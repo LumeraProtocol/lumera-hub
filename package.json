@@ -1,5 +1,5 @@
 {
-  "name": "lumera-hub",
+  "name": "@lumera-hub/ui",
   "private": true,
   "scripts": {
     "build": "turbo run build",
@@ -16,5 +16,16 @@
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
+  },
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "@tamagui/babel-plugin": "^1.132.16",
+    "@tamagui/config": "^1.132.16",
+    "@tamagui/core": "^1.132.16",
+    "@tamagui/metro-plugin": "^1.132.16",
+    "@tamagui/next-plugin": "^1.132.16",
+    "react-native-svg": "^15.12.1",
+    "tamagui": "^1.132.16"
   }
 }
