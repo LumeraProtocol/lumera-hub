@@ -225,40 +225,33 @@ pnpm install
 
 ```ts
 import { createTamagui, createTokens } from 'tamagui'
-import * as V4 from '@tamagui/config/v4'
+import * as v4 from '@tamagui/config/v4'
 
-// Handle different export styles across releases
-const preset =
-  // named export `config`
-  (V4 as any).config ??
-  // default export
-  (V4 as any).default ??
-  // some builds export the object itself
-  V4
+// The v4 preset module exports tokens/themes/fonts/shorthands directly
+const preset: any = v4
 
-// keep preset tokens/themes/fonts/shorthands; only extend what you need
 const extraTokens = createTokens({
-  color: {
-    brand: '#7e5bef',
-    background: '#0d1117',
-  },
+    color: {
+        brand: '#7e5bef',
+        background: '#0d1117',
+    },
 })
 
 const config = createTamagui({
-  ...preset,
-  // merge tokens instead of replacing; keep preset token families intact
-  tokens: {
-    ...(preset as any).tokens,
-    ...extraTokens,
-  },
-  defaultTheme: 'dark',
+    ...preset,
+    tokens: {
+        ...(preset as any).tokens,
+        ...extraTokens,
+    },
+    defaultTheme: 'dark',
 })
 
 export type AppConfig = typeof config
 declare module 'tamagui' {
-  interface TamaguiCustomConfig extends AppConfig {}
+    interface TamaguiCustomConfig extends AppConfig {}
 }
 export default config
+
 ```
 
 ### 7.3 Shared Provider in @lumera-hub/ui
@@ -278,31 +271,38 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => (
 
 ### 7.4 Next.js (web) configuration
 
-- CommonJS next.config.js (plays nicely with Tamagui plugin)  
+- CommonJS next.config.ts (plays nicely with Tamagui plugin)  
 - Transpile RN/RNW/Tamagui and the ui package  
 - Optional static export flag for desktop packaging
 
-```js
-// apps/web/next.config.js
+```ts
+// apps/web/next.config.ts
+import type { NextConfig } from 'next'
+import { createRequire } from 'module'
+
+// withTamagui is published as CJS; bridge it in TS/ESM:
+const require = createRequire(import.meta.url)
 const { withTamagui } = require('@tamagui/next-plugin')
 
 const isDesktopExport = process.env.NEXT_OUTPUT === 'export'
 
-module.exports = withTamagui({
-  config: '../../tamagui.config.ts',
-  components: ['tamagui', '@lumera-hub/ui'],
-  appDir: true,
-})({
-  reactStrictMode: true,
-  transpilePackages: [
-    'tamagui',
-    '@tamagui',
-    'react-native',
-    'react-native-web',
-    '@lumera-hub/ui'
-  ],
-  ...(isDesktopExport ? { output: 'export' } : {}),
-})
+const baseConfig: NextConfig = {
+    reactStrictMode: true,
+    transpilePackages: [
+        'tamagui',
+        '@tamagui',
+        'react-native',
+        'react-native-web',
+        '@lumera-hub/ui',
+    ],
+    ...(isDesktopExport ? { output: 'export' } : {}),
+}
+
+export default withTamagui({
+    config: '../../tamagui.config.ts',
+    components: ['tamagui', '@lumera-hub/ui'],
+    appDir: true,
+})(baseConfig)
 ```
 
 - Babel for web
@@ -322,11 +322,8 @@ module.exports = {
 import './globals.css'
 import React from 'react'
 import { AppProvider } from '@lumera-hub/ui'
-import { useServerInsertedHTML } from 'next/navigation'
-import { getStyleElement } from 'tamagui'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  useServerInsertedHTML(() => <>{getStyleElement({})}</>)
   return (
     <html lang="en">
       <body>
