@@ -9,9 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@cosmos-kit/cosmostation-extension": "^2.16.2",
+    "@cosmos-kit/keplr-extension": "^2.15.2",
+    "@cosmos-kit/leap-extension": "^2.15.2",
+    "@cosmos-kit/react": "^2.10.2",
+    "@interchain-ui/react": "^1.26.3",
     "@lumera-hub/ui": "workspace:^",
     "@tamagui/config": "^1.132.16",
     "@tamagui/core": "^1.132.16",
+    "chain-registry": "^1.55.103",
     "next": "15.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",

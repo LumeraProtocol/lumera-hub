@@ -32686,11 +32686,14 @@ var tamagui_config_default = config;
 
 // ../../packages/ui/src/Provider.tsx
 var import_jsx_runtime29 = require("react/jsx-runtime");
-var AppProvider = /* @__PURE__ */ __name(({ children }) => /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(TamaguiProvider, { config: tamagui_config_default, defaultTheme: "dark", children }), "AppProvider");
+var AppProvider = /* @__PURE__ */ __name(({ children }) => {
+  const typedConfig = tamagui_config_default;
+  return /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(TamaguiProvider, { config: typedConfig, defaultTheme: "dark", children });
+}, "AppProvider");
 
 // ../../packages/ui/src/screens/HomeScreen.tsx
 var import_jsx_runtime30 = require("react/jsx-runtime");
-var HomeScreen = /* @__PURE__ */ __name(() => /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(YStack, { f: 1, ai: "center", jc: "center", space: true, children: [
+var HomeScreen = /* @__PURE__ */ __name(() => /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(YStack, { flex: 1, alignItems: "center", justifyContent: "center", gap: "$2", children: [
   /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(H1, { children: "Welcome to Lumera Hub" }),
   /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(Paragraph, { children: "This screen is shared between Web & Mobile." })
 ] }), "HomeScreen");

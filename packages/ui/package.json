@@ -15,7 +15,13 @@
   "dependencies": {
     "@tamagui/config": "^1.132.16",
     "@tamagui/core": "^1.132.16",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "react-native": "0.79.5",
     "tamagui": "^1.132.16"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
   }
 }

@@ -1,14 +1,13 @@
 {
   "name": "desktop",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "echo \"Desktop dev uses Next dev server at http://localhost:3000\"",
+    "build": "echo \"Desktop build expects ./dist populated by root build:desktop:export\"",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@tauri-apps/cli": "^2.7.1"
   }
