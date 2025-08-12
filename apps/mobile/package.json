@@ -10,6 +10,8 @@
     "dev": "expo start"
   },
   "dependencies": {
+    "@cosmos-kit/react": "^2.22.2",
+    "@cosmos-kit/walletconnect": "^2.13.2",
     "@react-navigation/native": "^7.1.17",
     "@react-navigation/native-stack": "^7.3.24",
     "expo": "~53.0.20",

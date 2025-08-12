@@ -1,13 +1,13 @@
 {
   "name": "lumera-hub",
   "private": true,
-  "packageManager": "pnpm@9",
+  "packageManager": "pnpm@9.15.9",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
     "web": "turbo run dev --filter=web",
     "mobile": "turbo run dev --filter=mobile",
-    "desktop": "turbo run dev --filter=desktop",
+    "desktop": "turbo run tauri:dev --filter=desktop",
     "build:web": "turbo run build --filter=web",
     "build:mobile": "turbo run build --filter=mobile",
     "build:desktop:export": "cd apps/web && NEXT_OUTPUT=export pnpm build && rm -rf ../desktop/dist && mkdir -p ../desktop/dist && cp -R ./out/* ../desktop/dist",
@@ -16,21 +16,23 @@
     "lint": "eslint ."
   },
   "devDependencies": {
-    "turbo": "^2.5.5",
-    "typescript": "5.8.3",
+    "@tamagui/babel-plugin": "^1.132.16",
+    "@tamagui/config": "^1.132.16",
+    "@tamagui/core": "^1.132.16",
+    "@tamagui/metro-plugin": "^1.132.16",
+    "@tamagui/next-plugin": "^1.132.16",
+    "@tauri-apps/cli": "^2.7.1",
     "eslint": "^9.0.0",
     "prettier": "^3.6.2",
     "tamagui": "^1.132.16",
-    "@tamagui/config": "^1.132.16",
-    "@tauri-apps/cli": "^2.7.1",
-    "@tamagui/core": "^1.132.16",
-    "@tamagui/next-plugin": "^1.132.16",
-    "@tamagui/babel-plugin": "^1.132.16",
-    "@tamagui/metro-plugin": "^1.132.16"
+    "turbo": "^2.5.5",
+    "typescript": "5.8.3"
   },
   "engines": {
     "node": ">=24 <25"
   },
   "version": "0.1.0",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+  }
 }
