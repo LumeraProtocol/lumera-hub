@@ -19,12 +19,18 @@ module.exports = withTamagui({
     '@lumera-hub/ui'
   ],
   ...(isDesktopExport ? { output: 'export' } : {}),
-  webpack: (config) => {
+  webpack: (config, { dev }) => {
     config.resolve = config.resolve || {}
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       'pino-pretty': false,
     }
+
+    // Turn off source maps in development to suppress missing .css.map requests
+    if (dev) {
+      config.devtool = false
+    }
+
     return config
   },
 })

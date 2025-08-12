@@ -9,16 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@cosmos-kit/react": "^2.16.2",
-    "@cosmos-kit/cosmostation-extension": "^2.16.2",
-    "@cosmos-kit/keplr-extension": "^2.15.2",
-    "@cosmos-kit/leap-extension": "^2.15.2",
-    "@cosmos-kit/walletconnect": "^2.11.2",
+    "@interchain-kit/core": "^0.3.43",
+    "@interchain-kit/react": "^0.3.43",
+    "@interchain-kit/cosmostation-extension": "^0.3.43",
+    "@interchain-kit/keplr-extension": "^0.3.44",
+    "@interchain-kit/leap-extension": "^0.3.44",
     "@interchain-ui/react": "^1.26.3",
     "@lumera-hub/ui": "workspace:^",
     "@tamagui/config": "^1.132.16",
     "@tamagui/core": "^1.132.16",
-    "chain-registry": "^1.55.103",
+    "chain-registry": "^2.0.42",
     "next": "15.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -36,5 +36,19 @@
     "eslint-config-next": "15.4.6",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "browserslist": {
+    "production": [
+      "last 2 Chrome versions",
+      "last 2 Firefox versions",
+      "Safari >= 15",
+      "not dead",
+      "not IE 11"
+    ],
+    "development": [
+      "last 1 Chrome version",
+      "last 1 Firefox version",
+      "last 1 Safari version"
+    ]
   }
 }
