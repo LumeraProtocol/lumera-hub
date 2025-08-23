@@ -120,6 +120,9 @@ importers:
       '@lumera-hub/ui':
         specifier: workspace:^
         version: link:../../packages/ui
+      '@react-jvectormap/core':
+        specifier: ^1.0.4
+        version: 1.0.4(jquery@3.7.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@tamagui/config':
         specifier: ^1.132.16
         version: 1.132.17(react-dom@19.1.0(react@19.1.0))(react-native-reanimated@3.17.5(@babel/core@7.28.0)(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(react@19.1.0))(react@19.1.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(react@19.1.0))(react@19.1.0)

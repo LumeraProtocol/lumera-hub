@@ -2,7 +2,6 @@ import React from 'react'
 import { YStack, Card, H3, Button } from 'tamagui'
 import Dropzone from 'react-dropzone'
 import { CloudUpload } from '@tamagui/lucide-icons'
-import { VectorMap } from "@react-jvectormap/core"
 import { worldMill } from "@react-jvectormap/world"
 
 interface Marker {
@@ -75,10 +74,20 @@ const markers: Marker[] = [
   { latLng: [59.9139, 10.7522], name: "Oslo", value: 11, style: { fill: "#66586d" } }, // Norway
 ];
 
-const Map: React.FC = () => {
+const SuperNodeMap = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: any }) => {
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null;
+  }
+
   return (
     <div style={{ width: "100%", height: "500px" }}>
-      <VectorMap
+      <JVectorMapWithNoSSR
         map={worldMill}
         backgroundColor="#151d29"
         zoomOnScroll={true}
@@ -132,7 +141,7 @@ const Map: React.FC = () => {
   );
 };
 
-export const CascadeScreen = () => {
+export const CascadeScreen = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: any }) => {
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className="flex justify-between gap-6 w-full">
@@ -157,7 +166,7 @@ export const CascadeScreen = () => {
       </div>
       <div className='mt-6 w-full'>
         <Card elevate size="$4" bordered className='w-full'>
-          <Map />
+          <SuperNodeMap JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
         </Card>
       </div>
       <div className='mt-6 w-full'>
