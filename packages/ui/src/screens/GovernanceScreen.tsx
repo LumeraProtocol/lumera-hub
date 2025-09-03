@@ -13,7 +13,7 @@ export const GovernanceScreen = () => {
           </Button>
         </div>
       </div>
-      <div className='mt-5 grid grid-cols-4 gap-6 w-full'>
+      <div className='mt-5 grid grid-cols-4 gap-6 w-full governance-overview'>
         <Card elevate size="$4" bordered className='w-full'>
           <Card.Header padded>
             <div className='flex items-center gap-3'>
@@ -23,7 +23,7 @@ export const GovernanceScreen = () => {
               <div>
                 <H3 className='text-base text-lumera-label leading-none'>Total Proposals</H3>
                 <div className='leading-none mt-3'>
-                  <span className='text-[36px] font-bold text-white'>5</span>
+                  <span className='text-[32px] font-bold text-white'>5</span>
                 </div>
               </div>
             </div>
@@ -38,7 +38,7 @@ export const GovernanceScreen = () => {
               <div>
                 <H3 className='text-base text-lumera-label leading-none'>Passed</H3>
                 <div className='leading-none mt-3'>
-                  <span className='text-[36px] font-bold text-white'>1</span>
+                  <span className='text-[32px] font-bold text-white'>1</span>
                 </div>
               </div>
             </div>
@@ -53,7 +53,7 @@ export const GovernanceScreen = () => {
               <div>
                 <H3 className='text-base text-lumera-label leading-none'>Voting Period</H3>
                 <div className='leading-none mt-3'>
-                  <span className='text-[36px] font-bold text-white'>7 Days</span>
+                  <span className='text-[32px] font-bold text-white'>7 Days</span>
                 </div>
               </div>
             </div>
@@ -68,7 +68,7 @@ export const GovernanceScreen = () => {
               <div>
                 <H3 className='text-base text-lumera-label leading-none'>Deposit Required</H3>
                 <div className='leading-none mt-3'>
-                  <span className='text-[36px] font-bold text-white'>500 LUME</span>
+                  <span className='text-[32px] font-bold text-white'>500 LUME</span>
                 </div>
               </div>
             </div>
@@ -76,25 +76,25 @@ export const GovernanceScreen = () => {
         </Card>
       </div>
       <Card elevate size="$4" bordered className='w-full p-5 mt-4'>
-        <div className='flex justify-between items-center'>
+        <div className='flex justify-between items-center governance-control'>
           <ul className='tabs-secondary'>
             <li className='tab-item active'>
-              <button className='tab-button'>All (5)</button>
+              <button className='tab-button whitespace-nowrap'>All (5)</button>
             </li>
             <li className='tab-item'>
-              <button className='tab-button'>Expedited (1)</button>
+              <button className='tab-button whitespace-nowrap'>Expedited (1)</button>
             </li>
             <li className='tab-item'>
-              <button className='tab-button'>Deposit (1)</button>
+              <button className='tab-button whitespace-nowrap'>Deposit (1)</button>
             </li>
             <li className='tab-item'>
-              <button className='tab-button'>Voting (1)</button>
+              <button className='tab-button whitespace-nowrap'>Voting (1)</button>
             </li>
             <li className='tab-item'>
-              <button className='tab-button'>Passed (1)</button>
+              <button className='tab-button whitespace-nowrap'>Passed (1)</button>
             </li>
             <li className='tab-item'>
-              <button className='tab-button'>Rejected (1)</button>
+              <button className='tab-button whitespace-nowrap'>Rejected (1)</button>
             </li>
           </ul>
           <div className='input-wrapper'>
@@ -104,10 +104,10 @@ export const GovernanceScreen = () => {
             </span>
           </div>
         </div>
-        <div className='mt-6 grid grid-cols-2 gap-6'>
+        <div className='mt-6 grid grid-cols-2 gap-6 governance-card-wrapper'>
           <Card elevate size="$4" bordered className='w-full'>
             <div className='p-5'>
-              <div className='flex justify-between items-start gap-6'>
+              <div className='flex justify-between items-start gap-6 governance-card-header'>
                 <div className='flex flex-col'>
                   <SizableText className='text-lumera-label'>LIP-009</SizableText>
                   <H3 className='!leading-6'>Emergence Security Patch for a/staking Module</H3>
@@ -137,7 +137,7 @@ export const GovernanceScreen = () => {
           </Card>
           <Card elevate size="$4" bordered className='w-full'>
             <div className='p-5'>
-              <div className='flex justify-between items-start gap-6'>
+              <div className='flex justify-between items-start gap-6 governance-card-header'>
                 <div className='flex flex-col'>
                   <SizableText className='text-lumera-label'>LIP-008</SizableText>
                   <H3 className='!leading-6'>Fund a new Community Marketing Initiative</H3>
@@ -171,7 +171,7 @@ export const GovernanceScreen = () => {
           </Card>
           <Card elevate size="$4" bordered className='w-full'>
             <div className='p-5'>
-              <div className='flex justify-between items-start gap-6'>
+              <div className='flex justify-between items-start gap-6 governance-card-header'>
                 <div className='flex flex-col'>
                   <SizableText className='text-lumera-label'>LIP-007</SizableText>
                   <H3 className='!leading-6'>Integrate New Cross-Chain Bridge for Enhanced Liquidity</H3>
@@ -201,7 +201,7 @@ export const GovernanceScreen = () => {
           </Card>
           <Card elevate size="$4" bordered className='w-full'>
             <div className='p-5'>
-              <div className='flex justify-between items-start gap-6'>
+              <div className='flex justify-between items-start gap-6 governance-card-header'>
                 <div className='flex flex-col'>
                   <SizableText className='text-lumera-label'>LIP-006</SizableText>
                   <H3 className='!leading-6'>Adjust Staking APY to Stabilize Token Emissions</H3>

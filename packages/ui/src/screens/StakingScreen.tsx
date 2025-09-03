@@ -27,8 +27,8 @@ export const StakingScreen = ({ address }: { address: string}) => {
             </ul>
           </div>
           <div>
-          <div className='flex justify-between w-full gap-6 mt-6'>
-            <Card elevate size="$4" bordered className='w-1/2'>
+          <div className='grid grid-cols-2 w-full gap-6 mt-6 staking-summary-wrapper'>
+            <Card elevate size="$4" bordered className='w-full'>
               <Card.Header padded>
                 <H3 className='text-lumera-label'>Total LUME Staked</H3>
                 <div className='text-[40px] font-bold text-white'>
@@ -36,7 +36,7 @@ export const StakingScreen = ({ address }: { address: string}) => {
                 </div>
               </Card.Header>
             </Card>
-            <Card elevate size="$4" bordered className='w-1/2'>
+            <Card elevate size="$4" bordered className='w-full'>
               <Card.Header padded>
                 <H3 className='text-lumera-label'>Current Staking APR</H3>
                 <div className='!text-lumera-green font-bold text-[40px]'>
@@ -47,8 +47,8 @@ export const StakingScreen = ({ address }: { address: string}) => {
           </div>
           <Card elevate size="$4" bordered className='w-full mt-6'>
             <Card.Header padded>
-              <div className='flex justify-between gap-6 w-full'>
-                <div className='w-1/2'>
+              <div className='grid grid-cols-2 gap-6 w-full rewards-calculator-wrapper'>
+                <div className='w-full'>
                   <H3 className='!flex gap-2 items-center rewards-calculator-icon'><Calculator /> <span>Rewards Calculator</span></H3>
                   <Text className='text-lumera-label text-base'>Estimate your potential earnings from staking LUME.</Text>
                   <div className='mt-5'>
@@ -59,7 +59,7 @@ export const StakingScreen = ({ address }: { address: string}) => {
                     </div>
                   </div>
                 </div>
-                <Card elevate size="$4" bordered className='w-1/2 estimated-rewards-card'>
+                <Card elevate size="$4" bordered className='w-full estimated-rewards-card'>
                   <Card.Header padded>
                     <H3>Estimated Rewards</H3>
                     <div className='mt-3 grid grid-cols-2 gap-2'>
@@ -88,7 +88,7 @@ export const StakingScreen = ({ address }: { address: string}) => {
           </Card>
           <Card elevate size="$4" bordered className='w-full mt-6'>
             <Card.Header padded>
-              <div className='flex justify-between w-full'>
+              <div className='flex justify-between w-full validators-control'>
                 <div className='flex flex-col'>
                   <H3 className='leading-none'>All Validators</H3>
                   <SizableText className='text-lumera-label'>Delegate your stake to a validator to earn rewards.</SizableText>
@@ -111,30 +111,32 @@ export const StakingScreen = ({ address }: { address: string}) => {
                     <button className='tab-button cursor-pointer px-3'>Inactive (1)</button>
                   </li>
                 </ul>
-                <table className='w-full table mt-5'>
+                <table className='w-full table mt-5 staking-table'>
                   <thead>
                     <tr>
-                      <th align='left' className='text-lumera-label'>Validator</th>
-                      <th align='right' className='text-lumera-label'>Staked Amount</th>
-                      <th align='right' className='text-lumera-label'>Commission</th>
-                      <th align='right' className='text-lumera-label'>Voting Power</th>
-                      <th align='left' className='text-lumera-label'>Uptime</th>
+                      <th align='left' className='text-lumera-label validator'>Validator</th>
+                      <th align='right' className='text-lumera-label staked-amount'>Staked Amount</th>
+                      <th align='right' className='text-lumera-label commission'>Commission</th>
+                      <th align='right' className='text-lumera-label voting-power'>Voting Power</th>
+                      <th align='left' className='text-lumera-label uptime'>Uptime</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr className='active'>
-                      <td>CosmoStation</td>
-                      <td align='right'>12,500,000 LUME</td>
-                      <td align='right'><Text>5.0%</Text></td>
-                      <td align='right'><Text>7.80%</Text></td>
-                      <td>
-                        <div className='flex w-full justify-end items-center gap-3'>
-                          <div className='custom-progress'>
-                            <Progress size="$4" value={99}>
-                              <Progress.Indicator animation="bouncy" />
-                            </Progress>
+                      <td data-label="Validator: ">CosmoStation</td>
+                      <td data-label="Staked Amount: " align='right'>12,500,000 LUME</td>
+                      <td data-label="Commission: " align='right'><Text>5.0%</Text></td>
+                      <td data-label="Voting Power: " align='right'><Text>7.80%</Text></td>
+                      <td data-label="Uptime: ">
+                        <div className='flex w-full justify-end items-center gap-3 action-col'>
+                          <div className='flex items-center gap-3'>
+                            <div className='custom-progress'>
+                              <Progress size="$4" value={99}>
+                                <Progress.Indicator animation="bouncy" />
+                              </Progress>
+                            </div>
+                            <Text>99.98%</Text>
                           </div>
-                          <Text>99.98%</Text>
                           <div className='btn-secondary'>
                             <Button>Delegate</Button>
                           </div>
@@ -142,18 +144,20 @@ export const StakingScreen = ({ address }: { address: string}) => {
                       </td>
                     </tr>
                     <tr>
-                      <td>CosmoStation</td>
-                      <td align='right'>12,500,000 LUME</td>
-                      <td align='right'><Text>5.0%</Text></td>
-                      <td align='right'><Text>7.80%</Text></td>
-                      <td align='right'>
-                        <div className='flex w-full justify-end items-center gap-3'>
-                          <div className='custom-progress'>
-                            <Progress size="$4" value={50}>
-                              <Progress.Indicator animation="bouncy" />
-                            </Progress>
+                      <td data-label="Validator: ">CosmoStation</td>
+                      <td data-label="Staked Amount: " align='right'>12,500,000 LUME</td>
+                      <td data-label="Commission: " align='right'><Text>5.0%</Text></td>
+                      <td data-label="Voting Power: " align='right'><Text>7.80%</Text></td>
+                      <td data-label="Uptime: ">
+                        <div className='flex w-full justify-end items-center gap-3 action-col'>
+                          <div className='flex items-center gap-3'>
+                            <div className='custom-progress'>
+                              <Progress size="$4" value={50}>
+                                <Progress.Indicator animation="bouncy" />
+                              </Progress>
+                            </div>
+                            <Text>50.98%</Text>
                           </div>
-                          <Text>99.98%</Text>
                           <div className='btn-secondary'>
                             <Button>Delegate</Button>
                           </div>
@@ -161,18 +165,20 @@ export const StakingScreen = ({ address }: { address: string}) => {
                       </td>
                     </tr>
                     <tr>
-                      <td>CosmoStation</td>
-                      <td align='right'>12,500,000 LUME</td>
-                      <td align='right'><Text>5.0%</Text></td>
-                      <td align='right'><Text>7.80%</Text></td>
-                      <td>
-                        <div className='flex w-full justify-end items-center gap-3'>
-                          <div className='custom-progress'>
-                            <Progress size="$4" value={99}>
-                              <Progress.Indicator animation="bouncy" />
-                            </Progress>
+                      <td data-label="Validator: ">CosmoStation</td>
+                      <td data-label="Staked Amount: " align='right'>12,500,000 LUME</td>
+                      <td data-label="Commission: " align='right'><Text>5.0%</Text></td>
+                      <td data-label="Voting Power: " align='right'><Text>7.80%</Text></td>
+                      <td data-label="Uptime: ">
+                        <div className='flex w-full justify-end items-center gap-3 action-col'>
+                          <div className='flex items-center gap-3'>
+                            <div className='custom-progress'>
+                              <Progress size="$4" value={99}>
+                                <Progress.Indicator animation="bouncy" />
+                              </Progress>
+                            </div>
+                            <Text>99.98%</Text>
                           </div>
-                          <Text>99.98%</Text>
                           <div className='btn-secondary'>
                             <Button>Delegate</Button>
                           </div>

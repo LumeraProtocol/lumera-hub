@@ -5,8 +5,8 @@ import { GovernanceScreen } from '@lumera-hub/ui/src/screens/GovernanceScreen'
 
 export default function Page() {
   return (
-    <>
+    <div className="governance-content">
       <GovernanceScreen />
-    </>
+    </div>
   )
 }

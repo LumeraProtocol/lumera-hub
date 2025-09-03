@@ -111,6 +111,9 @@
 .text-\[40px\] {
   font-size: 40px;
 }
+.\!text-\[40px\] {
+  font-size: 40px !important;
+}
 .btn-full .is_Button  {
   width: 100% !important;
 }
@@ -460,6 +463,9 @@
 .text-\[36px\] {
   font-size: 36px;
 }
+.text-\[32px\] {
+  font-size: 32px;
+}
 .tabs-secondary {
   display: inline-flex;
   gap: 8px;
@@ -489,4 +495,169 @@
 }
 .z-50 {
   z-index: 50;
+}
+.\!z-50 {
+  z-index: 50 !important;
+}
+.z-1 {
+  z-index: 1;
+}
+#interchain-ui-overlays-manager > div {
+  z-index: 50 !important;
+}
+.btn-address {
+  padding: 6px 12px;
+  color: #9da3ae;
+  background-color: #212936;
+  border-radius: 9px;
+  transition: all 0.3s ease-in-out;
+}
+.btn-logout {
+  padding: 6px 12px;
+  color: #e5e7eb;
+  background-color: #394150;
+  border-radius: 9px;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+.btn-logout:hover {
+  color: #fff;
+  background-color: #078A8A;
+}
+.btn-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: #e5e7eb;
+  background-color: transparent;
+  border-radius: 100%;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+.btn-close:hover {
+  background-color: #078A8A;
+}
+.break-words {
+  word-wrap: break-word;
+}
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+@media screen and (min-width: 768px) {
+  .md\:flex-row {
+    flex-direction: row;
+  }
+}
+@media screen and (max-width: 1300px) {
+  .home-content .balance-rewards-overview {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  .governance-content .governance-overview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .cascade-overview .is_Card {
+    width: 48%;
+  }
+  .text-\[40px\] {
+    font-size: 36px;
+  }
+  .\!text-\[40px\] {
+    font-size: 36px !important;
+  }
+  .governance-control {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .input-wrapper {
+    width: 100%;
+    max-width: 420px;
+  }
+}
+@media screen and (max-width: 1200px) {
+  .staking-table thead {
+    display: none;
+  }
+  .staking-table tbody tr {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+  .staking-table tbody td::before {
+    content: attr(data-label);
+  }
+  .governance-card-wrapper {
+    grid-template-columns: repeat(1, 1fr);
+  }
+}
+@media screen and (max-width: 1024px) {
+  .btn-hambuger {
+    border-right: 0;
+  }
+}
+@media screen and (max-width: 800px) {
+  .governance-control .tabs-secondary {
+    flex-wrap: wrap;
+  }
+}
+@media screen and (max-width: 768px) {
+  .home-content .balance-rewards-overview,
+  .home-content .overview-wrapper,
+  .staking-summary-wrapper,
+  .rewards-calculator-wrapper,
+  .governance-content .governance-overview {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  .home-content .governance-proposals-activity {
+    flex-direction: column;
+  }
+  .cascade-overview {
+    flex-direction: column;
+  }
+  .home-content .active-governance-proposals,
+  .home-content .recent-activity,
+  .cascade-overview .is_Card {
+    width: 100%;
+  }
+  .text-\[40px\] {
+    font-size: 32px;
+  }
+  .\!text-\[40px\] {
+    font-size: 32px !important;
+  }
+}
+@media screen and (max-width: 550px) {
+  .home-content .chart-wrapper {
+    flex-direction: column;
+  }
+  .home-content .chart-wrapper > div {
+    width: 100% !important;
+  }
+  .home-content .chart-wrapper {
+    flex-direction: column;
+  }
+  .staking-table .action-col {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .governance-card-header {
+    flex-direction: column;
+  }
+  .validators-control {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+@media screen and (max-width: 440px) {
+  .staking-table .custom-progress .is_Progress {
+    min-width: 150px;
+  }
+  .connect-wallet-label {
+    display: none;
+  }
 }

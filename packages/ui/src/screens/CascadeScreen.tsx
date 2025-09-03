@@ -144,7 +144,7 @@ const SuperNodeMap = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: any }) => 
 export const CascadeScreen = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: any }) => {
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
-      <div className="flex justify-between gap-6 w-full">
+      <div className="flex justify-between gap-6 w-full cascade-overview">
         <Card elevate size="$4" bordered className='cascade-top-left'>
           <Card.Header padded>
             <H3 className='text-white'>Network Storage</H3>

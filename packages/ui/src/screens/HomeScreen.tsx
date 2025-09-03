@@ -43,11 +43,11 @@ export const HomeScreen = ({ address }: { address: string}) => {
         </div> :
         <>
           <div className='w-full flex flex-col gap-6'>
-            <div className='flex justify-between gap-6 w-full'>
-              <Card bordered className='w-46p'>
+            <div className='grid grid-cols-2 gap-6 w-full overview-wrapper'>
+              <Card bordered className='w-full portfolio-overview'>
                 <Card.Header padded>
                   <H3>Portfolio Overview</H3>
-                  <div className='mt-5 flex justify-between items-center'>
+                  <div className='mt-5 flex justify-between items-center chart-wrapper'>
                     <div className='w-1/2'>
                       <ReactECharts option={option} style={{ height: '200px', width: '100%' }} />
                     </div>
@@ -70,28 +70,30 @@ export const HomeScreen = ({ address }: { address: string}) => {
                   </div>
                 </Card.Header>
               </Card>
-              <Card elevate size="$4" bordered className='w-1/4'>
-                <Card.Header padded>
-                  <H3 className='text-lumera-label'>Total Balance</H3>
-                  <div>
-                    <span className='text-[40px] font-bold text-white'>20,234.88</span> <span className='text-base text-lumera-label'>LUME</span>
-                  </div>
-                </Card.Header>
-              </Card>
-              <Card elevate size="$4" bordered className='w-1/4'>
-                <Card.Header padded>
-                  <H3 className='text-lumera-label'>Claimable Rewards</H3>
-                  <div>
-                    <H4 className='!text-lumera-green font-bold text-[40px]'>125.43</H4>
-                    <div className='mt-4 btn-full btn-secondary'>
-                      <Button>Claim All Rewards</Button>
+              <div className='grid grid-cols-2 gap-6 w-full balance-rewards-overview'>
+                <Card elevate size="$4" bordered className='w-full total-balance'>
+                  <Card.Header padded>
+                    <H3 className='text-lumera-label'>Total Balance</H3>
+                    <div>
+                      <span className='text-[40px] font-bold text-white break-words'>20,234.88</span> <span className='text-base text-lumera-label'>LUME</span>
                     </div>
-                  </div>
-                </Card.Header>
-              </Card>
+                  </Card.Header>
+                </Card>
+                <Card elevate size="$4" bordered className='w-full claimable-rewards'>
+                  <Card.Header padded>
+                    <H3 className='text-lumera-label'>Claimable Rewards</H3>
+                    <div>
+                      <H4 className='!text-lumera-green font-bold !text-[40px]'>125.43</H4>
+                      <div className='mt-4 btn-full btn-secondary'>
+                        <Button>Claim All Rewards</Button>
+                      </div>
+                    </div>
+                  </Card.Header>
+                </Card>
+              </div>
             </div>
-            <div className='flex justify-between gap-6'>
-              <div className='w-2/3'>
+            <div className='flex justify-between gap-6 governance-proposals-activity'>
+              <div className='w-2/3 active-governance-proposals'>
                 <Card elevate size="$4" bordered>
                   <Card.Header padded>
                     <div className='flex justify-between items-center'>
@@ -108,7 +110,7 @@ export const HomeScreen = ({ address }: { address: string}) => {
                   </Card.Header>
                 </Card>
               </div>
-              <div className='w-1/3'>
+              <div className='w-1/3 recent-activity'>
                 <Card elevate size="$4" bordered>
                   <Card.Header padded>
                     <H3>Recent Activity</H3>

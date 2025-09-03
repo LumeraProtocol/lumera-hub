@@ -14,8 +14,8 @@ const JVectorMapWithNoSSR = dynamic(
 
 export default function Page() {
   return (
-    <>
+    <div className="cascade-content">
       <CascadeScreen JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
-    </>
+    </div>
   )
 }
