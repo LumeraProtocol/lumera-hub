@@ -44,7 +44,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [currentPath, setCurrentPath] = useState<string>(NAV_ITEMS[0].url);
 
   useEffect(() => {
-    // Chỉ chạy ở client-side
     if (typeof window !== 'undefined') {
       setCurrentPath(window.location.pathname);
       const navItem = NAV_ITEMS.find((item) => item.url === window.location.pathname);
