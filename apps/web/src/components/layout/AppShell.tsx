@@ -9,7 +9,7 @@ import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 // Inspired by docs/preliminary-ui-design.html but simplified and dependency-free (no icon libs)
 // TailwindCSS v4 classes are used (configured via globals.css)
 
-const NAV_ITEMS: { id: ViewId; label: string, url: string, icon: React.ReactNode }[] = [
+export const NAV_ITEMS: { id: ViewId; label: string, url: string, icon: React.ReactNode }[] = [
   { id: "dashboard", label: "Dashboard", url: "/", icon: <BarChart2 /> },
   { id: "staking", label: "Staking", url: "/staking", icon: <Hotel /> },
   { id: "governance", label: "Governance", url: "/governance", icon: <LaptopMinimalCheck /> },
@@ -62,7 +62,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Sidebar (desktop) */}
       <div className="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 z-50">
         <div className="flex flex-col flex-grow bg-lumera-navy border-r border-gray-800/50">
-          <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-800">
+          <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800">
             <div className="w-6 h-6 grid place-items-center">
               <img src="/lumera-symbol.svg" alt="Lumera" />
             </div>
@@ -107,7 +107,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="relative flex flex-1 w-full">
             <div className="flex flex-grow flex-col bg-lumera-navy border-r border-gray-800/50">
               <div className="flex justify-between items-center w-full">
-                <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-800">
+                <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800">
                   <div className="w-6 h-6 grid place-items-center">
                     <img src="/lumera-symbol.svg" alt="Lumera" />
                   </div>

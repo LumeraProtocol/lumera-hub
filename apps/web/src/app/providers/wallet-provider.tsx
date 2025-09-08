@@ -9,10 +9,10 @@ import { cosmostationWallet } from '@interchain-kit/cosmostation-extension'
 import { ThemeProvider, OverlaysManager } from '@interchain-ui/react'
 import '@interchain-ui/react/styles'
 
+import { CHAIN_NAME } from '@/contants/chain';
+
 // import { assetLists, chains } from 'chain-registry/mainnet'
-// const CHAIN_NAME = 'lumera'
 import { assetLists, chains } from 'chain-registry/testnet'
-const CHAIN_NAME = 'lumeratestnet'
 
 export function WebWalletProviders({ children }: { children: React.ReactNode }) {
   const lumeraChain = chains.find(({chainName}) =>chainName===CHAIN_NAME)

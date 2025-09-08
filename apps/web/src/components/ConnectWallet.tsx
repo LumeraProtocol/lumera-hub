@@ -3,8 +3,7 @@ import { useChain } from '@interchain-kit/react'
 import { InterchainWalletModal } from '@interchain-kit/react';
 import { Wallet, LogOut } from '@tamagui/lucide-icons'
 
-// const CHAIN_NAME = 'lumera'
-const CHAIN_NAME = 'lumeratestnet'
+import { CHAIN_NAME } from '@/contants/chain';
 
 const formatAddress = (address: string, length = 20, endLength = -6): string => {
   return `${address.substr(0, length)}...${address.substr(endLength)}`;
