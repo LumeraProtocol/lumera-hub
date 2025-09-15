@@ -1,15 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import dayjs from 'dayjs';
 import ReactECharts from 'echarts-for-react'
-import { YStack, H2, Paragraph, Card, H3, H4, Button, Text, SizableText } from 'tamagui'
+import { 
+  YStack, 
+  H2, 
+  Paragraph, 
+  Card, 
+  H3, 
+  H4, 
+  Button, 
+  Text, 
+  SizableText, 
+  Dialog, 
+  Label, 
+  Input, 
+  RadioGroup, 
+  Checkbox, 
+  Select, 
+  XStack,
+} from 'tamagui'
 import { LaptopMinimalCheck, Database, BarChart2, Warehouse, Send } from '@tamagui/lucide-icons'
-import { Wallet } from '@tamagui/lucide-icons'
+import { Wallet, CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
 import Skeleton from '@/components/Skeleton';
 import { AccountInfoData } from '@/hooks/useAccountInfo'
 import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity'
-import { IProposal } from '@/hooks/useProposals'
+import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/useProposals'
 import { formatNumber } from '@/utils/format'
 import { NAV_ITEMS } from '@/components/layout/AppShell';
 
@@ -26,11 +43,40 @@ interface IHomeScreen {
   isProposalLoading: boolean;
   recentActivities: IRecentActivity[];
   isRecentActivityLoading: boolean;
+  onOptionChange: (val: string) => void;
+  onVoteClick: (item: IProposal | null) => void;
+  isVoteLoading: boolean;
+  error: string | null;
+  voteAdvanced: {
+    fees: string; 
+    gas: string; 
+    memo: string; 
+    broadcastMode: string; 
+  };
+  handleVoteAdvancedChange: (name: string, value: string) => void;
 }
 
 interface IPortfolioOverviewChart {
   stacked: number;
   liquid: number;
+}
+
+interface IVoteModal {
+  isOpen: boolean;
+  setOpen: (status: boolean) => void;
+  sernder: string;
+  onOptionChange: (val: string) => void;
+  onVoteClick: (item: IProposal | null) => void;
+  item: IProposal | null;
+  isVoteLoading: boolean;
+  error: string | null;
+  voteAdvanced: {
+    fees: string; 
+    gas: string; 
+    memo: string; 
+    broadcastMode: string; 
+  };
+  handleVoteAdvancedChange: (name: string, value: string) => void;
 }
 
 const RATE_VALUE = 1000000
@@ -106,6 +152,203 @@ const formatMessage = (msgs: TMessage[]) => {
   }
 }
 
+const VoteModal = ({ 
+  isOpen, 
+  setOpen, 
+  sernder, 
+  onOptionChange, 
+  onVoteClick, 
+  item, 
+  isVoteLoading, 
+  error,
+  voteAdvanced,
+  handleVoteAdvancedChange,
+}: IVoteModal) => {
+  if (!isOpen) {
+    return null;
+  }
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const handleAdvancedCheckedChange = (checked: boolean) => {
+    setShowAdvanced(checked);
+  }
+
+  return (
+     <Dialog
+        open={isOpen}
+        onOpenChange={setOpen}
+        modal
+      >
+        <Dialog.Trigger asChild>
+        </Dialog.Trigger>
+
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+
+          <Dialog.Content
+            bordered
+            elevate
+            key="content"
+            animation={[
+              'quick',
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            x={0}
+            scale={1}
+            opacity={1}
+            y={0}
+          >
+            <div className='vote-main-content'>
+              <div className='flex justify-between items-center'>
+                <H3 className='text-lumera-label text-[32px]'>Vote</H3>
+                <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
+              </div>
+              <div className='mt-1'>
+                <Label htmlFor="sender" className='text-base'>Sender</Label>
+                <div className='input-wrapper'>
+                  <Input id="sender" placeholder="Sender" className='input' defaultValue={sernder} readOnly />
+                </div>
+              </div>
+              <div className='mt-1'>
+                <Label htmlFor="option" className='text-base'>Option</Label>
+                <RadioGroup aria-labelledby="Select one item" defaultValue="1" name="option" id="option" onValueChange={onOptionChange}>
+                  <div className='flex items-center gap-6'>
+                    {VOTE_OPTIONS?.map((item) => (
+                      <div className='flex items-center gap-3' key={item.value}>
+                        <RadioGroup.Item value={item.value} id={`radiogroup-${item.value}`} size="$4">
+                          <RadioGroup.Indicator />
+                        </RadioGroup.Item>
+
+                        <Label size="$4" id={`radiogroup-${item.value}`} className='leading-none'>
+                          {item.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {showAdvanced ?
+                <div className='mt-1'>
+                  <div>
+                    <Label htmlFor="fees" className='text-base'>Fees</Label>
+                    <div className='input-wrapper'>
+                      <Input 
+                        id="fees" 
+                        placeholder="Fees" 
+                        className='input has-symbol' 
+                        value={voteAdvanced.fees} 
+                        onChangeText={(newValue) => handleVoteAdvancedChange('fees', newValue)} 
+                      />
+                      <span className='input-symbol'>ulume</span>
+                    </div>
+                  </div>
+                  <div className='mt-1'>
+                    <Label htmlFor="gas" className='text-base'>Gas</Label>
+                    <div className='input-wrapper'>
+                      <Input 
+                        id="gas" 
+                        placeholder="Gas" 
+                        className='input' 
+                        value={voteAdvanced.gas} 
+                        onChangeText={(newValue) => handleVoteAdvancedChange('gas', newValue)} 
+                      />
+                    </div>
+                  </div>
+                  <div className='mt-1'>
+                    <Label htmlFor="memo" className='text-base'>Memo</Label>
+                    <div className='input-wrapper'>
+                      <Input 
+                        id="memo" 
+                        placeholder="Memo" 
+                        className='input' 
+                        value={voteAdvanced.memo} 
+                        onChangeText={(newValue) => handleVoteAdvancedChange('memo', newValue)} 
+                      />
+                    </div>
+                  </div>
+                  <div className='mt-1'>
+                    <Label htmlFor="broadcastMode" className='text-base'>Broadcast Mode</Label>
+                    <div className=''>
+                      <Select
+                        id="broadcastMode"
+                        value={voteAdvanced.broadcastMode}
+                        onValueChange={(newValue) => handleVoteAdvancedChange('broadcastMode', newValue)}
+                      >
+                        <Select.Trigger width={220} iconAfter={<ChevronDown size="$1" />}>
+                          <Select.Value placeholder="Broadcast Mode" />
+                        </Select.Trigger>
+
+                        <Select.Content zIndex={200000}>
+                          <Select.Viewport minWidth={200}>
+                            <Select.Group>
+                              {broadcastModeOptions.map((item, i) => (
+                                <Select.Item
+                                  index={i}
+                                  key={item.value}
+                                  value={item.value}
+                                >
+                                  <Select.ItemText>{item.name}</Select.ItemText>
+                                  <XStack flex={1} />
+                                  <Select.ItemIndicator marginLeft="auto">
+                                    <CheckIcon size={16} />
+                                  </Select.ItemIndicator>
+                                </Select.Item>
+                              ))}
+                            </Select.Group>
+                          </Select.Viewport>
+                        </Select.Content>
+                      </Select>
+                    </div>
+                  </div>
+                </div>: null
+              }
+
+              <YStack space="$2" marginTop="$3">
+                <div className='flex justify-between items-center'>
+                  <div className='flex gap-3 items-center'>
+                    <Checkbox 
+                      id="advanced" 
+                      size="$4" 
+                      checked={showAdvanced} 
+                      onCheckedChange={handleAdvancedCheckedChange}
+                    >
+                      <Checkbox.Indicator>
+                        <CheckIcon />
+                      </Checkbox.Indicator>
+                    </Checkbox>
+
+                    <Label size="$4" htmlFor="advanced">
+                      Advanced
+                    </Label>
+                  </div>
+                  <div className='btn-primary flex justify-end mt-3'>
+                    <Button onPress={() => onVoteClick(item)} disabled={isVoteLoading}>Send</Button>
+                  </div>
+                </div>
+              </YStack>
+              {error && !isVoteLoading ? 
+                <div className='text-lumera-red-light mt-3'>{error}</div> : null
+              }
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
+  )
+}
+
 export const HomeScreen = ({ 
   address, 
   connect, 
@@ -115,11 +358,18 @@ export const HomeScreen = ({
   isProposalLoading, 
   recentActivities, 
   isRecentActivityLoading,
+  onOptionChange,
+  onVoteClick,
+  isVoteLoading,
+  error,
+  voteAdvanced,
+  handleVoteAdvancedChange,
 }: IHomeScreen) => {
   const { stacked, liquid, rewards } = getPortfolioData(accountInfo);
+  const [isVoteOpen, setVoteOpen] = React.useState(false);
+  const [selectedItem, setSelectedItem] = useState<IProposal | null>(null)
 
   const getActivity = (item: IRecentActivity) => {
-    const latestEvent = item.events[item.events.length - 1];
     const messages = item.tx.body.messages;
 
     switch (formatMessage(messages)?.toLowerCase()) {
@@ -147,6 +397,20 @@ export const HomeScreen = ({
             </div>
           </div>
         )
+      case 'withdrawdelegatorreward':
+        const event = item.events.find((i) => i.type === 'withdraw_rewards');
+        const amount = event?.attributes?.find((i) => i.key === 'amount');
+        return (
+          <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
+            <div className="rounded-full grid place-items-center recent-activity-icon claimed-icon">
+              <BarChart2 size="$1" />
+            </div>
+            <div className='w-full flex flex-col'>
+              <Text>Claimed {formatNumber((Number(amount?.value.replace('ulume', '')) / RATE_VALUE).toFixed(2))} LUME in rewards</Text>
+              <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
+            </div>
+          </div>
+        )
       default:
         return (
           <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
@@ -154,7 +418,7 @@ export const HomeScreen = ({
               <LaptopMinimalCheck size="$1" />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>{formatMessage(messages)} {formatNumber((Number(messages[0].amount?.amount || messages[0].amount[0].amount) / RATE_VALUE).toFixed(2))} LUME</Text>
+              <Text>{formatMessage(messages)}</Text>
               <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
             </div>
           </div>
@@ -169,24 +433,6 @@ export const HomeScreen = ({
     //     <SizableText className='!text-sm text-lumera-label leading-none'>3 hours ago</SizableText>
     //   </div>
     // </div>
-    // <div className='flex justify-between gap-3 mb-3'>
-    //   <div className="rounded-full grid place-items-center recent-activity-icon stacked-icon">
-    //     <Warehouse size="$1" />
-    //   </div>
-    //   <div className='w-full flex flex-col'>
-    //     <Text>Staked 2,000 LUME</Text>
-    //     <SizableText className='!text-sm text-lumera-label leading-none'>2 days ago</SizableText>
-    //   </div>
-    // </div>
-    // <div className='flex justify-between gap-3 mb-3'>
-    // <div className="rounded-full grid place-items-center recent-activity-icon claimed-icon">
-    //     <BarChart2 size="$1" />
-    //   </div>
-    //   <div className='w-full flex flex-col'>
-    //     <Text>Claimed 125.43 LUME in rewards</Text>
-    //     <SizableText className='!text-sm text-lumera-label leading-none'>2 days ago</SizableText>
-    //   </div>
-    // </div>
     // <div className='flex justify-between gap-3'>
     // <div className="rounded-full grid place-items-center recent-activity-icon uploaded-icon">
     //     <Database size="$1" />
@@ -196,6 +442,11 @@ export const HomeScreen = ({
     //     <SizableText className='!text-sm text-lumera-label leading-none'>5 days ago</SizableText>
     //   </div>
     // </div>
+  }
+
+  const handleVotePress = (item: IProposal) => {
+    setVoteOpen(true);
+    setSelectedItem(item);
   }
 
   return (
@@ -306,10 +557,12 @@ export const HomeScreen = ({
                         {proposals?.map((item) => (
                           <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
                             <div className='flex flex-col'>
-                              <Text>{item.title}</Text>
+                              <a href={`/governance/${item.id}`}>
+                                <Text>{item.title}</Text>
+                              </a>
                               <SizableText className='text-sm text-lumera-label'>{item.proposer}</SizableText>
                             </div>
-                            <div className='btn-primary'><Button>Vote Now</Button></div>
+                            <div className='btn-primary'><Button onPress={() => handleVotePress(item)}>Vote Now</Button></div>
                           </div>
                         ))}
                         </>
@@ -336,6 +589,18 @@ export const HomeScreen = ({
               </div>
             </div>
           </div>
+          <VoteModal 
+            isOpen={isVoteOpen} 
+            setOpen={setVoteOpen} 
+            sernder={address} 
+            onOptionChange={onOptionChange} 
+            onVoteClick={onVoteClick} 
+            item={selectedItem} 
+            isVoteLoading={isVoteLoading} 
+            error={error} 
+            voteAdvanced={voteAdvanced}
+            handleVoteAdvancedChange={handleVoteAdvancedChange}
+          />
         </>
       }
     </YStack>

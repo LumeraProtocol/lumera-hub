@@ -141,6 +141,9 @@ importers:
       chain-registry:
         specifier: ^2.0.42
         version: 2.0.42
+      dayjs:
+        specifier: ^1.11.18
+        version: 1.11.18
       next:
         specifier: 15.4.6
         version: 15.4.6(@babel/core@7.28.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)

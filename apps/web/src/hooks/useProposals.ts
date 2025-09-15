@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useChain } from '@interchain-kit/react'
+import dayjs from 'dayjs';
 
-import { REST_AI_URL } from '@/contants/network';
+import { CHAIN_NAME, REST_AI_URL } from '@/contants/network';
 import { Coin } from '@/hooks/useAccountInfo'
 
 type TMessage = {
@@ -15,6 +17,31 @@ type TMessage = {
         upgraded_client_state: string | null;
     };
 }
+
+export const VOTE_OPTIONS = [
+  {
+    value: '1',
+    label: 'Yes'
+  },
+  {
+    value: '3',
+    label: 'No'
+  },
+  {
+    value: '4',
+    label: 'No With Veto'
+  },
+  {
+    value: '2',
+    label: 'Abstain'
+  },
+]
+
+export const broadcastModeOptions = [
+  { name: 'Sync', value: 'BROADCAST_MODE_SYNC' },
+  { name: 'Async', value: 'BROADCAST_MODE_ASYNC' },
+  { name: 'BROADCAST_MODE_BLOCK', value: 'Block' },
+];
 
 export interface IProposal {
     id: string;
@@ -40,9 +67,19 @@ export interface IProposal {
 }
 
 const useProposals = () => {
+    const { address } = useChain(CHAIN_NAME)
     const [proposalsInfo, setProposalsInfo] = useState<IProposal[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
+    const [voteOption, setVoteOption] = useState('');
+    const [isVoteLoading, setVoteLoading] = useState(false);
+    const [errorVote, setErrorVote] = useState<string | null>(null);
+    const [voteAdvanced, setAdvanced] = useState({
+        fees: '2000',
+        gas: '200000',
+        memo: 'ping.pub',
+        broadcastMode: VOTE_OPTIONS[0].value,
+    });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -51,7 +88,7 @@ const useProposals = () => {
 
             try {
                 const { data } = await axios.get(`${REST_AI_URL}/cosmos/gov/v1/proposals?proposal_status=PROPOSAL_STATUS_UNSPECIFIED`);
-                setProposalsInfo(data.proposals)
+                setProposalsInfo(data.proposals.sort((a: IProposal, b: IProposal) => dayjs(b.submit_time).valueOf() - dayjs(a.submit_time).valueOf()))
             } catch (e) {
                 console.error('API Error:', e);
                 if (e instanceof Error) {
@@ -62,14 +99,53 @@ const useProposals = () => {
             } finally {
                 setLoading(false);
             }
-            };
+        };
         fetchData();
-    }, [])
+    }, []);
+
+    const handleOptionChange = (val: string) => {
+        setVoteOption(val);
+    }
+
+    const handleVote = async (item: IProposal | null) => {
+        if (!item) {
+            return null;
+        }
+        setVoteLoading(true);
+        setError(null);
+        try {
+            await axios.post(`${REST_AI_URL}/cosmos.gov.v1beta1.Msg/Vote`, {
+                option: voteOption,
+                proposal_id: item.id,
+                voter: address,
+                metadata: '',
+            });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
+            setErrorVote(e?.response?.data?.message || 'An unknown error occurred.')
+            console.error('API Error:', e);
+        } finally {
+            setVoteLoading(false);
+        }
+    }
+
+    const handleVoteAdvancedChange = (name: string, value: string) => {
+        setAdvanced({
+            ...voteAdvanced,
+            [name]: value,
+        })
+    }
 
     return {
         proposalsInfo,
         loading,
         error,
+        errorVote,
+        isVoteLoading,
+        voteAdvanced,
+        handleVoteAdvancedChange,
+        handleOptionChange,
+        handleVote,
     }
 }
 

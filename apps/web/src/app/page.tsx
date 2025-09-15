@@ -30,6 +30,12 @@ export default function Page() {
           isProposalLoading={proposals.loading}
           recentActivities={recentActivityData.recentActivity}
           isRecentActivityLoading={recentActivityData.loading}
+          onOptionChange={proposals.handleOptionChange}
+          onVoteClick={proposals.handleVote}
+          isVoteLoading={proposals.isVoteLoading}
+          error={proposals.errorVote}
+          voteAdvanced={proposals.voteAdvanced}
+          handleVoteAdvancedChange={proposals.handleVoteAdvancedChange}
         />
       </div>
     </>
