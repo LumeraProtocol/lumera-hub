@@ -1,12 +1,18 @@
-// apps/web/src/app/staking/page.tsx
+// apps/web/src/app/governance/page.tsx
 'use client'
+import { Helmet } from "react-helmet-async";
+
 import { GovernanceScreen } from '@lumera-hub/ui/src/screens/GovernanceScreen'
-// import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 
 export default function Page() {
   return (
-    <div className="governance-content">
-      <GovernanceScreen />
-    </div>
+    <>
+      <Helmet>
+        <title>Governance</title>
+      </Helmet>
+      <div className="governance-content">
+        <GovernanceScreen />
+      </div>
+    </>
   )
 }

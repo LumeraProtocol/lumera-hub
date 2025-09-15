@@ -18,10 +18,10 @@ export const StakingScreen = ({ address }: { address: string}) => {
         <div className='w-full'>
           <div className='w-full'>
             <ul className='flex gap-0 list-none tabs'>
-              <li className='tab-iem active'>
+              <li className='tab-item active'>
                 <button className='tab-button cursor-pointer'>All Validators</button>
               </li>
-              <li className='tab-iem'>
+              <li className='tab-item'>
                 <button className='tab-button cursor-pointer'>My Staking</button>
               </li>
             </ul>
@@ -104,10 +104,10 @@ export const StakingScreen = ({ address }: { address: string}) => {
               </div>
               <div className='mt-5'>
                 <ul className='flex gap-0 list-none tabs'>
-                  <li className='tab-iem active'>
+                  <li className='tab-item active'>
                     <button className='tab-button cursor-pointer px-3'>Active (4)</button>
                   </li>
-                  <li className='tab-iem'>
+                  <li className='tab-item'>
                     <button className='tab-button cursor-pointer px-3'>Inactive (1)</button>
                   </li>
                 </ul>

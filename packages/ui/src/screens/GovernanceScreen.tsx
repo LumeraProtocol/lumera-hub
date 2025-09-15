@@ -149,7 +149,7 @@ export const GovernanceScreen = () => {
                 </div>
               </div>
               <div className='mt-5'>
-                Thi proposal seeks to allocate 100,00 LUME to a community-led marketing campaign to increase brand awareness and attract new ...
+                This proposal seeks to allocate 100,000 LUME to a community-led marketing campaign to increase brand awareness and attract new ...
               </div>
               <div className='mt-5'>
                 <div className='status-bar-wrapper'>

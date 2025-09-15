@@ -1,6 +1,7 @@
-// apps/web/src/app/staking/page.tsx
+// apps/web/src/app/cascade/page.tsx
 'use client'
 
+import { Helmet } from "react-helmet-async";
 import dynamic from 'next/dynamic'
 
 import { CascadeScreen } from '@lumera-hub/ui/src/screens/CascadeScreen'
@@ -14,8 +15,13 @@ const JVectorMapWithNoSSR = dynamic(
 
 export default function Page() {
   return (
-    <div className="cascade-content">
-      <CascadeScreen JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
-    </div>
+    <>
+      <Helmet>
+        <title>Cascade</title>
+      </Helmet>
+      <div className="cascade-content">
+        <CascadeScreen JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
+      </div>
+    </>
   )
 }

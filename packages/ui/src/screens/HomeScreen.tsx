@@ -1,14 +1,19 @@
 import React from 'react';
+import dayjs from 'dayjs';
 import ReactECharts from 'echarts-for-react'
-import { YStack, H2, Paragraph, Card, H3, H4, Button, Text, SizableText, Spinner } from 'tamagui'
-import { LaptopMinimalCheck, Database, BarChart2, Warehouse } from '@tamagui/lucide-icons'
+import { YStack, H2, Paragraph, Card, H3, H4, Button, Text, SizableText } from 'tamagui'
+import { LaptopMinimalCheck, Database, BarChart2, Warehouse, Send } from '@tamagui/lucide-icons'
 import { Wallet } from '@tamagui/lucide-icons'
+import relativeTime from 'dayjs/plugin/relativeTime'
 
 import Skeleton from '@/components/Skeleton';
 import { AccountInfoData } from '@/hooks/useAccountInfo'
+import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity'
 import { IProposal } from '@/hooks/useProposals'
 import { formatNumber } from '@/utils/format'
 import { NAV_ITEMS } from '@/components/layout/AppShell';
+
+dayjs.extend(relativeTime);
 
 const COLORS = ['#4d4adc', '#62bbf3'];
 
@@ -19,6 +24,8 @@ interface IHomeScreen {
   accountInfo: AccountInfoData | null;
   proposals: IProposal[];
   isProposalLoading: boolean;
+  recentActivities: IRecentActivity[];
+  isRecentActivityLoading: boolean;
 }
 
 interface IPortfolioOverviewChart {
@@ -73,8 +80,124 @@ const getPortfolioData = (accountInfo: AccountInfoData | null) => {
 
 const governanceNav = NAV_ITEMS.find((item) => item.id === 'governance');
 
-export const HomeScreen = ({ address, connect, loading, accountInfo, proposals, isProposalLoading }: IHomeScreen) => {
-  const { stacked, liquid, rewards } = getPortfolioData(accountInfo)
+const formatMessage = (msgs: TMessage[]) => {
+  if (msgs) {
+    const sum: Record<string, number> = msgs
+      .map((msg) => {
+        const msgType = msg['@type'] || 'unknown';
+        return msgType
+          .substring(msgType.lastIndexOf('.') + 1)
+          .replace('Msg', '');
+      })
+      .reduce((s, c) => {
+        const sh: Record<string, number> = s;
+        if (sh[c]) {
+          sh[c] += 1;
+        } else {
+          sh[c] = 1;
+        }
+        return sh;
+      }, {});
+    const output: string[] = [];
+    Object.keys(sum).forEach((k) => {
+      output.push(sum[k] > 1 ? `${k}×${sum[k]}` : k);
+    });
+    return output.join(', ');
+  }
+}
+
+export const HomeScreen = ({ 
+  address, 
+  connect, 
+  loading, 
+  accountInfo, 
+  proposals, 
+  isProposalLoading, 
+  recentActivities, 
+  isRecentActivityLoading,
+}: IHomeScreen) => {
+  const { stacked, liquid, rewards } = getPortfolioData(accountInfo);
+
+  const getActivity = (item: IRecentActivity) => {
+    const latestEvent = item.events[item.events.length - 1];
+    const messages = item.tx.body.messages;
+
+    switch (formatMessage(messages)?.toLowerCase()) {
+      case 'delegate':
+        return (
+          <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
+            <div className="rounded-full grid place-items-center recent-activity-icon stacked-icon">
+              <Warehouse size="$1" />
+            </div>
+            <div className='w-full flex flex-col'>
+              <Text>Staked {formatNumber((Number(messages[0].amount.amount) / RATE_VALUE).toFixed(2))} LUME</Text>
+              <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
+            </div>
+          </div>
+        )
+      case 'send':
+        return (
+          <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
+            <div className="rounded-full grid place-items-center recent-activity-icon stacked-icon">
+              <Send size="$1" />
+            </div>
+            <div className='w-full flex flex-col'>
+              <Text>Send {formatNumber((Number(messages[0].amount[0].amount) / RATE_VALUE).toFixed(2))} LUME</Text>
+              <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
+            </div>
+          </div>
+        )
+      default:
+        return (
+          <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
+            <div className="rounded-full  grid place-items-center recent-activity-icon voted-icon">
+              <LaptopMinimalCheck size="$1" />
+            </div>
+            <div className='w-full flex flex-col'>
+              <Text>{formatMessage(messages)} {formatNumber((Number(messages[0].amount?.amount || messages[0].amount[0].amount) / RATE_VALUE).toFixed(2))} LUME</Text>
+              <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
+            </div>
+          </div>
+        )
+    }
+    // <div className='flex justify-between gap-3 mb-3'>
+    //   <div className="rounded-full  grid place-items-center recent-activity-icon voted-icon">
+    //     <LaptopMinimalCheck size="$1" />
+    //   </div>
+    //   <div className='w-full flex flex-col'>
+    //     <Text>Voted 'For' on Proposal LIP-007</Text>
+    //     <SizableText className='!text-sm text-lumera-label leading-none'>3 hours ago</SizableText>
+    //   </div>
+    // </div>
+    // <div className='flex justify-between gap-3 mb-3'>
+    //   <div className="rounded-full grid place-items-center recent-activity-icon stacked-icon">
+    //     <Warehouse size="$1" />
+    //   </div>
+    //   <div className='w-full flex flex-col'>
+    //     <Text>Staked 2,000 LUME</Text>
+    //     <SizableText className='!text-sm text-lumera-label leading-none'>2 days ago</SizableText>
+    //   </div>
+    // </div>
+    // <div className='flex justify-between gap-3 mb-3'>
+    // <div className="rounded-full grid place-items-center recent-activity-icon claimed-icon">
+    //     <BarChart2 size="$1" />
+    //   </div>
+    //   <div className='w-full flex flex-col'>
+    //     <Text>Claimed 125.43 LUME in rewards</Text>
+    //     <SizableText className='!text-sm text-lumera-label leading-none'>2 days ago</SizableText>
+    //   </div>
+    // </div>
+    // <div className='flex justify-between gap-3'>
+    // <div className="rounded-full grid place-items-center recent-activity-icon uploaded-icon">
+    //     <Database size="$1" />
+    //   </div>
+    //   <div className='w-full flex flex-col'>
+    //     <Text>Uploaded document to Cascade</Text>
+    //     <SizableText className='!text-sm text-lumera-label leading-none'>5 days ago</SizableText>
+    //   </div>
+    // </div>
+  }
+
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       {!address ?
@@ -111,7 +234,7 @@ export const HomeScreen = ({ address, connect, loading, accountInfo, proposals, 
                       <div>
                         <div className='flex gap-1 items-center'>
                           <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[0] }}></span>
-                          <SizableText className='text-lumera-label font-bold'>Stacked</SizableText>
+                          <SizableText className='text-lumera-label font-bold'>Staked</SizableText>
                         </div>
                         <div className='text-2xl font-bold'>
                           {loading ?
@@ -201,42 +324,12 @@ export const HomeScreen = ({ address, connect, loading, accountInfo, proposals, 
                   <Card.Header padded>
                     <H3>Recent Activity</H3>
                     <div className='mt-5'>
-                      <div className='flex justify-between gap-3 mb-3'>
-                        <div className="rounded-full  grid place-items-center recent-activity-icon voted-icon">
-                          <LaptopMinimalCheck size="$1" />
-                        </div>
-                        <div className='w-full flex flex-col'>
-                          <Text>Voted 'For' on Proposal LIP-007</Text>
-                          <SizableText className='!text-sm text-lumera-label leading-none'>3 hours ago</SizableText>
-                        </div>
-                      </div>
-                      <div className='flex justify-between gap-3 mb-3'>
-                      <div className="rounded-full grid place-items-center recent-activity-icon stacked-icon">
-                          <Warehouse size="$1" />
-                        </div>
-                        <div className='w-full flex flex-col'>
-                          <Text>Stacked 2,000 LUME</Text>
-                          <SizableText className='!text-sm text-lumera-label leading-none'>2 days ago</SizableText>
-                        </div>
-                      </div>
-                      <div className='flex justify-between gap-3 mb-3'>
-                      <div className="rounded-full grid place-items-center recent-activity-icon claimed-icon">
-                          <BarChart2 size="$1" />
-                        </div>
-                        <div className='w-full flex flex-col'>
-                          <Text>Claimed 125.43 LUME in rewards</Text>
-                          <SizableText className='!text-sm text-lumera-label leading-none'>2 days ago</SizableText>
-                        </div>
-                      </div>
-                      <div className='flex justify-between gap-3'>
-                      <div className="rounded-full grid place-items-center recent-activity-icon uploaded-icon">
-                          <Database size="$1" />
-                        </div>
-                        <div className='w-full flex flex-col'>
-                          <Text>Uploaded document to Cascade</Text>
-                          <SizableText className='!text-sm text-lumera-label leading-none'>5 days ago</SizableText>
-                        </div>
-                      </div>
+                      {isRecentActivityLoading ?
+                        <Skeleton /> : 
+                        <>
+                          {recentActivities?.map((item) => getActivity(item))}
+                        </>
+                      }
                     </div>
                   </Card.Header>
                 </Card>

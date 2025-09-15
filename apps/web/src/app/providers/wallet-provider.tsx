@@ -7,9 +7,10 @@ import { keplrWallet } from '@interchain-kit/keplr-extension'
 import { leapWallet } from '@interchain-kit/leap-extension'
 import { cosmostationWallet } from '@interchain-kit/cosmostation-extension'
 import { ThemeProvider, OverlaysManager } from '@interchain-ui/react'
+import { HelmetProvider } from 'react-helmet-async';
 import '@interchain-ui/react/styles'
 
-import { CHAIN_NAME } from '@/contants/chain';
+import { CHAIN_NAME } from '@/contants/network';
 
 // import { assetLists, chains } from 'chain-registry/mainnet'
 import { assetLists, chains } from 'chain-registry/testnet'
@@ -44,17 +45,19 @@ export function WebWalletProviders({ children }: { children: React.ReactNode }) 
   ]
 
   return (
-    <ThemeProvider>
-      <ChainProvider
-        wallets={wallets}
-        chains={[lumeraChain]}
-        assetLists={[lumeraAssets]}
-        signerOptions={{}}
-        endpointOptions={{}}
-      >
-        {children}
-        <OverlaysManager />
-      </ChainProvider>
-    </ThemeProvider>
+    <HelmetProvider>
+      <ThemeProvider>
+        <ChainProvider
+          wallets={wallets}
+          chains={[lumeraChain]}
+          assetLists={[lumeraAssets]}
+          signerOptions={{}}
+          endpointOptions={{}}
+        >
+          {children}
+          <OverlaysManager />
+        </ChainProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   )
 }

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useChain, useChainWallet } from '@interchain-kit/react'
+import { useChain } from '@interchain-kit/react'
+import axios from 'axios';
 
-import { CHAIN_NAME } from '@/contants/chain';
+import { CHAIN_NAME, REST_AI_URL } from '@/contants/network';
 
 export interface Coin {
   denom: string;
@@ -36,7 +37,6 @@ interface AccountInfoHookResult {
 
 const useAccountInfo = (): AccountInfoHookResult => {
   const { address } = useChain(CHAIN_NAME)
-  const { chain } = useChainWallet(CHAIN_NAME, address)
 
   const [accountInfo, setAccountInfo] = useState<AccountInfoData | null>({
     balances: [],
@@ -48,7 +48,7 @@ const useAccountInfo = (): AccountInfoHookResult => {
 
 
   useEffect(() => {
-    if (!address || !chain?.apis?.rest?.[0]?.address) {
+    if (!address) {
       setAccountInfo({ balances: [], delegations: [], rewards: [] });
       setLoading(false);
       setError(null);
@@ -59,22 +59,16 @@ const useAccountInfo = (): AccountInfoHookResult => {
       setLoading(true);
       setError(null);
 
-      const restUrl = chain?.apis?.rest?.[0]?.address;
-
       try {
         const [balanceRes, delegationsRes, rewardsRes] = await Promise.all([
-          fetch(`${restUrl}/cosmos/bank/v1beta1/balances/${address}`),
-          fetch(`${restUrl}/cosmos/staking/v1beta1/delegations/${address}`),
-          fetch(`${restUrl}/cosmos/distribution/v1beta1/delegators/${address}/rewards`),
+          axios.get(`${REST_AI_URL}/cosmos/bank/v1beta1/balances/${address}`),
+          axios.get(`${REST_AI_URL}/cosmos/staking/v1beta1/delegations/${address}`),
+          axios.get(`${REST_AI_URL}/cosmos/distribution/v1beta1/delegators/${address}/rewards`),
         ]);
 
-        if (!balanceRes.ok || !delegationsRes.ok || !rewardsRes.ok) {
-          throw new Error('Failed to fetch account data. Check network status or address.');
-        }
-
-        const balanceData = await balanceRes.json();
-        const delegationsData = await delegationsRes.json();
-        const rewardsData = await rewardsRes.json();
+        const balanceData = balanceRes.data;
+        const delegationsData = delegationsRes.data;
+        const rewardsData = rewardsRes.data;
         setAccountInfo({
           balances: balanceData.balances,
           delegations: delegationsData.delegation_responses,
@@ -93,7 +87,7 @@ const useAccountInfo = (): AccountInfoHookResult => {
     };
 
     fetchData();
-  }, [address, chain]);
+  }, [address]);
 
   return { accountInfo, loading, error };
 };

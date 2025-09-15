@@ -219,12 +219,12 @@
   transition: all 0.3s ease-in-out;
   transform: translateY(100%);
 }
-.tab-iem.active .tab-button,
-.tab-iem .tab-button:hover {
+.tab-item.active .tab-button,
+.tab-item .tab-button:hover {
   color: #6368e9;
 }
-.tab-iem.active .tab-button::after,
-.tab-iem .tab-button:hover::after {
+.tab-item.active .tab-button::after,
+.tab-item .tab-button:hover::after {
   transform: translateY(0);
 }
 .gap-6 {

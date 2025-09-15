@@ -18,6 +18,7 @@
     "@tamagui/config": "^1.132.16",
     "@tamagui/core": "^1.132.16",
     "@tamagui/lucide-icons": "^1.132.20",
+    "dayjs": "^1.11.18",
     "echarts": "^6.0.0",
     "echarts-for-react": "^3.0.2",
     "react": "^19.1.0",

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useChain, useChainWallet } from '@interchain-kit/react'
+import axios from 'axios';
 
-import { CHAIN_NAME } from '@/contants/chain';
+import { REST_AI_URL } from '@/contants/network';
 import { Coin } from '@/hooks/useAccountInfo'
 
 type TMessage = {
@@ -40,36 +40,18 @@ export interface IProposal {
 }
 
 const useProposals = () => {
-    const { address } = useChain(CHAIN_NAME)
-    const { chain } = useChainWallet(CHAIN_NAME, address)
-
     const [proposalsInfo, setProposalsInfo] = useState<IProposal[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
-     useEffect(() => {
-        if (!chain?.apis?.rest?.[0]?.address) {
-            setProposalsInfo([]);
-            setLoading(false);
-            setError(null);
-            return;
-        }
+    useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             setError(null);
 
-            const restUrl = chain?.apis?.rest?.[0]?.address;
-
             try {
-                const proposalRes = await fetch(`${restUrl}/cosmos/gov/v1/proposals?proposal_status=PROPOSAL_STATUS_UNSPECIFIED`)
-
-                if (!proposalRes.ok) {
-                throw new Error('Failed to fetch account data. Check network status or address.');
-                }
-
-                const proposalData = await proposalRes.json();
-                setProposalsInfo(proposalData.proposals)
-                console.log('proposalData', proposalData)
+                const { data } = await axios.get(`${REST_AI_URL}/cosmos/gov/v1/proposals?proposal_status=PROPOSAL_STATUS_UNSPECIFIED`);
+                setProposalsInfo(data.proposals)
             } catch (e) {
                 console.error('API Error:', e);
                 if (e instanceof Error) {
@@ -82,7 +64,7 @@ const useProposals = () => {
             }
             };
         fetchData();
-    }, [chain])
+    }, [])
 
     return {
         proposalsInfo,

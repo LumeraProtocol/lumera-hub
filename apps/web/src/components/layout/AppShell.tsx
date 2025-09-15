@@ -132,7 +132,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         : "text-lumera-gray hover:text-white hover:bg-gray-700/50"
                     }`}
                   >
-                    <span className="inline-block w-2 h-2 rounded-full bg-gray-600" />
+                    <span className="inline-block w-6 h-6">{item.icon}</span>
                     <span>{item.label}</span>
                   </a>
                 ))}
