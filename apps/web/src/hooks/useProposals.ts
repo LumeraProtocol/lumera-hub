@@ -71,14 +71,14 @@ const useProposals = () => {
     const [proposalsInfo, setProposalsInfo] = useState<IProposal[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    const [voteOption, setVoteOption] = useState('');
+    const [voteOption, setVoteOption] = useState(VOTE_OPTIONS[0].value);
     const [isVoteLoading, setVoteLoading] = useState(false);
     const [errorVote, setErrorVote] = useState<string | null>(null);
     const [voteAdvanced, setAdvanced] = useState({
         fees: '2000',
         gas: '200000',
         memo: 'ping.pub',
-        broadcastMode: VOTE_OPTIONS[0].value,
+        broadcastMode: broadcastModeOptions[0].value,
     });
 
     useEffect(() => {
@@ -114,12 +114,17 @@ const useProposals = () => {
         setVoteLoading(true);
         setError(null);
         try {
-            await axios.post(`${REST_AI_URL}/cosmos.gov.v1beta1.Msg/Vote`, {
+            const option = {
                 option: voteOption,
                 proposal_id: item.id,
                 voter: address,
-                metadata: '',
-            });
+                metadata: JSON.stringify({
+                    fee: voteAdvanced.fees,
+                    gas: voteAdvanced.gas,
+                    memo: voteAdvanced.memo,
+                }),
+            }
+            await axios.post(`${REST_AI_URL}/cosmos.gov.v1beta1.Msg/Vote`, option);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
             setErrorVote(e?.response?.data?.message || 'An unknown error occurred.')
