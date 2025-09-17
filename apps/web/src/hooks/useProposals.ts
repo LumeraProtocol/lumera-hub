@@ -88,7 +88,7 @@ const useProposals = () => {
 
             try {
                 const { data } = await axios.get(`${REST_AI_URL}/cosmos/gov/v1/proposals?proposal_status=PROPOSAL_STATUS_UNSPECIFIED`);
-                setProposalsInfo(data.proposals.sort((a: IProposal, b: IProposal) => dayjs(b.submit_time).valueOf() - dayjs(a.submit_time).valueOf()))
+                setProposalsInfo(data.proposals.sort((a: IProposal, b: IProposal) => dayjs(b.submit_time).valueOf() - dayjs(a.submit_time).valueOf()));
             } catch (e) {
                 console.error('API Error:', e);
                 if (e instanceof Error) {
@@ -112,7 +112,7 @@ const useProposals = () => {
             return null;
         }
         setVoteLoading(true);
-        setError(null);
+        setErrorVote(null);
         try {
             const option = {
                 option: voteOption,
@@ -122,6 +122,7 @@ const useProposals = () => {
                     fee: voteAdvanced.fees,
                     gas: voteAdvanced.gas,
                     memo: voteAdvanced.memo,
+                    mode: voteAdvanced.broadcastMode,
                 }),
             }
             await axios.post(`${REST_AI_URL}/cosmos.gov.v1beta1.Msg/Vote`, option);
@@ -141,6 +142,11 @@ const useProposals = () => {
         })
     }
 
+    const handleResetError = () => {
+        setErrorVote(null);
+        setErrorVote(null);
+    }
+
     return {
         proposalsInfo,
         loading,
@@ -148,6 +154,7 @@ const useProposals = () => {
         errorVote,
         isVoteLoading,
         voteAdvanced,
+        handleResetError,
         handleVoteAdvancedChange,
         handleOptionChange,
         handleVote,

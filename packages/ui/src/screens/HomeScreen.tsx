@@ -54,6 +54,9 @@ interface IHomeScreen {
     broadcastMode: string; 
   };
   handleVoteAdvancedChange: (name: string, value: string) => void;
+  onClaimButtonClick: () => void;
+  handleResetError: () => void;
+  isClaimLoading: boolean;
 }
 
 interface IPortfolioOverviewChart {
@@ -364,6 +367,9 @@ export const HomeScreen = ({
   error,
   voteAdvanced,
   handleVoteAdvancedChange,
+  onClaimButtonClick,
+  handleResetError,
+  isClaimLoading,
 }: IHomeScreen) => {
   const { stacked, liquid, rewards } = getPortfolioData(accountInfo);
   const [isVoteOpen, setVoteOpen] = React.useState(false);
@@ -445,6 +451,7 @@ export const HomeScreen = ({
   }
 
   const handleVotePress = (item: IProposal) => {
+    handleResetError();
     setVoteOpen(true);
     setSelectedItem(item);
   }
@@ -535,7 +542,7 @@ export const HomeScreen = ({
                         {loading ? <Skeleton /> : formatNumber(rewards)}
                       </H4>
                       <div className='mt-4 btn-full btn-secondary'>
-                        <Button>Claim All Rewards</Button>
+                        <Button onPress={onClaimButtonClick} disabled={isClaimLoading || loading}>Claim All Rewards</Button>
                       </div>
                     </div>
                   </Card.Header>
@@ -562,7 +569,11 @@ export const HomeScreen = ({
                               </a>
                               <SizableText className='text-sm text-lumera-label'>{item.proposer}</SizableText>
                             </div>
-                            <div className='btn-primary'><Button onPress={() => handleVotePress(item)}>Vote Now</Button></div>
+                            {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
+                              <div className='btn-primary'>
+                                <Button onPress={() => handleVotePress(item)}>Vote Now</Button>
+                              </div> : null
+                            }
                           </div>
                         ))}
                         </>

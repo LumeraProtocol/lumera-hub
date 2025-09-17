@@ -139,6 +139,10 @@
 .btn-primary .is_Button:hover .is_Button {
   background-color: #47C78A !important;
 }
+.btn-primary .is_Button:disabled,
+.btn-secondary .is_Button:disabled {
+  opacity: 0.8;
+}
 .sub-card {
   background-color: #151c29;
 }

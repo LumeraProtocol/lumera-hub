@@ -11,7 +11,7 @@ import { HomeScreen } from '@lumera-hub/ui/src/screens/HomeScreen'
 
 export default function Page() {
   const { address, connect } = useChain(CHAIN_NAME);
-  const { accountInfo, loading } = useAccountInfo();
+  const { accountInfo, loading, handleClaimButtonClick, isClaimLoading } = useAccountInfo();
   const proposals = useProposals();
   const recentActivityData = useRecentActivity();
 
@@ -36,6 +36,9 @@ export default function Page() {
           error={proposals.errorVote}
           voteAdvanced={proposals.voteAdvanced}
           handleVoteAdvancedChange={proposals.handleVoteAdvancedChange}
+          onClaimButtonClick={handleClaimButtonClick}
+          handleResetError={proposals.handleResetError}
+          isClaimLoading={isClaimLoading}
         />
       </div>
     </>
