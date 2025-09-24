@@ -22193,7 +22193,7 @@ __name(wrapChildrenInText, "wrapChildrenInText");
 // ../../node_modules/.pnpm/@tamagui+adapt@1.132.17_react-dom@19.1.0_react@19.1.0__react-native@0.79.5_@babel+core@7.28.0_l3lpzlqd7gjells3fjeiwokuti/node_modules/@tamagui/adapt/dist/esm/Adapt.mjs
 var import_core4 = require("@tamagui/core");
 
-// ../../node_modules/.pnpm/@tamagui+polyfill-dev@1.132.17/node_modules/@tamagui/polyfill-dev/index.js
+// ../../node_modules/.pnpm/@tamagui+polyfill-dev@1.132.20/node_modules/@tamagui/polyfill-dev/index.js
 if (typeof globalThis["__DEV__"] === "undefined") {
   globalThis["__DEV__"] = process.env.NODE_ENV === "development";
 }

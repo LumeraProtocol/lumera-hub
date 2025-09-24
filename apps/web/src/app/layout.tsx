@@ -1,4 +1,5 @@
 import './globals.css'
+import './styles.css'
 import React from 'react'
 import ClientRoot from './providers/client-root'
 import AppShell from '@/components/layout/AppShell'
