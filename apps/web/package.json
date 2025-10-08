@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@cosmjs/proto-signing": "^0.36.1",
+    "@cosmjs/stargate": "^0.36.1",
     "@interchain-kit/core": "^0.3.43",
     "@interchain-kit/cosmostation-extension": "^0.3.43",
     "@interchain-kit/keplr-extension": "^0.3.44",
@@ -23,6 +25,7 @@
     "@tamagui/lucide-icons": "^1.132.20",
     "axios": "^1.12.0",
     "chain-registry": "^2.0.42",
+    "cosmjs-types": "^0.10.1",
     "dayjs": "^1.11.18",
     "next": "15.4.6",
     "react": "19.1.0",

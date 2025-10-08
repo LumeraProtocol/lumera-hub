@@ -2,3 +2,4 @@
 export const CHAIN_NAME = 'lumeratestnet'
 // export const REST_AI_URL = 'https://lcd.lumera.io';
 export const REST_AI_URL = 'https://lcd.testnet.lumera.io';
+export const DENOM = 'ulumera';

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useChain } from '@interchain-kit/react'
+import { useChain } from '@interchain-kit/react';
+import { MsgWithdrawDelegatorReward, MsgWithdrawValidatorCommission } from 'cosmjs-types/cosmos/distribution/v1beta1/tx';
 
-import { CHAIN_NAME, REST_AI_URL } from '@/contants/network';
+import { CHAIN_NAME, DENOM } from '@/contants/network';
 import * as instance from '@/utils/api';
-
 
 export interface Coin {
   denom: string;
@@ -31,7 +31,7 @@ export interface AccountInfoData {
 }
 
 const useAccountInfo = () => {
-  const { address } = useChain(CHAIN_NAME)
+  const { address, getSigningClient } = useChain(CHAIN_NAME)
 
   const [accountInfo, setAccountInfo] = useState<AccountInfoData | null>({
     balances: [],
@@ -95,25 +95,53 @@ const useAccountInfo = () => {
       const { data } = await instance.get(`/cosmos/staking/v1beta1/delegations/${address}`);
       if (data?.delegation_responses?.length) {
         for (const item of data?.delegation_responses) {
-          await Promise.all([
-            instance.post(`/cosmos.distribution.v1beta1.Msg/WithdrawDelegatorReward`, {
-              delegator_address: item.delegation.delegator_address,
-              validator_address: item.delegation.validator_address,
-            }),
-            instance.post(`/cosmos.distribution.v1beta1.Msg/WithdrawValidatorCommission`, {
-              alidator_address: item.delegation.validator_address,
-            }),
-          ]);
+          const signingClient = await getSigningClient();
+
+          if (!signingClient) {
+            throw new Error('SigningClient không khả dụng sau khi init');
+          }
+
+          // create MsgWithdrawDelegatorReward
+          const msg = [
+              {
+              typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
+              value: MsgWithdrawDelegatorReward.fromPartial({
+                delegatorAddress: address, // delegator address
+                validatorAddress: item.delegation.validator_address, // Validator address
+              }),
+            },
+            {
+              typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission',
+              value: MsgWithdrawValidatorCommission.fromPartial({
+                validatorAddress: item.delegation.validator_address,
+              }),
+            }
+          ];
+          // Fee
+          const fee = {
+            amount: [{ denom: DENOM, amount: '2500' }],
+            gas: '250000',
+          };
+
+          // Broadcast transaction
+          const response = await signingClient.signAndBroadcast(
+            address,
+            msg,
+            fee,
+            `Withdraw staking rewards from ${item.delegation.validator_address}`
+          );
+          console.log(`Claim staking rewards thành công! Tx hash: ${response.transactionHash}`)
         }
-        fetchData();
+        // fetchData();
       }
+      
     } catch (e) {
       console.error('API Error:', e);
-      if (e instanceof Error) {
-        setErrorClaim(e);
-      } else {
-        setErrorClaim(new Error('An unknown error occurred.'));
-      }
+      // if (e instanceof Error) {
+      //   setErrorClaim(e);
+      // } else {
+      //   setErrorClaim(new Error('An unknown error occurred.'));
+      // }
     } finally {
       setLoading(false);
     }
