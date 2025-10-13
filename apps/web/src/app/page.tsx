@@ -1,17 +1,16 @@
 // apps/web/src/app/page.tsx
 'use client'
-import { useChain } from '@interchain-kit/react'
 import { Helmet } from "react-helmet-async";
 
-import { CHAIN_NAME } from '@/contants/network';
 import useAccountInfo from '@/hooks/useAccountInfo';
 import useProposals from '@/hooks/useProposals';
 import useRecentActivity from '@/hooks/useRecentActivity';
 import { HomeScreen } from '@lumera-hub/ui/src/screens/HomeScreen'
+import useWalletConnect from '@/hooks/useWalletConnect';
 
 export default function Page() {
-  const { address, connect } = useChain(CHAIN_NAME);
-  const { accountInfo, loading, handleClaimButtonClick, isClaimLoading } = useAccountInfo();
+  const { address } = useWalletConnect();
+  const { accountInfo, loading, handleClaimButtonClick, isClaimLoading, claimInfo, errorClaim, handleClaimChange, handleToggleClaimModal, isClaimModalOpen } = useAccountInfo();
   const proposals = useProposals();
   const recentActivityData = useRecentActivity();
 
@@ -23,7 +22,6 @@ export default function Page() {
       <div className="home-content">
         <HomeScreen 
           address={address} 
-          connect={connect} 
           loading={loading}
           accountInfo={accountInfo}
           proposals={proposals.proposalsInfo}
@@ -39,6 +37,11 @@ export default function Page() {
           onClaimButtonClick={handleClaimButtonClick}
           handleResetError={proposals.handleResetError}
           isClaimLoading={isClaimLoading}
+          claimInfo={claimInfo}
+          errorClaim={errorClaim}
+          handleClaimChange={handleClaimChange}
+          handleToggleClaimModal={handleToggleClaimModal}
+          isClaimModalOpen={isClaimModalOpen}
         />
       </div>
     </>

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useChain } from '@interchain-kit/react'
 import dayjs from 'dayjs';
 
-import { CHAIN_NAME, REST_AI_URL } from '@/contants/network';
+import { REST_AI_URL } from '@/contants/network';
 import { Coin } from '@/hooks/useAccountInfo'
+import useWalletConnect from '@/hooks/useWalletConnect';
 
 type TMessage = {
     '@type': string;
@@ -67,7 +67,7 @@ export interface IProposal {
 }
 
 const useProposals = () => {
-    const { address } = useChain(CHAIN_NAME)
+    const { address } = useWalletConnect();
     const [proposalsInfo, setProposalsInfo] = useState<IProposal[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);

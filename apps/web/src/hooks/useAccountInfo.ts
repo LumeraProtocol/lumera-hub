@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useChain } from '@interchain-kit/react';
-import { MsgWithdrawDelegatorReward, MsgWithdrawValidatorCommission } from 'cosmjs-types/cosmos/distribution/v1beta1/tx';
+import { SigningStargateClient } from '@cosmjs/stargate';
+import { Registry } from '@cosmjs/proto-signing';
+import { MsgWithdrawDelegatorReward } from 'cosmjs-types/cosmos/distribution/v1beta1/tx';
 
-import { CHAIN_NAME, DENOM } from '@/contants/network';
 import * as instance from '@/utils/api';
+import useWalletConnect from '@/hooks/useWalletConnect';
+import { RPC_ENDPOINT, DENOM } from '@/contants/network';
 
 export interface Coin {
   denom: string;
@@ -30,8 +32,13 @@ export interface AccountInfoData {
   rewards: ValidatorRewards[];
 }
 
+const registry = new Registry();
+registry.register(
+  '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
+  MsgWithdrawDelegatorReward
+);
 const useAccountInfo = () => {
-  const { address, getSigningClient } = useChain(CHAIN_NAME)
+  const { address, getOfflineSigner } = useWalletConnect();
 
   const [accountInfo, setAccountInfo] = useState<AccountInfoData | null>({
     balances: [],
@@ -41,7 +48,14 @@ const useAccountInfo = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [isClaimLoading, setClaimLoading] = useState(false);
-  const [errorClaim, setErrorClaim] = useState<Error | null>(null);
+  const [errorClaim, setErrorClaim] = useState<string | null>(null);
+  const [claimInfo, setClaimInfo] = useState({
+    senderAddress: address,
+    fees: '2000',
+    gas: '200000',
+    memo: 'Claim rewards',
+  });
+  const [isClaimModalOpen, setClaimModalOpen] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -87,67 +101,82 @@ const useAccountInfo = () => {
 
   const handleClaimButtonClick = async () => {
     setErrorClaim(null);
-    if (!address) {
+    if (!claimInfo.senderAddress) {
       return;
     }
     setClaimLoading(true);
     try {
-      const { data } = await instance.get(`/cosmos/staking/v1beta1/delegations/${address}`);
-      if (data?.delegation_responses?.length) {
-        for (const item of data?.delegation_responses) {
-          const signingClient = await getSigningClient();
-
-          if (!signingClient) {
-            throw new Error('SigningClient không khả dụng sau khi init');
-          }
-
-          // create MsgWithdrawDelegatorReward
-          const msg = [
-              {
-              typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
-              value: MsgWithdrawDelegatorReward.fromPartial({
-                delegatorAddress: address, // delegator address
-                validatorAddress: item.delegation.validator_address, // Validator address
-              }),
-            },
-            {
-              typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission',
-              value: MsgWithdrawValidatorCommission.fromPartial({
-                validatorAddress: item.delegation.validator_address,
-              }),
-            }
-          ];
-          // Fee
-          const fee = {
-            amount: [{ denom: DENOM, amount: '2500' }],
-            gas: '250000',
-          };
-
-          // Broadcast transaction
-          const response = await signingClient.signAndBroadcast(
-            address,
-            msg,
-            fee,
-            `Withdraw staking rewards from ${item.delegation.validator_address}`
-          );
-          console.log(`Claim staking rewards thành công! Tx hash: ${response.transactionHash}`)
-        }
-        // fetchData();
+      const offlineSigner = await getOfflineSigner();
+      if (!offlineSigner) {
+        setErrorClaim('Please connect wallet before using');
+        return;
       }
-      
+      const client = await SigningStargateClient.connectWithSigner(
+        RPC_ENDPOINT,
+        offlineSigner,
+        { 
+          registry: new Registry([
+            ["/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward", MsgWithdrawDelegatorReward],
+          ]), 
+        }
+      );
+      const msgWithdraw = [];
+      const { data } = await instance.get(`/cosmos/staking/v1beta1/delegations/${claimInfo.senderAddress}`);
+      for (const item of data?.delegation_responses) {
+        msgWithdraw.push({
+          typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+          value: {
+            delegatorAddress: item.delegation.delegator_address,
+            validatorAddress: item.delegation.validator_address,
+          },
+        })
+      }
+      const fee = {
+        amount: [{ denom: DENOM, amount: claimInfo.fees }], // Fee gas
+        gas: claimInfo.gas, // Gas limit
+      };
+      const memo = claimInfo.memo
+      const result = await client.signAndBroadcast(claimInfo.senderAddress, msgWithdraw, fee, memo);
+      if (result?.transactionHash) {
+        setClaimModalOpen(false);
+        fetchData();
+      }
     } catch (e) {
-      console.error('API Error:', e);
-      // if (e instanceof Error) {
-      //   setErrorClaim(e);
-      // } else {
-      //   setErrorClaim(new Error('An unknown error occurred.'));
-      // }
+      // console.error('API Error:', e);
+      if (e instanceof Error) {
+        setErrorClaim(e.message);
+      } else {
+        setErrorClaim('An unknown error occurred.');
+      }
     } finally {
-      setLoading(false);
+      setClaimLoading(false);
     }
   }
 
-  return { accountInfo, loading, error, handleClaimButtonClick, isClaimLoading, errorClaim };
+  const handleClaimChange = (name: string, value: string) => {
+    const currentClaimInfo = claimInfo;
+    setClaimInfo({
+      ...currentClaimInfo,
+      [name]: value,
+    })
+  }
+
+  const handleToggleClaimModal = (status: boolean) => {
+    setClaimModalOpen(status);
+  }
+
+  return { 
+    accountInfo, 
+    loading, 
+    error, 
+    isClaimLoading, 
+    errorClaim,
+    claimInfo,
+    isClaimModalOpen,
+    handleClaimButtonClick, 
+    handleClaimChange,
+    handleToggleClaimModal,
+  };
 };
 
 export default useAccountInfo;
