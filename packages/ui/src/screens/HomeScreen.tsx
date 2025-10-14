@@ -23,6 +23,7 @@ import { LaptopMinimalCheck, Database, BarChart2, Warehouse, Send } from '@tamag
 import { Wallet, CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
+import { ConnectWalletButton } from '@/components/ConnectWallet';
 import Skeleton from '@/components/Skeleton';
 import { AccountInfoData } from '@/hooks/useAccountInfo'
 import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity'
@@ -36,7 +37,6 @@ const COLORS = ['#4d4adc', '#62bbf3'];
 
 interface IHomeScreen {
   address: string; 
-  connect: () => void;
   loading: boolean;
   accountInfo: AccountInfoData | null;
   proposals: IProposal[];
@@ -54,6 +54,19 @@ interface IHomeScreen {
     broadcastMode: string; 
   };
   handleVoteAdvancedChange: (name: string, value: string) => void;
+  onClaimButtonClick: () => void;
+  handleResetError: () => void;
+  isClaimLoading: boolean;
+  claimInfo: {
+    senderAddress: string; 
+    fees: string; 
+    gas: string; 
+    memo: string; 
+  };
+  errorClaim: string | null;
+  handleClaimChange: (name: string, value: string) => void;
+  handleToggleClaimModal: (status: boolean) => void;
+  isClaimModalOpen: boolean;
 }
 
 interface IPortfolioOverviewChart {
@@ -75,6 +88,21 @@ interface IVoteModal {
     gas: string; 
     memo: string; 
     broadcastMode: string; 
+  };
+  handleVoteAdvancedChange: (name: string, value: string) => void;
+}
+
+interface IClaimableRewardsModal {
+  isOpen: boolean;
+  setOpen: (status: boolean) => void;
+  sernder: string;
+  onSendClick: () => void;
+  isVoteLoading: boolean;
+  error: string | null;
+  voteAdvanced: {
+    fees: string; 
+    gas: string; 
+    memo: string; 
   };
   handleVoteAdvancedChange: (name: string, value: string) => void;
 }
@@ -115,7 +143,12 @@ const getPortfolioData = (accountInfo: AccountInfoData | null) => {
   if (accountInfo) {
     stacked = accountInfo.delegations.reduce((total, item) => Number(item.balance.amount) + total, 0)
     liquid = accountInfo.balances.reduce((total, item) => Number(item.amount) + total, 0)
-    rewards = accountInfo.rewards.reduce((total, item) => Number(item.reward[0].amount) + total, 0)
+    rewards = accountInfo.rewards.reduce((total, item) => {
+      if (item.reward?.length) {
+        return Number(item.reward[0].amount) + total
+      }
+      return 0;
+    }, 0)
   }
   return {
     stacked: Number((stacked / RATE_VALUE).toFixed(2)),
@@ -152,7 +185,7 @@ const formatMessage = (msgs: TMessage[]) => {
   }
 }
 
-const VoteModal = ({ 
+export const VoteModal = ({ 
   isOpen, 
   setOpen, 
   sernder, 
@@ -349,9 +382,151 @@ const VoteModal = ({
   )
 }
 
+const ClaimableRewardsModal = ({ 
+  isOpen, 
+  setOpen, 
+  sernder, 
+  onSendClick, 
+  isVoteLoading, 
+  error,
+  voteAdvanced,
+  handleVoteAdvancedChange,
+}: IClaimableRewardsModal) => {
+  if (!isOpen) {
+    return null;
+  }
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const handleAdvancedCheckedChange = (checked: boolean) => {
+    setShowAdvanced(checked);
+  }
+
+  return (
+     <Dialog
+        open={isOpen}
+        onOpenChange={setOpen}
+        modal
+      >
+        <Dialog.Trigger asChild>
+        </Dialog.Trigger>
+
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+
+          <Dialog.Content
+            bordered
+            elevate
+            key="content"
+            animation={[
+              'quick',
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            x={0}
+            scale={1}
+            opacity={1}
+            y={0}
+          >
+            <div className='withdraw-main-content'>
+              <div className='flex justify-between items-center'>
+                <H3 className='text-lumera-label text-[32px]'>Withdraw</H3>
+                <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
+              </div>
+              <div className='mt-1'>
+                <Label htmlFor="sender" className='text-base'>Sender</Label>
+                <div className='input-wrapper'>
+                  <Input id="sender" placeholder="Sender" className='input' defaultValue={sernder} readOnly />
+                </div>
+              </div>
+
+              {showAdvanced ?
+                <div className='mt-1'>
+                  <div>
+                    <Label htmlFor="fees" className='text-base'>Fees</Label>
+                    <div className='input-wrapper'>
+                      <Input 
+                        id="fees" 
+                        placeholder="Fees" 
+                        className='input has-symbol' 
+                        value={voteAdvanced.fees} 
+                        onChangeText={(newValue) => handleVoteAdvancedChange('fees', newValue)} 
+                      />
+                      <span className='input-symbol'>ulume</span>
+                    </div>
+                  </div>
+                  <div className='mt-1'>
+                    <Label htmlFor="gas" className='text-base'>Gas</Label>
+                    <div className='input-wrapper'>
+                      <Input 
+                        id="gas" 
+                        placeholder="Gas" 
+                        className='input' 
+                        value={voteAdvanced.gas} 
+                        onChangeText={(newValue) => handleVoteAdvancedChange('gas', newValue)} 
+                      />
+                    </div>
+                  </div>
+                  <div className='mt-1'>
+                    <Label htmlFor="memo" className='text-base'>Memo</Label>
+                    <div className='input-wrapper'>
+                      <Input 
+                        id="memo" 
+                        placeholder="Memo" 
+                        className='input' 
+                        value={voteAdvanced.memo} 
+                        onChangeText={(newValue) => handleVoteAdvancedChange('memo', newValue)} 
+                      />
+                    </div>
+                  </div>
+                </div>: null
+              }
+
+              <YStack space="$2" marginTop="$3">
+                <div className='flex justify-between items-center'>
+                  <div className='flex gap-3 items-center'>
+                    <Checkbox 
+                      id="advanced" 
+                      size="$4" 
+                      checked={showAdvanced} 
+                      onCheckedChange={handleAdvancedCheckedChange}
+                    >
+                      <Checkbox.Indicator>
+                        <CheckIcon />
+                      </Checkbox.Indicator>
+                    </Checkbox>
+
+                    <Label size="$4" htmlFor="advanced">
+                      Advanced
+                    </Label>
+                  </div>
+                  <div className='btn-primary flex justify-end mt-3'>
+                    <Button onPress={onSendClick} disabled={isVoteLoading}>Send</Button>
+                  </div>
+                </div>
+              </YStack>
+              {error && !isVoteLoading ? 
+                <div className='text-lumera-red-light mt-3'>{error}</div> : null
+              }
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
+  )
+}
+
 export const HomeScreen = ({ 
   address, 
-  connect, 
   loading, 
   accountInfo, 
   proposals, 
@@ -364,6 +539,14 @@ export const HomeScreen = ({
   error,
   voteAdvanced,
   handleVoteAdvancedChange,
+  onClaimButtonClick,
+  handleResetError,
+  isClaimLoading,
+  claimInfo,
+  errorClaim,
+  handleClaimChange,
+  handleToggleClaimModal,
+  isClaimModalOpen,
 }: IHomeScreen) => {
   const { stacked, liquid, rewards } = getPortfolioData(accountInfo);
   const [isVoteOpen, setVoteOpen] = React.useState(false);
@@ -445,6 +628,7 @@ export const HomeScreen = ({
   }
 
   const handleVotePress = (item: IProposal) => {
+    handleResetError();
     setVoteOpen(true);
     setSelectedItem(item);
   }
@@ -461,12 +645,7 @@ export const HomeScreen = ({
               <H2 className='font-bold text-white text-[32px] leading-none'>Welcome to the Lumera Hub</H2>
               <Paragraph className='text-base text-lumera-gray'>Connect your wallet to manage assets, participate in governance, and access the full suite of Lumera services.</Paragraph>
               <div className='text-center'>
-                <button
-                  onClick={connect}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex cursor-pointer"
-                >
-                  <Wallet size="$1" /> <div className="ml-1 connect-wallet-label">Connect Wallet</div>
-                </button>
+                <ConnectWalletButton />
               </div>
             </div>
           </div> 
@@ -535,7 +714,7 @@ export const HomeScreen = ({
                         {loading ? <Skeleton /> : formatNumber(rewards)}
                       </H4>
                       <div className='mt-4 btn-full btn-secondary'>
-                        <Button>Claim All Rewards</Button>
+                        <Button onPress={() => handleToggleClaimModal(true)} disabled={isClaimLoading || loading}>Claim All Rewards</Button>
                       </div>
                     </div>
                   </Card.Header>
@@ -562,7 +741,11 @@ export const HomeScreen = ({
                               </a>
                               <SizableText className='text-sm text-lumera-label'>{item.proposer}</SizableText>
                             </div>
-                            <div className='btn-primary'><Button onPress={() => handleVotePress(item)}>Vote Now</Button></div>
+                            {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
+                              <div className='btn-primary'>
+                                <Button onPress={() => handleVotePress(item)}>Vote Now</Button>
+                              </div> : null
+                            }
                           </div>
                         ))}
                         </>
@@ -600,6 +783,16 @@ export const HomeScreen = ({
             error={error} 
             voteAdvanced={voteAdvanced}
             handleVoteAdvancedChange={handleVoteAdvancedChange}
+          />
+          <ClaimableRewardsModal 
+            isOpen={isClaimModalOpen} 
+            setOpen={handleToggleClaimModal} 
+            sernder={claimInfo.senderAddress} 
+            onSendClick={onClaimButtonClick} 
+            isVoteLoading={isClaimLoading} 
+            error={errorClaim} 
+            voteAdvanced={claimInfo}
+            handleVoteAdvancedChange={handleClaimChange}
           />
         </>
       }

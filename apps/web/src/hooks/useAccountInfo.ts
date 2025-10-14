@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useChain } from '@interchain-kit/react'
-import axios from 'axios';
+import { SigningStargateClient } from '@cosmjs/stargate';
+import { Registry } from '@cosmjs/proto-signing';
+import { MsgWithdrawDelegatorReward } from 'cosmjs-types/cosmos/distribution/v1beta1/tx';
 
-import { CHAIN_NAME, REST_AI_URL } from '@/contants/network';
+import * as instance from '@/utils/api';
+import useWalletConnect from '@/hooks/useWalletConnect';
+import { RPC_ENDPOINT, DENOM } from '@/contants/network';
 
 export interface Coin {
   denom: string;
@@ -29,14 +32,13 @@ export interface AccountInfoData {
   rewards: ValidatorRewards[];
 }
 
-interface AccountInfoHookResult {
-  accountInfo: AccountInfoData | null;
-  loading: boolean;
-  error: Error | null;
-}
-
-const useAccountInfo = (): AccountInfoHookResult => {
-  const { address } = useChain(CHAIN_NAME)
+const registry = new Registry();
+registry.register(
+  '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
+  MsgWithdrawDelegatorReward
+);
+const useAccountInfo = () => {
+  const { address, getOfflineSigner } = useWalletConnect();
 
   const [accountInfo, setAccountInfo] = useState<AccountInfoData | null>({
     balances: [],
@@ -45,7 +47,46 @@ const useAccountInfo = (): AccountInfoHookResult => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [isClaimLoading, setClaimLoading] = useState(false);
+  const [errorClaim, setErrorClaim] = useState<string | null>(null);
+  const [claimInfo, setClaimInfo] = useState({
+    senderAddress: address,
+    fees: '2000',
+    gas: '200000',
+    memo: 'Claim rewards',
+  });
+  const [isClaimModalOpen, setClaimModalOpen] = useState(false);
 
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const [balanceRes, delegationsRes, rewardsRes] = await Promise.all([
+        instance.get(`/cosmos/bank/v1beta1/balances/${address}`),
+        instance.get(`/cosmos/staking/v1beta1/delegations/${address}`),
+        instance.get(`/cosmos/distribution/v1beta1/delegators/${address}/rewards`),
+      ]);
+
+      const balanceData = balanceRes.data;
+      const delegationsData = delegationsRes.data;
+      const rewardsData = rewardsRes.data;
+      setAccountInfo({
+        balances: balanceData.balances,
+        delegations: delegationsData.delegation_responses,
+        rewards: rewardsData.rewards,
+      });
+    } catch (e) {
+      console.error('API Error:', e);
+      if (e instanceof Error) {
+        setError(e);
+      } else {
+        setError(new Error('An unknown error occurred.'));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!address) {
@@ -55,41 +96,87 @@ const useAccountInfo = (): AccountInfoHookResult => {
       return;
     }
 
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const [balanceRes, delegationsRes, rewardsRes] = await Promise.all([
-          axios.get(`${REST_AI_URL}/cosmos/bank/v1beta1/balances/${address}`),
-          axios.get(`${REST_AI_URL}/cosmos/staking/v1beta1/delegations/${address}`),
-          axios.get(`${REST_AI_URL}/cosmos/distribution/v1beta1/delegators/${address}/rewards`),
-        ]);
-
-        const balanceData = balanceRes.data;
-        const delegationsData = delegationsRes.data;
-        const rewardsData = rewardsRes.data;
-        setAccountInfo({
-          balances: balanceData.balances,
-          delegations: delegationsData.delegation_responses,
-          rewards: rewardsData.rewards,
-        });
-      } catch (e) {
-        console.error('API Error:', e);
-        if (e instanceof Error) {
-          setError(e);
-        } else {
-          setError(new Error('An unknown error occurred.'));
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, [address]);
 
-  return { accountInfo, loading, error };
+  const handleClaimButtonClick = async () => {
+    setErrorClaim(null);
+    if (!claimInfo.senderAddress) {
+      return;
+    }
+    setClaimLoading(true);
+    try {
+      const offlineSigner = await getOfflineSigner();
+      if (!offlineSigner) {
+        setErrorClaim('Please connect wallet before using');
+        return;
+      }
+      const client = await SigningStargateClient.connectWithSigner(
+        RPC_ENDPOINT,
+        offlineSigner,
+        { 
+          registry: new Registry([
+            ["/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward", MsgWithdrawDelegatorReward],
+          ]), 
+        }
+      );
+      const msgWithdraw = [];
+      const { data } = await instance.get(`/cosmos/staking/v1beta1/delegations/${claimInfo.senderAddress}`);
+      for (const item of data?.delegation_responses) {
+        msgWithdraw.push({
+          typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+          value: {
+            delegatorAddress: item.delegation.delegator_address,
+            validatorAddress: item.delegation.validator_address,
+          },
+        })
+      }
+      const fee = {
+        amount: [{ denom: DENOM, amount: claimInfo.fees }], // Fee gas
+        gas: claimInfo.gas, // Gas limit
+      };
+      const memo = claimInfo.memo
+      const result = await client.signAndBroadcast(claimInfo.senderAddress, msgWithdraw, fee, memo);
+      if (result?.transactionHash) {
+        setClaimModalOpen(false);
+        fetchData();
+      }
+    } catch (e) {
+      // console.error('API Error:', e);
+      if (e instanceof Error) {
+        setErrorClaim(e.message);
+      } else {
+        setErrorClaim('An unknown error occurred.');
+      }
+    } finally {
+      setClaimLoading(false);
+    }
+  }
+
+  const handleClaimChange = (name: string, value: string) => {
+    const currentClaimInfo = claimInfo;
+    setClaimInfo({
+      ...currentClaimInfo,
+      [name]: value,
+    })
+  }
+
+  const handleToggleClaimModal = (status: boolean) => {
+    setClaimModalOpen(status);
+  }
+
+  return { 
+    accountInfo, 
+    loading, 
+    error, 
+    isClaimLoading, 
+    errorClaim,
+    claimInfo,
+    isClaimModalOpen,
+    handleClaimButtonClick, 
+    handleClaimChange,
+    handleToggleClaimModal,
+  };
 };
 
 export default useAccountInfo;

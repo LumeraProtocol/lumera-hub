@@ -1,14 +1,13 @@
 // apps/web/src/app/staking/page.tsx
 'use client'
 
-import { useChain } from '@interchain-kit/react'
 import { Helmet } from "react-helmet-async";
 
-import { CHAIN_NAME } from '@/contants/network';
 import { StakingScreen } from '@lumera-hub/ui/src/screens/StakingScreen'
+import useWalletConnect from '@/hooks/useWalletConnect';
 
 export default function Page() {
-  const { address } = useChain(CHAIN_NAME)
+ const { address } = useWalletConnect();
 
   return (
     <>

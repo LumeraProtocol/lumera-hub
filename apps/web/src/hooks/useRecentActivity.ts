@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useChain } from '@interchain-kit/react';
 import axios from 'axios';
 
-import { CHAIN_NAME, REST_AI_URL } from '@/contants/network';
+import { REST_AI_URL } from '@/contants/network';
 import { Coin } from '@/hooks/useAccountInfo';
+import useWalletConnect from '@/hooks/useWalletConnect';
 
 export type TMessage = {
     '@type': string;
@@ -99,7 +99,7 @@ export interface IRecentActivity {
 }
 
 const useRecentActivity = () => {
-    const { address } = useChain(CHAIN_NAME)
+    const { address } = useWalletConnect();
     const [recentActivity, setRecentActivity] = useState<IRecentActivity[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
