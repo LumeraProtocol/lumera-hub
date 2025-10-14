@@ -185,7 +185,7 @@ const formatMessage = (msgs: TMessage[]) => {
   }
 }
 
-const VoteModal = ({ 
+export const VoteModal = ({ 
   isOpen, 
   setOpen, 
   sernder, 

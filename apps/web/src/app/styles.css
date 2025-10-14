@@ -377,13 +377,23 @@
 .mt-2 {
   margin-top: 8px;
 }
-.status-bar-left {
-  background-color: #55b5a6;
+.status-bar-yes,
+.status-bar-no,
+.status-bar-abstain,
+.status-bar-no-with-veto {
   height: 8px;
 }
-.status-bar-center {
+.status-bar-yes {
+  background-color: #55b5a6;
+}
+.status-bar-no {
   background-color: #dd524c;
-  height: 8px;
+}
+.status-bar-abstain {
+  background-color: #39694a;
+}
+.status-bar-no-with-veto {
+  background-color: #ecbc4a;
 }
 .btn-purple .is_Button {
   color: #d2b6f9;
@@ -445,6 +455,18 @@
 .btn-blue .is_Button:hover .is_Button {
   background-color: #001432 !important;
 }
+.btn-red .is_Button {
+  color: #fff;
+  background-color: #ef4444 !important;
+  border: 1px solid #fe6a6a;
+}
+.btn-red .is_Button path,
+.btn-red .is_Button circle {
+  stroke: #fff;
+}
+.btn-red .is_Button:hover {
+  background-color: #fe6a6a !important;
+}
 .w-2\/3 {
   width: 66.6667%;
 }
@@ -489,6 +511,7 @@
 }
 .tabs-secondary .tab-item.active .tab-button,
 .tabs-secondary .tab-item .tab-button:hover {
+  color: #fff;
   background-color: #4d4adc;
 }
 .cascade-top-left {
@@ -582,9 +605,18 @@
   background-color: #555;
 }
 .btn-wallet-close {
-    position: absolute;
-    top: -12px;
-    right: -24px;
+  position: absolute;
+  top: -12px;
+  right: -24px;
+}
+.min-h-12 {
+  min-height: 48px;
+}
+.loading-wrapper {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
 }
 @media screen and (min-width: 768px) {
   .md\:flex-row {
