@@ -10,6 +10,7 @@ import {
 import { CircleX, Check as CheckIcon } from '@tamagui/lucide-icons'
 
 import { formatNumber } from '@/utils/format';
+import Loading from '@/components/Loading';
 
 interface IVoteModal {
   isOpen: boolean;
@@ -81,7 +82,8 @@ export default function DepositModal({
             opacity={1}
             y={0}
           >
-            <div className='withdraw-main-content'>
+            <div className='withdraw-main-content relative'>
+              <Loading isLoading={isVoteLoading} />
               <div className='flex justify-between items-center'>
                 <H3 className='text-lumera-label text-[32px]'>Deposit</H3>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>

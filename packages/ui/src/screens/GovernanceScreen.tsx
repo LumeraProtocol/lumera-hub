@@ -17,6 +17,7 @@ import {
   Timer, 
   CheckCircle,
 } from '@tamagui/lucide-icons';
+import dayjs from 'dayjs';
 
 import Loading from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
@@ -162,13 +163,18 @@ export const GovernanceScreen = ({
   }
 
   const getControls = (item: IProposal) => {
-    if (['PROPOSAL_STATUS_FAILED', 'PROPOSAL_STATUS_REJECTED'].includes(item?.status)) {
+    const now = dayjs();
+    const expiryDate = dayjs(item.deposit_end_time);
+    const isExpired = expiryDate.isBefore(now);
+
+    if (['PROPOSAL_STATUS_FAILED', 'PROPOSAL_STATUS_REJECTED'].includes(item?.status) || (isExpired && item.status !== 'PROPOSAL_STATUS_VOTING_PERIOD')) {
       return null;
     }
-
     return (
       <div className='btn-blue flex justify-end gap-3'>
-        <Button onPress={() => handleVotePress(item)}>Vote</Button>
+        {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
+          <Button onPress={() => handleVotePress(item)}>Vote</Button> : null
+        }
         <Button onPress={() => handleDepositClick(item.id)}>Deposit</Button>
       </div>
     );
