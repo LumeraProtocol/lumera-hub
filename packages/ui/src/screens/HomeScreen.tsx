@@ -19,10 +19,11 @@ import {
   Select, 
   XStack,
 } from 'tamagui'
-import { LaptopMinimalCheck, Database, BarChart2, Warehouse, Send } from '@tamagui/lucide-icons'
-import { Wallet, CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons'
+import { LaptopMinimalCheck, BarChart2, Warehouse, Send } from '@tamagui/lucide-icons'
+import { CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
+import Loading from '@/components/Loading';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import Skeleton from '@/components/Skeleton';
 import { AccountInfoData } from '@/hooks/useAccountInfo'
@@ -243,7 +244,8 @@ export const VoteModal = ({
             opacity={1}
             y={0}
           >
-            <div className='vote-main-content'>
+            <div className='vote-main-content relative'>
+              <Loading isLoading={isVoteLoading} />
               <div className='flex justify-between items-center'>
                 <H3 className='text-lumera-label text-[32px]'>Vote</H3>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
@@ -438,7 +440,8 @@ const ClaimableRewardsModal = ({
             opacity={1}
             y={0}
           >
-            <div className='withdraw-main-content'>
+            <div className='withdraw-main-content relative'>
+              <Loading isLoading={isVoteLoading} />
               <div className='flex justify-between items-center'>
                 <H3 className='text-lumera-label text-[32px]'>Withdraw</H3>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
