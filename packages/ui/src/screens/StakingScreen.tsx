@@ -109,7 +109,6 @@ export const StakingScreen = ({
     return total / RATE_VALUE;
   }
 
-
   const getCurrentStakingAPR = () => {
     const validators = [...delegateOptions.validators, ...staking.validators]
     const total = validators.reduce((total, validator) => Number(formatCommissionRate(validator.commission?.commission_rates?.rate).replace('%', '')) + total, 0);
@@ -171,7 +170,7 @@ export const StakingScreen = ({
               <Card.Header padded>
                 <H3 className='text-lumera-label'>Current Staking APR</H3>
                 <div className='!text-lumera-green font-bold text-[40px]'>
-                  {getCurrentStakingAPR()}
+                  Coming soon
                 </div>
               </Card.Header>
             </Card>
