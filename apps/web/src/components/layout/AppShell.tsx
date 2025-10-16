@@ -28,6 +28,7 @@ const VIEW_TITLES: Record<ViewId, string> = {
   sense: "Sense",
   inference: "Inference",
   nfts: "NFTs",
+  wallet: "Wallet",
 }
 
 type ViewId =
@@ -38,6 +39,7 @@ type ViewId =
   | "sense"
   | "inference"
   | "nfts"
+  | "wallet"
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false)
