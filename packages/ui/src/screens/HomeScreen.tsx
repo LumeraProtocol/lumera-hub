@@ -736,21 +736,26 @@ export const HomeScreen = ({
                       {isProposalLoading ?
                         <Skeleton /> : 
                         <>
-                        {proposals?.map((item) => (
-                          <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
-                            <div className='flex flex-col'>
-                              <a href={`/governance/${item.id}`}>
-                                <Text>{item.title}</Text>
-                              </a>
-                              <SizableText className='text-sm text-lumera-label'>{item.proposer}</SizableText>
+                          {!proposals?.length ?
+                            <div className='flex items-center justify-center min-h-28 md:min-h-80 my-2'>
+                              <H3 className='text-2xl'>No data</H3>
+                            </div> : null
+                          }
+                          {proposals?.map((item) => (
+                            <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
+                              <div className='flex flex-col'>
+                                <a href={`/governance/${item.id}`}>
+                                  <Text>{item.title}</Text>
+                                </a>
+                                <SizableText className='text-sm text-lumera-label'>{item.proposer}</SizableText>
+                              </div>
+                              {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
+                                <div className='btn-primary'>
+                                  <Button onPress={() => handleVotePress(item)}>Vote Now</Button>
+                                </div> : null
+                              }
                             </div>
-                            {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
-                              <div className='btn-primary'>
-                                <Button onPress={() => handleVotePress(item)}>Vote Now</Button>
-                              </div> : null
-                            }
-                          </div>
-                        ))}
+                          ))}
                         </>
                       }
                       

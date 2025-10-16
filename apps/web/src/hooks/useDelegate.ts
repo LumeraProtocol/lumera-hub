@@ -29,14 +29,20 @@ const useDelegate = (options: UseDepositOptions = {}) => {
     const [error, setError] = useState('');
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [validators, setValidators] = useState([]);
+    const [isOpenModal, setOpenModal] = useState(false);
+    const [totalValidators, setTotalValidators] = useState('0');
+    const [isFetchValidatorLoading, setFetchValidatorLoading] = useState(false);
 
     const fetchValidator = async () => {
+        setFetchValidatorLoading(true);
         try {
-            const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=500&status=BOND_STATUS_BONDED');
+            const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=500&status=BOND_STATUS_BONDED&pagination.count_total=true');
             setValidators(data.validators);
+            setTotalValidators(data.pagination.total);
         } catch (e) {
             console.error('API Error:', e);
         }
+        setFetchValidatorLoading(false);
     }
 
     useEffect(() => {
@@ -54,6 +60,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
             amount: '',
             validator: '',
         });
+        setOpenModal(false);
     }
 
     const handleInputChange = (name: string, value: string) => {
@@ -132,15 +139,34 @@ const useDelegate = (options: UseDepositOptions = {}) => {
         setLoading(false);
     }
 
+    const handleOpenModal = (validator: string) => {
+        setOpenModal(true);
+        if (validator) {
+            setOptionsAdvanced({
+                ...optionsAdvanced,
+                validator,
+            });
+        }
+    }
+
+    const handleCloseModal = () => {
+        setOpenModal(false);
+    }
+
     return {
         error,
         showAdvanced,
         isLoading,
         optionsAdvanced,
         validators,
+        isOpenModal,
+        totalValidators,
+        isFetchValidatorLoading,
         handleInputChange,
         handleShowAdvancedChange,
         handleSendClick,
+        handleOpenModal,
+        handleCloseModal,
     }
 }
 

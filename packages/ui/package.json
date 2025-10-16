@@ -13,6 +13,7 @@
   "module": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
+    "@cosmjs/encoding": "^0.36.1",
     "@headlessui/react": "^2.2.9",
     "@react-jvectormap/core": "^1.0.4",
     "@react-jvectormap/world": "^1.1.2",

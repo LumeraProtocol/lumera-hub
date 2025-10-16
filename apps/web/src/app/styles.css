@@ -642,6 +642,9 @@
 .paginate-wrapper ul.react-paginate li a:hover {
     background-color: #078A8A
 }
+.current-staking-apr {
+  width: calc(33.3% - 24px);
+}
 @media screen and (min-width: 1025px) {
   .lg\:grid-cols-3 {
     grid-template-columns: 1fr 1fr 1fr;
