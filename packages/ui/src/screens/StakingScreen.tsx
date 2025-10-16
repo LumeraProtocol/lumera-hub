@@ -224,7 +224,10 @@ export const StakingScreen = ({
               <Card.Header padded>
                 <H3 className='text-lumera-label'>Total LUME Staked</H3>
                 <div className='text-[40px] font-bold text-white'>
-                  {formatNumber(getTotalStaked() / 1000000, { decimalsLength: 2 })} LUME
+                  {formatToken({
+                    amount: `${getTotalStaked()}`,
+                    denom: staking.params.bond_denom,
+                  }, true, '0,0.[00]')}
                 </div>
               </Card.Header>
             </Card>
