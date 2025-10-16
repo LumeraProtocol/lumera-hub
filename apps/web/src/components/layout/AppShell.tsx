@@ -11,13 +11,13 @@ import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 
 export const NAV_ITEMS: { id: ViewId; label: string, url: string, icon: React.ReactNode }[] = [
   { id: "dashboard", label: "Dashboard", url: "/", icon: <BarChart2 /> },
+  { id: "wallet", label: "Wallet", url: "/wallet", icon: <Wallet /> },
   { id: "staking", label: "Staking", url: "/staking", icon: <Hotel /> },
   { id: "governance", label: "Governance", url: "/governance", icon: <LaptopMinimalCheck /> },
   { id: "cascade", label: "Cascade", url: "/cascade", icon: <Database /> },
-  { id: "sense", label: "Sense", url: "#", icon: <ShieldCheck /> },
-  { id: "inference", label: "Inference", url: "#", icon: <BrainCircuit /> },
-  { id: "nfts", label: "NFTs", url: "#", icon: <Image /> },
-  { id: "wallet", label: "Wallet", url: "/wallet", icon: <Wallet /> },
+  { id: "sense", label: "Sense", url: "/sense", icon: <ShieldCheck /> },
+  { id: "inference", label: "Inference", url: "/inference", icon: <BrainCircuit /> },
+  { id: "nfts", label: "NFTs", url: "/nfts", icon: <Image /> },
 ]
 
 const VIEW_TITLES: Record<ViewId, string> = {

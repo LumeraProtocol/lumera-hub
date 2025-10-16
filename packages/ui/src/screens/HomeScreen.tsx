@@ -771,7 +771,7 @@ export const HomeScreen = ({
                       {isRecentActivityLoading ?
                         <Skeleton /> : 
                         <>
-                          {recentActivities?.map((item) => getActivity(item))}
+                          {recentActivities.slice(0, 6)?.map((item) => getActivity(item))}
                         </>
                       }
                     </div>
