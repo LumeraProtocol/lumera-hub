@@ -166,6 +166,7 @@ const useAccountInfo = () => {
   }
 
   const handleToggleClaimModal = (status: boolean) => {
+    setClaimLoading(false);
     setClaimModalOpen(status);
   }
 
@@ -180,6 +181,7 @@ const useAccountInfo = () => {
   const handleCloseCongratulationsModal = () => {
     setTransactionHash('');
     setClaimModalOpen(false);
+    setClaimLoading(false);
   }
 
   return { 

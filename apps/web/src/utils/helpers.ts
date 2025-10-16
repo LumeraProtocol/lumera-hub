@@ -70,3 +70,10 @@ export function consensusPubkeyToHexAddress(consensusPubkey?: {
   }
   return '';
 }
+
+export const mapAmount = (events:{type: string, attributes: {key: string, value: string}[]}[]) => {
+  if(!events) return []
+  return events.find(x => x.type==='coin_received')?.attributes
+    .filter(x => x.key === 'YW1vdW50'|| x.key === `amount`)
+    .map(x => x.key==='amount'? x.value : String.fromCharCode(...fromBase64(x.value)))
+}
