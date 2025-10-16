@@ -10,6 +10,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
           <Script src="https://cdn.tailwindcss.com" />
+          <link rel="icon" type="image/png" href="/lumera.png" />
       </head>
       <body>
         <ClientRoot>
