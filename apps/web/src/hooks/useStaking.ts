@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 
 import * as instance from '@/utils/api';
+import { IValidator } from '@/types/validator';
 
 const useStaking = (address = '') => {
 
     const [isLoading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [validators, setValidators] = useState([]);
+    const [validators, setValidators] = useState<IValidator[]>([]);
     const [totalValidators, setTotalValidators] = useState('0');
     const [currentTab, setCurrentTab] = useState('active');
     const [params, setParams] = useState({
@@ -31,9 +32,13 @@ const useStaking = (address = '') => {
      const fetchValidator = async () => {
         setLoading(true);
         try {
-            const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=1000&status=BOND_STATUS_UNBONDING&pagination.count_total=true');
-            setValidators(data.validators);
-            setTotalValidators(data.pagination.total);
+            const [undondingRes, unbondedRes] = await Promise.all([
+                instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=1000&status=BOND_STATUS_UNBONDING&pagination.count_total=true'),
+                instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=300&status=BOND_STATUS_UNBONDED'),
+            ]);
+            const allValidators = [...undondingRes.data.validators, ...unbondedRes.data.validators] as IValidator[];
+            setValidators(allValidators);
+            setTotalValidators(`${allValidators.length}`);
         } catch (error) {
             setError(error instanceof Error ? error.message : 'An unknown error occurred.');
         }
