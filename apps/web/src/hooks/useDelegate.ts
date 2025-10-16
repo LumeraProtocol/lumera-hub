@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { SigningStargateClient } from '@cosmjs/stargate';
 import { Registry } from '@cosmjs/proto-signing';
 import { 
-  MsgDeposit, 
-} from 'cosmjs-types/cosmos/gov/v1/tx';
+  MsgDelegate, 
+} from 'cosmjs-types/cosmos/staking/v1beta1/tx'; // Import MsgDelegate
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
@@ -15,63 +15,50 @@ interface UseDepositOptions {
 
 export const RATE_VALUE = 1000000
 
-const useDeposit = (options: UseDepositOptions = {}) => {
+const useDelegate = (options: UseDepositOptions = {}) => {
     const { address, getOfflineSigner } = useWalletConnect();
     const [isLoading, setLoading] = useState(false);
-    const [depositAdvanced, setDepositAdvanced] = useState({
+    const [optionsAdvanced, setOptionsAdvanced] = useState({
         senderAddress: address,
         fees: '2000',
         gas: '200000',
         memo: 'ping.pub',
-        depositAmount: '',
+        amount: '',
+        validator: '',
     });
     const [error, setError] = useState('');
     const [showAdvanced, setShowAdvanced] = useState(false);
-    const [proposalId, setProposalId] = useState('');
-    const [isModalOpen, setModalOpen] = useState(false);
-    const [availableAmount, setAvailableAmount] = useState(0);
+    const [validators, setValidators] = useState([]);
 
-    const fetchData = async () => {
+    const fetchValidator = async () => {
         try {
-          const { data } = await instance.get(`/cosmos/bank/v1beta1/balances/${address}`);
-          let total = 0;
-          for (const item of data.balances) {
-            if (item.denom === 'ulume') {
-                total += Number(item.amount)
-            }
-          }
-          setAvailableAmount(Number((total / RATE_VALUE).toFixed(6)));
+            const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=500&status=BOND_STATUS_BONDED');
+            setValidators(data.validators);
         } catch (e) {
-          console.error('API Error:', e);
+            console.error('API Error:', e);
         }
-    };
+    }
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        fetchValidator();
+    }, [])
 
     const resetData = () => {
         setShowAdvanced(false);
-        setModalOpen(false);
         setLoading(false);
-        setDepositAdvanced({
+        setOptionsAdvanced({
             senderAddress: address,
             fees: '2000',
             gas: '200000',
             memo: 'ping.pub',
-            depositAmount: '',
+            amount: '',
+            validator: '',
         });
     }
 
-    useEffect(() => {
-        if (!isModalOpen) {
-            resetData();
-        }
-    }, [isModalOpen])
-
-    const handleDepositChange = (name: string, value: string) => {
-        setDepositAdvanced({
-            ...depositAdvanced,
+    const handleInputChange = (name: string, value: string) => {
+        setOptionsAdvanced({
+            ...optionsAdvanced,
             [name]: value,
         });
     }
@@ -81,19 +68,23 @@ const useDeposit = (options: UseDepositOptions = {}) => {
     }
 
     const handleSendClick = async () => {
-        if (!depositAdvanced.depositAmount) {
+        if (!optionsAdvanced.amount) {
             setError('Please enter amount.');
             return
         }
-        if (!depositAdvanced.senderAddress) {
+        if (!optionsAdvanced.validator) {
+            setError('Please enter validator.');
+            return
+        }
+        if (!optionsAdvanced.senderAddress) {
             setError('Please enter sender.');
             return
         }
-        if (!depositAdvanced.fees) {
+        if (!optionsAdvanced.fees) {
             setError('Please enter fee.');
             return
         }
-        if (!depositAdvanced.gas) {
+        if (!optionsAdvanced.gas) {
             setError('Please enter gas.');
             return
         }
@@ -109,26 +100,26 @@ const useDeposit = (options: UseDepositOptions = {}) => {
                 offlineSigner,
                 { 
                     registry: new Registry([
-                        ["/cosmos.gov.v1.MsgDeposit", MsgDeposit],
+                        ["/cosmos.staking.v1beta1.MsgDelegate", MsgDelegate],
                     ]), 
                 }
             );
             const msg = {
-                typeUrl: '/cosmos.gov.v1.MsgDeposit',
-                value: MsgDeposit.fromPartial({
-                    proposalId: BigInt(proposalId),
-                    depositor: address,
-                    amount: [{ 
-                        denom: DENOM,
-                        amount: depositAdvanced.depositAmount,
-                    }],
+                typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
+                value: MsgDelegate.fromPartial({
+                    delegatorAddress: optionsAdvanced.senderAddress,
+                    validatorAddress: optionsAdvanced.validator,
+                    amount: {
+                        denom: 'lumera',
+                        amount: optionsAdvanced.amount,
+                    },
                 }),
             };
             const fee = {
-                amount: [{ denom: DENOM, amount: depositAdvanced.fees }], // Fee gas
-                gas: depositAdvanced.gas, // Gas limit
+                amount: [{ denom: DENOM, amount: optionsAdvanced.fees }], // Fee gas
+                gas: optionsAdvanced.gas, // Gas limit
             };
-            const result = await client.signAndBroadcast(depositAdvanced.senderAddress, [msg], fee, depositAdvanced.memo);
+            const result = await client.signAndBroadcast(optionsAdvanced.senderAddress, [msg], fee, optionsAdvanced.memo);
             if (result?.transactionHash) {
                 resetData();
                 if (options?.callback) {
@@ -142,19 +133,15 @@ const useDeposit = (options: UseDepositOptions = {}) => {
     }
 
     return {
-        address,
         error,
         showAdvanced,
         isLoading,
-        depositAdvanced,
-        isModalOpen,
-        availableAmount,
-        setModalOpen,
-        handleDepositChange,
+        optionsAdvanced,
+        validators,
+        handleInputChange,
         handleShowAdvancedChange,
         handleSendClick,
-        setProposalId,
     }
 }
 
-export default useDeposit;
+export default useDelegate;

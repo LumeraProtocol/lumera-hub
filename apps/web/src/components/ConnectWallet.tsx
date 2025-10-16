@@ -4,10 +4,7 @@ import { Dialog, Unspaced, Button } from 'tamagui'
 import Image from 'next/image';
 
 import useWalletConnect from '@/hooks/useWalletConnect';
-
-const formatAddress = (address: string, length = 20, endLength = -6): string => {
-  return `${address.substr(0, length)}...${address.substr(endLength)}`;
-};
+import { formatAddress } from '@/utils/format';
 
 export function WalletModalComponent() {
   const { isModalOpen, handleToggleModal, error, handleConnect, isLoading } = useWalletConnect();
