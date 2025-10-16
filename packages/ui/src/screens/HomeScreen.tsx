@@ -388,7 +388,7 @@ export const VoteModal = ({
   )
 }
 
-const ClaimableRewardsModal = ({ 
+export const ClaimableRewardsModal = ({ 
   isOpen, 
   setOpen, 
   sender, 

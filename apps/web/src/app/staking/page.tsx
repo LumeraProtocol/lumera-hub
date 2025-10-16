@@ -15,6 +15,15 @@ export default function Page() {
  const staking = useStaking(address);
  const { 
     accountInfo,
+    handleClaimButtonClick, 
+    isClaimLoading, 
+    claimInfo, 
+    errorClaim, 
+    handleClaimChange, 
+    handleToggleClaimModal, 
+    isClaimModalOpen, 
+    transactionHash, 
+    handleCloseCongratulationsModal,
   } = useAccountInfo();
 
   return (
@@ -53,8 +62,31 @@ export default function Page() {
             signingInfos: staking.signingInfos,
             validatorTab: staking.validatorTab,
             rewards: staking.rewards,
+            subTab: staking.subTab,
+            onSubTabChange: staking.handleSubTabChange,
             onValidatorTabChange: staking.handleValidatorTabChange,
             onTabChange: staking.handleTabChange,
+          }}
+          claim={{
+            onClaimButtonClick: handleClaimButtonClick,
+            isClaimLoading: isClaimLoading,
+            claimInfo: claimInfo,
+            errorClaim: errorClaim,
+            handleClaimChange: handleClaimChange,
+            handleToggleClaimModal: handleToggleClaimModal,
+            isClaimModalOpen: isClaimModalOpen,
+            transactionHash: transactionHash,
+            onCloseCongratulationsModal: handleCloseCongratulationsModal,
+          }}
+          activityData={{
+            isActivitiesLoading: staking.isActivitiesLoading,
+            activities: staking.activities,
+            activitiesError: staking.activitiesError,
+          }}
+          unbonding={{
+            isLoading: staking.isUnbondingDelegationsLoading,
+            unbondingDelegations: staking.unbondingDelegations,
+            unbondingDelegationsError: staking.unbondingDelegationsError,
           }}
         />
       </div>
