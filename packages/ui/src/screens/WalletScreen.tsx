@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { Transition } from '@headlessui/react';
 import ReactPaginate from 'react-paginate';
-import Link from 'next/link';
 
 import Loading from '@/components/Loading';
 import PastTime from '@/components/PastTime';
@@ -260,12 +259,12 @@ export const WalletScreen = ({
                                 <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
                                     {getTxIcon(getMessages(tx.tx.body.messages))}
                                 </div>
-                                <Link  href={`/block/${tx.height}`} className="font-semibold text-white ml-2">{tx.height}</Link>
+                                <a href={`/block/${tx.height}`} className="font-semibold text-white ml-2">{tx.height}</a>
                             </div>
                             <div className="col-span-4">
-                                <Link href={`/tx/${tx.txhash}`} className="font-semibold text-white">
+                                <a href={`/tx/${tx.txhash}`} className="font-semibold text-white">
                                     {formatAddress(tx.txhash, 20, -6)}
-                                </Link>
+                                </a>
                             </div>
                             <div className="col-span-3 text-left">
                                 {getMessages(tx.tx.body.messages)}
