@@ -32,11 +32,12 @@ const useDelegate = (options: UseDepositOptions = {}) => {
     const [isOpenModal, setOpenModal] = useState(false);
     const [totalValidators, setTotalValidators] = useState('0');
     const [isFetchValidatorLoading, setFetchValidatorLoading] = useState(false);
+    const [transactionHash, setTransactionHash] = useState('');
 
     const fetchValidator = async () => {
         setFetchValidatorLoading(true);
         try {
-            const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=500&status=BOND_STATUS_BONDED&pagination.count_total=true');
+            const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=1000&status=BOND_STATUS_BONDED&pagination.count_total=true');
             setValidators(data.validators);
             setTotalValidators(data.pagination.total);
         } catch (e) {
@@ -128,6 +129,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
             };
             const result = await client.signAndBroadcast(optionsAdvanced.senderAddress, [msg], fee, optionsAdvanced.memo);
             if (result?.transactionHash) {
+                setTransactionHash(result?.transactionHash);
                 resetData();
                 if (options?.callback) {
                     options.callback();
@@ -153,6 +155,10 @@ const useDelegate = (options: UseDepositOptions = {}) => {
         setOpenModal(false);
     }
 
+    const handleCloseCongratulationsModal = () => {
+        setTransactionHash('');
+    }
+
     return {
         error,
         showAdvanced,
@@ -162,6 +168,8 @@ const useDelegate = (options: UseDepositOptions = {}) => {
         isOpenModal,
         totalValidators,
         isFetchValidatorLoading,
+        transactionHash,
+        handleCloseCongratulationsModal,
         handleInputChange,
         handleShowAdvancedChange,
         handleSendClick,

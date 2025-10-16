@@ -15,7 +15,7 @@ import Loading from '@/components/Loading';
 interface IVoteModal {
   isOpen: boolean;
   setOpen: (status: boolean) => void;
-  sernder: string;
+  sender: string;
   onVoteClick: () => void;
   isVoteLoading: boolean;
   error: string | null;
@@ -34,7 +34,7 @@ interface IVoteModal {
 
 export default function DepositModal({
     isOpen, 
-    sernder, 
+    sender, 
     isVoteLoading, 
     error,
     voteAdvanced,
@@ -91,7 +91,7 @@ export default function DepositModal({
               <div className='mt-1'>
                 <Label htmlFor="sender" className='text-base'>Sender</Label>
                 <div className='input-wrapper'>
-                  <Input id="sender" placeholder="Sender" className='input' defaultValue={sernder} readOnly />
+                  <Input id="sender" placeholder="Sender" className='input' defaultValue={sender} readOnly />
                 </div>
               </div>
               <div className='mt-1'>

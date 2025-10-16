@@ -12,7 +12,7 @@ import useAccountInfo from '@/hooks/useAccountInfo';
 export default function Page() {
  const { address } = useWalletConnect();
  const delegate = useDelegate();
- const staking = useStaking();
+ const staking = useStaking(address);
  const { 
     accountInfo,
   } = useAccountInfo();
@@ -35,6 +35,8 @@ export default function Page() {
             totalValidators: delegate.totalValidators,
             isLoading: delegate.isFetchValidatorLoading,
             isOpenModal: delegate.isOpenModal,
+            transactionHash: delegate.transactionHash,
+            onCloseCongratulationsModal: delegate.handleCloseCongratulationsModal,
             onCloseDailogChange: delegate.handleCloseModal,
             onOpenModal: delegate.handleOpenModal,
             onSendClick: delegate.handleSendClick,
@@ -49,7 +51,10 @@ export default function Page() {
             isLoading: staking.isLoading,
             slashingParams: staking.slashingParams,
             signingInfos: staking.signingInfos,
-            handleTabChange: staking.handleTabChange,
+            validatorTab: staking.validatorTab,
+            rewards: staking.rewards,
+            onValidatorTabChange: staking.handleValidatorTabChange,
+            onTabChange: staking.handleTabChange,
           }}
         />
       </div>

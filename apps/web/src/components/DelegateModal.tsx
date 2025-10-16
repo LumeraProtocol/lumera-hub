@@ -34,6 +34,8 @@ interface IVoteModal {
   onInputChange: (name: string, value: string) => void;
   onAdvancedCheckedChange: (checked: boolean) => void;
   validators: IValidator[];
+  transactionHash?: string;
+  onCloseCongratulationsModal?: () => void;
 }
 
 export default function DelegateModal({
@@ -44,11 +46,63 @@ export default function DelegateModal({
     showAdvanced,
     availableAmount,
     validators,
+    transactionHash = '',
     onCloseDailogChange, 
     onSendClick, 
     onInputChange,
     onAdvancedCheckedChange,
+    onCloseCongratulationsModal,
 }: IVoteModal) {
+  if (transactionHash) {
+    return (
+      <Dialog
+        open
+        onOpenChange={onCloseCongratulationsModal}
+        modal
+      >
+        <Dialog.Trigger asChild>
+        </Dialog.Trigger>
+
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+
+          <Dialog.Content
+            bordered
+            elevate
+            key="content"
+            animation={[
+              'quick',
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            x={0}
+            scale={1}
+            opacity={1}
+            y={0}
+          >
+            <div className='withdraw-main-content relative text-center p-5'>
+              <H3 className='!text-green-500 text-[32px]'>Congratulations! delegate completed successfully.</H3>
+              <div className='mt-3'>
+                <a href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</a>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog> 
+    )
+  }
+
   return (
     <Dialog
       open={isOpen}

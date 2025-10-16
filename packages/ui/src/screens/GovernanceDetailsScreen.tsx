@@ -31,7 +31,7 @@ interface IGovernanceDetailsScreen {
     deposit: {
         isOpen: boolean;
         setOpen: (status: boolean) => void;
-        sernder: string;
+        sender: string;
         onVoteClick: () => void;
         setModalOpen: (status: boolean) => void;
         setProposalId: (id: string) => void;
@@ -365,7 +365,7 @@ export const GovernanceDetailsScreen = ({
             <VoteModal 
                 isOpen={vote.isVoteOpen} 
                 setOpen={vote.setVoteOpen} 
-                sernder={vote.address} 
+                sender={vote.address} 
                 onOptionChange={vote.onOptionChange} 
                 onVoteClick={vote.onVoteClick} 
                 item={governance} 
@@ -376,7 +376,7 @@ export const GovernanceDetailsScreen = ({
             />
             <DepositModal 
                 isOpen={deposit.isOpen}
-                sernder={deposit.sernder}
+                sender={deposit.sender}
                 isVoteLoading={deposit.isVoteLoading}
                 error={deposit.error}
                 voteAdvanced={deposit.voteAdvanced}

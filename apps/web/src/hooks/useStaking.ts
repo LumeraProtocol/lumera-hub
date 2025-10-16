@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 
 import * as instance from '@/utils/api';
 
-const useStaking = () => {
+const useStaking = (address = '') => {
+
     const [isLoading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [validators, setValidators] = useState([]);
@@ -24,11 +25,13 @@ const useStaking = () => {
         slash_fraction_downtime: "0"
     });
     const [signingInfos, setSigningInfos] = useState([]);
+    const [validatorTab, setValidatorTab] = useState('all');
+    const [rewards, setRewards] = useState([]);
 
      const fetchValidator = async () => {
         setLoading(true);
         try {
-            const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=500&status=BOND_STATUS_UNBONDING&pagination.count_total=true');
+            const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=1000&status=BOND_STATUS_UNBONDING&pagination.count_total=true');
             setValidators(data.validators);
             setTotalValidators(data.pagination.total);
         } catch (error) {
@@ -37,7 +40,7 @@ const useStaking = () => {
         setLoading(false);
     }
 
-     const fetchParams = async () => {
+    const fetchParams = async () => {
         setLoading(true);
         try {
             const [stakingParamsRes, slashingParamsRes, signingInfosRes] = await Promise.all([
@@ -53,13 +56,33 @@ const useStaking = () => {
         }
         setLoading(false);
     }
+
+    const fetchRewards = async () => {
+        try {
+            const { data } = await instance.get(`/cosmos/distribution/v1beta1/delegators/${address}/rewards`);
+           setRewards(data.rewards);
+        } catch (error) {
+            console.error(error instanceof Error ? error.message : 'An unknown error occurred.');
+        }
+    }
+
     useEffect(() => {
         fetchValidator();
         fetchParams();
     }, []);
 
+    useEffect(() => {
+        if (address) {
+            fetchRewards();
+        }
+    }, [address]);
+
     const handleTabChange = (tab: string) => {
         setCurrentTab(tab);
+    }
+
+    const handleValidatorTabChange = (tab: string) => {
+        setValidatorTab(tab);
     }
 
     return {
@@ -71,6 +94,9 @@ const useStaking = () => {
         params,
         slashingParams,
         signingInfos,
+        validatorTab,
+        rewards,
+        handleValidatorTabChange,
         handleTabChange,
     }
 }
