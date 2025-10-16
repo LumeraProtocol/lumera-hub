@@ -557,7 +557,6 @@ export const HomeScreen = ({
 
   const getActivity = (item: IRecentActivity) => {
     const messages = item.tx.body.messages;
-
     switch (formatMessage(messages)?.toLowerCase()) {
       case 'delegate':
         return (
@@ -583,6 +582,7 @@ export const HomeScreen = ({
             </div>
           </div>
         )
+      case 'withdrawdelegatorreward×2':
       case 'withdrawdelegatorreward':
         const event = item.events.find((i) => i.type === 'withdraw_rewards');
         const amount = event?.attributes?.find((i) => i.key === 'amount');
@@ -592,7 +592,7 @@ export const HomeScreen = ({
               <BarChart2 size="$1" />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>Claimed {formatNumber((Number(amount?.value.replace('ulume', '')) / RATE_VALUE).toFixed(2))} LUME in rewards</Text>
+              <Text>Claimed {formatNumber((Number(amount?.value.replace('ulume', '').replace('stake', '')) / RATE_VALUE).toFixed(2))} LUME in rewards</Text>
               <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
             </div>
           </div>

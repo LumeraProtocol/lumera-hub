@@ -32,11 +32,6 @@ export interface AccountInfoData {
   rewards: ValidatorRewards[];
 }
 
-const registry = new Registry();
-registry.register(
-  '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
-  MsgWithdrawDelegatorReward
-);
 const useAccountInfo = () => {
   const { address, getOfflineSigner } = useWalletConnect();
 
@@ -56,6 +51,7 @@ const useAccountInfo = () => {
     memo: 'Claim rewards',
   });
   const [isClaimModalOpen, setClaimModalOpen] = useState(false);
+  const [selectedModal, setSelectedModal] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -165,6 +161,14 @@ const useAccountInfo = () => {
     setClaimModalOpen(status);
   }
 
+  const handleOpenModal = (modal: string) => {
+    setSelectedModal(modal);
+  }
+
+  const handleCloseModal = () => {
+    setSelectedModal('');
+  }
+
   return { 
     accountInfo, 
     loading, 
@@ -173,9 +177,12 @@ const useAccountInfo = () => {
     errorClaim,
     claimInfo,
     isClaimModalOpen,
+    selectedModal,
     handleClaimButtonClick, 
     handleClaimChange,
     handleToggleClaimModal,
+    handleOpenModal,
+    handleCloseModal,
   };
 };
 

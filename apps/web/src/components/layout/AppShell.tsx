@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { X, BarChart2, Hotel, LaptopMinimalCheck, Database, ShieldCheck, Image, BrainCircuit } from '@tamagui/lucide-icons'
+import { X, BarChart2, Hotel, LaptopMinimalCheck, Database, ShieldCheck, Image, BrainCircuit, Wallet } from '@tamagui/lucide-icons'
 
 import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 
@@ -17,6 +17,7 @@ export const NAV_ITEMS: { id: ViewId; label: string, url: string, icon: React.Re
   { id: "sense", label: "Sense", url: "#", icon: <ShieldCheck /> },
   { id: "inference", label: "Inference", url: "#", icon: <BrainCircuit /> },
   { id: "nfts", label: "NFTs", url: "#", icon: <Image /> },
+  { id: "wallet", label: "Wallet", url: "/wallet", icon: <Wallet /> },
 ]
 
 const VIEW_TITLES: Record<ViewId, string> = {

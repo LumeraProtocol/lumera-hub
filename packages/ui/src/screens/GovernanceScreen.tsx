@@ -316,7 +316,9 @@ export const GovernanceScreen = ({
                   <div className='flex justify-between items-start gap-6 governance-card-header'>
                     <div className='flex flex-col'>
                       {/* <SizableText className='text-lumera-label'>LIP-006</SizableText> */}
-                      <H3 className='!leading-6'>{item.title}</H3>
+                      <a href={`/governance/${item.id}`}>
+                        <H3 className='!leading-6'>{item.title}</H3>
+                      </a>
                     </div>
                     {getStatus(item.status)}
                   </div>
