@@ -30,6 +30,7 @@ const useSend = (options: UseDepositOptions = {}) => {
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [balances, setBalances] = useState<Coin[]>([]);
     const [selectedDenom, setSelectedDenom] = useState<string>('ulume');
+    const [transactionHash, setTransactionHash] = useState('');
 
     useEffect(() => {
         if (isConnected) {
@@ -116,6 +117,7 @@ const useSend = (options: UseDepositOptions = {}) => {
             };
             const result = await client.signAndBroadcast(optionsAdvanced.senderAddress, [msg], fee, optionsAdvanced.memo);
             if (result?.transactionHash) {
+                setTransactionHash(result?.transactionHash);
                 resetData();
                 if (options?.callback) {
                     options.callback();
@@ -147,6 +149,10 @@ const useSend = (options: UseDepositOptions = {}) => {
         }
     };
 
+    const handleCloseCongratulationsModal = () => {
+        setTransactionHash('');
+    }
+
     return {
         error,
         showAdvanced,
@@ -154,9 +160,11 @@ const useSend = (options: UseDepositOptions = {}) => {
         optionsAdvanced,
         balances,
         selectedDenom,
+        transactionHash,
         handleInputChange,
         handleShowAdvancedChange,
         handleSendClick,
+        handleCloseCongratulationsModal,
     }
 }
 

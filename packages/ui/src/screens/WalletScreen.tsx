@@ -71,6 +71,8 @@ interface IWalletScreen {
             balances: string; 
         };
         showAdvanced: boolean;
+        transactionHash?: string;
+        onCloseCongratulationsModal?: () => void;
         onCloseDailogChange: () => void;
         onSendClick: () => void;
         onInputChange: (name: string, value: string) => void;
@@ -89,6 +91,8 @@ interface IWalletScreen {
         };
         showAdvanced: boolean;
         validators: IValidator[];
+        transactionHash?: string;
+        onCloseCongratulationsModal?: () => void;
         onCloseDailogChange: () => void;
         onSendClick: () => void;
         onInputChange: (name: string, value: string) => void;
@@ -192,6 +196,8 @@ export const WalletScreen = ({
                 optionsAdvanced={sendOptions.optionsAdvanced}
                 showAdvanced={sendOptions.showAdvanced}
                 error={sendOptions.error}
+                transactionHash={sendOptions.transactionHash}
+                onCloseCongratulationsModal={sendOptions.onCloseCongratulationsModal}
             />
             <DelegateModal
                 isOpen={selectedModal === 'stake'}
@@ -205,7 +211,8 @@ export const WalletScreen = ({
                 showAdvanced={delegateOptions.showAdvanced}
                 error={delegateOptions.error}
                 validators={delegateOptions.validators}
-
+                transactionHash={delegateOptions.transactionHash}
+                onCloseCongratulationsModal={delegateOptions.onCloseCongratulationsModal}
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <Card>

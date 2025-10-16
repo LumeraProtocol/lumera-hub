@@ -13,7 +13,7 @@ interface UseDepositOptions {
   callback?: () => void;
 }
 
-export const RATE_VALUE = 1000000
+export const RATE_VALUE = 1000000;
 
 const useDeposit = (options: UseDepositOptions = {}) => {
     const { address, getOfflineSigner } = useWalletConnect();
@@ -47,8 +47,10 @@ const useDeposit = (options: UseDepositOptions = {}) => {
     };
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (address) {
+            fetchData();
+        }
+    }, [address]);
 
     const resetData = () => {
         setShowAdvanced(false);

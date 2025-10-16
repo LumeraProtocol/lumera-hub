@@ -45,13 +45,14 @@ const useAccountInfo = () => {
   const [isClaimLoading, setClaimLoading] = useState(false);
   const [errorClaim, setErrorClaim] = useState<string | null>(null);
   const [claimInfo, setClaimInfo] = useState({
-    senderAddress: address,
+    senderAddress: '',
     fees: '2000',
     gas: '200000',
     memo: 'Claim rewards',
   });
   const [isClaimModalOpen, setClaimModalOpen] = useState(false);
   const [selectedModal, setSelectedModal] = useState('');
+  const [transactionHash, setTransactionHash] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -90,6 +91,13 @@ const useAccountInfo = () => {
       setLoading(false);
       setError(null);
       return;
+    }
+
+    if (address) {
+      setClaimInfo({
+        ...claimInfo,
+        senderAddress: address,
+      });
     }
 
     fetchData();
@@ -131,9 +139,9 @@ const useAccountInfo = () => {
         amount: [{ denom: DENOM, amount: claimInfo.fees }], // Fee gas
         gas: claimInfo.gas, // Gas limit
       };
-      const memo = claimInfo.memo
-      const result = await client.signAndBroadcast(claimInfo.senderAddress, msgWithdraw, fee, memo);
+      const result = await client.signAndBroadcast(claimInfo.senderAddress, msgWithdraw, fee, claimInfo.memo);
       if (result?.transactionHash) {
+        setTransactionHash(result.transactionHash);
         setClaimModalOpen(false);
         fetchData();
       }
@@ -169,6 +177,11 @@ const useAccountInfo = () => {
     setSelectedModal('');
   }
 
+  const handleCloseCongratulationsModal = () => {
+    setTransactionHash('');
+    setClaimModalOpen(false);
+  }
+
   return { 
     accountInfo, 
     loading, 
@@ -178,6 +191,8 @@ const useAccountInfo = () => {
     claimInfo,
     isClaimModalOpen,
     selectedModal,
+    transactionHash,
+    handleCloseCongratulationsModal,
     handleClaimButtonClick, 
     handleClaimChange,
     handleToggleClaimModal,

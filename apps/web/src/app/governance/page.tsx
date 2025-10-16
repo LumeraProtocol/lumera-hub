@@ -47,7 +47,7 @@ export default function Page() {
           setVoteOpen={proposals.setVoteOpen}
           deposit={{
             isOpen: deposit.isModalOpen, 
-            sernder: address, 
+            sender: address, 
             isVoteLoading: deposit.isLoading, 
             error: deposit.error,
             voteAdvanced: deposit.depositAdvanced,

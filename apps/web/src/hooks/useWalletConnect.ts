@@ -31,7 +31,7 @@ const useWalletConnect = () => {
                     break;
             }
         } catch (error) {
-            console.log('error', error)
+            console.error(error);
             // setError(error?.message)
         }
         setLoading(false);
@@ -64,7 +64,6 @@ const useWalletConnect = () => {
                 walletName: '',
             }));
         } catch (error: unknown) {
-            console.log('error', error)
             setError(error instanceof Error ? error.message : 'Unknown error')
         }
     }
