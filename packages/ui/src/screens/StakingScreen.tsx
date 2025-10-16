@@ -137,6 +137,13 @@ export const StakingScreen = ({
   const totalPower = calculateTotalPower(getValidators());
   const totalStaked = calculateTotalPower(getAllValidators());
 
+  const getTotalStaked = () => {
+    if (staking.validatorTab === 'my') {
+      return accountInfo?.delegations?.reduce((total, item) => Number(item.delegation.shares) + total, 0) || 0;
+    }
+    return calculateTotalPower(getAllValidators());
+  }
+
   const getValidatorsBySort = () => {
     const validators = getValidators();
 
@@ -217,7 +224,7 @@ export const StakingScreen = ({
               <Card.Header padded>
                 <H3 className='text-lumera-label'>Total LUME Staked</H3>
                 <div className='text-[40px] font-bold text-white'>
-                  {formatNumber(totalStaked / 1000000, { decimalsLength: 0})} LUME
+                  {formatNumber(getTotalStaked() / 1000000, { decimalsLength: 2 })} LUME
                 </div>
               </Card.Header>
             </Card>
@@ -225,7 +232,7 @@ export const StakingScreen = ({
               <Card.Header padded>
                 <H3 className='text-lumera-label'>Current Staking APR</H3>
                 <div className='!text-lumera-green font-bold text-[40px]'>
-                  {getCurrentStakingAPR()}
+                  Coming soon
                 </div>
               </Card.Header>
             </Card>
