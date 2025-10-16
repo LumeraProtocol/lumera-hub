@@ -68,6 +68,8 @@ interface IHomeScreen {
   handleClaimChange: (name: string, value: string) => void;
   handleToggleClaimModal: (status: boolean) => void;
   isClaimModalOpen: boolean;
+  transactionHash?: string;
+  onCloseCongratulationsModal?: () => void;
 }
 
 interface IPortfolioOverviewChart {
@@ -78,7 +80,7 @@ interface IPortfolioOverviewChart {
 interface IVoteModal {
   isOpen: boolean;
   setOpen: (status: boolean) => void;
-  sernder: string;
+  sender: string;
   onOptionChange: (val: string) => void;
   onVoteClick: (item: IProposal | null) => void;
   item: IProposal | null;
@@ -96,7 +98,7 @@ interface IVoteModal {
 interface IClaimableRewardsModal {
   isOpen: boolean;
   setOpen: (status: boolean) => void;
-  sernder: string;
+  sender: string;
   onSendClick: () => void;
   isVoteLoading: boolean;
   error: string | null;
@@ -106,6 +108,8 @@ interface IClaimableRewardsModal {
     memo: string; 
   };
   handleVoteAdvancedChange: (name: string, value: string) => void;
+  transactionHash?: string;
+  onCloseCongratulationsModal?: () => void;
 }
 
 const RATE_VALUE = 1000000
@@ -189,7 +193,7 @@ const formatMessage = (msgs: TMessage[]) => {
 export const VoteModal = ({ 
   isOpen, 
   setOpen, 
-  sernder, 
+  sender, 
   onOptionChange, 
   onVoteClick, 
   item, 
@@ -253,7 +257,7 @@ export const VoteModal = ({
               <div className='mt-1'>
                 <Label htmlFor="sender" className='text-base'>Sender</Label>
                 <div className='input-wrapper'>
-                  <Input id="sender" placeholder="Sender" className='input' defaultValue={sernder} readOnly />
+                  <Input id="sender" placeholder="Sender" className='input' defaultValue={sender} readOnly />
                 </div>
               </div>
               <div className='mt-1'>
@@ -387,17 +391,70 @@ export const VoteModal = ({
 const ClaimableRewardsModal = ({ 
   isOpen, 
   setOpen, 
-  sernder, 
+  sender, 
   onSendClick, 
   isVoteLoading, 
   error,
   voteAdvanced,
   handleVoteAdvancedChange,
+  transactionHash,
+  onCloseCongratulationsModal,
 }: IClaimableRewardsModal) => {
   if (!isOpen) {
     return null;
   }
+  
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  if (transactionHash) {
+    return (
+      <Dialog
+        open
+        onOpenChange={onCloseCongratulationsModal}
+        modal
+      >
+        <Dialog.Trigger asChild>
+        </Dialog.Trigger>
+
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+
+          <Dialog.Content
+            bordered
+            elevate
+            key="content"
+            animation={[
+              'quick',
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            x={0}
+            scale={1}
+            opacity={1}
+            y={0}
+          >
+            <div className='withdraw-main-content relative text-center p-5'>
+              <H3 className='!text-green-500 text-[32px]'>Congratulations! claim all rewards completed successfully.</H3>
+              <div className='mt-3'>
+                <a href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</a>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog> 
+    )
+  }
 
   const handleAdvancedCheckedChange = (checked: boolean) => {
     setShowAdvanced(checked);
@@ -449,7 +506,7 @@ const ClaimableRewardsModal = ({
               <div className='mt-1'>
                 <Label htmlFor="sender" className='text-base'>Sender</Label>
                 <div className='input-wrapper'>
-                  <Input id="sender" placeholder="Sender" className='input' defaultValue={sernder} readOnly />
+                  <Input id="sender" placeholder="Sender" className='input' defaultValue={sender} readOnly />
                 </div>
               </div>
 
@@ -550,6 +607,8 @@ export const HomeScreen = ({
   handleClaimChange,
   handleToggleClaimModal,
   isClaimModalOpen,
+  transactionHash,
+  onCloseCongratulationsModal,
 }: IHomeScreen) => {
   const { stacked, liquid, rewards } = getPortfolioData(accountInfo);
   const [isVoteOpen, setVoteOpen] = React.useState(false);
@@ -783,7 +842,7 @@ export const HomeScreen = ({
           <VoteModal 
             isOpen={isVoteOpen} 
             setOpen={setVoteOpen} 
-            sernder={address} 
+            sender={address} 
             onOptionChange={onOptionChange} 
             onVoteClick={onVoteClick} 
             item={selectedItem} 
@@ -795,12 +854,14 @@ export const HomeScreen = ({
           <ClaimableRewardsModal 
             isOpen={isClaimModalOpen} 
             setOpen={handleToggleClaimModal} 
-            sernder={claimInfo.senderAddress} 
+            sender={claimInfo.senderAddress} 
             onSendClick={onClaimButtonClick} 
             isVoteLoading={isClaimLoading} 
             error={errorClaim} 
             voteAdvanced={claimInfo}
             handleVoteAdvancedChange={handleClaimChange}
+            transactionHash={transactionHash}
+            onCloseCongratulationsModal={onCloseCongratulationsModal}
           />
         </>
       }

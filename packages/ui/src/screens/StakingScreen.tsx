@@ -6,7 +6,7 @@ import { fromHex, toBase64, fromBase64, toHex } from '@cosmjs/encoding';
 import Loading from '@/components/Loading';
 import DelegateModal from '@/components/DelegateModal';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
-import { AccountInfoData } from '@/hooks/useAccountInfo';
+import { AccountInfoData, Coin } from '@/hooks/useAccountInfo';
 import { RATE_VALUE } from '@/hooks/useDeposit';
 import { IValidator } from '@/types/validator';
 import { formatToken, formatCommissionRate, formatNumber, percent } from '@/utils/format';
@@ -19,6 +19,11 @@ type TSigningInfos = {
   missed_blocks_counter: string;
   start_height: string;
   tombstoned: boolean;
+}
+
+type Ireward = {
+  validator_address: string;
+  reward: Coin[];
 }
 
 interface IStakingScreen {
@@ -39,6 +44,8 @@ interface IStakingScreen {
     totalValidators: string;
     isLoading: boolean;
     isOpenModal: boolean;
+    transactionHash?: string;
+    onCloseCongratulationsModal?: () => void;
     onCloseDailogChange: () => void;
     onSendClick: () => void;
     onInputChange: (name: string, value: string) => void;
@@ -66,7 +73,10 @@ interface IStakingScreen {
       slash_fraction_downtime: string;
     };
     signingInfos: TSigningInfos[];
-    handleTabChange: (tab: string) => void;
+    validatorTab: string;
+    rewards: Ireward[];
+    onValidatorTabChange: (tab: string) => void;
+    onTabChange: (tab: string) => void;
   };
   accountInfo: AccountInfoData | null;
 }
@@ -78,11 +88,54 @@ export const StakingScreen = ({
   accountInfo,
 }: IStakingScreen) => {
   const getValidators = () => {
-    return staking?.currentTab === 'active' ? delegateOptions.validators : staking.validators;
+    const validators = staking?.currentTab === 'active' ? delegateOptions.validators : staking.validators;
+    if (staking.validatorTab === 'my') {
+      const validatorAddress = staking?.rewards?.map((item) => item.validator_address);
+      if (validatorAddress?.length) {
+        return validators.filter((item) => validatorAddress.includes(item.operator_address));
+      }
+    }
+    return validators
+  }
+
+  const calcTotalValidatorByTab = (tab: string) => {
+    if (staking.validatorTab === 'my') {
+      const validatorAddress = staking?.rewards?.map((item) => item.validator_address);
+       if (validatorAddress?.length) {
+        switch (tab) {
+          case "active":
+            return delegateOptions.validators.filter((item) => validatorAddress.includes(item.operator_address)).length;
+          case "inactive":
+            return staking.validators.filter((item) => validatorAddress.includes(item.operator_address)).length;
+          default:
+            return "0";
+        }
+      }
+    }
+
+    switch (tab) {
+      case "active":
+        return delegateOptions?.totalValidators;
+      case "inactive":
+        return staking?.totalValidators;
+      default:
+          return "0";
+    }
+  }
+
+  const getAllValidators = () => {
+    if (staking.validatorTab === 'my') {
+      const validatorAddress = staking?.rewards?.map((item) => item.validator_address);
+      if (validatorAddress?.length) {
+        return [...delegateOptions.validators, ...staking.validators].filter((item) => validatorAddress.includes(item.operator_address));
+      }
+    }
+
+    return [...delegateOptions.validators, ...staking.validators];
   }
 
   const totalPower = calculateTotalPower(getValidators());
-  const totalStaked = calculateTotalPower([...delegateOptions.validators, ...staking.validators]);
+  const totalStaked = calculateTotalPower(getAllValidators());
 
   const getValidatorsBySort = () => {
     const validators = getValidators();
@@ -110,10 +163,12 @@ export const StakingScreen = ({
   }
 
   const getCurrentStakingAPR = () => {
-    const validators = [...delegateOptions.validators, ...staking.validators]
-    const total = validators.reduce((total, validator) => Number(formatCommissionRate(validator.commission?.commission_rates?.rate).replace('%', '')) + total, 0);
-
-    return `${(total / validators.length).toFixed(2)}%`;
+    const validators = getAllValidators();
+    const totalReward = validators.reduce((total, validator) => {
+      const reward = Number(formatCommissionRate(validator.commission?.commission_rates?.rate).replace('%', '')) * Number(validator.delegator_shares) / 100;
+      return reward + total
+    }, 0);
+    return percent(totalReward / totalStaked);
   }
 
   const getUptime = (validator: IValidator) => {
@@ -147,11 +202,11 @@ export const StakingScreen = ({
         <div className='w-full'>
           <div className='w-full'>
             <ul className='flex gap-0 list-none tabs'>
-              <li className='tab-item active'>
-                <button className='tab-button cursor-pointer px-3'>All Validators</button>
+              <li className={`tab-item ${staking.validatorTab === 'all' ? 'active' : ''}`}>
+                <button className='tab-button cursor-pointer px-3' onClick={() => staking.onValidatorTabChange('all')}>All Validators</button>
               </li>
-              <li className='tab-item'>
-                <button className='tab-button cursor-pointer px-3'>My Staking</button>
+              <li className={`tab-item ${staking.validatorTab === 'my' ? 'active' : ''}`}>
+                <button className='tab-button cursor-pointer px-3' onClick={() => staking.onValidatorTabChange('my')}>My Staking</button>
               </li>
             </ul>
           </div>
@@ -162,7 +217,7 @@ export const StakingScreen = ({
               <Card.Header padded>
                 <H3 className='text-lumera-label'>Total LUME Staked</H3>
                 <div className='text-[40px] font-bold text-white'>
-                  {formatNumber(totalStaked, { decimalsLength: 0})} LUME
+                  {formatNumber(totalStaked / 1000000, { decimalsLength: 0})} LUME
                 </div>
               </Card.Header>
             </Card>
@@ -236,10 +291,10 @@ export const StakingScreen = ({
                 <Loading isLoading={staking.isLoading || delegateOptions.isLoading} />
                 <ul className='flex gap-0 list-none tabs'>
                   <li className={`tab-item ${staking?.currentTab === 'active' ? 'active' : ''}`}>
-                    <button className='tab-button cursor-pointer px-3' onClick={() => staking.handleTabChange('active')}>Active ({delegateOptions?.totalValidators || 0})</button>
+                    <button className='tab-button cursor-pointer px-3' onClick={() => staking.onTabChange('active')}>Active ({calcTotalValidatorByTab('active')})</button>
                   </li>
                   <li className={`tab-item ${staking?.currentTab === 'inactive' ? 'active' : ''}`}>
-                    <button className='tab-button cursor-pointer px-3' onClick={() => staking.handleTabChange('inactive')}>Inactive ({staking?.totalValidators || 0})</button>
+                    <button className='tab-button cursor-pointer px-3' onClick={() => staking.onTabChange('inactive')}>Inactive ({calcTotalValidatorByTab('inactive')})</button>
                   </li>
                 </ul>
                 <table className='w-full table mt-5 staking-table'>
@@ -303,6 +358,8 @@ export const StakingScreen = ({
           showAdvanced={delegateOptions.showAdvanced}
           error={delegateOptions.error}
           validators={delegateOptions.validators}
+          transactionHash={delegateOptions.transactionHash}
+          onCloseCongratulationsModal={delegateOptions.onCloseCongratulationsModal}
         />
       </div>
       }

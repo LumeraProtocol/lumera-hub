@@ -10,7 +10,19 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 
 export default function Page() {
   const { address } = useWalletConnect();
-  const { accountInfo, loading, handleClaimButtonClick, isClaimLoading, claimInfo, errorClaim, handleClaimChange, handleToggleClaimModal, isClaimModalOpen } = useAccountInfo();
+  const { 
+    accountInfo, 
+    loading, 
+    handleClaimButtonClick, 
+    isClaimLoading, 
+    claimInfo, 
+    errorClaim, 
+    handleClaimChange, 
+    handleToggleClaimModal, 
+    isClaimModalOpen, 
+    transactionHash, 
+    handleCloseCongratulationsModal,
+  } = useAccountInfo();
   const proposals = useProposals();
   const recentActivityData = useRecentActivity();
 
@@ -42,6 +54,8 @@ export default function Page() {
           handleClaimChange={handleClaimChange}
           handleToggleClaimModal={handleToggleClaimModal}
           isClaimModalOpen={isClaimModalOpen}
+          transactionHash={transactionHash}
+          onCloseCongratulationsModal={handleCloseCongratulationsModal}
         />
       </div>
     </>

@@ -55,6 +55,8 @@ export default function Page() {
             onSendClick: sendOptions.handleSendClick,
             onInputChange: sendOptions.handleInputChange,
             onAdvancedCheckedChange: sendOptions.handleShowAdvancedChange,
+             transactionHash: sendOptions.transactionHash,
+            onCloseCongratulationsModal: sendOptions.handleCloseCongratulationsModal,
           }}
           delegateOptions={{
             isVoteLoading: delegate.isLoading,
@@ -62,6 +64,8 @@ export default function Page() {
             optionsAdvanced: delegate.optionsAdvanced,
             showAdvanced: delegate.showAdvanced,
             validators: delegate.validators,
+            transactionHash: delegate.transactionHash,
+            onCloseCongratulationsModal: delegate.handleCloseCongratulationsModal,
             onCloseDailogChange: handleCloseModal,
             onSendClick: delegate.handleSendClick,
             onInputChange: delegate.handleInputChange,

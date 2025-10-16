@@ -61,7 +61,7 @@ interface IGovernanceScreen {
   deposit: {
     isOpen: boolean;
     setOpen: (status: boolean) => void;
-    sernder: string;
+    sender: string;
     onVoteClick: () => void;
     setModalOpen: (status: boolean) => void;
     setProposalId: (id: string) => void;
@@ -188,7 +188,7 @@ export const GovernanceScreen = ({
       yesPercent: item.final_tally_result.yes_count ? Number(item.final_tally_result.yes_count) * 100 / total : 0,
       noPercent: item.final_tally_result.yes_count ? Number(item.final_tally_result.no_count) * 100 / total : 0,
       noWithVetoPercent: item.final_tally_result.yes_count ? Number(item.final_tally_result.no_with_veto_count) * 100 / total : 0,
-      abstainPercent: item.final_tally_result.yes_count ? Number(item.final_tally_result.abstain_count) * 100 / total : 0,
+      abstainPercent: item.final_tally_result.yes_count ? Number(item.final_tally_result.abstain_count || 0) * 100 / total : 0,
     }
   }
 
@@ -349,7 +349,7 @@ export const GovernanceScreen = ({
         <VoteModal 
           isOpen={isVoteOpen} 
           setOpen={setVoteOpen} 
-          sernder={address} 
+          sender={address} 
           onOptionChange={onOptionChange} 
           onVoteClick={onVoteClick} 
           item={selectedItem} 
@@ -360,7 +360,7 @@ export const GovernanceScreen = ({
         />
         <DepositModal 
           isOpen={deposit.isOpen}
-          sernder={deposit.sernder}
+          sender={deposit.sender}
           isVoteLoading={deposit.isVoteLoading}
           error={deposit.error}
           voteAdvanced={deposit.voteAdvanced}

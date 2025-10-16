@@ -45,7 +45,7 @@ export default function Page({ params }: Props) {
           handlePageClick={handlePageClick}
           deposit={{
             isOpen: deposit.isModalOpen, 
-            sernder: address, 
+            sender: address, 
             isVoteLoading: deposit.isLoading, 
             error: deposit.error,
             voteAdvanced: deposit.depositAdvanced,
