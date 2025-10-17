@@ -276,7 +276,7 @@ export default function DelegateModal({
               </div>
             </YStack>
             {error && !isVoteLoading ? 
-              <div className='text-lumera-red-light mt-3'>{error}</div> : null
+              <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
             }
           </div>
         </Dialog.Content>

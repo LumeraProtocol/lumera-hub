@@ -13,7 +13,13 @@ import { AccountInfoData, Coin } from '@/hooks/useAccountInfo';
 import { IRecentActivity } from '@/hooks/useRecentActivity';
 import { RATE_VALUE } from '@/hooks/useDeposit';
 import { IValidator } from '@/types/validator';
-import { formatToken, formatCommissionRate, formatAddress, percent } from '@/utils/format';
+import { 
+  formatToken, 
+  formatCommissionRate, 
+  formatAddress, 
+  percent, 
+  formatTokens,
+} from '@/utils/format';
 import { 
   calculateTotalPower, 
   calculatePercent, 
@@ -218,7 +224,7 @@ export const StakingScreen = ({
     if (accountInfo?.rewards?.length) {
       for (const item of accountInfo?.rewards) {
         for (const reward of item.reward) {
-          if (reward.denom === 'ulume') {
+          if (reward.denom === staking.params.bond_denom) {
             total += Number(reward.amount);
           }
         }
@@ -416,7 +422,7 @@ export const StakingScreen = ({
                           {formatToken({
                             amount: `${getTotalStaked()}`,
                             denom: staking.params.bond_denom,
-                          }, true, '0,0.[00]')}
+                          }, true, '0,0.[000000]')}
                         </p>
                       </div>
                       <div>
@@ -429,7 +435,7 @@ export const StakingScreen = ({
                           {formatToken({
                             amount: `${getTotalRewards()}`,
                             denom: staking.params.bond_denom,
-                          }, true, '0,0.[00]')}
+                          }, true, '0,0.[000000]')}
                         </p>
                       </div>
                     </div>
@@ -489,15 +495,12 @@ export const StakingScreen = ({
                                   </div>
                                   <div className="col-span-3 text-right font-mono text-white">
                                       {formatToken({
-                                        amount: delegation.delegation.shares,
-                                        denom: staking.params.bond_denom,
-                                      }, true, '0,0.[00]')}
+                                        amount: delegation.balance.amount,
+                                        denom: delegation.balance.denom,
+                                      }, true, '0,0.[000000]')}
                                   </div>
                                   <div className="col-span-3 text-right font-mono text-teal-400">
-                                    {formatToken({
-                                      amount: `${reward ? getReward(reward) : '0'}`,
-                                      denom: staking.params.bond_denom,
-                                    }, true, '0,0.[00]')}
+                                    {formatTokens(reward?.reward)}
                                   </div>
                                   <div className="col-span-2 flex justify-end">
                                       {reward && getReward(reward) > 0 && <CustomButton variant="secondary" className="!py-1.5 !px-4 text-sm" onClick={() => claim.handleToggleClaimModal(true)}>Claim</CustomButton>}
@@ -512,13 +515,6 @@ export const StakingScreen = ({
                       {staking.subTab === 'unstake' && (
                         <div className='relative'>
                           <Loading isLoading={unbonding.isLoading} />
-                          {!unbonding.unbondingDelegations.length ? (
-                            <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
-                              <div className='col-span-12'>
-                                <H3>No data</H3>
-                              </div>
-                            </div>
-                          ) : null}
                           <div className="overflow-x-auto">
                             <div className="min-w-[700px] space-y-2">
                               <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase">
@@ -527,6 +523,13 @@ export const StakingScreen = ({
                                 <div className="col-span-2 text-right">Balance</div>
                                 <div className="col-span-5 text-right">Completion Time</div>
                               </div>
+                              {!unbonding.unbondingDelegations.length ? (
+                                <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
+                                  <div className='col-span-12'>
+                                    <H3>No data</H3>
+                                  </div>
+                                </div>
+                              ) : null}
                               {unbonding.unbondingDelegations.map((delegation, i) => {
                                 const validator = getAllValidators().find(v => v.operator_address === delegation.validator_address);
 

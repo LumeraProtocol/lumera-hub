@@ -797,7 +797,7 @@ export const HomeScreen = ({
                         <>
                           {!proposals?.length ?
                             <div className='flex items-center justify-center min-h-28 md:min-h-80 my-2'>
-                              <H3 className='text-2xl'>No data</H3>
+                              <H3 className='text-2xl'>No active proposals</H3>
                             </div> : null
                           }
                           {proposals?.map((item) => (

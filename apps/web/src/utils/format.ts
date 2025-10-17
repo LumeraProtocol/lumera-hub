@@ -81,3 +81,12 @@ export const formatCommissionRate = (rate?: string) => {
 export const percent = (decimal?: string | number) => {
   return decimal ? numeral(decimal).format('0.[00]%') : '-';
 }
+
+export const formatTokens = (
+    tokens?: { denom: string; amount: string }[],
+    withDenom = true,
+    fmt = '0.0a'
+  ) => {
+  if (!tokens) return '';
+  return tokens.map((x) => formatToken(x, withDenom, fmt)).join(', ');
+}

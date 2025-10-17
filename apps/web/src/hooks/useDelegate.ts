@@ -118,7 +118,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
                     delegatorAddress: optionsAdvanced.senderAddress,
                     validatorAddress: optionsAdvanced.validator,
                     amount: {
-                        denom: 'lumera',
+                        denom: 'lume',
                         amount: optionsAdvanced.amount,
                     },
                 }),
