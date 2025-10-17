@@ -740,14 +740,14 @@ export const HomeScreen = ({
                   <div className='mt-5 flex justify-between items-center chart-wrapper'>
                     <div className='w-1/2'>
                       <ReactECharts option={getOption({ 
-                        stacked: formatToken({
+                        stacked: Number(formatToken({
                                 amount: `${stacked}`,
                                 denom: DENOM,
-                              }, false, '0,0.[000000]'), 
-                        liquid: formatToken({
+                              }, false, '0,0.[000000]')), 
+                        liquid: Number(formatToken({
                                 amount: `${liquid}`,
                                 denom: DENOM,
-                              }, false, '0,0.[000000]')
+                              }, false, '0,0.[000000]'))
                         })} style={{ height: '200px', width: '100%' }} />
                     </div>
                     <div className='w-1/2'>
