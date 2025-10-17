@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 import * as instance from '@/utils/api';
+import { DENOM } from '@/contants/network';
 
 const LIMIT = 20;
 
@@ -19,6 +20,11 @@ const useGovernances = () => {
         rejected: 0,
         unspecified: 0,
         failed: 0,
+        votingPeriodParam: '0',
+        depositRequiredParam: {
+            denom: DENOM,
+            amount: '0'
+        },
     });
 
     const [currentTab, setCurrentTab] = useState('');
@@ -29,7 +35,16 @@ const useGovernances = () => {
             message: '',
         })
         try {
-            const [resPassed, resDepositRequired, resVotingPeriod, resTotalProposals, resRejected, resUnspecified, resFailed] = await Promise.all([
+            const [
+                resPassed, 
+                resDepositRequired, 
+                resVotingPeriod, 
+                resTotalProposals, 
+                resRejected, 
+                resUnspecified, 
+                resFailed,
+                resParams,
+            ] = await Promise.all([
                 instance.get(`/cosmos/gov/v1/proposals?pagination.limit=1&pagination.count_total=true&proposal_status=PROPOSAL_STATUS_PASSED`),
                 instance.get(`/cosmos/gov/v1/proposals?pagination.limit=1&pagination.count_total=true&proposal_status=PROPOSAL_STATUS_DEPOSIT_PERIOD`),
                 instance.get(`/cosmos/gov/v1/proposals?pagination.limit=1&pagination.count_total=true&proposal_status=PROPOSAL_STATUS_VOTING_PERIOD`),
@@ -37,7 +52,9 @@ const useGovernances = () => {
                 instance.get(`/cosmos/gov/v1/proposals?pagination.limit=1&pagination.count_total=true&proposal_status=PROPOSAL_STATUS_REJECTED`),
                 instance.get(`/cosmos/gov/v1/proposals?pagination.limit=1&pagination.count_total=true&proposal_status=PROPOSAL_STATUS_UNSPECIFIED`),
                 instance.get(`/cosmos/gov/v1/proposals?pagination.limit=1&pagination.count_total=true&proposal_status=PROPOSAL_STATUS_FAILED`),
+                instance.get(`/cosmos/gov/v1/params/voting`),
             ]);
+
             setSumary({
                 totalProposals: Number(resPassed.data.pagination.total || 0),
                 passed: Number(resTotalProposals.data.pagination.total || 0),
@@ -46,6 +63,11 @@ const useGovernances = () => {
                 rejected: Number(resRejected.data.pagination.total || 0),
                 unspecified: Number(resUnspecified.data.pagination.total || 0),
                 failed: Number(resFailed.data.pagination.total || 0),
+                depositRequiredParam: {
+                    denom: resParams.data.params.min_deposit[0].denom,
+                    amount: resParams.data.params.min_deposit[0].amount,
+                },
+                votingPeriodParam: resParams.data.params.voting_period,
             });
         } catch (error) {
             setMsg({

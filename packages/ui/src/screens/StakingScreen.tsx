@@ -8,6 +8,7 @@ import PastTime from '@/components/PastTime';
 import Loading from '@/components/Loading';
 import CountDown from '@/components/CountDown';
 import DelegateModal from '@/components/DelegateModal';
+import Skeleton from '@/components/Skeleton';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import { AccountInfoData, Coin } from '@/hooks/useAccountInfo';
 import { IRecentActivity } from '@/hooks/useRecentActivity';
@@ -141,6 +142,7 @@ interface IStakingScreen {
     unbondingDelegations: TUnbondingDelegation[];
     unbondingDelegationsError: string;
   };
+  isAccountInfoLoading: boolean;
 }
 
 export const StakingScreen = ({ 
@@ -151,6 +153,7 @@ export const StakingScreen = ({
   claim,
   activityData,
   unbonding,
+  isAccountInfoLoading,
 }: IStakingScreen) => {
   const getValidators = () => {
     const validators = staking?.currentTab === 'active' ? delegateOptions.validators : staking.validators;
@@ -176,7 +179,7 @@ export const StakingScreen = ({
 
   const getTotalStaked = () => {
     if (staking.validatorTab === 'my') {
-      return accountInfo?.delegations?.reduce((total, item) => Number(item.delegation.shares) + total, 0) || 0;
+      return accountInfo?.delegations?.reduce((total, item) => Number(item.balance.amount) + total, 0) || 0;
     }
     return calculateTotalPower(getAllValidators());
   }
@@ -274,15 +277,18 @@ export const StakingScreen = ({
           {staking.validatorTab === 'all' ?
             <>
               <div className='flex justify-between w-full gap-6 mt-6 staking-summary-wrapper relative'>
-                <Loading isLoading={staking.isLoading || delegateOptions.isLoading} />
                 <Card elevate size="$4" bordered className='w-2/3'>
                   <Card.Header padded>
                     <H3 className='text-lumera-label'>Total LUME Staked</H3>
                     <div className='text-[40px] font-bold text-white'>
-                      {formatToken({
-                        amount: `${getTotalStaked()}`,
-                        denom: staking.params.bond_denom,
-                      }, true, '0,0.[00]')}
+                      {staking.isLoading || delegateOptions.isLoading ?
+                        <Skeleton /> : <>
+                          {formatToken({
+                            amount: `${getTotalStaked()}`,
+                            denom: staking.params.bond_denom,
+                          }, true, '0,0.[00]')}
+                        </>
+                      }
                     </div>
                   </Card.Header>
                 </Card>
@@ -353,60 +359,68 @@ export const StakingScreen = ({
                     </div>
                   </div>
                   <div className='mt-5 relative'>
-                    <Loading isLoading={staking.isLoading || delegateOptions.isLoading} />
-                    <ul className='flex gap-0 list-none tabs'>
-                      <li className={`tab-item ${staking?.currentTab === 'active' ? 'active' : ''}`}>
-                        <button className='tab-button cursor-pointer px-3' onClick={() => staking.onTabChange('active')}>Active ({calcTotalValidatorByTab('active')})</button>
-                      </li>
-                      <li className={`tab-item ${staking?.currentTab === 'inactive' ? 'active' : ''}`}>
-                        <button className='tab-button cursor-pointer px-3' onClick={() => staking.onTabChange('inactive')}>Inactive ({calcTotalValidatorByTab('inactive')})</button>
-                      </li>
-                    </ul>
-                    <table className='w-full table mt-5 staking-table'>
-                      <thead>
-                        <tr>
-                          <th align='left' className='text-lumera-label validator'>Validator</th>
-                          <th align='right' className='text-lumera-label staked-amount'>Staked Amount</th>
-                          <th align='right' className='text-lumera-label commission'>Commission</th>
-                          <th align='right' className='text-lumera-label voting-power'>Voting Power</th>
-                          <th align='left' className='text-lumera-label uptime'>Uptime</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {getValidatorsBySort()?.map((validator) => {
-                          const uptime = getUptime(validator);
-                          const uptimePercent = percent(uptime);
-                          return (
-                            <tr key={validator.operator_address}>
-                              <td data-label="Validator: ">
-                                {validator.description.moniker}
-                              </td>
-                              <td data-label="Staked Amount: " align='right'>{formatToken({
-                                amount: validator.tokens,
-                                denom: staking.params.bond_denom,
-                              }, true, '0,0')}</td>
-                              <td data-label="Commission: " align='right'><Text>{formatCommissionRate(validator.commission?.commission_rates?.rate)}</Text></td>
-                              <td data-label="Voting Power: " align='right'><Text>{calculatePercent(validator.delegator_shares, totalPower)}</Text></td>
-                              <td data-label="Uptime: ">
-                                <div className='flex w-full justify-between items-center gap-3 action-col'>
-                                  <div className='flex items-center gap-3'>
-                                    <div className='custom-progress'>
-                                      <Progress size="$4" value={Number(uptimePercent.replace('%', ''))}>
-                                        <Progress.Indicator animation="bouncy" />
-                                      </Progress>
-                                    </div>
-                                    <Text className={uptime && uptime > 0.95 ? 'text-green-500' : 'text-red-500'}>{uptimePercent}</Text>
-                                  </div>
-                                  <div className='btn-secondary'>
-                                    <Button onPress={() => delegateOptions.onOpenModal(validator.operator_address)}>Delegate</Button>
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
+                    {staking.isLoading || delegateOptions.isLoading || !staking?.params?.bond_denom ? (
+                        <div className='my-2 min-h-11'>
+                          <Loading isLoading />
+                        </div>
+                      ) : (
+                        <>
+                          <ul className='flex gap-0 list-none tabs'>
+                            <li className={`tab-item ${staking?.currentTab === 'active' ? 'active' : ''}`}>
+                              <button className='tab-button cursor-pointer px-3' onClick={() => staking.onTabChange('active')}>Active ({calcTotalValidatorByTab('active')})</button>
+                            </li>
+                            <li className={`tab-item ${staking?.currentTab === 'inactive' ? 'active' : ''}`}>
+                              <button className='tab-button cursor-pointer px-3' onClick={() => staking.onTabChange('inactive')}>Inactive ({calcTotalValidatorByTab('inactive')})</button>
+                            </li>
+                          </ul>
+                          <table className='w-full table mt-5 staking-table'>
+                            <thead>
+                              <tr>
+                                <th align='left' className='text-lumera-label validator'>Validator</th>
+                                <th align='right' className='text-lumera-label staked-amount'>Staked Amount</th>
+                                <th align='right' className='text-lumera-label commission'>Commission</th>
+                                <th align='right' className='text-lumera-label voting-power'>Voting Power</th>
+                                <th align='left' className='text-lumera-label uptime'>Uptime</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {getValidatorsBySort()?.map((validator) => {
+                                const uptime = getUptime(validator);
+                                const uptimePercent = percent(uptime);
+                                return (
+                                  <tr key={validator.operator_address}>
+                                    <td data-label="Validator: ">
+                                      {validator.description.moniker}
+                                    </td>
+                                    <td data-label="Staked Amount: " align='right'>{formatToken({
+                                      amount: validator.tokens,
+                                      denom: staking.params.bond_denom,
+                                    }, true, '0,0')}</td>
+                                    <td data-label="Commission: " align='right'><Text>{formatCommissionRate(validator.commission?.commission_rates?.rate)}</Text></td>
+                                    <td data-label="Voting Power: " align='right'><Text>{calculatePercent(validator.delegator_shares, totalPower)}</Text></td>
+                                    <td data-label="Uptime: ">
+                                      <div className='flex w-full justify-between items-center gap-3 action-col'>
+                                        <div className='flex items-center gap-3'>
+                                          <div className='custom-progress'>
+                                            <Progress size="$4" value={Number(uptimePercent.replace('%', ''))}>
+                                              <Progress.Indicator animation="bouncy" />
+                                            </Progress>
+                                          </div>
+                                          <Text className={uptime && uptime > 0.95 ? 'text-green-500' : 'text-red-500'}>{uptimePercent}</Text>
+                                        </div>
+                                        <div className='btn-secondary'>
+                                          <Button onPress={() => delegateOptions.onOpenModal(validator.operator_address)}>Delegate</Button>
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                        </>
+                      )
+                    }
                   </div>
                 </Card.Header>
               </Card>
@@ -419,10 +433,14 @@ export const StakingScreen = ({
                       <div>
                         <p className="text-sm text-gray-400">Total Staked</p>
                         <p className="text-2xl sm:text-3xl font-bold text-white">
-                          {formatToken({
-                            amount: `${getTotalStaked()}`,
-                            denom: staking.params.bond_denom,
-                          }, true, '0,0.[000000]')}
+                           {staking.isLoading ?
+                              <Skeleton /> : <>
+                                 {formatToken({
+                                  amount: `${getTotalStaked()}`,
+                                  denom: staking.params.bond_denom,
+                                }, true, '0,0.[000000]')}
+                              </>
+                            }
                         </p>
                       </div>
                       <div>
@@ -432,10 +450,14 @@ export const StakingScreen = ({
                       <div>
                         <p className="text-sm text-gray-400">Claimable Rewards</p>
                         <p className="text-2xl sm:text-3xl font-bold text-teal-400">
-                          {formatToken({
-                            amount: `${getTotalRewards()}`,
-                            denom: staking.params.bond_denom,
-                          }, true, '0,0.[000000]')}
+                          {staking.isLoading ?
+                            <Skeleton /> : <>
+                                {formatToken({
+                                amount: `${getTotalRewards()}`,
+                                denom: staking.params.bond_denom,
+                              }, true, '0,0.[000000]')}
+                            </>
+                          }
                         </p>
                       </div>
                     </div>
@@ -466,48 +488,51 @@ export const StakingScreen = ({
                     </div>
                     <div className="mt-6">
                       {staking.subTab === 'delegations' && (
-                        <div className="overflow-x-auto">
-                          <div className="min-w-[700px] space-y-2">
-                            <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase">
-                              <div className="col-span-4">Validator</div>
-                              <div className="col-span-3 text-right">Staked</div>
-                              <div className="col-span-3 text-right">Claimable</div>
-                              <div className="col-span-2"></div>
-                            </div>
-                            {accountInfo?.delegations.map(delegation => {
-                              const validator = getAllValidators().find(v => v.operator_address === delegation.delegation.validator_address);
-                              const reward = accountInfo?.rewards.find(v => v.validator_address === delegation.delegation.validator_address);
+                        <div className='relative'>
+                          <Loading isLoading={isAccountInfoLoading} />
+                          <div className="overflow-x-auto">
+                            <div className="min-w-[700px] space-y-2">
+                              <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase">
+                                <div className="col-span-4">Validator</div>
+                                <div className="col-span-3 text-right">Staked</div>
+                                <div className="col-span-3 text-right">Claimable</div>
+                                <div className="col-span-2"></div>
+                              </div>
+                              {accountInfo?.delegations.map(delegation => {
+                                const validator = getAllValidators().find(v => v.operator_address === delegation.delegation.validator_address);
+                                const reward = accountInfo?.rewards.find(v => v.validator_address === delegation.delegation.validator_address);
 
-                              return (
-                                <div 
-                                  key={delegation.delegation.validator_address} 
-                                  className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg"
-                                >
+                                return (
                                   <div 
-                                    className="col-span-4"
+                                    key={delegation.delegation.validator_address} 
+                                    className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg"
                                   >
-                                    <a 
-                                      href={`/staking/${delegation.delegation.validator_address}`} 
-                                      className="font-semibold text-white hover:text-indigo-400 cursor-pointer"
+                                    <div 
+                                      className="col-span-4"
                                     >
-                                      {validator?.description?.moniker}
-                                    </a>
+                                      <a 
+                                        href={`/staking/${delegation.delegation.validator_address}`} 
+                                        className="font-semibold text-white hover:text-indigo-400 cursor-pointer"
+                                      >
+                                        {validator?.description?.moniker}
+                                      </a>
+                                    </div>
+                                    <div className="col-span-3 text-right font-mono text-white">
+                                        {formatToken({
+                                          amount: delegation.balance.amount,
+                                          denom: delegation.balance.denom,
+                                        }, true, '0,0.[000000]')}
+                                    </div>
+                                    <div className="col-span-3 text-right font-mono text-teal-400">
+                                      {formatTokens(reward?.reward)}
+                                    </div>
+                                    <div className="col-span-2 flex justify-end">
+                                        {reward && getReward(reward) > 0 && <CustomButton variant="secondary" className="!py-1.5 !px-4 text-sm" onClick={() => claim.handleToggleClaimModal(true)}>Claim</CustomButton>}
+                                    </div>
                                   </div>
-                                  <div className="col-span-3 text-right font-mono text-white">
-                                      {formatToken({
-                                        amount: delegation.balance.amount,
-                                        denom: delegation.balance.denom,
-                                      }, true, '0,0.[000000]')}
-                                  </div>
-                                  <div className="col-span-3 text-right font-mono text-teal-400">
-                                    {formatTokens(reward?.reward)}
-                                  </div>
-                                  <div className="col-span-2 flex justify-end">
-                                      {reward && getReward(reward) > 0 && <CustomButton variant="secondary" className="!py-1.5 !px-4 text-sm" onClick={() => claim.handleToggleClaimModal(true)}>Claim</CustomButton>}
-                                  </div>
-                                </div>
-                              )
-                            })}
+                                )
+                              })}
+                            </div>
                           </div>
                         </div>
                       )}

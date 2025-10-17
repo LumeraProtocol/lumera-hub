@@ -1,4 +1,4 @@
-import React, { useState, Fragment } from 'react';
+import React, { useState } from 'react';
 import { 
     Landmark, 
     XCircle, 
@@ -12,8 +12,8 @@ import {
     ArrowDownLeft, 
     Check,
 } from 'lucide-react';
-import { Transition } from '@headlessui/react';
 import ReactPaginate from 'react-paginate';
+import dayjs from 'dayjs';
 
 import Loading from '@/components/Loading';
 import PastTime from '@/components/PastTime';
@@ -21,12 +21,14 @@ import Card from '@/components/Card';
 import ReceiveModal from '@/components/ReceiveModal';
 import DelegateModal from '@/components/DelegateModal';
 import SendModal from '@/components/SendModal';
+import Skeleton from '@/components/Skeleton';
 import { AccountInfoData } from '@/hooks/useAccountInfo';
 import { RATE_VALUE } from '@/hooks/useDeposit';
 import { ITransaction } from '@/hooks/useTransaction';
-import { formatAddress } from '@/utils/format';
+import { formatAddress, formatToken } from '@/utils/format';
 import { getMessages } from '@/utils/helpers';
 import { IValidator } from '@/types/validator';
+import { DENOM } from '@/contants/network';
 
 import 'react-paginate/theme/basic/react-paginate.css';
 
@@ -35,16 +37,17 @@ interface IButton {
     onClick?: any;
     className?: string;
     variant?: string;
+    disabled?: boolean;
 }
 
-export const Button = ({ children, onClick, className = '', variant = 'primary' }: IButton) => {
+export const Button = ({ children, onClick, className = '', variant = 'primary', disabled = false }: IButton) => {
   const baseClasses = 'px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900';
   const variants: any = {
     primary: 'bg-indigo-600 text-white hover:bg-indigo-500 focus:ring-indigo-500',
     secondary: 'bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500',
     ghost: 'bg-transparent text-gray-300 hover:bg-gray-700/50',
   };
-  return <button onClick={onClick} className={`${baseClasses} ${variants[variant as any]} ${className}`}>{children}</button>;
+  return <button onClick={onClick} className={`${baseClasses} ${variants[variant as any]} ${className}`} disabled={disabled}>{children}</button>;
 };
 
 interface IWalletScreen {
@@ -154,20 +157,20 @@ export const WalletScreen = ({
         let total = 0;
         if (accountInfo?.balances?.length) {
             for (const item of accountInfo?.balances) {
-                if (item.denom === 'ulume') {
+                if (item.denom === DENOM) {
                     total += Number(item.amount);
                 }
             }
         }
         if (accountInfo?.delegations?.length) {
             for (const item of accountInfo?.delegations) {
-                if (item.balance.denom === 'ulume') {
+                if (item.balance.denom === DENOM) {
                     total += Number(item.balance.amount);
                 }
             }
         }
         
-        return total / RATE_VALUE;
+        return total;
     }
 
     const handleCopyAddress = () => {
@@ -187,7 +190,7 @@ export const WalletScreen = ({
             />
             <SendModal
                 isOpen={selectedModal === 'send'}
-                availableAmount={getTotalBalances()}
+                availableAmount={getTotalBalances() / RATE_VALUE}
                 isVoteLoading={sendOptions.isVoteLoading}
                 onAdvancedCheckedChange={sendOptions.onAdvancedCheckedChange}
                 onCloseDailogChange={sendOptions.onCloseDailogChange}
@@ -201,7 +204,7 @@ export const WalletScreen = ({
             />
             <DelegateModal
                 isOpen={selectedModal === 'stake'}
-                availableAmount={getTotalBalances()}
+                availableAmount={getTotalBalances() / RATE_VALUE}
                 isVoteLoading={delegateOptions.isVoteLoading}
                 onAdvancedCheckedChange={delegateOptions.onAdvancedCheckedChange}
                 onCloseDailogChange={delegateOptions.onCloseDailogChange}
@@ -217,11 +220,21 @@ export const WalletScreen = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <Card>
                     <h3 className="font-semibold text-gray-400">Total Wallet Balance</h3>
-                    <p className="text-4xl sm:text-5xl font-bold text-white mt-2">{getTotalBalances().toLocaleString()} LUME</p>
+                    <p className="text-4xl sm:text-5xl font-bold text-white mt-2">
+                        {isLoading ?
+                            <Skeleton /> : <>
+                                {formatToken({
+                                amount: `${getTotalBalances()}`,
+                                denom: DENOM,
+                                }, true, '0,0.[00000]')}
+                            </>
+                        }
+                    </p>
                     <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <Button 
                             className="w-full" 
                             onClick={() => onOpenModal('send')}
+                            disabled={isLoading}
                         >
                             <Send className="w-5 h-5"/> Send
                         </Button>
@@ -229,6 +242,7 @@ export const WalletScreen = ({
                             variant="secondary" 
                             className="w-full" 
                             onClick={() => onOpenModal('receive')}
+                            disabled={isLoading}
                         >
                             <ArrowDown className="w-5 h-5"/> Receive
                         </Button>
@@ -236,6 +250,7 @@ export const WalletScreen = ({
                             variant="secondary" 
                             className="w-full"
                             onClick={() => onOpenModal('stake')}
+                            disabled={isLoading}
                         >
                             <Landmark className="w-5 h-5"/> Stake
                         </Button>
@@ -277,7 +292,7 @@ export const WalletScreen = ({
                                 {getMessages(tx.tx.body.messages)}
                             </div>
                             <div className="col-span-3 text-sm text-gray-500 flex justify-end">
-                                <span className="text-white pr-1">{tx.timestamp}</span>
+                                <span className="text-white pr-1">{dayjs(tx.timestamp).format('YYYY-MM-DD HH:mm:ss')}</span>
                                 (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm' />)
                             </div>
                         </div>
