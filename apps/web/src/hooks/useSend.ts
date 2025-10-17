@@ -107,8 +107,8 @@ const useSend = (options: UseDepositOptions = {}) => {
                     fromAddress: address,
                     toAddress: optionsAdvanced.recipient,
                     amount: [{
-                        denom: 'lumera',
-                        amount: optionsAdvanced.amount,
+                        denom: DENOM,
+                        amount: `${Number(optionsAdvanced.amount) * 1000000}`,
                     }],
                 }),
             };

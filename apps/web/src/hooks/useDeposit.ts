@@ -123,7 +123,7 @@ const useDeposit = (options: UseDepositOptions = {}) => {
                     depositor: address,
                     amount: [{ 
                         denom: DENOM,
-                        amount: depositAdvanced.depositAmount,
+                        amount: `${Number(depositAdvanced.depositAmount) * 1000000}`,
                     }],
                 }),
             };

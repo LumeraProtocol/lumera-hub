@@ -13,7 +13,7 @@ interface UseDepositOptions {
   callback?: () => void;
 }
 
-export const RATE_VALUE = 1000000
+export const RATE_VALUE = 1000000;
 
 const useDelegate = (options: UseDepositOptions = {}) => {
     const { address, getOfflineSigner } = useWalletConnect();
@@ -119,8 +119,8 @@ const useDelegate = (options: UseDepositOptions = {}) => {
                     delegatorAddress: optionsAdvanced.senderAddress,
                     validatorAddress: optionsAdvanced.validator,
                     amount: {
-                        denom: 'lume',
-                        amount: optionsAdvanced.amount,
+                        denom: DENOM,
+                        amount: `${Number(optionsAdvanced.amount) * 1000000}`,
                     },
                 }),
             };
