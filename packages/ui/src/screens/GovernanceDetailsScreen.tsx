@@ -87,7 +87,8 @@ export const GovernanceDetailsScreen = ({
         if (!governance?.messages?.length) {
             return null;
         }
-        const item = governance.messages[0]
+        const item = governance.messages[0];
+        console.log('item', item)
         return (
             <div>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-3 w-full'>
@@ -107,13 +108,15 @@ export const GovernanceDetailsScreen = ({
                 <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md'>
                     <div className='flex flex-col w-full'>
                         <Text>Plan</Text>
-                        <div className='grid grid-cols-1 md:grid-cols-3 w-full'>
-                            {Object.entries(item.plan).map(([key, value]) => (
-                                <SizableText className='text-sm text-lumera-label' key={key}>
-                                    <strong className='capitalize text-gray-300'>{key}:</strong> {value || ''}
-                                </SizableText>
-                            ))}
-                        </div>
+                        {item?.plan ?
+                            <div className='grid grid-cols-1 md:grid-cols-3 w-full'>
+                                {Object.entries(item.plan).map(([key, value]) => (
+                                    <SizableText className='text-sm text-lumera-label' key={key}>
+                                        <strong className='capitalize text-gray-300'>{key}:</strong> {value || ''}
+                                    </SizableText>
+                                ))}
+                            </div> : <div className='text-base mt-3'>No data</div>
+                        }
                     </div>
                 </div>
                 <div className='mt-3 flex justify-between gap-5 w-full p-3 rounded-md'>
