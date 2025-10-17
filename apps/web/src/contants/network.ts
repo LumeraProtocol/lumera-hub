@@ -1,9 +1,9 @@
 export const CHAIN_NAME = 'lumera'
 // export const CHAIN_NAME = 'lumeratestnet'
-// export const REST_AI_URL = 'https://lcd.lumera.io';
-export const REST_AI_URL = 'https://lcd.testnet.lumera.io';
+export const REST_AI_URL = 'https://lcd.lumera.io';
+// export const REST_AI_URL = 'https://lcd.testnet.lumera.io';
 export const DENOM = 'ulume';
-// export const RPC_ENDPOINT = "https://rpc.lumera.io"
-export const RPC_ENDPOINT = "https://rpc.testnet.lumera.io"
-// export const CHAIN_ID = 'lumera-mainnet-1';
-export const CHAIN_ID = 'lumera-testnet-2';
+export const RPC_ENDPOINT = "https://rpc.lumera.io"
+// export const RPC_ENDPOINT = "https://rpc.testnet.lumera.io"
+export const CHAIN_ID = 'lumera-mainnet-1';
+// export const CHAIN_ID = 'lumera-testnet-2';

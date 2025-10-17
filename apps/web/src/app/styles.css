@@ -645,6 +645,41 @@
 .current-staking-apr {
   width: calc(33.3% - 24px);
 }
+.min-w-\[968px\] {
+  min-width: 968px;
+}
+.btn-jailed {
+  padding: 2px 14px;
+  border-color: transparent;
+  background-color: #f87272;
+  color: #fff;
+  border-radius: 9px;
+  font-size: 16px;
+}
+.leading-11 {
+  line-height: 44px;
+}
+.min-w-5xl {
+  min-width: 1024px;
+}
+@media screen and (min-width: 1025px) and (max-width: 1290px) {
+  .governance-card-header {
+    flex-direction: column;
+  }
+  .governance-card-header > div:nth-child(1) {
+    order: 2;
+  }
+  .governance-card-header > div:nth-child(2) {
+    order: 1;
+  }
+}
+@media screen and (min-width: 1025px) and (max-width: 1200px) {
+  .governance-content .status-bar-label {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 8px;
+  }
+}
 @media screen and (min-width: 1025px) {
   .lg\:grid-cols-3 {
     grid-template-columns: 1fr 1fr 1fr;
@@ -710,6 +745,22 @@
     border-right: 0;
   }
 }
+@media screen and (max-width: 900px) {
+  .governance-content .status-bar-label {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 8px;
+  }
+  .governance-card-header {
+    flex-direction: column;
+  }
+  .governance-card-header > div:nth-child(1) {
+    order: 2;
+  }
+  .governance-card-header > div:nth-child(2) {
+    order: 1;
+  }
+}
 @media screen and (max-width: 800px) {
   .governance-control .tabs-secondary {
     flex-wrap: wrap;
@@ -740,6 +791,9 @@
   .\!text-\[40px\] {
     font-size: 32px !important;
   }
+  .current-staking-apr {
+    width: 100%;
+  }
 }
 @media screen and (max-width: 550px) {
   .home-content .chart-wrapper {
@@ -762,6 +816,22 @@
     flex-direction: column;
     gap: 12px;
   }
+  .btn-logout {
+    padding: 4px 8px;
+  }
+  .btn-logout svg {
+    width: 18px;
+    height: 18px;
+  }
+  .proposals-title {
+    line-height: 1.2 !important;
+  }
+  .governance-content .status-bar-label,
+  .governance-content-details .status-bar-label-detail {
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+  }
 }
 @media screen and (max-width: 440px) {
   .staking-table .custom-progress .is_Progress {
@@ -769,5 +839,8 @@
   }
   .connect-wallet-label {
     display: none;
+  }
+  .staking-content .estimated-rewards-results {
+    grid-template-columns: 1fr;
   }
 }

@@ -205,11 +205,11 @@ export const GovernanceScreen = ({
 
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
-      <div className='flex justify-between w-full items-center'>
+      <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
         <H2 className='font-bold text-white text-[32px] leading-none'>Governance</H2>
         <div className='btn-primary'>
           <Button>
-            <span className='font-bold'>Create Proposal</span>
+            <span className='font-bold whitespace-nowrap'>Create Proposal</span>
           </Button>
         </div>
       </div>
@@ -284,7 +284,7 @@ export const GovernanceScreen = ({
         </div>
         <Card elevate size="$4" bordered className='w-full p-5 mt-4'>
           <div className='flex justify-between items-center governance-control'>
-            <ul className='tabs-secondary'>
+            <ul className='tabs-secondary flex-wrap'>
               <li className={`tab-item ${!currentTab ? 'active' : ''}`}>
                 <button className='tab-button whitespace-nowrap' onClick={() => onTabChange('')}>All ({formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })})</button>
               </li>
@@ -314,7 +314,7 @@ export const GovernanceScreen = ({
               </span>
             </div>
           </div>
-          <div className='mt-6 grid grid-cols-2 gap-6 governance-card-wrapper'>
+          <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 governance-card-wrapper'>
             {!governances?.length ? 
               <div><H3 className='!leading-6'>No data</H3></div> : null
             }
@@ -325,7 +325,6 @@ export const GovernanceScreen = ({
                 <div className='p-5'>
                   <div className='flex justify-between items-start gap-6 governance-card-header'>
                     <div className='flex flex-col'>
-                      {/* <SizableText className='text-lumera-label'>LIP-006</SizableText> */}
                       <a href={`/governance/${item.id}`}>
                         <H3 className='!leading-6'>{item.title}</H3>
                       </a>
@@ -342,7 +341,7 @@ export const GovernanceScreen = ({
                       <div className='status-bar-no-with-veto' style={{ width: `${noWithVetoPercent}%` }}></div>
                       <div className='status-bar-abstain' style={{ width: `${abstainPercent}%` }}></div>
                     </div>
-                    <div className='flex justify-between gap-3 mt-2'>
+                    <div className='flex justify-between gap-3 mt-2 status-bar-label'>
                       <div className='text-lumera-label'><span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(1)}%</div>
                       <div className='text-lumera-label'><span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(1)}%</div>
                       <div className='text-lumera-label'><span className='text-lumera-red-light'>No With Veto</span>: {noWithVetoPercent.toFixed(1)}%</div>

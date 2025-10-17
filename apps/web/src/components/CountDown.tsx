@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 interface CountdownProps {
   targetDate: Date;
   title?: string;
+  className?: string;
 }
 
 interface TimeLeft {
@@ -12,7 +13,7 @@ interface TimeLeft {
   seconds: number;
 }
 
-const CountDown: React.FC<CountdownProps> = ({ targetDate }) => {
+const CountDown: React.FC<CountdownProps> = ({ targetDate, className = '' }) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
@@ -37,7 +38,7 @@ const CountDown: React.FC<CountdownProps> = ({ targetDate }) => {
   }, [targetDate]);
 
   return (
-    <span className='text-sm text-lumera-label'>
+    <span className={`text-sm text-lumera-label ${className}`}>
         <span className='text-green-500'>{timeLeft.days}</span> days <span className='text-green-500'>{timeLeft.hours}</span> hours <span className='text-green-500'>{timeLeft.minutes}</span> minutes <span className='text-green-500'>{timeLeft.seconds}</span> seconds
     </span>
   )

@@ -832,8 +832,8 @@ export const HomeScreen = ({
                 <Card elevate size="$4" bordered>
                   <Card.Header padded>
                     <div className='flex justify-between items-center'>
-                      <H3>Active Governance Proposals</H3>
-                      <a href={governanceNav?.url || '#'} className='text-link text-sm'>View All</a>
+                      <H3 className='proposals-title'>Active Governance Proposals</H3>
+                      <a href={governanceNav?.url || '#'} className='text-link text-sm whitespace-nowrap'>View All</a>
                     </div>
                     <div className='mt-5'>
                       {isProposalLoading ?

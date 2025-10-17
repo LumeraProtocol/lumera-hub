@@ -255,7 +255,7 @@ export const StakingScreen = ({
             <div className="w-20 h-20 rounded-full grid place-items-center staking-icon wallet">
               <Wallet size="$3" />
             </div>
-            <H2 className='font-bold text-white text-[32px] leading-none !mt-5'>Connect Your Wallet</H2>
+            <H2 className='font-bold text-white text-[32px] leading-none !mt-5 text-center'>Connect Your Wallet</H2>
             <Paragraph className='text-base text-lumera-gray mx-auto max-w-[400px] text-center !mt-3'>Please connect your wallet to view this page and interact with the Lumera ecosystem.</Paragraph>
             <div className='text-center mt-4'>
               <ConnectWalletButton />
@@ -276,11 +276,11 @@ export const StakingScreen = ({
           <div>
           {staking.validatorTab === 'all' ?
             <>
-              <div className='flex justify-between w-full gap-6 mt-6 staking-summary-wrapper relative'>
-                <Card elevate size="$4" bordered className='w-2/3'>
+              <div className='flex justify-between flex-col md:flex-row w-full gap-6 mt-6 staking-summary-wrapper relative'>
+                <Card elevate size="$4" bordered className='w-full md:w-2/3'>
                   <Card.Header padded>
                     <H3 className='text-lumera-label'>Total LUME Staked</H3>
-                    <div className='text-[40px] font-bold text-white'>
+                    <div className='text-[40px] font-bold text-white !leading-11'>
                       {staking.isLoading || delegateOptions.isLoading ?
                         <Skeleton /> : <>
                           {formatToken({
@@ -295,7 +295,7 @@ export const StakingScreen = ({
                 <Card elevate size="$4" bordered className='current-staking-apr'>
                   <Card.Header padded>
                     <H3 className='text-lumera-label'>Current Staking APR</H3>
-                    <div className='!text-lumera-green font-bold text-[40px]'>
+                    <div className='!text-lumera-green font-bold text-[40px] !leading-11'>
                       Coming soon
                     </div>
                   </Card.Header>
@@ -303,7 +303,7 @@ export const StakingScreen = ({
               </div>
               <Card elevate size="$4" bordered className='w-full mt-6'>
                 <Card.Header padded>
-                  <div className='grid grid-cols-2 gap-6 w-full rewards-calculator-wrapper'>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-6 w-full rewards-calculator-wrapper'>
                     <div className='w-full'>
                       <H3 className='!flex gap-2 items-center rewards-calculator-icon'><Calculator /> <span>Rewards Calculator</span></H3>
                       <Text className='text-lumera-label text-base'>Estimate your potential earnings from staking LUME.</Text>
@@ -318,7 +318,7 @@ export const StakingScreen = ({
                     <Card elevate size="$4" bordered className='w-full estimated-rewards-card'>
                       <Card.Header padded>
                         <H3>Estimated Rewards</H3>
-                        <div className='mt-3 grid grid-cols-2 gap-2'>
+                        <div className='mt-3 grid grid-cols-2 gap-2 estimated-rewards-results'>
                           <div className='flex flex-col'>
                             <SizableText className='text-lumera-label'>1 Day</SizableText>
                             <Text className='!text-lumera-green'><span className='font-bold text-base'>0.00</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
@@ -384,11 +384,11 @@ export const StakingScreen = ({
                               </tr>
                             </thead>
                             <tbody>
-                              {getValidatorsBySort()?.map((validator) => {
+                              {getValidatorsBySort()?.map((validator, index) => {
                                 const uptime = getUptime(validator);
                                 const uptimePercent = percent(uptime);
                                 return (
-                                  <tr key={validator.operator_address}>
+                                  <tr key={validator.operator_address} className={index % 2 === 0 ? '!bg-gray-900' : ''}>
                                     <td data-label="Validator: ">
                                       {validator.description.moniker}
                                     </td>
@@ -408,9 +408,12 @@ export const StakingScreen = ({
                                           </div>
                                           <Text className={uptime && uptime > 0.95 ? 'text-green-500' : 'text-red-500'}>{uptimePercent}</Text>
                                         </div>
-                                        <div className='btn-secondary'>
-                                          <Button onPress={() => delegateOptions.onOpenModal(validator.operator_address)}>Delegate</Button>
-                                        </div>
+                                        {validator.jailed ?
+                                          <div className='btn-jailed'>Jailed</div> :
+                                          <div className='btn-secondary'>
+                                            <Button onPress={() => delegateOptions.onOpenModal(validator.operator_address)}>Delegate</Button>
+                                          </div>
+                                        }
                                       </div>
                                     </td>
                                   </tr>
@@ -466,25 +469,27 @@ export const StakingScreen = ({
                     </CustomButton>
                   </div>
                   <div className="mt-8 border-t border-gray-700 pt-6">
-                    <div className="flex border-b border-gray-700">
-                      <button 
-                        onClick={() => staking.onSubTabChange('delegations')} 
-                        className={`px-4 py-2 font-medium ${staking.subTab === 'delegations' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
-                      >
-                        Delegations
-                      </button>
-                      <button 
-                        onClick={() => staking.onSubTabChange('unstake')} 
-                        className={`px-4 py-2 font-medium ${staking.subTab === 'unstake' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
-                      >
-                        Unstake/Restake
-                      </button>
-                      <button 
-                        onClick={() => staking.onSubTabChange('activities')} 
-                        className={`px-4 py-2 font-medium ${staking.subTab === 'activities' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
-                      >
-                        Activities
-                      </button>
+                    <div className='overflow-x-auto'>
+                      <div className="flex border-b border-gray-700">
+                        <button 
+                          onClick={() => staking.onSubTabChange('delegations')} 
+                          className={`px-4 py-2 font-medium ${staking.subTab === 'delegations' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+                        >
+                          Delegations
+                        </button>
+                        <button 
+                          onClick={() => staking.onSubTabChange('unstake')} 
+                          className={`px-4 py-2 font-medium ${staking.subTab === 'unstake' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+                        >
+                          Unstake/Restake
+                        </button>
+                        <button 
+                          onClick={() => staking.onSubTabChange('activities')} 
+                          className={`px-4 py-2 font-medium ${staking.subTab === 'activities' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+                        >
+                          Activities
+                        </button>
+                      </div>
                     </div>
                     <div className="mt-6">
                       {staking.subTab === 'delegations' && (
@@ -576,7 +581,7 @@ export const StakingScreen = ({
                                       }, true, '0,0.[00]')}
                                     </div>
                                     <div className="col-span-5 text-right font-mono text-gray-300">
-                                        <CountDown targetDate={new Date(delegation.entries[0].completion_time)} />
+                                      <CountDown targetDate={new Date(delegation.entries[0].completion_time)} className="whitespace-nowrap" />
                                     </div>
                                   </div>
                                 );
@@ -590,7 +595,7 @@ export const StakingScreen = ({
                         <div className='relative'>
                           <Loading isLoading={activityData.isActivitiesLoading} />
                           <div className="overflow-x-auto">
-                            <div className="min-w-[750px] space-y-2">
+                            <div className="min-w-5xl space-y-2">
                                 <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase">
                                     <div className="col-span-1">Block</div>
                                     <div className="col-span-3">TX Hash</div>
@@ -629,9 +634,9 @@ export const StakingScreen = ({
                                         <div className="col-span-2 text-right text-white">
                                           {mapAmount(tx.events)?.join(", ")}
                                         </div>
-                                        <div className="col-span-3 text-gray-400 flex justify-end">
+                                        <div className="col-span-3 text-gray-400 flex justify-end whitespace-nowrap">
                                           {tx.timestamp}
-                                          (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm' />)
+                                          (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm whitespace-nowrap' />)
                                         </div>
                                     </div>
                                 ))}

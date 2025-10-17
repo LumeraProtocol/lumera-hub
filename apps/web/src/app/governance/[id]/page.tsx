@@ -34,7 +34,7 @@ export default function Page({ params }: Props) {
       <Helmet>
         <title>{governance?.title || 'Governance Detail'}</title>
       </Helmet>
-      <div className="governance-content">
+      <div className="governance-content-details">
         <GovernanceDetailsScreen 
           isLoading={isLoading}
           governance={governance}

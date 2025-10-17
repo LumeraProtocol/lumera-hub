@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { X, BarChart2, Hotel, LaptopMinimalCheck, Database, ShieldCheck, Image, BrainCircuit, Wallet } from '@tamagui/lucide-icons'
+import { X, BarChart2, Hotel, LaptopMinimalCheck, Database, ShieldCheck, Image as ImageIcon, BrainCircuit, Wallet } from '@tamagui/lucide-icons';
+import Link from 'next/link'
 
 import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 
@@ -17,7 +18,7 @@ export const NAV_ITEMS: { id: ViewId; label: string, url: string, icon: React.Re
   { id: "cascade", label: "Cascade", url: "/cascade", icon: <Database /> },
   { id: "sense", label: "Sense", url: "/sense", icon: <ShieldCheck /> },
   { id: "inference", label: "Inference", url: "/inference", icon: <BrainCircuit /> },
-  { id: "nfts", label: "NFTs", url: "/nfts", icon: <Image /> },
+  { id: "nfts", label: "NFTs", url: "/nfts", icon: <ImageIcon /> },
 ]
 
 const VIEW_TITLES: Record<ViewId, string> = {
@@ -64,12 +65,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Sidebar (desktop) */}
       <div className="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 z-50">
         <div className="flex flex-col flex-grow bg-lumera-navy border-r border-gray-800/50">
-          <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800">
-            <div className="w-6 h-6 grid place-items-center">
-              <img src="/lumera-symbol.svg" alt="Lumera" />
+          <Link href="/">
+            <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800">
+              <div className="w-6 h-6 grid place-items-center">
+                <img src="/lumera-symbol.svg" alt="Lumera" />
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight">Lumera</h1>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">Lumera</h1>
-          </div>
+          </Link>
           <nav className="flex-1 px-4 py-6 space-y-2">
             <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Menu</p>
             {NAV_ITEMS.map((item) => (
@@ -109,15 +112,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="relative flex flex-1 w-full">
             <div className="flex flex-grow flex-col bg-lumera-navy border-r border-gray-800/50">
               <div className="flex justify-between items-center w-full">
-                <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800">
-                  <div className="w-6 h-6 grid place-items-center">
-                    <img src="/lumera-symbol.svg" alt="Lumera" />
+                <Link href="/">
+                  <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800 w-full">
+                    <div className="w-6 h-6 grid place-items-center">
+                      <img src="/lumera-symbol.svg" alt="Lumera" />
+                    </div>
+                    <h1 className="text-2xl font-bold tracking-tight">Lumera</h1>
                   </div>
-                  <h1 className="text-2xl font-bold tracking-tight">Lumera</h1>
-                </div>
+                </Link>
                 <button className="btn-close" onClick={() => setSidebarOpen(false)}><X /></button>
               </div>
-              <nav className="flex-1 px-4 py-6 space-y-2">
+              <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
                 <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Menu</p>
                 {NAV_ITEMS.map((item) => (
                   <a
@@ -160,14 +165,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           >
             {/* simple hamburger */}
             <div className="space-y-1">
-              <span className="block w-6 h-0.5 bg-gray-400" />
-              <span className="block w-6 h-0.5 bg-gray-400" />
-              <span className="block w-6 h-0.5 bg-gray-400" />
+              <span className="block w-4 sm:w-6 h-0.5 bg-gray-400" />
+              <span className="block w-4 sm:w-6 h-0.5 bg-gray-400" />
+              <span className="block w-4 sm:w-6 h-0.5 bg-gray-400" />
             </div>
           </button>
-          <div className="flex flex-1 justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-1 justify-between pl-0 pr-4 sm:px-6 lg:px-8">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold">{VIEW_TITLES[activeView]}</h1>
+              <h1 className="text-base sm:text-2xl font-bold">{VIEW_TITLES[activeView]}</h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6 gap-3">
               {/* Placeholder for wallet actions */}
