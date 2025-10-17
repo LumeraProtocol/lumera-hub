@@ -64,6 +64,7 @@ const useSend = (options: UseDepositOptions = {}) => {
     }
 
     const handleSendClick = async () => {
+        setError('');
         if (!optionsAdvanced.amount) {
             setError('Please enter amount.');
             return

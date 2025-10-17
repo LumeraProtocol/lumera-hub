@@ -24,6 +24,10 @@ const useGovernances = () => {
     const [currentTab, setCurrentTab] = useState('');
 
     const fetchSumary = async () => {
+        setMsg({
+            type: '',
+            message: '',
+        })
         try {
             const [resPassed, resDepositRequired, resVotingPeriod, resTotalProposals, resRejected, resUnspecified, resFailed] = await Promise.all([
                 instance.get(`/cosmos/gov/v1/proposals?pagination.limit=1&pagination.count_total=true&proposal_status=PROPOSAL_STATUS_PASSED`),
