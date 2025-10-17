@@ -113,7 +113,7 @@ export function ConnectWalletButton() {
           onClick={() => handleToggleModal(true)}
           className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors flex cursor-pointer"
         >
-          <Wallet size="$1" /> <div className="ml-1 connect-wallet-label">Connect Wallet</div>
+          <Wallet size="$1" /> <div className="ml-1">Connect Wallet</div>
         </button> : null
       }
     </div>

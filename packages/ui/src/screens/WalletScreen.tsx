@@ -220,7 +220,7 @@ export const WalletScreen = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <Card>
                     <h3 className="font-semibold text-gray-400">Total Wallet Balance</h3>
-                    <p className="text-4xl sm:text-5xl font-bold text-white mt-2">
+                    <p className="text-4xl xl:text-5xl font-bold text-white mt-2">
                         {isLoading ?
                             <Skeleton /> : <>
                                 {formatToken({
@@ -273,30 +273,34 @@ export const WalletScreen = ({
 
             <Card>
                 <h2 className="text-xl font-semibold text-white mb-4">Transaction History</h2>
-                <div className="space-y-2 relative">
+                <div className="space-y-2 relative w-full">
                     <Loading isLoading={isLoading} />
-                    {transactions.map((tx) => (
-                        <div key={tx.txhash} className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors">
-                            <div className="col-span-2 flex items-center">
-                                <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
-                                    {getTxIcon(getMessages(tx.tx.body.messages))}
+                    <div className='w-full overflow-x-auto'>
+                        <div className='w-full min-w-[968px]'>
+                            {transactions.map((tx) => (
+                                <div key={tx.txhash} className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors">
+                                    <div className="col-span-2 flex items-center">
+                                        <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
+                                            {getTxIcon(getMessages(tx.tx.body.messages))}
+                                        </div>
+                                        <a href={`/block/${tx.height}`} className="font-semibold text-white ml-2">{tx.height}</a>
+                                    </div>
+                                    <div className="col-span-4">
+                                        <a href={`/tx/${tx.txhash}`} className="font-semibold text-white whitespace-nowrap">
+                                            {formatAddress(tx.txhash, 15, -6)}
+                                        </a>
+                                    </div>
+                                    <div className="col-span-3 text-left whitespace-nowrap">
+                                        {getMessages(tx.tx.body.messages)}
+                                    </div>
+                                    <div className="col-span-3 text-sm text-gray-500 flex justify-end">
+                                        <span className="text-white pr-1 whitespace-nowrap">{dayjs(tx.timestamp).format('YYYY-MM-DD HH:mm:ss')}</span>
+                                        (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm whitespace-nowrap' />)
+                                    </div>
                                 </div>
-                                <a href={`/block/${tx.height}`} className="font-semibold text-white ml-2">{tx.height}</a>
-                            </div>
-                            <div className="col-span-4">
-                                <a href={`/tx/${tx.txhash}`} className="font-semibold text-white">
-                                    {formatAddress(tx.txhash, 20, -6)}
-                                </a>
-                            </div>
-                            <div className="col-span-3 text-left">
-                                {getMessages(tx.tx.body.messages)}
-                            </div>
-                            <div className="col-span-3 text-sm text-gray-500 flex justify-end">
-                                <span className="text-white pr-1">{dayjs(tx.timestamp).format('YYYY-MM-DD HH:mm:ss')}</span>
-                                (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm' />)
-                            </div>
+                            ))}
                         </div>
-                    ))}
+                    </div>
                     {totalTransactions > 1 ?
                         <div className="paginate-wrapper pt-3">
                             <ReactPaginate
