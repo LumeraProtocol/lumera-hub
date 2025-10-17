@@ -101,7 +101,7 @@ const useAccountInfo = () => {
     }
 
     fetchData();
-  }, [address, claimInfo]);
+  }, [address]);
 
   const handleClaimButtonClick = async () => {
     setErrorClaim(null);
