@@ -22,7 +22,7 @@ import dayjs from 'dayjs';
 import Loading from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
 import { IProposal } from '@/hooks/useProposals';
-import { formatNumber } from '@/utils/format';
+import { formatNumber, formatToken } from '@/utils/format';
 import { VoteModal } from './HomeScreen';
 
 interface IGovernanceScreen {
@@ -40,6 +40,11 @@ interface IGovernanceScreen {
     rejected: number;
     unspecified: number;
     failed: number;
+    depositRequiredParam: {
+      denom: string;
+      amount: string;
+    };
+    votingPeriodParam: string;
   };
   onTabChange: (status: string) => void;
   currentTab: string;
@@ -250,7 +255,7 @@ export const GovernanceScreen = ({
                 <div>
                   <H3 className='text-base text-lumera-label leading-none'>Voting Period</H3>
                   <div className='leading-none mt-3'>
-                    <span className='text-[32px] font-bold text-white'>{formatNumber(sumary?.votingPeriod || 0, { decimalsLength: 0 })} Days</span>
+                    <span className='text-[32px] font-bold text-white'>{formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days</span>
                   </div>
                 </div>
               </div>
@@ -265,7 +270,12 @@ export const GovernanceScreen = ({
                 <div>
                   <H3 className='text-base text-lumera-label leading-none'>Deposit Required</H3>
                   <div className='leading-none mt-3'>
-                    <span className='text-[32px] font-bold text-white'>{formatNumber(sumary?.depositRequired || 0, { decimalsLength: 0 })} LUME</span>
+                    <span className='text-[32px] font-bold text-white'>
+                      {formatToken({
+                        amount: sumary.depositRequiredParam.amount,
+                        denom: sumary.depositRequiredParam.denom,
+                      }, true, '0,0')}
+                    </span>
                   </div>
                 </div>
               </div>
