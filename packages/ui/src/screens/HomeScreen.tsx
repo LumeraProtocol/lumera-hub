@@ -29,8 +29,9 @@ import Skeleton from '@/components/Skeleton';
 import { AccountInfoData } from '@/hooks/useAccountInfo'
 import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity'
 import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/useProposals'
-import { formatNumber } from '@/utils/format'
+import { formatNumber, formatToken } from '@/utils/format'
 import { NAV_ITEMS } from '@/components/layout/AppShell';
+import { DENOM } from '@/contants/network';
 
 dayjs.extend(relativeTime);
 
@@ -144,21 +145,13 @@ const getOption = (data: IPortfolioOverviewChart) => {
 const getPortfolioData = (accountInfo: AccountInfoData | null) => {
   let stacked = 0;
   let liquid = 0;
-  let rewards = 0;
   if (accountInfo) {
     stacked = accountInfo.delegations.reduce((total, item) => Number(item.balance.amount) + total, 0)
     liquid = accountInfo.balances.reduce((total, item) => Number(item.amount) + total, 0)
-    rewards = accountInfo.rewards.reduce((total, item) => {
-      if (item.reward?.length) {
-        return Number(item.reward[0].amount) + total
-      }
-      return 0;
-    }, 0)
   }
   return {
-    stacked: Number((stacked / RATE_VALUE).toFixed(2)),
-    liquid: Number((liquid / RATE_VALUE).toFixed(2)),
-    rewards: Number((rewards / RATE_VALUE).toFixed(2)),
+    stacked,
+    liquid,
   }
 }
 
@@ -610,7 +603,7 @@ export const HomeScreen = ({
   transactionHash,
   onCloseCongratulationsModal,
 }: IHomeScreen) => {
-  const { stacked, liquid, rewards } = getPortfolioData(accountInfo);
+  const { stacked, liquid } = getPortfolioData(accountInfo);
   const [isVoteOpen, setVoteOpen] = React.useState(false);
   const [selectedItem, setSelectedItem] = useState<IProposal | null>(null)
 
@@ -624,7 +617,13 @@ export const HomeScreen = ({
               <Warehouse size="$1" />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>Staked {formatNumber((Number(messages[0].amount.amount) / RATE_VALUE).toFixed(2))} LUME</Text>
+              <Text>Staked {messages[0].amount.denom === 'lume' ? formatToken({
+                                amount: `${messages[0].amount.amount}`,
+                                denom: 'lume',
+                              }, true, '0,0.[000000]') : formatToken({
+                                amount: `${messages[0].amount.amount}`,
+                                denom: DENOM,
+                              }, true, '0,0.[000000]')}</Text>
               <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
             </div>
           </div>
@@ -636,7 +635,10 @@ export const HomeScreen = ({
               <Send size="$1" />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>Send {formatNumber((Number(messages[0].amount[0].amount) / RATE_VALUE).toFixed(2))} LUME</Text>
+              <Text>Send {formatToken({
+                                amount: `${messages[0].amount[0].amount}`,
+                                denom: DENOM,
+                              }, true, '0,0.[000000]')}</Text>
               <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
             </div>
           </div>
@@ -651,7 +653,10 @@ export const HomeScreen = ({
               <BarChart2 size="$1" />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>Claimed {formatNumber((Number(amount?.value.replace('ulume', '').replace('stake', '')) / RATE_VALUE).toFixed(2))} LUME in rewards</Text>
+              <Text>Claimed {formatToken({
+                                amount: `${amount?.value.replace('ulume', '').replace('stake', '')}`,
+                                denom: DENOM,
+                              }, true, '0,0.[000000]')} in rewards</Text>
               <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
             </div>
           </div>
@@ -695,6 +700,20 @@ export const HomeScreen = ({
     setSelectedItem(item);
   }
 
+  const getTotalRewards = () => {
+    let total = 0;
+    if (accountInfo?.rewards?.length) {
+      for (const item of accountInfo?.rewards) {
+        for (const reward of item.reward) {
+          if (reward.denom === DENOM) {
+            total += Number(reward.amount);
+          }
+        }
+      }
+    }
+    return total;
+  }
+
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       {!address ?
@@ -720,7 +739,16 @@ export const HomeScreen = ({
                   <H3>Portfolio Overview</H3>
                   <div className='mt-5 flex justify-between items-center chart-wrapper'>
                     <div className='w-1/2'>
-                      <ReactECharts option={getOption({ stacked, liquid })} style={{ height: '200px', width: '100%' }} />
+                      <ReactECharts option={getOption({ 
+                        stacked: formatToken({
+                                amount: `${stacked}`,
+                                denom: DENOM,
+                              }, false, '0,0.[000000]'), 
+                        liquid: formatToken({
+                                amount: `${liquid}`,
+                                denom: DENOM,
+                              }, false, '0,0.[000000]')
+                        })} style={{ height: '200px', width: '100%' }} />
                     </div>
                     <div className='w-1/2'>
                       <div>
@@ -731,7 +759,10 @@ export const HomeScreen = ({
                         <div className='text-2xl font-bold'>
                           {loading ?
                            <Skeleton /> : <>
-                              {formatNumber(stacked)} LUME
+                              {formatToken({
+                                amount: `${stacked}`,
+                                denom: DENOM,
+                              }, true, '0,0.[000000]')}
                             </>
                           }
                           </div>
@@ -745,7 +776,10 @@ export const HomeScreen = ({
                           {loading ?
                             <Skeleton /> : 
                             <>
-                              {formatNumber(liquid)} LUME
+                              {formatToken({
+                                amount: `${liquid}`,
+                                denom: DENOM,
+                              }, true, '0,0.[000000]')}
                             </>
                           }
                         </div>
@@ -762,7 +796,12 @@ export const HomeScreen = ({
                       {loading ?
                         <Skeleton /> : 
                         <>
-                          <span className='text-[40px] font-bold text-white break-words'>{formatNumber((stacked + liquid).toFixed(2))}</span> <span className='text-base text-lumera-label'>LUME</span>
+                          <span className='text-3xl font-bold text-white break-words'>
+                            {formatToken({
+                              amount: `${stacked + liquid}`,
+                              denom: DENOM,
+                            }, true, '0,0.[000000]')}
+                          </span>
                         </>
                       }
                     </div>
@@ -772,8 +811,13 @@ export const HomeScreen = ({
                   <Card.Header padded>
                     <H3 className='text-lumera-label'>Claimable Rewards</H3>
                     <div>
-                      <H4 className='!text-lumera-green font-bold !text-[40px]'>
-                        {loading ? <Skeleton /> : formatNumber(rewards)}
+                      <H4 className='!text-lumera-green font-bold !text-3xl'>
+                        {loading ? <Skeleton /> : 
+                        formatToken({
+                          amount: `${getTotalRewards()}`,
+                          denom: DENOM,
+                        }, true, '0,0.[0000]')
+                        }
                       </H4>
                       <div className='mt-4 btn-full btn-secondary'>
                         <Button onPress={() => handleToggleClaimModal(true)} disabled={isClaimLoading || loading}>Claim All Rewards</Button>
