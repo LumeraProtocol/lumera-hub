@@ -1,13 +1,9 @@
 import { useState, useEffect } from 'react';
-import { SigningStargateClient } from '@cosmjs/stargate';
-import { Registry } from '@cosmjs/proto-signing';
-import { MsgWithdrawDelegatorReward } from 'cosmjs-types/cosmos/distribution/v1beta1/tx';
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { TAttribute, TLog, TLogEvent, TMessage, TOption, TSignerInfos, TFee } from '@/hooks/useRecentActivity';
+import { TLog, TLogEvent, TMessage, TOption, TSignerInfos, TFee } from '@/hooks/useRecentActivity';
 import { Coin } from '@/hooks/useAccountInfo';
-import { RPC_ENDPOINT, DENOM } from '@/contants/network';
 
 const LIMIT = 20;
 
