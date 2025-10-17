@@ -57,7 +57,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
             senderAddress: address,
             fees: '2000',
             gas: '200000',
-            memo: 'ping.pub',
+            memo: 'Stake from Lumera Hub',
             amount: '',
             validator: '',
         });
@@ -76,6 +76,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
     }
 
     const handleSendClick = async () => {
+        setError('');
         if (!optionsAdvanced.amount) {
             setError('Please enter amount.');
             return

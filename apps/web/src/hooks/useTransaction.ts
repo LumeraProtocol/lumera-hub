@@ -46,7 +46,7 @@ export interface ITransaction {
 }
 
 const useTransaction = () => {
-    const { address, getOfflineSigner } = useWalletConnect();
+    const { address } = useWalletConnect();
     const [isLoading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [transactions, setTransactions] = useState<ITransaction[]>([]);
