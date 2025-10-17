@@ -22,7 +22,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
         senderAddress: address,
         fees: '2000',
         gas: '200000',
-        memo: 'ping.pub',
+        memo: 'Lumera Hub',
         amount: '',
         validator: '',
     });
