@@ -22,7 +22,7 @@ const useDeposit = (options: UseDepositOptions = {}) => {
         senderAddress: address,
         fees: '2000',
         gas: '200000',
-        memo: 'ping.pub',
+        memo: 'Lumera Hub',
         depositAmount: '',
     });
     const [error, setError] = useState('');
@@ -60,7 +60,7 @@ const useDeposit = (options: UseDepositOptions = {}) => {
             senderAddress: address,
             fees: '2000',
             gas: '200000',
-            memo: 'ping.pub',
+            memo: 'Lumera Hub',
             depositAmount: '',
         });
     }

@@ -82,7 +82,7 @@ const useProposals = () => {
     const [voteAdvanced, setAdvanced] = useState({
         fees: '2000',
         gas: '200000',
-        memo: 'ping.pub',
+        memo: 'Lumera Hub',
         broadcastMode: broadcastModeOptions[0].value,
     });
     const [isVoteOpen, setVoteOpen] = useState(false);
@@ -117,7 +117,7 @@ const useProposals = () => {
             setAdvanced({
                 fees: '2000',
                 gas: '200000',
-                memo: 'ping.pub',
+                memo: 'Lumera Hub',
                 broadcastMode: broadcastModeOptions[0].value,
             })
         }
