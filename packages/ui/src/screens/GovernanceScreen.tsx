@@ -19,6 +19,7 @@ import {
 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 
+import AppLink from '@/components/AppLink';
 import Loading from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
 import { IProposal } from '@/hooks/useProposals';
@@ -206,7 +207,7 @@ export const GovernanceScreen = ({
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
-        <H2 className='font-bold text-white text-[32px] leading-none'>Governance</H2>
+        <H2 className='!font-bold text-white text-[32px] leading-none'>Governance</H2>
         <div className='btn-primary'>
           <Button>
             <span className='font-bold whitespace-nowrap'>Create Proposal</span>
@@ -274,7 +275,7 @@ export const GovernanceScreen = ({
                       {formatToken({
                         amount: sumary.depositRequiredParam.amount,
                         denom: sumary.depositRequiredParam.denom,
-                      }, true, '0,0')}
+                      }, false, '0,0')}<span className='text-xl ml-1'>LUME</span>
                     </span>
                   </div>
                 </div>
@@ -325,9 +326,9 @@ export const GovernanceScreen = ({
                 <div className='p-5'>
                   <div className='flex justify-between items-start gap-6 governance-card-header'>
                     <div className='flex flex-col'>
-                      <a href={`/governance/${item.id}`}>
+                      <AppLink href={`/governance/${item.id}`}>
                         <H3 className='!leading-6'>{item.title}</H3>
-                      </a>
+                      </AppLink>
                     </div>
                     {getStatus(item.status)}
                   </div>

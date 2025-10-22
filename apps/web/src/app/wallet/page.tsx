@@ -1,5 +1,6 @@
-// apps/web/src/app/governance/page.tsx
+// apps/web/src/app/wallet/page.tsx
 'use client'
+import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 import { WalletScreen } from '@lumera-hub/ui/src/screens/WalletScreen'
@@ -27,7 +28,10 @@ export default function Page() {
   const sendOptions = useSend({
     callback: handleCloseModal
   });
-  const delegate = useDelegate()
+  const delegate = useDelegate();
+  useEffect(() => {
+    document.title = 'Wallet';
+  }, []);
 
   return (
     <>

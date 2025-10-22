@@ -1,6 +1,7 @@
 // apps/web/src/app/cascade/page.tsx
 'use client'
 
+import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import dynamic from 'next/dynamic'
 
@@ -14,6 +15,10 @@ const JVectorMapWithNoSSR = dynamic(
 );
 
 export default function Page() {
+  useEffect(() => {
+    document.title = 'Cascade';
+  }, []);
+
   return (
     <>
       <Helmet>

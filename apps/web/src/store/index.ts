@@ -4,9 +4,11 @@ import storage from 'redux-persist/lib/storage';
 import { combineReducers } from 'redux';
 
 import walletSlice from '@/redux/wallet.slice';
+import appSlice from '@/redux/app.slice';
 
 const rootReducer = combineReducers({
   wallet: walletSlice,
+  app: appSlice,
 });
 
 const persistConfig = {

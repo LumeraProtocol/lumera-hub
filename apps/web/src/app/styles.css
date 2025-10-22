@@ -1,81 +1,3 @@
-.bg-lumera-gray {
-  background-color: #F5F5FA;
-}
-.bg-lumera-green {
-  background-color: #47C78A;
-}
-.bg-lumera-teal {
-  background-color: #078A8A;
-}
-.bg-lumera-navy {
-  background-color: #001432;
-}
-.text-lumera-gray {
-  color: #F5F5FA;
-}
-.text-lumera-label {
-  color: #9da3ae !important;
-}
-.text-lumera-sub-label {
-  color: #6c727f;
-}
-.text-lumera-red-light {
-  color: #e77975;
-}
-.text-lumera-green {
-  color: #47C78A;
-}
-.\!text-lumera-green {
-  color: #47C78A !important;
-}
-.text-lumera-teal {
-  color: #078A8A;
-}
-.text-lumera-green-light {
-  color: #68d1bf;;
-}
-.\!text-lumera-teal {
-  color: #078A8A !important;
-}
-.text-lumera-navy {
-  color: #001432;
-}
-.text-lumera-blue-light {
-  color: #838df1;
-}
-.w-20 {
-  width: 80px;
-}
-.h-20 {
-  height: 80px;
-}
-.max-w-\[450px\] {
-  max-width: 450px;
-}
-.font-bold {
-  font-weight: bold !important;
-}
-.text-\[32px\] {
-  font-size: 32px !important;
-}
-.leading-none {
-  line-height: 1 !important;
-}
-.mt-10 {
-  margin-top: 40px;
-}
-.text-base {
-  font-size: 16px !important;
-}
-.w-1\/2 {
-  width: 50% !important;
-}
-.w-1\/4 {
-  width: 25% !important;
-}
-.gap-6 {
-  gap: 24px;
-}
 .is_H3 {
   font-size: 18px !important;
   font-weight: bold !important;
@@ -84,35 +6,8 @@
   background: #1a212e !important;
   border-color: #2a323f !important;
 }
-.w-2\/3 {
-  width: 66.6667%;
-}
-.w-1\/3 {
-  width: 33.3333%;
-}
 .w-46p {
   width: 46%;
-}
-.w-3 {
-  width: 12px;
-}
-.h-3 {
-  height: 12px;
-}
-.gap-1 {
-  gap: 4px;
-}
-.mt-4 {
-  margin-top: 16px;
-}
-.text-2xl {
-  font-size: 24px !important;
-}
-.text-\[40px\] {
-  font-size: 40px;
-}
-.\!text-\[40px\] {
-  font-size: 40px !important;
 }
 .btn-full .is_Button  {
   width: 100% !important;
@@ -146,18 +41,6 @@
 .sub-card {
   background-color: #151c29;
 }
-.p-3 {
-  padding: 12px;
-}
-.mt-5 {
-  margin-top: 20px;
-}
-.\!text-sm {
-  font-size: 14px;
-}
-.mb-3 {
-  margin-bottom: 12px;
-}
 .recent-activity-icon {
   min-width: 36px;
   min-height: 36px;
@@ -179,26 +62,11 @@
 .recent-activity-icon.uploaded-icon path {
   stroke: #62bbf3;
 }
-.min-h-\[80vh\] {
-  min-height: 80vh;
-}
-.justify-center {
-  justify-content: center;
-}
-.mt-3 {
-  margin-top: 12px;
-}
-.\!mt-3 {
-  margin-top: 12px !important;
-}
 .staking-icon.wallet {
   background-color: #29313e;
 }
 .staking-icon.wallet path {
   stroke: #838df1;
-}
-.\!mt-5 {
-  margin-top: 20px !important;
 }
 .tabs {
   gap: 24px;
@@ -230,18 +98,6 @@
 .tab-item.active .tab-button::after,
 .tab-item .tab-button:hover::after {
   transform: translateY(0);
-}
-.gap-6 {
-  gap: 24px;
-}
-.mt-6 {
-  margin-top: 24px;
-}
-.\!flex {
-  display: flex !important;
-}
-.gap-2 {
-  gap: 8px;
 }
 .rewards-calculator-icon rect,
 .rewards-calculator-icon path,
@@ -287,22 +143,9 @@
   background-color: #151c29 !important;
   box-shadow: none !important;
 }
-.grid {
-  display: grid;
-}
-.grid-cols-2 {
-  grid-template-columns: repeat(2, 1fr);
-}
-.grid-cols-4 {
-  grid-template-columns: repeat(4, 1fr);
-}
 .input-symbol path,
 .input-symbol circle {
   stroke: #9da3ae
-}
-.px-3 {
-  padding-left: 12px;
-  padding-right: 12px;
 }
 .table {
   border-collapse: separate;
@@ -330,9 +173,6 @@
   border-top-right-radius: 8px;
   border-bottom-right-radius: 8px;
 }
-.justify-end {
-  justify-content: flex-end;
-}
 .custom-progress .is_Progress {
   background-color: #394150 !important;
 }
@@ -351,20 +191,8 @@
 .governance-deposit-icon path {
   stroke: #62bbf3;
 }
-.text-right {
-  text-align: right;
-}
 .bg-lumera-sub-card {
   background-color: #171e2c;
-}
-.p-5 {
-  padding: 20px;
-}
-.\!leading-6 {
-  line-height: 24px !important;
-}
-.rounded-9 {
-  border-radius: 9px;
 }
 .status-bar-wrapper {
   width: 100%;
@@ -373,9 +201,6 @@
   background-color: #394150;
   display: flex;
   overflow: hidden;
-}
-.mt-2 {
-  margin-top: 8px;
 }
 .status-bar-yes,
 .status-bar-no,
@@ -467,12 +292,6 @@
 .btn-red .is_Button:hover {
   background-color: #fe6a6a !important;
 }
-.w-2\/3 {
-  width: 66.6667%;
-}
-.w-1\/3 {
-  width: 33.3333%;
-}
 .dropzone-wrapper {
   min-height: 320px;
   background-color: #1a212e;
@@ -485,12 +304,6 @@
 }
 .dropzone-wrapper .upload-icon path {
   stroke: #9da3ae;
-}
-.text-\[36px\] {
-  font-size: 36px;
-}
-.text-\[32px\] {
-  font-size: 32px;
 }
 .tabs-secondary {
   display: inline-flex;
@@ -519,12 +332,6 @@
 }
 .cascade-top-right {
   width: calc(34% - 24px);
-}
-.z-50 {
-  z-index: 50;
-}
-.\!z-50 {
-  z-index: 50 !important;
 }
 .z-1 {
   z-index: 1;
@@ -573,9 +380,6 @@
 .whitespace-nowrap {
   white-space: nowrap;
 }
-.h-\[84vh\] {
-  height: 84vh;
-}
 .vote-main-content,
 .withdraw-main-content {
   max-height: 92vh;
@@ -609,23 +413,11 @@
   top: -12px;
   right: -24px;
 }
-.min-h-12 {
-  min-height: 48px;
-}
 .loading-wrapper {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 50;
-}
-.grid-cols-1 {
-  grid-template-columns: 1fr;
-}
-.capitalize {
-  text-transform: capitalize;
-}
-.text-gray-300 {
-  color: #d1d5dc;
 }
 .paginate-wrapper ul.react-paginate {
   justify-content: flex-end;
@@ -645,9 +437,6 @@
 .current-staking-apr {
   width: calc(33.3% - 24px);
 }
-.min-w-\[968px\] {
-  min-width: 968px;
-}
 .btn-jailed {
   padding: 2px 14px;
   border-color: transparent;
@@ -655,12 +444,6 @@
   color: #fff;
   border-radius: 9px;
   font-size: 16px;
-}
-.leading-11 {
-  line-height: 44px;
-}
-.min-w-5xl {
-  min-width: 1024px;
 }
 @media screen and (min-width: 1025px) and (max-width: 1290px) {
   .governance-card-header {
@@ -680,20 +463,9 @@
     row-gap: 8px;
   }
 }
-@media screen and (min-width: 1025px) {
-  .lg\:grid-cols-3 {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-}
 @media screen and (min-width: 768px) {
-  .md\:flex-row {
-    flex-direction: row;
-  }
   .withdraw-main-content {
     min-width: 450px;
-  }
-  .md\:grid-cols-2 {
-    grid-template-columns: 1fr 1fr;
   }
 }
 @media screen and (max-width: 1300px) {
@@ -705,12 +477,6 @@
   }
   .cascade-overview .is_Card {
     width: 48%;
-  }
-  .text-\[40px\] {
-    font-size: 36px;
-  }
-  .\!text-\[40px\] {
-    font-size: 36px !important;
   }
   .governance-control {
     flex-direction: column;
@@ -784,12 +550,6 @@
   .home-content .recent-activity,
   .cascade-overview .is_Card {
     width: 100%;
-  }
-  .text-\[40px\] {
-    font-size: 32px;
-  }
-  .\!text-\[40px\] {
-    font-size: 32px !important;
   }
   .current-staking-apr {
     width: 100%;
