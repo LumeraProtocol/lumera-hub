@@ -84,7 +84,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (currentUrl === '/' && currentUrl === url) {
       return true;
     }
-    console.log(1111, 'url', url, currentUrl, currentUrl.indexOf(url) !== -1)
     return url !== NAV_ITEMS[0].url && currentUrl.indexOf(url) !== -1;
   }
 
