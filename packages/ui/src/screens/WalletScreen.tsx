@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
     Landmark, 
     XCircle, 
@@ -12,9 +12,13 @@ import {
     ArrowDownLeft, 
     Check,
 } from 'lucide-react';
+import { YStack, H2, Paragraph, Card as TamaguiCard } from 'tamagui';
 import ReactPaginate from 'react-paginate';
 import dayjs from 'dayjs';
+import { Wallet } from '@tamagui/lucide-icons';
 
+import AppLink from '@/components/AppLink';
+import { ConnectWalletButton } from '@/components/ConnectWallet';
 import Loading from '@/components/Loading';
 import PastTime from '@/components/PastTime';
 import Card from '@/components/Card';
@@ -22,6 +26,7 @@ import ReceiveModal from '@/components/ReceiveModal';
 import DelegateModal from '@/components/DelegateModal';
 import SendModal from '@/components/SendModal';
 import Skeleton from '@/components/Skeleton';
+import AppButton from '@/components/AppButton';
 import { AccountInfoData } from '@/hooks/useAccountInfo';
 import { RATE_VALUE } from '@/hooks/useDeposit';
 import { ITransaction } from '@/hooks/useTransaction';
@@ -31,24 +36,6 @@ import { IValidator } from '@/types/validator';
 import { DENOM } from '@/contants/network';
 
 import 'react-paginate/theme/basic/react-paginate.css';
-
-interface IButton {
-    children: any; 
-    onClick?: any;
-    className?: string;
-    variant?: string;
-    disabled?: boolean;
-}
-
-export const Button = ({ children, onClick, className = '', variant = 'primary', disabled = false }: IButton) => {
-  const baseClasses = 'px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900';
-  const variants: any = {
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-500 focus:ring-indigo-500',
-    secondary: 'bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500',
-    ghost: 'bg-transparent text-gray-300 hover:bg-gray-700/50',
-  };
-  return <button onClick={onClick} className={`${baseClasses} ${variants[variant as any]} ${className}`} disabled={disabled}>{children}</button>;
-};
 
 interface IWalletScreen {
     walletAddress: string;
@@ -160,6 +147,9 @@ export const WalletScreen = ({
                 if (item.denom === DENOM) {
                     total += Number(item.amount);
                 }
+                 if (item.denom === 'lume') {
+                    total += Number(item.amount) * RATE_VALUE;
+                }
             }
         }
         if (accountInfo?.delegations?.length) {
@@ -167,9 +157,28 @@ export const WalletScreen = ({
                 if (item.balance.denom === DENOM) {
                     total += Number(item.balance.amount);
                 }
+                 if (item.balance.denom === 'lume') {
+                    total += Number(item.balance.amount) * RATE_VALUE;
+                }
             }
         }
         
+        return total;
+    }
+
+    const getAvailableBalances = () => {
+        let total = 0;
+        if (accountInfo?.balances?.length) {
+            for (const item of accountInfo?.balances) {
+                if (item.denom === DENOM) {
+                    total += Number(item.amount);
+                }
+                if (item.denom === 'lume') {
+                    total += Number(item.amount) * RATE_VALUE;
+                }
+            }
+        }
+       
         return total;
     }
 
@@ -181,6 +190,25 @@ export const WalletScreen = ({
         }, 3000)
     }
 
+    if (!walletAddress) {
+        return (
+            <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
+                <TamaguiCard elevate size="$4" bordered className='w-full'>
+                    <div className='flex flex-col items-center justify-center min-h-[80vh]'>
+                        <div className="w-20 h-20 rounded-full grid place-items-center staking-icon wallet">
+                            <Wallet size="$3" />
+                        </div>
+                        <H2 className='font-bold text-white text-[32px] leading-none !mt-5 text-center'>Connect Your Wallet</H2>
+                        <Paragraph className='text-base text-lumera-gray mx-auto max-w-[400px] text-center !mt-3'>Please connect your wallet to view this page and interact with the Lumera ecosystem.</Paragraph>
+                        <div className='text-center mt-4'>
+                            <ConnectWalletButton />
+                        </div>
+                    </div>
+                </TamaguiCard>
+            </YStack>
+        );
+    }
+
     return (
         <div className="space-y-8">
             <ReceiveModal 
@@ -190,7 +218,7 @@ export const WalletScreen = ({
             />
             <SendModal
                 isOpen={selectedModal === 'send'}
-                availableAmount={getTotalBalances() / RATE_VALUE}
+                availableAmount={getAvailableBalances() / RATE_VALUE}
                 isVoteLoading={sendOptions.isVoteLoading}
                 onAdvancedCheckedChange={sendOptions.onAdvancedCheckedChange}
                 onCloseDailogChange={sendOptions.onCloseDailogChange}
@@ -204,7 +232,7 @@ export const WalletScreen = ({
             />
             <DelegateModal
                 isOpen={selectedModal === 'stake'}
-                availableAmount={getTotalBalances() / RATE_VALUE}
+                availableAmount={getAvailableBalances() / RATE_VALUE}
                 isVoteLoading={delegateOptions.isVoteLoading}
                 onAdvancedCheckedChange={delegateOptions.onAdvancedCheckedChange}
                 onCloseDailogChange={delegateOptions.onCloseDailogChange}
@@ -226,34 +254,34 @@ export const WalletScreen = ({
                                 {formatToken({
                                 amount: `${getTotalBalances()}`,
                                 denom: DENOM,
-                                }, true, '0,0.[00000]')}
+                                }, false, '0,0.[00000]')}<span className='text-2xl ml-1'>LUME</span>
                             </>
                         }
                     </p>
                     <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <Button 
-                            className="w-full" 
+                        <AppButton 
+                            className="w-full cursor-pointer" 
                             onClick={() => onOpenModal('send')}
                             disabled={isLoading}
                         >
                             <Send className="w-5 h-5"/> Send
-                        </Button>
-                        <Button 
+                        </AppButton>
+                        <AppButton 
                             variant="secondary" 
-                            className="w-full" 
+                            className="w-full cursor-pointer" 
                             onClick={() => onOpenModal('receive')}
                             disabled={isLoading}
                         >
                             <ArrowDown className="w-5 h-5"/> Receive
-                        </Button>
-                        <Button 
+                        </AppButton>
+                        <AppButton 
                             variant="secondary" 
-                            className="w-full"
+                            className="w-full cursor-pointer"
                             onClick={() => onOpenModal('stake')}
                             disabled={isLoading}
                         >
                             <Landmark className="w-5 h-5"/> Stake
-                        </Button>
+                        </AppButton>
                     </div>
                 </Card>
                 <Card>
@@ -283,12 +311,12 @@ export const WalletScreen = ({
                                         <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
                                             {getTxIcon(getMessages(tx.tx.body.messages))}
                                         </div>
-                                        <a href={`/block/${tx.height}`} className="font-semibold text-white ml-2">{tx.height}</a>
+                                        <AppLink href={`/block/${tx.height}`} className="font-semibold text-white ml-2">{tx.height}</AppLink>
                                     </div>
                                     <div className="col-span-4">
-                                        <a href={`/tx/${tx.txhash}`} className="font-semibold text-white whitespace-nowrap">
+                                        <AppLink href={`/tx/${tx.txhash}`} className="font-semibold text-white whitespace-nowrap">
                                             {formatAddress(tx.txhash, 15, -6)}
-                                        </a>
+                                        </AppLink>
                                     </div>
                                     <div className="col-span-3 text-left whitespace-nowrap">
                                         {getMessages(tx.tx.body.messages)}

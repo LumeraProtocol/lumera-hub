@@ -66,8 +66,8 @@ export const formatToken = (
     if(amount < 0.01) {
       fmt = '0.[000000]'
     }
-    return `${numeral(amount).format(fmt)} ${
-      withDenom ? denom.substring(0, 10) : ''
+    return `${numeral(amount).format(fmt)}${
+      withDenom ? ' ' + denom.substring(0, 10) : ''
     }`;
   }
   return '-';

@@ -116,7 +116,7 @@ const useRecentActivity = () => {
             setError(null);
 
             try {
-                const { data } = await axios.get(`${REST_AI_URL}/cosmos/tx/v1beta1/txs?pagination.limit=5&order_by=ORDER_BY_DESC&query=message.sender%3D'${address}'`);
+                const { data } = await axios.get(`${REST_AI_URL}/cosmos/tx/v1beta1/txs?order_by=ORDER_BY_DESC&query=message.sender%3D'${address}'&pagination.limit=5`);
                 setRecentActivity(data.tx_responses)
             } catch (e) {
                 console.error('API Error:', e);

@@ -1,5 +1,6 @@
+// apps/web/src/app/governance/[id]/page.tsx
 'use client';
-import { use } from 'react';
+import { use, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 import useGovernanceDetails from '@/hooks/useGovernanceDetails';
@@ -28,6 +29,10 @@ export default function Page({ params }: Props) {
   const deposit = useDeposit({ callback: () => fetchGovernanceDetail(id) });
   const proposals = useProposals();
   const { address } = useWalletConnect();
+
+  useEffect(() => {
+    document.title = governance?.title || 'Governance Detail';
+  }, []);
 
   return (
     <>

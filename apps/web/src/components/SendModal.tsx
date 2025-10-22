@@ -11,6 +11,7 @@ import { CircleX, Check as CheckIcon } from '@tamagui/lucide-icons';
 
 import { formatNumber } from '@/utils/format';
 import Loading from '@/components/Loading';
+import AppLink from '@/components/AppLink';
 
 interface IVoteModal {
   isOpen: boolean;
@@ -90,7 +91,7 @@ export default function SendModal({
             <div className='withdraw-main-content relative text-center p-5'>
               <H3 className='!text-green-500 text-[32px]'>Congratulations! send completed successfully.</H3>
               <div className='mt-3'>
-                <a href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</a>
+                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</AppLink>
               </div>
             </div>
           </Dialog.Content>

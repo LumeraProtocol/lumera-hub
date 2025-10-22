@@ -1,5 +1,6 @@
 // apps/web/src/app/governance/page.tsx
 'use client'
+import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 import { GovernanceScreen } from '@lumera-hub/ui/src/screens/GovernanceScreen'
@@ -9,6 +10,10 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import useDeposit from '@/hooks/useDeposit';
 
 export default function Page() {
+  useEffect(() => {
+    document.title = 'Governance';
+  }, []);
+
   const {
     isLoading,
     governances,

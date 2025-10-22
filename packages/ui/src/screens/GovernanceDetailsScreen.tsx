@@ -1,6 +1,7 @@
 import { 
   YStack, 
   Card,
+  H2,
   H3,
   Text,
   SizableText,
@@ -9,11 +10,13 @@ import {
 import dayjs from 'dayjs';
 import numeral from 'numeral';
 import ReactPaginate from 'react-paginate';
+import { ChevronLeft } from 'lucide-react';
 
 import Loading from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
 import CountDown from '@/components/CountDown';
 import PastTime from '@/components/PastTime';
+import AppLink from '@/components/AppLink';
 import { IProposal } from '@/hooks/useProposals';
 import { IBlock, IVote } from '@/hooks/useGovernanceDetails';
 import { formatAddress } from '@/utils/format';
@@ -88,9 +91,12 @@ export const GovernanceDetailsScreen = ({
             return null;
         }
         const item = governance.messages[0];
-        console.log('item', item)
         return (
             <div>
+                <H3 className='text-lumera-label'>Description</H3>
+                <div className='w-full'>
+                    {governance.summary}
+                </div>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-3 w-full'>
                     <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md'>
                         <div className='flex flex-col w-full'>
@@ -118,9 +124,6 @@ export const GovernanceDetailsScreen = ({
                             </div> : <div className='text-base mt-3'>No data</div>
                         }
                     </div>
-                </div>
-                <div className='mt-3 flex justify-between gap-5 w-full p-3 rounded-md'>
-                    {governance.summary}
                 </div>
             </div>
         )
@@ -189,23 +192,6 @@ export const GovernanceDetailsScreen = ({
         return dayjs(date).format("YYYY-MM-DD HH:mm")
     }
 
-    const getStatus = (status: string) => {
-        switch (status) {
-            case 'PROPOSAL_STATUS_DEPOSIT_PERIOD':
-                return 'Deposit';
-            case 'PROPOSAL_STATUS_VOTING_PERIOD':
-                return 'Voting';
-            case 'PROPOSAL_STATUS_PASSED':
-                return 'Passed';
-            case 'PROPOSAL_STATUS_REJECTED':
-                return 'Rejected';
-            case 'PROPOSAL_STATUS_FAILED':
-                return 'Failed';
-            default:
-                return 'Unspecified';
-        }
-    }
-
     const { yesPercent, noPercent, noWithVetoPercent, abstainPercent, turnout } = getPoolPercent();
 
     if ((!governance || !block) && !isLoading) {
@@ -233,17 +219,90 @@ export const GovernanceDetailsScreen = ({
         return end.getTime() - now.getTime();
     }
 
+    const getStatus = (status: string) => {
+        switch (status) {
+          case 'PROPOSAL_STATUS_PASSED':
+            return (
+              <div className='btn-green'>
+                <span className='is_Button rounded-2xl px-3 py-1'>
+                  <span>Passed</span>
+                </span>
+              </div>
+            )
+          case 'PROPOSAL_STATUS_DEPOSIT_PERIOD':
+            return (
+              <div className='btn-yellow'>
+                <span className='is_Button rounded-2xl px-3 py-1'>
+                  <span>Deposit</span>
+                </span>
+              </div>
+            )
+          case 'PROPOSAL_STATUS_VOTING_PERIOD':
+            return (
+              <div className='btn-emerald'>
+                <span className='is_Button rounded-2xl px-3 py-1'>
+                  <span>Voting</span>
+                </span>
+              </div>
+            )
+          case 'PROPOSAL_STATUS_UNSPECIFIED':
+            return (
+              <div className='btn-purple'>
+                <span className='is_Button rounded-2xl px-3 py-1'>
+                  <span>Unspecified</span>
+                </span>
+              </div>
+            )
+          case 'PROPOSAL_STATUS_REJECTED':
+            return (
+              <div className='btn-black'>
+                <span className='is_Button rounded-2xl px-3 py-1'>
+                  <span>Rejected</span>
+                </span>
+              </div>
+            )
+          case 'PROPOSAL_STATUS_FAILED':
+            return (
+              <div className='btn-red'>
+                <span className='is_Button rounded-2xl px-3 py-1'>
+                  <span>Failed</span>
+                </span>
+              </div>
+            )
+          default:
+            return '';
+        }
+    }
+
+    const getStatusText = (status: string) => {
+        switch (status) {
+            case 'PROPOSAL_STATUS_DEPOSIT_PERIOD':
+                return 'Deposit';
+            case 'PROPOSAL_STATUS_VOTING_PERIOD':
+                return 'Voting';
+            case 'PROPOSAL_STATUS_PASSED':
+                return 'Passed';
+            case 'PROPOSAL_STATUS_REJECTED':
+                return 'Rejected';
+            case 'PROPOSAL_STATUS_FAILED':
+                return 'Failed';
+            default:
+                return 'Unspecified';
+        }
+    }
+
     return (
-        <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
-            <div className="w-full relative">
+        <YStack flex={1}>
+            <div className='text-left'>
+                <AppLink href='/governance' className="flex items-start gap-2 text-gray-400 hover:text-white transition-colors mb-4"><ChevronLeft className="w-5 h-5"/>Back to Proposals</AppLink>
+            </div>
+            <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
+                <H2 className='!font-bold text-white text-[32px] leading-none'>{governance?.title}</H2>
+                {getStatus(governance?.status || '')}
+            </div>
+            <div className="w-full relative mt-5">
                 <Loading isLoading={isLoading} />
                 <Card elevate size="$4" bordered className='p-5 w-full'>
-                    <div className='flex justify-between sm:items-center flex-col sm:flex-row'>
-                        <H3 className='!leading-0 sm:leading-6'>{governance?.title}</H3>
-                        <div>
-                            <span className='inline-block text-sm bg-gray-900 rounded-2xl px-5 py-1 border border-gray-700'>{getStatus(governance?.status || '')}</span>
-                        </div>
-                    </div>
                     {getMessage()}
                 </Card>
                 <Card elevate size="$4" bordered className='p-5 w-full mt-5'>
@@ -306,7 +365,7 @@ export const GovernanceDetailsScreen = ({
                                     <div>
                                         <span className='w-2.5 h-2.5 rounded-full bg-green-500 inline-block mr-2'></span> <span>Voting end</span> <span>{getDate(governance?.voting_end_time)}</span>
                                         <div className='pl-5'>
-                                            <SizableText className='text-sm text-lumera-label'>Current Status: {getStatus(governance?.status)}</SizableText>
+                                            <SizableText className='text-sm text-lumera-label'>Current Status: {getStatusText(governance?.status)}</SizableText>
                                         </div>
                                     </div>
                                     <div className='pl-5 sm:pl-0'><PastTime pastDate={new Date(governance?.voting_end_time)} /></div>

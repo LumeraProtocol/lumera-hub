@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import dayjs from 'dayjs';
-import ReactECharts from 'echarts-for-react'
+import ReactECharts from 'echarts-for-react';
 import { 
   YStack, 
   H2, 
@@ -18,12 +18,13 @@ import {
   Checkbox, 
   Select, 
   XStack,
-} from 'tamagui'
+} from 'tamagui';
 import { LaptopMinimalCheck, BarChart2, Warehouse, Send } from '@tamagui/lucide-icons'
-import { CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons'
-import relativeTime from 'dayjs/plugin/relativeTime'
+import { CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons';
+import relativeTime from 'dayjs/plugin/relativeTime';
 
 import Loading from '@/components/Loading';
+import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import Skeleton from '@/components/Skeleton';
 import { AccountInfoData } from '@/hooks/useAccountInfo'
@@ -440,7 +441,7 @@ export const ClaimableRewardsModal = ({
             <div className='withdraw-main-content relative text-center p-5'>
               <H3 className='!text-green-500 text-[32px]'>Congratulations! claim all rewards completed successfully.</H3>
               <div className='mt-3'>
-                <a href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</a>
+                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</AppLink>
               </div>
             </div>
           </Dialog.Content>
@@ -754,7 +755,7 @@ export const HomeScreen = ({
                       <div>
                         <div className='flex gap-1 items-center'>
                           <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[0] }}></span>
-                          <SizableText className='text-lumera-label font-bold'>Staked</SizableText>
+                          <SizableText className='text-lumera-label !font-bold'>Staked</SizableText>
                         </div>
                         <div className='text-2xl font-bold'>
                           {loading ?
@@ -762,7 +763,7 @@ export const HomeScreen = ({
                               {formatToken({
                                 amount: `${stacked}`,
                                 denom: DENOM,
-                              }, true, '0,0.[000000]')}
+                              }, false, '0,0.[000000]')}<span className='text-lg ml-1'>LUME</span>
                             </>
                           }
                           </div>
@@ -770,7 +771,7 @@ export const HomeScreen = ({
                       <div className='mt-4'>
                         <div className='flex gap-1 items-center'>
                           <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[1] }}></span>
-                          <SizableText className='text-lumera-label font-bold'>Liquid</SizableText>
+                          <SizableText className='text-lumera-label !font-bold'>Liquid</SizableText>
                         </div>
                         <div className='text-2xl font-bold'>
                           {loading ?
@@ -779,7 +780,7 @@ export const HomeScreen = ({
                               {formatToken({
                                 amount: `${liquid}`,
                                 denom: DENOM,
-                              }, true, '0,0.[000000]')}
+                              }, false, '0,0.[000000]')}<span className='text-lg ml-1'>LUME</span>
                             </>
                           }
                         </div>
@@ -800,7 +801,7 @@ export const HomeScreen = ({
                             {formatToken({
                               amount: `${stacked + liquid}`,
                               denom: DENOM,
-                            }, true, '0,0.[000000]')}
+                            }, false, '0,0.[000000]')}<span className='text-xl ml-1'>LUME</span>
                           </span>
                         </>
                       }
@@ -811,12 +812,14 @@ export const HomeScreen = ({
                   <Card.Header padded>
                     <H3 className='text-lumera-label'>Claimable Rewards</H3>
                     <div>
-                      <H4 className='!text-lumera-green font-bold !text-3xl'>
-                        {loading ? <Skeleton /> : 
-                        formatToken({
-                          amount: `${getTotalRewards()}`,
-                          denom: DENOM,
-                        }, true, '0,0.[0000]')
+                      <H4 className='!text-lumera-green !font-bold !text-3xl'>
+                        {loading ? <Skeleton /> :
+                          <>
+                          {formatToken({
+                            amount: `${getTotalRewards()}`,
+                            denom: DENOM,
+                          }, false, '0,0.[0000]')}<span className='text-xl ml-1'>LUME</span>
+                          </>
                         }
                       </H4>
                       <div className='mt-4 btn-full btn-secondary'>
@@ -833,23 +836,23 @@ export const HomeScreen = ({
                   <Card.Header padded>
                     <div className='flex justify-between items-center'>
                       <H3 className='proposals-title'>Active Governance Proposals</H3>
-                      <a href={governanceNav?.url || '#'} className='text-link text-sm whitespace-nowrap'>View All</a>
+                      <AppLink href={governanceNav?.url || '#'} className='text-link text-sm whitespace-nowrap'>View All</AppLink>
                     </div>
                     <div className='mt-5'>
                       {isProposalLoading ?
                         <Skeleton /> : 
                         <>
                           {!proposals?.length ?
-                            <div className='flex items-center justify-center min-h-28 md:min-h-80 my-2'>
+                            <div className='flex items-center justify-center min-h-28 md:min-h-[284px] my-2'>
                               <H3 className='text-2xl'>No active proposals</H3>
                             </div> : null
                           }
                           {proposals?.map((item) => (
                             <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
                               <div className='flex flex-col'>
-                                <a href={`/governance/${item.id}`}>
+                                <AppLink href={`/governance/${item.id}`}>
                                   <Text>{item.title}</Text>
-                                </a>
+                                </AppLink>
                                 <SizableText className='text-sm text-lumera-label'>{item.proposer}</SizableText>
                               </div>
                               {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
