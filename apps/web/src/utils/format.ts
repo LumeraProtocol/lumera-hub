@@ -85,7 +85,7 @@ export const percent = (decimal?: string | number) => {
 export const formatTokens = (
     tokens?: { denom: string; amount: string }[],
     withDenom = true,
-    fmt = '0.0a'
+    fmt = '0.[000000]'
   ) => {
   if (!tokens) return '';
   return tokens.map((x) => formatToken(x, withDenom, fmt)).join(', ');
