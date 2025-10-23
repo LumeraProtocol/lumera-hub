@@ -426,11 +426,11 @@ export const GovernanceDetailsScreen = ({
         const startDate = dayjs(governance.voting_start_time);
         const endDate = dayjs(governance.voting_end_time);
         const now = dayjs();
-        const totalDays = endDate.diff(startDate, 'hour');
-        const passedDays = now.diff(startDate, 'hour');
+        const totalDays = endDate.diff(startDate, 'day');
+        const passedDays = now.diff(startDate, 'day');
         const remainingPercent = ((totalDays - passedDays) / totalDays) * 100;
 
-        if (passedDays <= 0) {
+        if (passedDays < 0) {
             return {
                 voteTimePercent: 100,
                 voteTimeLeft: 0,
@@ -438,7 +438,7 @@ export const GovernanceDetailsScreen = ({
         }
         return {
             voteTimePercent: 100 - remainingPercent,
-            voteTimeLeft: Math.ceil((totalDays - passedDays) / 60),
+            voteTimeLeft: Math.ceil(totalDays - passedDays),
         };
     }
 
