@@ -1,20 +1,20 @@
 import React from 'react'
-import { 
-  YStack, 
-  H2, 
-  Button, 
-  Card, 
-  H3, 
-  Input, 
+import {
+  YStack,
+  H2,
+  Button,
+  Card,
+  H3,
+  Input,
 } from 'tamagui';
-import { 
-  Logs, 
-  BadgeCheck, 
-  Beaker, 
-  Search, 
-  Activity, 
-  Coins, 
-  Timer, 
+import {
+  Logs,
+  BadgeCheck,
+  Beaker,
+  Search,
+  Activity,
+  Coins,
+  Timer,
   CheckCircle,
 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
@@ -54,10 +54,10 @@ interface IGovernanceScreen {
   isVoteLoading: boolean;
   error: string | null;
   voteAdvanced: {
-    fees: string; 
-    gas: string; 
-    memo: string; 
-    broadcastMode: string; 
+    fees: string;
+    gas: string;
+    memo: string;
+    broadcastMode: string;
   };
   handleVoteAdvancedChange: (name: string, value: string) => void;
   handleResetError: () => void;
@@ -74,11 +74,11 @@ interface IGovernanceScreen {
     isVoteLoading: boolean;
     error: string | null;
     voteAdvanced: {
-      fees: string; 
-      gas: string; 
-      memo: string; 
-      senderAddress: string; 
-      depositAmount: string; 
+      fees: string;
+      gas: string;
+      memo: string;
+      senderAddress: string;
+      depositAmount: string;
     };
     handleVoteAdvancedChange: (name: string, value: string) => void;
     showAdvanced: boolean;
@@ -107,7 +107,7 @@ export const GovernanceScreen = ({
   setVoteOpen
 }: IGovernanceScreen) => {
   const [selectedItem, setSelectedItem] = React.useState<IProposal | null>(null)
-  
+
   const getStatus = (status: string) => {
     switch (status) {
       case 'PROPOSAL_STATUS_PASSED':
@@ -226,7 +226,9 @@ export const GovernanceScreen = ({
                 <div>
                   <H3 className='text-base text-lumera-label leading-none'>Total Proposals</H3>
                   <div className='leading-none mt-3'>
-                    <span className='text-[32px] font-bold text-white'>{formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })}</span>
+                    <span className='text-[32px] font-bold text-white'>
+                      {formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -241,7 +243,9 @@ export const GovernanceScreen = ({
                 <div>
                   <H3 className='text-base text-lumera-label leading-none'>Passed</H3>
                   <div className='leading-none mt-3'>
-                    <span className='text-[32px] font-bold text-white'>{formatNumber(sumary?.passed || 0, { decimalsLength: 0 })}</span>
+                    <span className='text-[32px] font-bold text-white'>
+                      {formatNumber(sumary?.passed || 0, { decimalsLength: 0 })}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -256,7 +260,9 @@ export const GovernanceScreen = ({
                 <div>
                   <H3 className='text-base text-lumera-label leading-none'>Voting Period</H3>
                   <div className='leading-none mt-3'>
-                    <span className='text-[32px] font-bold text-white'>{formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days</span>
+                    <span className='text-[32px] font-bold text-white'>
+                      {formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days
+                    </span>
                   </div>
                 </div>
               </div>
@@ -287,25 +293,60 @@ export const GovernanceScreen = ({
           <div className='flex justify-between items-center governance-control'>
             <ul className='tabs-secondary flex-wrap'>
               <li className={`tab-item ${!currentTab ? 'active' : ''}`}>
-                <button className='tab-button whitespace-nowrap' onClick={() => onTabChange('')}>All ({formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })})</button>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('')}
+                >
+                  All ({formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })})
+                </button>
               </li>
               <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_UNSPECIFIED' ? 'active' : ''}`}>
-                <button className='tab-button whitespace-nowrap' onClick={() => onTabChange('PROPOSAL_STATUS_UNSPECIFIED')}>Unspecified ({formatNumber(sumary?.unspecified || 0, { decimalsLength: 0 })})</button>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('PROPOSAL_STATUS_UNSPECIFIED')}
+                >
+                  Unspecified ({formatNumber(sumary?.unspecified || 0, { decimalsLength: 0 })})
+                </button>
               </li>
               <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? 'active' : ''}`}>
-                <button className='tab-button whitespace-nowrap' onClick={() => onTabChange('PROPOSAL_STATUS_DEPOSIT_PERIOD')}>Deposit ({formatNumber(sumary?.depositRequired || 0, { decimalsLength: 0 })})</button>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('PROPOSAL_STATUS_DEPOSIT_PERIOD')}
+                >
+                  Deposit ({formatNumber(sumary?.depositRequired || 0, { decimalsLength: 0 })})
+                </button>
               </li>
               <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_VOTING_PERIOD' ? 'active' : ''}`}>
-                <button className='tab-button whitespace-nowrap' onClick={() => onTabChange('PROPOSAL_STATUS_VOTING_PERIOD')}>Voting ({formatNumber(sumary?.votingPeriod || 0, { decimalsLength: 0 })})</button>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('PROPOSAL_STATUS_VOTING_PERIOD')}
+                >
+                  Voting ({formatNumber(sumary?.votingPeriod || 0, { decimalsLength: 0 })})
+                </button>
               </li>
               <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_PASSED' ? 'active' : ''}`}>
-                <button className='tab-button whitespace-nowrap' onClick={() => onTabChange('PROPOSAL_STATUS_PASSED')}>Passed ({formatNumber(sumary?.passed || 0, { decimalsLength: 0 })})</button>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('PROPOSAL_STATUS_PASSED')}
+                >
+                  Passed ({formatNumber(sumary?.passed || 0, { decimalsLength: 0 })})
+                </button>
               </li>
               <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_REJECTED' ? 'active' : ''}`}>
-                <button className='tab-button whitespace-nowrap' onClick={() => onTabChange('PROPOSAL_STATUS_REJECTED')}>Rejected ({formatNumber(sumary?.rejected || 0, { decimalsLength: 0 })})</button>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('PROPOSAL_STATUS_REJECTED')}
+                >
+                  Rejected ({formatNumber(sumary?.rejected || 0, { decimalsLength: 0 })})
+                </button>
               </li>
               <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_FAILED' ? 'active' : ''}`}>
-                <button className='tab-button whitespace-nowrap' onClick={() => onTabChange('PROPOSAL_STATUS_FAILED')}>Failed ({formatNumber(sumary?.failed || 0, { decimalsLength: 0 })})</button>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('PROPOSAL_STATUS_FAILED')}
+                >
+                  Failed ({formatNumber(sumary?.failed || 0, { decimalsLength: 0 })})
+                </button>
               </li>
             </ul>
             <div className='input-wrapper hidden'>
@@ -316,7 +357,7 @@ export const GovernanceScreen = ({
             </div>
           </div>
           <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 governance-card-wrapper'>
-            {!governances?.length && !isLoading ? 
+            {!governances?.length && !isLoading ?
               <div><H3 className='!leading-6'>No data</H3></div> : null
             }
             {governances?.map((item) => {
@@ -343,10 +384,18 @@ export const GovernanceScreen = ({
                       <div className='status-bar-abstain' style={{ width: `${abstainPercent}%` }}></div>
                     </div>
                     <div className='flex justify-between gap-3 mt-2 status-bar-label'>
-                      <div className='text-lumera-label'><span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(1)}%</div>
-                      <div className='text-lumera-label'><span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(1)}%</div>
-                      <div className='text-lumera-label'><span className='text-lumera-red-light'>No With Veto</span>: {noWithVetoPercent.toFixed(1)}%</div>
-                      <div className='text-lumera-label'><span className='text-lumera-sub-label'>Abstain</span>: {abstainPercent.toFixed(1)}%</div>
+                      <div className='text-lumera-label'>
+                        <span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(1)}%
+                      </div>
+                      <div className='text-lumera-label'>
+                        <span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(1)}%
+                      </div>
+                      <div className='text-lumera-label'>
+                        <span className='text-lumera-red-light'>No With Veto</span>: {noWithVetoPercent.toFixed(1)}%
+                      </div>
+                      <div className='text-lumera-label'>
+                        <span className='text-lumera-sub-label'>Abstain</span>: {abstainPercent.toFixed(1)}%
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -356,19 +405,19 @@ export const GovernanceScreen = ({
             })}
           </div>
         </Card>
-        <VoteModal 
-          isOpen={isVoteOpen} 
-          setOpen={setVoteOpen} 
-          sender={address} 
-          onOptionChange={onOptionChange} 
-          onVoteClick={onVoteClick} 
-          item={selectedItem} 
-          isVoteLoading={isVoteLoading} 
-          error={error} 
+        <VoteModal
+          isOpen={isVoteOpen}
+          setOpen={setVoteOpen}
+          sender={address}
+          onOptionChange={onOptionChange}
+          onVoteClick={onVoteClick}
+          item={selectedItem}
+          isVoteLoading={isVoteLoading}
+          error={error}
           voteAdvanced={voteAdvanced}
           handleVoteAdvancedChange={handleVoteAdvancedChange}
         />
-        <DepositModal 
+        <DepositModal
           isOpen={deposit.isOpen}
           sender={deposit.sender}
           isVoteLoading={deposit.isVoteLoading}

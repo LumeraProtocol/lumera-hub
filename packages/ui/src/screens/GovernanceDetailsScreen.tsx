@@ -465,7 +465,9 @@ export const GovernanceDetailsScreen = ({
                             <div className='status-bar-yes' style={{ width: `${turnout}%` }}></div>
                         </div>
                         <div className='flex justify-between gap-3 mt-2'>
-                            <div className='text-lumera-label'><span className='text-lumera-green-light'>Turnout</span>: {turnout.toFixed(2)}%</div>
+                            <div className='text-lumera-label'>
+                              <span className='text-lumera-green-light'>Turnout</span>: {turnout.toFixed(2)}%
+                            </div>
                         </div>
                     </div>
                     <div className='mt-5'>
@@ -475,8 +477,12 @@ export const GovernanceDetailsScreen = ({
                             <div className='status-bar-no' style={{ width: `${noPercent}%` }}></div>
                         </div>
                         <div className='flex justify-between gap-3 mt-2 status-bar-label-detail'>
-                            <div className='text-lumera-label'><span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(2)}%</div>
-                            <div className='text-lumera-label'><span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(2)}%</div>
+                            <div className='text-lumera-label'>
+                              <span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(2)}%
+                            </div>
+                            <div className='text-lumera-label'>
+                              <span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(2)}%
+                            </div>
                         </div>
                     </div>
                     <div className='mt-5'>
@@ -486,11 +492,10 @@ export const GovernanceDetailsScreen = ({
                         </div>
                         {governance?.voting_end_time ? (
                             <div className='flex justify-end gap-3 mt-2 status-bar-label-detail text-lumera-label text-sm'>
-                                {voteTimeLeft > 0 ?
-                                    <span>{voteTimeLeft} day(s)</span> :
-                                    <span>Ends on {dayjs(governance.voting_end_time).format('MMM DD, YYYY')} at {dayjs(governance.voting_end_time).format('hh:mm A')}</span>
-                                }
-
+                              {voteTimeLeft > 0 ?
+                                <span>{voteTimeLeft} day(s)</span> :
+                                <span>Ends on {dayjs(governance.voting_end_time).format('MMM DD, YYYY')} at {dayjs(governance.voting_end_time).format('hh:mm A')}</span>
+                              }
                             </div>
                         ) : null
                         }
