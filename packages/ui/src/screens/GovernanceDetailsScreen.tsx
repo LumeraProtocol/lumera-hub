@@ -1,5 +1,5 @@
-import { 
-  YStack, 
+import {
+  YStack,
   Card,
   H2,
   H3,
@@ -8,9 +8,8 @@ import {
   Button,
 } from 'tamagui';
 import dayjs from 'dayjs';
-import numeral from 'numeral';
-import ReactPaginate from 'react-paginate';
 import { ChevronLeft } from 'lucide-react';
+import ReactECharts from 'echarts-for-react';
 
 import Loading from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
@@ -19,7 +18,8 @@ import PastTime from '@/components/PastTime';
 import AppLink from '@/components/AppLink';
 import { IProposal } from '@/hooks/useProposals';
 import { IBlock, IVote } from '@/hooks/useGovernanceDetails';
-import { formatAddress } from '@/utils/format';
+import { formatAddress, formatNumber, formatToken } from '@/utils/format';
+import { DENOM } from '@/contants/network';
 import { VoteModal } from './HomeScreen';
 
 import 'react-paginate/theme/basic/react-paginate.css';
@@ -41,11 +41,11 @@ interface IGovernanceDetailsScreen {
         isVoteLoading: boolean;
         error: string | null;
         voteAdvanced: {
-        fees: string; 
-        gas: string; 
-        memo: string; 
-        senderAddress: string; 
-        depositAmount: string; 
+        fees: string;
+        gas: string;
+        memo: string;
+        senderAddress: string;
+        depositAmount: string;
         };
         handleVoteAdvancedChange: (name: string, value: string) => void;
         showAdvanced: boolean;
@@ -58,10 +58,10 @@ interface IGovernanceDetailsScreen {
         isVoteLoading: boolean;
         error: string | null;
         voteAdvanced: {
-            fees: string; 
-            gas: string; 
-            memo: string; 
-            broadcastMode: string; 
+            fees: string;
+            gas: string;
+            memo: string;
+            broadcastMode: string;
         };
         handleVoteAdvancedChange: (name: string, value: string) => void;
         address: string;
@@ -72,8 +72,17 @@ interface IGovernanceDetailsScreen {
     block: IBlock | null;
     votes: IVote[];
     totalVotes: number;
-    handlePageClick: ({ selected }: { selected: number }) => void;
+    handlePageClick: () => void;
 }
+
+interface IVoteChartOptions {
+    yes: number;
+    noWithVeto: number;
+    no: number;
+    abstain: number;
+}
+
+const COLORS = ['#2dd4bf', '#f87171', '#fb923c', '#9ca3af'];
 
 export const GovernanceDetailsScreen = ({
     isLoading,
@@ -91,13 +100,16 @@ export const GovernanceDetailsScreen = ({
             return null;
         }
         const item = governance.messages[0];
+        const getTotalDeposit = () => {
+            return governance.total_deposit.reduce((total, deposit) => total + Number(deposit.amount), 0);
+        }
         return (
             <div>
                 <H3 className='text-lumera-label'>Description</H3>
                 <div className='w-full'>
                     {governance.summary}
                 </div>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-3 w-full'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-3 w-full mt-3'>
                     <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md'>
                         <div className='flex flex-col w-full'>
                             <Text>@type</Text>
@@ -111,18 +123,38 @@ export const GovernanceDetailsScreen = ({
                         </div>
                     </div>
                 </div>
-                <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md'>
-                    <div className='flex flex-col w-full'>
-                        <Text>Plan</Text>
-                        {item?.plan ?
-                            <div className='grid grid-cols-1 md:grid-cols-3 w-full'>
-                                {Object.entries(item.plan).map(([key, value]) => (
-                                    <SizableText className='text-sm text-lumera-label' key={key}>
-                                        <strong className='capitalize text-gray-300'>{key}:</strong> {value || ''}
-                                    </SizableText>
-                                ))}
-                            </div> : <div className='text-base mt-3'>No data</div>
-                        }
+                <div className='mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full sub-card p-3 rounded-md'>
+                    <div>
+                        <Text>Proposal Type</Text>
+                        <div>
+                            <SizableText className='text-sm text-lumera-label truncate !whitespace-nowrap'>
+                                {item?.plan?.info}
+                            </SizableText>
+                        </div>
+                    </div>
+                    <div>
+                        <Text>Proposed On</Text>
+                        <div>
+                            <SizableText className='text-sm text-lumera-label truncate !whitespace-nowrap'>
+                                {dayjs(governance.voting_start_time).format('MM/DD/YYYY')}
+                            </SizableText>
+                        </div>
+                    </div>
+                    <div>
+                        <Text>Voting End</Text>
+                        <div>
+                            <SizableText className='text-sm text-lumera-label truncate !whitespace-nowrap'>
+                                {dayjs(governance.voting_end_time).format('MM/DD/YYYY')}
+                            </SizableText>
+                        </div>
+                    </div>
+                    <div>
+                        <Text>Deposit</Text>
+                        <div>
+                            <SizableText className='text-sm text-lumera-label truncate !whitespace-nowrap'>
+                                {formatToken({ amount: `${getTotalDeposit()}`, denom: DENOM, })}
+                            </SizableText>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -132,22 +164,19 @@ export const GovernanceDetailsScreen = ({
     const getPoolPercent = () => {
         if (!governance?.final_tally_result) {
             return {
-                yesPercent: 0, 
-                noPercent: 0, 
-                noWithVetoPercent: 0, 
-                abstainPercent: 0, 
+                yesPercent: 0,
+                noPercent: 0,
                 turnout: 0,
             }
         }
         const item = governance.final_tally_result;
         const total = Number(item.abstain_count) + Number(item.no_count) + Number(item.no_with_veto_count) + Number(item.yes_count);
+        const yesNoTotal = Number(item.no_count) + Number(item.yes_count);
         const bonded = pool?.bonded_tokens || '1';
         return {
-            yesPercent: item.yes_count ? Number(item.yes_count) * 100 / total : 0,
-            noPercent: item.yes_count ? Number(item.no_count) * 100 / total : 0,
-            noWithVetoPercent: item.yes_count ? Number(item.no_with_veto_count) * 100 / total : 0,
-            abstainPercent: item.yes_count ? Number(item.abstain_count) * 100 / total : 0,
-            turnout: Number(total) / Number(bonded) * 100,
+            yesPercent: Number(item.yes_count) ? Number(item.yes_count) * 100 / yesNoTotal : 0,
+            noPercent: Number(item.no_count) ? Number(item.no_count) * 100 / yesNoTotal : 0,
+            turnout: Number(total) / Number(bonded) * 100 || 0,
         }
     }
 
@@ -192,7 +221,7 @@ export const GovernanceDetailsScreen = ({
         return dayjs(date).format("YYYY-MM-DD HH:mm")
     }
 
-    const { yesPercent, noPercent, noWithVetoPercent, abstainPercent, turnout } = getPoolPercent();
+    const { yesPercent, noPercent, turnout } = getPoolPercent();
 
     if ((!governance || !block) && !isLoading) {
         return (
@@ -291,6 +320,130 @@ export const GovernanceDetailsScreen = ({
         }
     }
 
+    const getOption = (data: IVoteChartOptions) => {
+        return {
+            tooltip: {
+            trigger: 'item'
+            },
+            color: COLORS,
+            series: [
+            {
+                name: 'Votes & Voters',
+                type: 'pie',
+                radius: '90%',
+                label: {
+                    show: false,
+                    position: 'center'
+                },
+                labelLine: {
+                    show: false
+                },
+                data: [
+                    { value: Number(data.yes), name: 'Yes' },
+                    { value: Number(data.no), name: 'No' },
+                    { value: Number(data.noWithVeto), name: 'No with Veto' },
+                    { value: Number(data.abstain), name: 'Abstain' }
+                ]
+            }
+            ]
+        }
+    }
+
+    const VoterTypePill = (vote: IVote) => {
+        switch (vote.options[0].option) {
+            case 'VOTE_OPTION_YES':
+                return (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-teal-500/20 text-teal-300">Yes</span>
+                );
+            case 'VOTE_OPTION_NO':
+                return (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-300">No</span>
+                );
+            case 'VOTE_OPTION_NO_WITH_VETO':
+                return (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-300">No with Veto</span>
+                );
+            default:
+                return (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-500/20 text-gray-300">Abstain</span>
+                );
+        }
+    }
+
+    const getGovernanceData = () => {
+        if (!governance) {
+            return {
+                yes: {
+                    value: 0,
+                    percent: '0',
+                },
+                no: {
+                    value: 0,
+                    percent: '0',
+                },
+                noWithVeto: {
+                    value: 0,
+                    percent: '0',
+                },
+                abstain: {
+                    value: 0,
+                    percent: '0',
+                },
+            }
+        }
+        const { abstain_count, no_with_veto_count, no_count, yes_count } = governance.final_tally_result;
+
+        const totalVotes = Number(yes_count) + Number(no_count) + Number(no_with_veto_count) + Number(abstain_count);
+        return {
+            yes: {
+                value: Number(yes_count),
+                percent: Number(yes_count) ? (Number(yes_count) * 100 / totalVotes)?.toFixed(2) : '0',
+            },
+            no: {
+                value: Number(no_count),
+                percent: Number(no_count) ? (Number(no_count) * 100 / totalVotes)?.toFixed(2) : '0',
+            },
+            noWithVeto: {
+                value: Number(no_with_veto_count),
+                percent: Number(no_with_veto_count) ? (Number(no_with_veto_count) * 100 / totalVotes)?.toFixed(2) : '0',
+            },
+            abstain: {
+                value: Number(abstain_count),
+                percent: Number(abstain_count) ? (Number(abstain_count) * 100 / totalVotes)?.toFixed(2) : '0',
+            },
+        }
+    }
+    const { abstain, no, noWithVeto, yes } = getGovernanceData();
+
+    const getVoteTimePercent = () => {
+        if (!governance) {
+            return {
+                voteTimePercent: 0,
+                voteTimeLeft: 0,
+            };
+        }
+
+        const startDate = dayjs(governance.voting_start_time);
+        const endDate = dayjs(governance.voting_end_time);
+        const now = dayjs();
+        const totalDays = endDate.diff(startDate, 'hour');
+        const passedDays = now.diff(startDate, 'hour');
+        const remainingPercent = ((totalDays - passedDays) / totalDays) * 100;
+
+        if (passedDays <= 0) {
+            return {
+                voteTimePercent: 100,
+                voteTimeLeft: 0,
+            };
+        }
+        return {
+            voteTimePercent: 100 - remainingPercent,
+            voteTimeLeft: Math.ceil((totalDays - passedDays) / 60),
+        };
+    }
+
+    const { voteTimeLeft, voteTimePercent } = getVoteTimePercent();
+
     return (
         <YStack flex={1}>
             <div className='text-left'>
@@ -306,7 +459,7 @@ export const GovernanceDetailsScreen = ({
                     {getMessage()}
                 </Card>
                 <Card elevate size="$4" bordered className='p-5 w-full mt-5'>
-                    <H3>Tally</H3>
+                    <H3>Results</H3>
                     <div className='mt-5'>
                         <div className='status-bar-wrapper'>
                             <div className='status-bar-yes' style={{ width: `${turnout}%` }}></div>
@@ -316,18 +469,31 @@ export const GovernanceDetailsScreen = ({
                         </div>
                     </div>
                     <div className='mt-5'>
+                        <div className='text-base mb-3'>Threshold</div>
                         <div className='status-bar-wrapper'>
                             <div className='status-bar-yes' style={{ width: `${yesPercent}%` }}></div>
                             <div className='status-bar-no' style={{ width: `${noPercent}%` }}></div>
-                            <div className='status-bar-no-with-veto' style={{ width: `${noWithVetoPercent}%` }}></div>
-                            <div className='status-bar-abstain' style={{ width: `${abstainPercent}%` }}></div>
                         </div>
                         <div className='flex justify-between gap-3 mt-2 status-bar-label-detail'>
                             <div className='text-lumera-label'><span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(2)}%</div>
                             <div className='text-lumera-label'><span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(2)}%</div>
-                            <div className='text-lumera-label'><span className='text-lumera-red-light'>No With Veto</span>: {noWithVetoPercent.toFixed(2)}%</div>
-                            <div className='text-lumera-label'><span className='text-lumera-sub-label'>Abstain</span>: {abstainPercent.toFixed(2)}%</div>
                         </div>
+                    </div>
+                    <div className='mt-5'>
+                        <div className='text-base mb-3'>Voting Period</div>
+                        <div className='status-bar-wrapper'>
+                            <div className='status-bar-yes' style={{ width: `${voteTimePercent}%` }}></div>
+                        </div>
+                        {governance?.voting_end_time ? (
+                            <div className='flex justify-end gap-3 mt-2 status-bar-label-detail text-lumera-label text-sm'>
+                                {voteTimeLeft > 0 ?
+                                    <span>{voteTimeLeft} day(s)</span> :
+                                    <span>Ends on {dayjs(governance.voting_end_time).format('MMM DD, YYYY')} at {dayjs(governance.voting_end_time).format('hh:mm A')}</span>
+                                }
+
+                            </div>
+                        ) : null
+                        }
                     </div>
                     <div className="mt-5">
                         {getControls()}
@@ -336,7 +502,7 @@ export const GovernanceDetailsScreen = ({
                 {governance ?
                     <Card elevate size="$4" bordered className='p-5 w-full mt-5'>
                         <H3>Timeline</H3>
-                        <div>
+                        <div className='mt-3'>
                             <div className="flex items-start justify-between flex-col sm:flex-row">
                                 <div>
                                     <span className='w-2.5 h-2.5 rounded-full bg-amber-600 inline-block mr-2'></span> <span>Submited at: </span> <span>{getDate(governance?.submit_time)}</span>
@@ -388,65 +554,89 @@ export const GovernanceDetailsScreen = ({
                     </Card> : null
                 }
                 <Card elevate size="$4" bordered className='p-5 w-full mt-5'>
-                    <H3>Votes</H3>
-                    <div className='overflow-x-auto'>
-                        <div className='w-full min-w-[968px]'>
-                            <table className="table w-full table-zebra">
-                                <tbody>
-                                    {votes.map((item, index) => (
-                                        <tr key={index}>
-                                            <td className="py-2 text-sm">{formatAddress(item.voter)}</td>
-                                            {item.option ?
-                                                <td
-                                                    v-if="item.option"
-                                                    className={`py-2 text-sm ${item.option === 'VOTE_OPTION_YES' ? 'text-yes' : ''} ${item.option === 'VOTE_OPTION_ABSTAIN' ? 'text-gray-400' : ''}`}
-                                                >
-                                                    { String(item.option).replace('VOTE_OPTION_', '') }
-                                                </td> : null
-                                            }
-                                            {item.options ?
-                                                <td
-                                                    v-if="item.options"
-                                                    className="py-2 text-sm"
-                                                >
-                                                    {item.options.map(x => `${x.option.replace('VOTE_OPTION_', '')}:${numeral(x.weight).format('0.[00]%')}`).join(', ') }
-                                                </td> : null 
-                                            }
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                    <H3>Votes & Voters</H3>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full mt-3">
+                        <div className="w-full">
+                            <div>
+                                <ReactECharts option={getOption({
+                                    yes: yes.value ? Number(formatToken({ amount: `${yes.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
+                                    no: yes.value ? Number(formatToken({ amount: `${no.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
+                                    noWithVeto: yes.value ? Number(formatToken({ amount: `${noWithVeto.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
+                                    abstain: yes.value ? Number(formatToken({ amount: `${abstain.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
+                                })} style={{ height: '200px', width: '100%' }} />
+                            </div>
+                            <div className="w-full mt-4 space-y-2">
+                               <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[0] }}></div>
+                                        <span className="text-gray-300">Yes</span>
+                                    </div>
+                                    <span className="font-semibold text-white">
+                                        {formatToken({ amount: `${yes.value}`, denom: DENOM }, true, '0,0')} ({yes.percent}%)
+                                    </span>
+                                </div>
+                               <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[1] }}></div>
+                                        <span className="text-gray-300">No</span>
+                                    </div>
+                                    <span className="font-semibold text-white">
+                                        {formatToken({ amount: `${no.value}`, denom: DENOM }, true, '0,0')} ({no.percent}%)
+                                    </span>
+                                </div>
+                               <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[2] }}></div>
+                                        <span className="text-gray-300">No with Veto</span>
+                                    </div>
+                                    <span className="font-semibold text-white">
+                                        {formatToken({ amount: `${noWithVeto.value}`, denom: DENOM }, true, '0,0')} ({noWithVeto.percent}%)
+                                    </span>
+                                </div>
+                               <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[3] }}></div>
+                                        <span className="text-gray-300">Abstain</span>
+                                    </div>
+                                    <span className="font-semibold text-white">
+                                        {formatToken({ amount: `${abstain.value}`, denom: DENOM }, true, '0,0')} ({abstain.percent}%)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className='w-full'>
+                            <div className="space-y-2 h-96 overflow-y-auto pr-2">
+                                {votes.map((voter, index) => (
+                                    <div key={`${index}-${voter.proposal_id}-${voter.voter}`} className="flex justify-between items-center p-3 bg-gray-900/50 rounded-md">
+                                        <span className="font-mono text-sm text-gray-300 truncate">{formatAddress(voter.voter, 10, -10)}</span>
+                                        {VoterTypePill(voter)}
+                                    </div>
+                                ))}
+                            </div>
+                            {Number(totalVotes) > 0 ? (
+                                <div className='w-full flex justify-end mt-2'>
+                                    <Button onPress={handlePageClick}>More</Button>
+                                </div>
+                            ) : null
+                            }
                         </div>
                     </div>
-                    {totalVotes > 1 ?
-                        <div className="paginate-wrapper pt-3">
-                            <ReactPaginate
-                                breakLabel="..."
-                                nextLabel=">"
-                                onPageChange={handlePageClick}
-                                pageRangeDisplayed={3}
-                                pageCount={totalVotes}
-                                previousLabel="<"
-                                renderOnZeroPageCount={null}
-                                className='react-paginate'
-                            />
-                        </div> : null
-                    }
                 </Card>
             </div>
-            <VoteModal 
-                isOpen={vote.isVoteOpen} 
-                setOpen={vote.setVoteOpen} 
-                sender={vote.address} 
-                onOptionChange={vote.onOptionChange} 
-                onVoteClick={vote.onVoteClick} 
-                item={governance} 
-                isVoteLoading={vote.isVoteLoading} 
-                error={vote.error} 
+            <VoteModal
+                isOpen={vote.isVoteOpen}
+                setOpen={vote.setVoteOpen}
+                sender={vote.address}
+                onOptionChange={vote.onOptionChange}
+                onVoteClick={vote.onVoteClick}
+                item={governance}
+                isVoteLoading={vote.isVoteLoading}
+                error={vote.error}
                 voteAdvanced={vote.voteAdvanced}
                 handleVoteAdvancedChange={vote.handleVoteAdvancedChange}
             />
-            <DepositModal 
+            <DepositModal
                 isOpen={deposit.isOpen}
                 sender={deposit.sender}
                 isVoteLoading={deposit.isVoteLoading}

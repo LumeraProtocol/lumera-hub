@@ -80,14 +80,20 @@ const useGovernanceDetails = (id: string) => {
     const [isVoteLoading, setVoteLoading] = useState(false);
     const [errorVote, setErrorVote] = useState('');
     const [totalVotes, setTotalVotes] = useState(0);
+    const [nextKey, setNextKey] = useState(null);
 
-    const fetchVotes = async (offset = 0) => {
+    const fetchVotes = async (key = null) => {
         setVoteLoading(true);
         setErrorVote('');
         try {
-            const { data } = await instance.get(`/cosmos/gov/v1/proposals/${id}/votes?pagination.limit=${VOTE_LIMIT}&pagination.count_total=true&pagination.reverse=true&pagination.offset=${offset}`);
+            let nextKey = '';
+            if (key) {
+                nextKey = `&pagination.key=${key}`;
+            }
+            const { data } = await instance.get(`/cosmos/gov/v1/proposals/${id}/votes?pagination.limit=${VOTE_LIMIT}&pagination.count_total=true&pagination.reverse=true${nextKey}`);
             setTotalVotes(Math.ceil(Number(data.pagination.total) / VOTE_LIMIT));
-            setVotes(data.votes);
+            setVotes(prev => [...prev, ...data.votes]);
+            setNextKey(data.pagination.next_key);
         } catch (error) {
            setErrorVote(error instanceof Error ? error.message : 'An unknown error occurred.');
         }
@@ -119,9 +125,8 @@ const useGovernanceDetails = (id: string) => {
         }
     }, [id]);
 
-    const handlePageClick = ({ selected }: { selected: number }) => {
-        const offset = selected * VOTE_LIMIT;
-        fetchVotes(offset);
+    const handlePageClick = () => {
+        fetchVotes(nextKey);
     }
 
     return {

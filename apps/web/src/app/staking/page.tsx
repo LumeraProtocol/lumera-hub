@@ -13,17 +13,17 @@ export default function Page() {
  const { address } = useWalletConnect();
  const delegate = useDelegate();
  const staking = useStaking(address);
- const { 
+ const {
     loading,
     accountInfo,
-    handleClaimButtonClick, 
-    isClaimLoading, 
-    claimInfo, 
-    errorClaim, 
-    handleClaimChange, 
-    handleToggleClaimModal, 
-    isClaimModalOpen, 
-    transactionHash, 
+    handleClaimButtonClick,
+    isClaimLoading,
+    claimInfo,
+    errorClaim,
+    handleClaimChange,
+    handleToggleClaimModal,
+    isClaimModalOpen,
+    transactionHash,
     handleCloseCongratulationsModal,
   } = useAccountInfo();
 
@@ -37,8 +37,8 @@ export default function Page() {
           <title>Staking</title>
       </Helmet>
       <div className="staking-content">
-        <StakingScreen 
-          address={address} 
+        <StakingScreen
+          address={address}
           accountInfo={accountInfo}
           isAccountInfoLoading={loading}
           delegateOptions={{
@@ -69,6 +69,8 @@ export default function Page() {
             validatorTab: staking.validatorTab,
             rewards: staking.rewards,
             subTab: staking.subTab,
+            apr: staking.apr,
+            isAPRLoading: staking.isAPRLoading,
             onSubTabChange: staking.handleSubTabChange,
             onValidatorTabChange: staking.handleValidatorTabChange,
             onTabChange: staking.handleTabChange,
