@@ -22,12 +22,14 @@ import dayjs from 'dayjs';
 import AppLink from '@/components/AppLink';
 import Loading from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
+import Skeleton from '@/components/Skeleton';
 import { IProposal } from '@/hooks/useProposals';
 import { formatNumber, formatToken } from '@/utils/format';
 import { VoteModal } from './HomeScreen';
 
 interface IGovernanceScreen {
   isLoading: boolean,
+  isSumaryLoading: boolean,
   governances: IProposal[];
   msg: {
     type: string;
@@ -99,6 +101,7 @@ export const GovernanceScreen = ({
   voteAdvanced,
   isVoteOpen,
   deposit,
+  isSumaryLoading,
   onTabChange,
   onOptionChange,
   onVoteClick,
@@ -215,7 +218,7 @@ export const GovernanceScreen = ({
         </div>
       </div>
       <div className='relative w-full'>
-        <Loading isLoading={isLoading} />
+        <Loading isLoading={isLoading || isSumaryLoading} />
         <div className='mt-5 grid grid-cols-4 gap-6 w-full governance-overview'>
           <Card elevate size="$4" bordered className='w-full'>
             <Card.Header padded>
@@ -227,7 +230,11 @@ export const GovernanceScreen = ({
                   <H3 className='text-base text-lumera-label leading-none'>Total Proposals</H3>
                   <div className='leading-none mt-3'>
                     <span className='text-[32px] font-bold text-white'>
-                      {formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })}
+                      {isSumaryLoading ?
+                        <Skeleton /> : <>
+                          {formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })}
+                        </>
+                      }
                     </span>
                   </div>
                 </div>
@@ -244,7 +251,11 @@ export const GovernanceScreen = ({
                   <H3 className='text-base text-lumera-label leading-none'>Passed</H3>
                   <div className='leading-none mt-3'>
                     <span className='text-[32px] font-bold text-white'>
-                      {formatNumber(sumary?.passed || 0, { decimalsLength: 0 })}
+                      {isSumaryLoading ?
+                        <Skeleton /> : <>
+                          {formatNumber(sumary?.passed || 0, { decimalsLength: 0 })}
+                        </>
+                      }
                     </span>
                   </div>
                 </div>
@@ -261,7 +272,11 @@ export const GovernanceScreen = ({
                   <H3 className='text-base text-lumera-label leading-none'>Voting Period</H3>
                   <div className='leading-none mt-3'>
                     <span className='text-[32px] font-bold text-white'>
-                      {formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days
+                      {isSumaryLoading ?
+                        <Skeleton /> : <>
+                          {formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days
+                        </>
+                      }
                     </span>
                   </div>
                 </div>
@@ -277,12 +292,17 @@ export const GovernanceScreen = ({
                 <div>
                   <H3 className='text-base text-lumera-label leading-none'>Deposit Required</H3>
                   <div className='leading-none mt-3'>
-                    <span className='text-[32px] font-bold text-white'>
-                      {formatToken({
-                        amount: sumary.depositRequiredParam.amount,
-                        denom: sumary.depositRequiredParam.denom,
-                      }, false, '0,0')}<span className='text-xl ml-1'>LUME</span>
-                    </span>
+                    {isSumaryLoading ?
+                      <Skeleton /> : <>
+                        <span className='text-[32px] font-bold text-white'>
+                          {formatToken({
+                            amount: sumary.depositRequiredParam.amount,
+                            denom: sumary.depositRequiredParam.denom,
+                          }, false, '0,0')}<span className='text-xl ml-1'>LUME</span>
+                        </span>
+                      </>
+                    }
+
                   </div>
                 </div>
               </div>

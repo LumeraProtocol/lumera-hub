@@ -20,6 +20,7 @@ export default function Page() {
     msg,
     sumary,
     currentTab,
+    isSumaryLoading,
     handleTabChange,
     fetchGovernances,
   } = useGovernances();
@@ -33,12 +34,13 @@ export default function Page() {
         <title>Governance</title>
       </Helmet>
       <div className="governance-content">
-        <GovernanceScreen 
-          address={address} 
+        <GovernanceScreen
+          address={address}
           isLoading={isLoading}
           governances={governances}
           msg={msg}
           sumary={sumary}
+          isSumaryLoading={isSumaryLoading}
           currentTab={currentTab}
           onTabChange={handleTabChange}
           onOptionChange={proposals.handleOptionChange}
@@ -51,18 +53,18 @@ export default function Page() {
           isVoteOpen={proposals.isVoteOpen}
           setVoteOpen={proposals.setVoteOpen}
           deposit={{
-            isOpen: deposit.isModalOpen, 
-            sender: address, 
-            isVoteLoading: deposit.isLoading, 
+            isOpen: deposit.isModalOpen,
+            sender: address,
+            isVoteLoading: deposit.isLoading,
             error: deposit.error,
             voteAdvanced: deposit.depositAdvanced,
             showAdvanced: deposit.showAdvanced,
             availableAmount: deposit.availableAmount,
-            setProposalId: deposit.setProposalId, 
-            setOpen: deposit.setModalOpen, 
-            onVoteClick: deposit.handleSendClick, 
-            setModalOpen: deposit.setModalOpen, 
-            handleVoteAdvancedChange: deposit.handleDepositChange, 
+            setProposalId: deposit.setProposalId,
+            setOpen: deposit.setModalOpen,
+            onVoteClick: deposit.handleSendClick,
+            setModalOpen: deposit.setModalOpen,
+            handleVoteAdvancedChange: deposit.handleDepositChange,
             handleAdvancedCheckedChange: deposit.handleShowAdvancedChange,
           }}
         />
