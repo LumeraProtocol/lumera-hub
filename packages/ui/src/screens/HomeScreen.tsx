@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import dayjs from 'dayjs';
 import ReactECharts from 'echarts-for-react';
-import { 
-  YStack, 
-  H2, 
-  Paragraph, 
-  Card, 
-  H3, 
-  H4, 
-  Button, 
-  Text, 
-  SizableText, 
-  Dialog, 
-  Label, 
-  Input, 
-  RadioGroup, 
-  Checkbox, 
-  Select, 
+import {
+  YStack,
+  H2,
+  Paragraph,
+  Card,
+  H3,
+  H4,
+  Button,
+  Text,
+  SizableText,
+  Dialog,
+  Label,
+  Input,
+  RadioGroup,
+  Checkbox,
+  Select,
   XStack,
 } from 'tamagui';
 import { LaptopMinimalCheck, BarChart2, Warehouse, Send } from '@tamagui/lucide-icons'
@@ -39,7 +39,7 @@ dayjs.extend(relativeTime);
 const COLORS = ['#4d4adc', '#62bbf3'];
 
 interface IHomeScreen {
-  address: string; 
+  address: string;
   loading: boolean;
   accountInfo: AccountInfoData | null;
   proposals: IProposal[];
@@ -51,20 +51,20 @@ interface IHomeScreen {
   isVoteLoading: boolean;
   error: string | null;
   voteAdvanced: {
-    fees: string; 
-    gas: string; 
-    memo: string; 
-    broadcastMode: string; 
+    fees: string;
+    gas: string;
+    memo: string;
+    broadcastMode: string;
   };
   handleVoteAdvancedChange: (name: string, value: string) => void;
   onClaimButtonClick: () => void;
   handleResetError: () => void;
   isClaimLoading: boolean;
   claimInfo: {
-    senderAddress: string; 
-    fees: string; 
-    gas: string; 
-    memo: string; 
+    senderAddress: string;
+    fees: string;
+    gas: string;
+    memo: string;
   };
   errorClaim: string | null;
   handleClaimChange: (name: string, value: string) => void;
@@ -89,10 +89,10 @@ interface IVoteModal {
   isVoteLoading: boolean;
   error: string | null;
   voteAdvanced: {
-    fees: string; 
-    gas: string; 
-    memo: string; 
-    broadcastMode: string; 
+    fees: string;
+    gas: string;
+    memo: string;
+    broadcastMode: string;
   };
   handleVoteAdvancedChange: (name: string, value: string) => void;
 }
@@ -105,9 +105,9 @@ interface IClaimableRewardsModal {
   isVoteLoading: boolean;
   error: string | null;
   voteAdvanced: {
-    fees: string; 
-    gas: string; 
-    memo: string; 
+    fees: string;
+    gas: string;
+    memo: string;
   };
   handleVoteAdvancedChange: (name: string, value: string) => void;
   transactionHash?: string;
@@ -184,14 +184,14 @@ const formatMessage = (msgs: TMessage[]) => {
   }
 }
 
-export const VoteModal = ({ 
-  isOpen, 
-  setOpen, 
-  sender, 
-  onOptionChange, 
-  onVoteClick, 
-  item, 
-  isVoteLoading, 
+export const VoteModal = ({
+  isOpen,
+  setOpen,
+  sender,
+  onOptionChange,
+  onVoteClick,
+  item,
+  isVoteLoading,
   error,
   voteAdvanced,
   handleVoteAdvancedChange,
@@ -278,12 +278,12 @@ export const VoteModal = ({
                   <div>
                     <Label htmlFor="fees" className='text-base'>Fees</Label>
                     <div className='input-wrapper'>
-                      <Input 
-                        id="fees" 
-                        placeholder="Fees" 
-                        className='input has-symbol' 
-                        value={voteAdvanced.fees} 
-                        onChangeText={(newValue) => handleVoteAdvancedChange('fees', newValue)} 
+                      <Input
+                        id="fees"
+                        placeholder="Fees"
+                        className='input has-symbol'
+                        value={voteAdvanced.fees}
+                        onChangeText={(newValue) => handleVoteAdvancedChange('fees', newValue)}
                       />
                       <span className='input-symbol'>ulume</span>
                     </div>
@@ -291,24 +291,24 @@ export const VoteModal = ({
                   <div className='mt-1'>
                     <Label htmlFor="gas" className='text-base'>Gas</Label>
                     <div className='input-wrapper'>
-                      <Input 
-                        id="gas" 
-                        placeholder="Gas" 
-                        className='input' 
-                        value={voteAdvanced.gas} 
-                        onChangeText={(newValue) => handleVoteAdvancedChange('gas', newValue)} 
+                      <Input
+                        id="gas"
+                        placeholder="Gas"
+                        className='input'
+                        value={voteAdvanced.gas}
+                        onChangeText={(newValue) => handleVoteAdvancedChange('gas', newValue)}
                       />
                     </div>
                   </div>
                   <div className='mt-1'>
                     <Label htmlFor="memo" className='text-base'>Memo</Label>
                     <div className='input-wrapper'>
-                      <Input 
-                        id="memo" 
-                        placeholder="Memo" 
-                        className='input' 
-                        value={voteAdvanced.memo} 
-                        onChangeText={(newValue) => handleVoteAdvancedChange('memo', newValue)} 
+                      <Input
+                        id="memo"
+                        placeholder="Memo"
+                        className='input'
+                        value={voteAdvanced.memo}
+                        onChangeText={(newValue) => handleVoteAdvancedChange('memo', newValue)}
                       />
                     </div>
                   </div>
@@ -352,10 +352,10 @@ export const VoteModal = ({
               <YStack space="$2" marginTop="$3">
                 <div className='flex justify-between items-center'>
                   <div className='flex gap-3 items-center'>
-                    <Checkbox 
-                      id="advanced" 
-                      size="$4" 
-                      checked={showAdvanced} 
+                    <Checkbox
+                      id="advanced"
+                      size="$4"
+                      checked={showAdvanced}
                       onCheckedChange={handleAdvancedCheckedChange}
                     >
                       <Checkbox.Indicator>
@@ -372,7 +372,7 @@ export const VoteModal = ({
                   </div>
                 </div>
               </YStack>
-              {error && !isVoteLoading ? 
+              {error && !isVoteLoading ?
                 <div className='text-lumera-red-light mt-3'>{error}</div> : null
               }
             </div>
@@ -382,12 +382,12 @@ export const VoteModal = ({
   )
 }
 
-export const ClaimableRewardsModal = ({ 
-  isOpen, 
-  setOpen, 
-  sender, 
-  onSendClick, 
-  isVoteLoading, 
+export const ClaimableRewardsModal = ({
+  isOpen,
+  setOpen,
+  sender,
+  onSendClick,
+  isVoteLoading,
   error,
   voteAdvanced,
   handleVoteAdvancedChange,
@@ -397,7 +397,7 @@ export const ClaimableRewardsModal = ({
   if (!isOpen) {
     return null;
   }
-  
+
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   if (transactionHash) {
@@ -446,7 +446,7 @@ export const ClaimableRewardsModal = ({
             </div>
           </Dialog.Content>
         </Dialog.Portal>
-      </Dialog> 
+      </Dialog>
     )
   }
 
@@ -509,12 +509,12 @@ export const ClaimableRewardsModal = ({
                   <div>
                     <Label htmlFor="fees" className='text-base'>Fees</Label>
                     <div className='input-wrapper'>
-                      <Input 
-                        id="fees" 
-                        placeholder="Fees" 
-                        className='input has-symbol' 
-                        value={voteAdvanced.fees} 
-                        onChangeText={(newValue) => handleVoteAdvancedChange('fees', newValue)} 
+                      <Input
+                        id="fees"
+                        placeholder="Fees"
+                        className='input has-symbol'
+                        value={voteAdvanced.fees}
+                        onChangeText={(newValue) => handleVoteAdvancedChange('fees', newValue)}
                       />
                       <span className='input-symbol'>ulume</span>
                     </div>
@@ -522,24 +522,24 @@ export const ClaimableRewardsModal = ({
                   <div className='mt-1'>
                     <Label htmlFor="gas" className='text-base'>Gas</Label>
                     <div className='input-wrapper'>
-                      <Input 
-                        id="gas" 
-                        placeholder="Gas" 
-                        className='input' 
-                        value={voteAdvanced.gas} 
-                        onChangeText={(newValue) => handleVoteAdvancedChange('gas', newValue)} 
+                      <Input
+                        id="gas"
+                        placeholder="Gas"
+                        className='input'
+                        value={voteAdvanced.gas}
+                        onChangeText={(newValue) => handleVoteAdvancedChange('gas', newValue)}
                       />
                     </div>
                   </div>
                   <div className='mt-1'>
                     <Label htmlFor="memo" className='text-base'>Memo</Label>
                     <div className='input-wrapper'>
-                      <Input 
-                        id="memo" 
-                        placeholder="Memo" 
-                        className='input' 
-                        value={voteAdvanced.memo} 
-                        onChangeText={(newValue) => handleVoteAdvancedChange('memo', newValue)} 
+                      <Input
+                        id="memo"
+                        placeholder="Memo"
+                        className='input'
+                        value={voteAdvanced.memo}
+                        onChangeText={(newValue) => handleVoteAdvancedChange('memo', newValue)}
                       />
                     </div>
                   </div>
@@ -549,10 +549,10 @@ export const ClaimableRewardsModal = ({
               <YStack space="$2" marginTop="$3">
                 <div className='flex justify-between items-center'>
                   <div className='flex gap-3 items-center'>
-                    <Checkbox 
-                      id="advanced" 
-                      size="$4" 
-                      checked={showAdvanced} 
+                    <Checkbox
+                      id="advanced"
+                      size="$4"
+                      checked={showAdvanced}
                       onCheckedChange={handleAdvancedCheckedChange}
                     >
                       <Checkbox.Indicator>
@@ -569,7 +569,7 @@ export const ClaimableRewardsModal = ({
                   </div>
                 </div>
               </YStack>
-              {error && !isVoteLoading ? 
+              {error && !isVoteLoading ?
                 <div className='text-lumera-red-light mt-3'>{error}</div> : null
               }
             </div>
@@ -579,13 +579,13 @@ export const ClaimableRewardsModal = ({
   )
 }
 
-export const HomeScreen = ({ 
-  address, 
-  loading, 
-  accountInfo, 
-  proposals, 
-  isProposalLoading, 
-  recentActivities, 
+export const HomeScreen = ({
+  address,
+  loading,
+  accountInfo,
+  proposals,
+  isProposalLoading,
+  recentActivities,
   isRecentActivityLoading,
   onOptionChange,
   onVoteClick,
@@ -618,14 +618,18 @@ export const HomeScreen = ({
               <Warehouse size="$1" />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>Staked {messages[0].amount.denom === 'lume' ? formatToken({
-                                amount: `${messages[0].amount.amount}`,
-                                denom: 'lume',
-                              }, true, '0,0.[000000]') : formatToken({
-                                amount: `${messages[0].amount.amount}`,
-                                denom: DENOM,
-                              }, true, '0,0.[000000]')}</Text>
-              <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
+              <Text>
+                Staked {messages[0].amount.denom === 'lume' ? formatToken({
+                  amount: `${messages[0].amount.amount}`,
+                  denom: 'lume',
+                }, true, '0,0.[000000]') : formatToken({
+                  amount: `${messages[0].amount.amount}`,
+                  denom: DENOM,
+                }, true, '0,0.[000000]')}
+              </Text>
+              <SizableText className='!text-sm text-lumera-label leading-none'>
+                {dayjs(item.timestamp).fromNow()}
+              </SizableText>
             </div>
           </div>
         )
@@ -637,9 +641,9 @@ export const HomeScreen = ({
             </div>
             <div className='w-full flex flex-col'>
               <Text>Send {formatToken({
-                                amount: `${messages[0].amount[0].amount}`,
-                                denom: DENOM,
-                              }, true, '0,0.[000000]')}</Text>
+                    amount: `${messages[0].amount[0].amount}`,
+                    denom: DENOM,
+                  }, true, '0,0.[000000]')}</Text>
               <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
             </div>
           </div>
@@ -730,7 +734,7 @@ export const HomeScreen = ({
                 <ConnectWalletButton />
               </div>
             </div>
-          </div> 
+          </div>
         </Card> :
         <>
           <div className='w-full flex flex-col gap-6'>
@@ -740,11 +744,11 @@ export const HomeScreen = ({
                   <H3>Portfolio Overview</H3>
                   <div className='mt-5 flex justify-between items-center chart-wrapper'>
                     <div className='w-1/2'>
-                      <ReactECharts option={getOption({ 
+                      <ReactECharts option={getOption({
                         stacked: Number(formatToken({
                                 amount: `${stacked}`,
                                 denom: DENOM,
-                              }, false, '0,0.[000000]')), 
+                              }, false, '0,0.[000000]')),
                         liquid: Number(formatToken({
                                 amount: `${liquid}`,
                                 denom: DENOM,
@@ -775,7 +779,7 @@ export const HomeScreen = ({
                         </div>
                         <div className='text-2xl font-bold'>
                           {loading ?
-                            <Skeleton /> : 
+                            <Skeleton /> :
                             <>
                               {formatToken({
                                 amount: `${liquid}`,
@@ -795,7 +799,7 @@ export const HomeScreen = ({
                     <H3 className='text-lumera-label'>Total Balance</H3>
                     <div>
                       {loading ?
-                        <Skeleton /> : 
+                        <Skeleton /> :
                         <>
                           <span className='text-3xl font-bold text-white break-words'>
                             {formatToken({
@@ -840,7 +844,7 @@ export const HomeScreen = ({
                     </div>
                     <div className='mt-5'>
                       {isProposalLoading ?
-                        <Skeleton /> : 
+                        <Skeleton /> :
                         <>
                           {!proposals?.length ?
                             <div className='flex items-center justify-center min-h-28 md:min-h-[284px] my-2'>
@@ -864,7 +868,7 @@ export const HomeScreen = ({
                           ))}
                         </>
                       }
-                      
+
                     </div>
                   </Card.Header>
                 </Card>
@@ -875,7 +879,7 @@ export const HomeScreen = ({
                     <H3>Recent Activity</H3>
                     <div className='mt-5'>
                       {isRecentActivityLoading ?
-                        <Skeleton /> : 
+                        <Skeleton /> :
                         <>
                           {recentActivities.slice(0, 6)?.map((item) => getActivity(item))}
                         </>
@@ -886,25 +890,25 @@ export const HomeScreen = ({
               </div>
             </div>
           </div>
-          <VoteModal 
-            isOpen={isVoteOpen} 
-            setOpen={setVoteOpen} 
-            sender={address} 
-            onOptionChange={onOptionChange} 
-            onVoteClick={onVoteClick} 
-            item={selectedItem} 
-            isVoteLoading={isVoteLoading} 
-            error={error} 
+          <VoteModal
+            isOpen={isVoteOpen}
+            setOpen={setVoteOpen}
+            sender={address}
+            onOptionChange={onOptionChange}
+            onVoteClick={onVoteClick}
+            item={selectedItem}
+            isVoteLoading={isVoteLoading}
+            error={error}
             voteAdvanced={voteAdvanced}
             handleVoteAdvancedChange={handleVoteAdvancedChange}
           />
-          <ClaimableRewardsModal 
-            isOpen={isClaimModalOpen} 
-            setOpen={handleToggleClaimModal} 
-            sender={claimInfo.senderAddress} 
-            onSendClick={onClaimButtonClick} 
-            isVoteLoading={isClaimLoading} 
-            error={errorClaim} 
+          <ClaimableRewardsModal
+            isOpen={isClaimModalOpen}
+            setOpen={handleToggleClaimModal}
+            sender={claimInfo.senderAddress}
+            onSendClick={onClaimButtonClick}
+            isVoteLoading={isClaimLoading}
+            error={errorClaim}
             voteAdvanced={claimInfo}
             handleVoteAdvancedChange={handleClaimChange}
             transactionHash={transactionHash}

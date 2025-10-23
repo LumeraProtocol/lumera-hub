@@ -36,12 +36,12 @@ const useGovernances = () => {
         })
         try {
             const [
-                resPassed, 
-                resDepositRequired, 
-                resVotingPeriod, 
-                resTotalProposals, 
-                resRejected, 
-                resUnspecified, 
+                resPassed,
+                resDepositRequired,
+                resVotingPeriod,
+                resTotalProposals,
+                resRejected,
+                resUnspecified,
                 resFailed,
                 resParams,
             ] = await Promise.all([
@@ -56,8 +56,8 @@ const useGovernances = () => {
             ]);
 
             setSumary({
-                totalProposals: Number(resPassed.data.pagination.total || 0),
-                passed: Number(resTotalProposals.data.pagination.total || 0),
+                totalProposals: Number(resTotalProposals.data.pagination.total || 0),
+                passed: Number(resPassed.data.pagination.total || 0),
                 votingPeriod: Number(resVotingPeriod.data.pagination.total || 0),
                 depositRequired: Number(resDepositRequired.data.pagination.total || 0),
                 rejected: Number(resRejected.data.pagination.total || 0),
