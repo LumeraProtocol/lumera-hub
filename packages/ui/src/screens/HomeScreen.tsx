@@ -30,7 +30,7 @@ import Skeleton from '@/components/Skeleton';
 import { AccountInfoData } from '@/hooks/useAccountInfo'
 import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity'
 import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/useProposals'
-import { formatNumber, formatToken } from '@/utils/format'
+import { formatToken } from '@/utils/format'
 import { NAV_ITEMS } from '@/components/layout/AppShell';
 import { DENOM } from '@/contants/network';
 

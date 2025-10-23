@@ -13,27 +13,27 @@ import Skeleton from '@/components/Skeleton';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import AppButton from '@/components/AppButton';
 import { RATE_VALUE } from '@/hooks/useDeposit';
-import { 
-  TSigningInfos, 
-  IReward, 
-  IValidator, 
-  AccountInfoData, 
-  IRecentActivity, 
+import {
+  TSigningInfos,
+  IReward,
+  IValidator,
+  AccountInfoData,
+  IRecentActivity,
   TUnbondingDelegation,
 } from '@/types';
 import { DENOM } from '@/contants/network';
-import { 
-  formatToken, 
-  formatCommissionRate, 
-  formatAddress, 
-  percent, 
+import {
+  formatToken,
+  formatCommissionRate,
+  formatAddress,
+  percent,
   formatTokens,
 } from '@/utils/format';
-import { 
-  calculateTotalPower, 
-  calculatePercent, 
-  valconsToBase64, 
-  consensusPubkeyToHexAddress, 
+import {
+  calculateTotalPower,
+  calculatePercent,
+  valconsToBase64,
+  consensusPubkeyToHexAddress,
   getMessages,
   mapAmount,
 } from '@/utils/helpers';
@@ -45,12 +45,12 @@ interface IStakingScreen {
     isVoteLoading: boolean;
     error: string | null;
     optionsAdvanced: {
-        fees: string; 
-        gas: string; 
-        memo: string; 
-        senderAddress: string; 
-        amount: string; 
-        validator: string; 
+        fees: string;
+        gas: string;
+        memo: string;
+        senderAddress: string;
+        amount: string;
+        validator: string;
     };
     showAdvanced: boolean;
     validators: IValidator[];
@@ -89,6 +89,8 @@ interface IStakingScreen {
     validatorTab: string;
     rewards: IReward[];
     subTab: string;
+    apr: number;
+    isAPRLoading: boolean;
     onSubTabChange: (tab: string) => void;
     onValidatorTabChange: (tab: string) => void;
     onTabChange: (tab: string) => void;
@@ -97,10 +99,10 @@ interface IStakingScreen {
   claim: {
     isClaimLoading: boolean;
     claimInfo: {
-      senderAddress: string; 
-      fees: string; 
-      gas: string; 
-      memo: string; 
+      senderAddress: string;
+      fees: string;
+      gas: string;
+      memo: string;
     };
     errorClaim: string | null;
     handleClaimChange: (name: string, value: string) => void;
@@ -123,7 +125,86 @@ interface IStakingScreen {
   isAccountInfoLoading: boolean;
 }
 
-export const StakingScreen = ({ 
+interface IRewardsCalculator {
+ apr: number;
+}
+
+const RewardsCalculator = ({
+  apr
+}: IRewardsCalculator) => {
+  const [amount, setAmount] = React.useState('0');
+  const [estimatedRewards, setEstimatedRewards] = React.useState(0);
+
+  const handleAmountChange = (text: string) => {
+    const numericText = text.replace(/[^0-9.]/g, '');
+    const parts = numericText.split('.');
+    let amount = 0;
+    if (parts.length > 2) {
+      const filteredText = parts[0] + '.' + parts.slice(1).join('');
+      setAmount(filteredText);
+      amount = Number(filteredText);
+    } else {
+      setAmount(numericText);
+      amount = Number(numericText);
+    }
+    const t = 1;
+    const result = amount * (apr / 100) * (t / 365);
+    setEstimatedRewards(result);
+  }
+
+  return (
+    <Card elevate size="$4" bordered className='w-full mt-6'>
+      <Card.Header padded>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-6 w-full rewards-calculator-wrapper'>
+          <div className='w-full'>
+            <H3 className='!flex gap-2 items-center rewards-calculator-icon'><Calculator /> <span>Rewards Calculator</span></H3>
+            <Text className='text-lumera-label text-base'>Estimate your potential earnings from staking LUME.</Text>
+            <div className='mt-5'>
+              <Label htmlFor="amount" className='text-base'>Amount to Stake</Label>
+              <div className='input-wrapper'>
+                <Input
+                  id="amount"
+                  placeholder="0.00"
+                  className='input has-symbol'
+                  keyboardType="numeric"
+                  value={amount}
+                  onChangeText={handleAmountChange}
+                />
+                <span className='input-symbol'>LUME</span>
+              </div>
+            </div>
+          </div>
+          <Card elevate size="$4" bordered className='w-full estimated-rewards-card'>
+            <Card.Header padded>
+              <H3>Estimated Rewards</H3>
+              <div className='mt-3 grid grid-cols-2 gap-2 estimated-rewards-results'>
+                <div className='flex flex-col'>
+                  <SizableText className='text-lumera-label'>1 Day</SizableText>
+                  <Text className='!text-lumera-green'><span className='font-bold text-base'>{estimatedRewards.toFixed(2)}</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
+                </div>
+                <div className='flex flex-col'>
+                  <SizableText className='text-lumera-label'>7 Days</SizableText>
+                  <Text className='!text-lumera-green'><span className='font-bold text-base'>{(estimatedRewards * 7).toFixed(2)}</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
+                </div>
+                <div className='flex flex-col'>
+                  <SizableText className='text-lumera-label'>30 Days</SizableText>
+                  <Text className='!text-lumera-green'><span className='font-bold text-base'>{(estimatedRewards * 30).toFixed(2)}</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
+                </div>
+                <div className='flex flex-col'>
+                  <SizableText className='text-lumera-label'>365 Days</SizableText>
+                  <Text className='!text-lumera-green'><span className='font-bold text-base'>{(estimatedRewards * 365).toFixed(2)}</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
+                </div>
+              </div>
+              <div className='!mt-3 text-lumera-label text-sm'>* All calculations are estimates based on the current APR and are subject to change.</div>
+            </Card.Header>
+          </Card>
+        </div>
+      </Card.Header>
+    </Card>
+  );
+}
+
+export const StakingScreen = ({
   address,
   delegateOptions,
   staking,
@@ -221,6 +302,8 @@ export const StakingScreen = ({
     return total;
   }
 
+  const totalStaked = getTotalStaked();
+
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className='w-full'>
@@ -244,10 +327,10 @@ export const StakingScreen = ({
                   <div className='text-[40px] font-bold text-white !leading-11'>
                     {staking.isLoading || delegateOptions.isLoading ?
                       <Skeleton /> : <>
-                        {formatToken({
-                          amount: `${getTotalStaked()}`,
+                        {totalStaked ? formatToken({
+                          amount: `${totalStaked}`,
                           denom: staking.params.bond_denom,
-                        }, false, '0,0.[00]')}<span className='text-2xl ml-1'>LUME</span>
+                        }, false, '0,0.[00]') : 0}<span className='text-2xl ml-1'>LUME</span>
                       </>
                     }
                   </div>
@@ -257,52 +340,16 @@ export const StakingScreen = ({
                 <Card.Header padded>
                   <H3 className='text-lumera-label'>Current Staking APR</H3>
                   <div className='!text-lumera-green font-bold text-3xl !leading-11'>
-                    Coming soon
+                    {staking.isAPRLoading ?
+                      <Skeleton /> : <>
+                        {staking.apr ? staking.apr.toFixed(2) : 0}%
+                      </>
+                    }
                   </div>
                 </Card.Header>
               </Card>
             </div>
-            <Card elevate size="$4" bordered className='w-full mt-6'>
-              <Card.Header padded>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6 w-full rewards-calculator-wrapper'>
-                  <div className='w-full'>
-                    <H3 className='!flex gap-2 items-center rewards-calculator-icon'><Calculator /> <span>Rewards Calculator</span></H3>
-                    <Text className='text-lumera-label text-base'>Estimate your potential earnings from staking LUME.</Text>
-                    <div className='mt-5'>
-                      <Label htmlFor="amount" className='text-base'>Amount to Stake</Label>
-                      <div className='input-wrapper'>
-                        <Input id="amount" placeholder="0.00" className='input has-symbol' />
-                        <span className='input-symbol'>LUME</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Card elevate size="$4" bordered className='w-full estimated-rewards-card'>
-                    <Card.Header padded>
-                      <H3>Estimated Rewards</H3>
-                      <div className='mt-3 grid grid-cols-2 gap-2 estimated-rewards-results'>
-                        <div className='flex flex-col'>
-                          <SizableText className='text-lumera-label'>1 Day</SizableText>
-                          <Text className='!text-lumera-green'><span className='font-bold text-base'>0.00</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
-                        </div>
-                        <div className='flex flex-col'>
-                          <SizableText className='text-lumera-label'>7 Days</SizableText>
-                          <Text className='!text-lumera-green'><span className='font-bold text-base'>0.00</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
-                        </div>
-                        <div className='flex flex-col'>
-                          <SizableText className='text-lumera-label'>30 Days</SizableText>
-                          <Text className='!text-lumera-green'><span className='font-bold text-base'>0.00</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
-                        </div>
-                        <div className='flex flex-col'>
-                          <SizableText className='text-lumera-label'>365 Days</SizableText>
-                          <Text className='!text-lumera-green'><span className='font-bold text-base'>0.00</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
-                        </div>
-                      </div>
-                      <div className='!mt-3 text-lumera-label text-sm'>* All calculations are estimates based on the current APR and are subject to change.</div>
-                    </Card.Header>
-                  </Card>
-                </div>
-              </Card.Header>
-            </Card>
+            <RewardsCalculator apr={staking.apr} />
             <Card elevate size="$4" bordered className='w-full mt-6'>
               <Card.Header padded>
                 <div className='flex justify-between w-full validators-control'>
@@ -419,7 +466,7 @@ export const StakingScreen = ({
                             {staking.isLoading || isAccountInfoLoading ?
                               <Skeleton /> : <>
                                   {formatToken({
-                                  amount: `${getTotalStaked()}`,
+                                  amount: `${totalStaked}`,
                                   denom: staking.params.bond_denom,
                                 }, true, '0,0.[000000]')}
                               </>
@@ -444,8 +491,8 @@ export const StakingScreen = ({
                         </p>
                       </div>
                     </div>
-                    <AppButton 
-                      className="w-full md:w-auto" 
+                    <AppButton
+                      className="w-full md:w-auto"
                       onClick={() => claim.handleToggleClaimModal(true)}
                       disabled={staking.isLoading || isAccountInfoLoading}
                     >
@@ -455,20 +502,20 @@ export const StakingScreen = ({
                   <div className="mt-8 border-t border-gray-700 pt-6">
                     <div className='overflow-x-auto'>
                       <div className="flex border-b border-gray-700">
-                        <button 
-                          onClick={() => staking.onSubTabChange('delegations')} 
+                        <button
+                          onClick={() => staking.onSubTabChange('delegations')}
                           className={`px-4 py-2 font-medium ${staking.subTab === 'delegations' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
                         >
                           Delegations
                         </button>
-                        <button 
-                          onClick={() => staking.onSubTabChange('unstake')} 
+                        <button
+                          onClick={() => staking.onSubTabChange('unstake')}
                           className={`px-4 py-2 font-medium ${staking.subTab === 'unstake' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
                         >
                           Unstake/Restake
                         </button>
-                        <button 
-                          onClick={() => staking.onSubTabChange('activities')} 
+                        <button
+                          onClick={() => staking.onSubTabChange('activities')}
                           className={`px-4 py-2 font-medium ${staking.subTab === 'activities' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
                         >
                           Activities
@@ -492,15 +539,15 @@ export const StakingScreen = ({
                                 const reward = accountInfo?.rewards.find(v => v.validator_address === delegation.delegation.validator_address);
 
                                 return (
-                                  <div 
-                                    key={delegation.delegation.validator_address} 
+                                  <div
+                                    key={delegation.delegation.validator_address}
                                     className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg"
                                   >
-                                    <div 
+                                    <div
                                       className="col-span-4"
                                     >
-                                      <AppLink 
-                                        href={`/staking/${delegation.delegation.validator_address}`} 
+                                      <AppLink
+                                        href={`/staking/${delegation.delegation.validator_address}`}
                                         className="font-semibold text-white hover:text-lumera-teal cursor-pointer"
                                       >
                                         {validator?.description?.moniker}
@@ -599,16 +646,16 @@ export const StakingScreen = ({
                                 {activityData.activities.map((tx) => (
                                     <div key={tx.txhash} className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-sm">
                                         <div className="col-span-1 text-gray-300">
-                                          <AppLink 
-                                            href={`/block/${tx.height}`} 
+                                          <AppLink
+                                            href={`/block/${tx.height}`}
                                             className="hover:text-lumera-teal truncate flex items-center gap-1.5"
                                           >
                                             {tx.height}<ArrowUpRight className="w-3 h-3"/>
                                           </AppLink>
                                         </div>
                                         <div className="col-span-3">
-                                          <AppLink 
-                                            href={`/tx/${tx.txhash}`} 
+                                          <AppLink
+                                            href={`/tx/${tx.txhash}`}
                                             className="hover:text-lumera-teal truncate flex items-center gap-1.5"
                                           >
                                             {formatAddress(tx.txhash, 12, -6)}<ArrowUpRight className="w-3 h-3"/>
@@ -653,13 +700,13 @@ export const StakingScreen = ({
         transactionHash={delegateOptions.transactionHash}
         onCloseCongratulationsModal={delegateOptions.onCloseCongratulationsModal}
       />
-      <ClaimableRewardsModal 
-        isOpen={claim.isClaimModalOpen} 
-        setOpen={claim.handleToggleClaimModal} 
-        sender={claim.claimInfo.senderAddress} 
-        onSendClick={claim.onClaimButtonClick} 
-        isVoteLoading={claim.isClaimLoading} 
-        error={claim.errorClaim} 
+      <ClaimableRewardsModal
+        isOpen={claim.isClaimModalOpen}
+        setOpen={claim.handleToggleClaimModal}
+        sender={claim.claimInfo.senderAddress}
+        onSendClick={claim.onClaimButtonClick}
+        isVoteLoading={claim.isClaimLoading}
+        error={claim.errorClaim}
         voteAdvanced={claim.claimInfo}
         handleVoteAdvancedChange={claim.handleClaimChange}
         transactionHash={claim.transactionHash}

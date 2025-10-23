@@ -31,7 +31,7 @@ export default function Page({ params }: Props) {
   const { address } = useWalletConnect();
 
   useEffect(() => {
-    document.title = governance?.title || 'Governance Detail';
+    document.title = governance?.title || 'Governance Details';
   }, []);
 
   return (
