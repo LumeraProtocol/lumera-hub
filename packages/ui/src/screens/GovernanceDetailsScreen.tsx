@@ -26,31 +26,34 @@ import 'react-paginate/theme/basic/react-paginate.css';
 
 interface IGovernanceDetailsScreen {
     isLoading: boolean;
+    isVoteLoading: boolean;
     governance: IProposal | null;
     pool: {
         bonded_tokens: string;
         not_bonded_tokens: string;
     };
     deposit: {
-        isOpen: boolean;
-        setOpen: (status: boolean) => void;
-        sender: string;
-        onVoteClick: () => void;
-        setModalOpen: (status: boolean) => void;
-        setProposalId: (id: string) => void;
-        isVoteLoading: boolean;
-        error: string | null;
-        voteAdvanced: {
-        fees: string;
-        gas: string;
-        memo: string;
-        senderAddress: string;
-        depositAmount: string;
-        };
-        handleVoteAdvancedChange: (name: string, value: string) => void;
-        showAdvanced: boolean;
-        handleAdvancedCheckedChange: (checked: boolean) => void;
-        availableAmount: number;
+      isOpen: boolean;
+      setOpen: (status: boolean) => void;
+      sender: string;
+      onVoteClick: () => void;
+      setModalOpen: (status: boolean) => void;
+      setProposalId: (id: string) => void;
+      isVoteLoading: boolean;
+      error: string | null;
+      voteAdvanced: {
+      fees: string;
+      gas: string;
+      memo: string;
+      senderAddress: string;
+      depositAmount: string;
+      };
+      handleVoteAdvancedChange: (name: string, value: string) => void;
+      showAdvanced: boolean;
+      handleAdvancedCheckedChange: (checked: boolean) => void;
+      availableAmount: number;
+      transactionHash: string;
+      handleCloseCongratulationsModal: () => void;
     };
     vote: {
         onOptionChange: (val: string) => void;
@@ -68,6 +71,8 @@ interface IGovernanceDetailsScreen {
         isVoteOpen: boolean;
         setVoteOpen: (status: boolean) => void;
         handleResetError: () => void;
+        transactionHash: string;
+        handleCloseCongratulationsModal: () => void;
     };
     block: IBlock | null;
     votes: IVote[];
@@ -95,6 +100,7 @@ export const GovernanceDetailsScreen = ({
     votes,
     totalVotes,
     nextKey,
+    isVoteLoading,
     handlePageClick,
 }: IGovernanceDetailsScreen) => {
     const getMessage = () => {
@@ -623,7 +629,7 @@ export const GovernanceDetailsScreen = ({
                             </div>
                             {Number(totalVotes) > 0 && nextKey ? (
                                 <div className='w-full flex justify-end mt-2'>
-                                  <Button onPress={handlePageClick}>Load More</Button>
+                                  <Button onPress={handlePageClick} disabled={isVoteLoading}>Load More</Button>
                                 </div>
                             ) : null
                             }
