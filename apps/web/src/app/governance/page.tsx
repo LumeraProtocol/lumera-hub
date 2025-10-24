@@ -1,15 +1,17 @@
 // apps/web/src/app/governance/page.tsx
 'use client'
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 
 import { GovernanceScreen } from '@lumera-hub/ui/src/screens/GovernanceScreen'
 import useGovernances from '@/hooks/useGovernances';
-import useProposals from '@/hooks/useProposals';
+import useProposals, { IProposal } from '@/hooks/useProposals';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import useDeposit from '@/hooks/useDeposit';
 
 export default function Page() {
+  const [selectedItem, setSelectedItem] = useState<IProposal | null>(null);
+
   useEffect(() => {
     document.title = 'Governance';
   }, []);
@@ -27,9 +29,14 @@ export default function Page() {
     handleTabChange,
     fetchGovernances,
   } = useGovernances();
-  const proposals = useProposals();
+  const proposals = useProposals({
+    customMemo: selectedItem ? `Vote for the ${selectedItem.title}` : '',
+  });
   const { address } = useWalletConnect();
-  const deposit = useDeposit({ callback: fetchGovernances });
+  const deposit = useDeposit({
+    callback: fetchGovernances,
+    customMemo: selectedItem ? `Deposit for the ${selectedItem.title}` : '',
+  });
 
   return (
     <>
@@ -38,6 +45,8 @@ export default function Page() {
       </Helmet>
       <div className="governance-content">
         <GovernanceScreen
+          selectedItem={selectedItem}
+          setSelectedItem={setSelectedItem}
           address={address}
           isLoading={isLoading}
           governances={governances}

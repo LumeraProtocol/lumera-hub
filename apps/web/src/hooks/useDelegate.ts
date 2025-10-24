@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import { SigningStargateClient } from '@cosmjs/stargate';
 import { Registry } from '@cosmjs/proto-signing';
-import { 
-  MsgDelegate, 
+import {
+  MsgDelegate,
 } from 'cosmjs-types/cosmos/staking/v1beta1/tx'; // Import MsgDelegate
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { RPC_ENDPOINT, DENOM } from '@/contants/network';
+import {
+  IValidator,
+} from '@/types';
 
 interface UseDepositOptions {
   callback?: () => void;
+  customMemo?: string;
 }
 
 export const RATE_VALUE = 1000000;
@@ -28,7 +32,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
     });
     const [error, setError] = useState('');
     const [showAdvanced, setShowAdvanced] = useState(false);
-    const [validators, setValidators] = useState([]);
+    const [validators, setValidators] = useState<IValidator[]>([]);
     const [isOpenModal, setOpenModal] = useState(false);
     const [totalValidators, setTotalValidators] = useState('0');
     const [isFetchValidatorLoading, setFetchValidatorLoading] = useState(false);
@@ -48,7 +52,16 @@ const useDelegate = (options: UseDepositOptions = {}) => {
 
     useEffect(() => {
         fetchValidator();
-    }, [])
+    }, []);
+
+    useEffect(() => {
+      if (options?.customMemo) {
+        setOptionsAdvanced({
+          ...optionsAdvanced,
+          memo: options?.customMemo,
+        });
+      }
+    }, [options?.customMemo]);
 
     const resetData = () => {
         setShowAdvanced(false);
@@ -57,7 +70,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
             senderAddress: address,
             fees: '2000',
             gas: '200000',
-            memo: 'Stake from Lumera Hub',
+            memo: options?.customMemo || 'Lumera Hub',
             amount: '',
             validator: '',
         });
@@ -69,6 +82,15 @@ const useDelegate = (options: UseDepositOptions = {}) => {
             ...optionsAdvanced,
             [name]: value,
         });
+        if (name === 'validator') {
+          const item = validators.find((v) => v.operator_address === value);
+          if (item) {
+            setOptionsAdvanced({
+            ...optionsAdvanced,
+            memo: `Stake for ${item?.description?.moniker}`,
+        });
+          }
+        }
     }
 
     const handleShowAdvancedChange = (status: boolean) => {
@@ -107,10 +129,10 @@ const useDelegate = (options: UseDepositOptions = {}) => {
             const client = await SigningStargateClient.connectWithSigner(
                 RPC_ENDPOINT,
                 offlineSigner,
-                { 
+                {
                     registry: new Registry([
                         ["/cosmos.staking.v1beta1.MsgDelegate", MsgDelegate],
-                    ]), 
+                    ]),
                 }
             );
             const msg = {
@@ -142,13 +164,14 @@ const useDelegate = (options: UseDepositOptions = {}) => {
         setLoading(false);
     }
 
-    const handleOpenModal = (validator: string) => {
+    const handleOpenModal = (validator: string, customMemo?: string) => {
         setOpenModal(true);
         if (validator) {
-            setOptionsAdvanced({
-                ...optionsAdvanced,
-                validator,
-            });
+          setOptionsAdvanced({
+              ...optionsAdvanced,
+              memo: customMemo || options?.customMemo || 'Lumera Hub',
+              validator,
+          });
         }
     }
 

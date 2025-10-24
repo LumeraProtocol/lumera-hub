@@ -12,13 +12,13 @@ import useSend from '@/hooks/useSend';
 
 export default function Page() {
   const { address } = useWalletConnect();
-  const { 
+  const {
     accountInfo,
     selectedModal,
     handleOpenModal,
     handleCloseModal,
   } = useAccountInfo();
-  const { 
+  const {
     isLoading,
     error,
     transactions,
@@ -26,7 +26,8 @@ export default function Page() {
     handlePageClick,
   } = useTransaction();
   const sendOptions = useSend({
-    callback: handleCloseModal
+    callback: handleCloseModal,
+    customMemo: '',
   });
   const delegate = useDelegate();
   useEffect(() => {
@@ -39,7 +40,7 @@ export default function Page() {
         <title>Wallet</title>
       </Helmet>
       <div className="governance-content">
-        <WalletScreen 
+        <WalletScreen
           walletAddress={address}
           accountInfo={accountInfo}
           isLoading={isLoading}

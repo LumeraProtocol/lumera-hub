@@ -1,5 +1,6 @@
 // apps/web/src/app/page.tsx
 'use client'
+import { useState } from 'react';
 import { Helmet } from "react-helmet-async";
 
 import useAccountInfo from '@/hooks/useAccountInfo';
@@ -7,8 +8,11 @@ import useProposals from '@/hooks/useProposals';
 import useRecentActivity from '@/hooks/useRecentActivity';
 import { HomeScreen } from '@lumera-hub/ui/src/screens/HomeScreen'
 import useWalletConnect from '@/hooks/useWalletConnect';
+import { IProposal } from '@/hooks/useProposals'
 
 export default function Page() {
+  const [selectedItem, setSelectedItem] = useState<IProposal | null>(null)
+
   const { address } = useWalletConnect();
   const {
     accountInfo,
@@ -23,7 +27,7 @@ export default function Page() {
     transactionHash,
     handleCloseCongratulationsModal,
   } = useAccountInfo();
-  const proposals = useProposals();
+  const proposals = useProposals({ customMemo: selectedItem?.title ? `Vote for the ${selectedItem?.title}` : '' });
   const recentActivityData = useRecentActivity();
 
   return (
@@ -33,6 +37,8 @@ export default function Page() {
       </Helmet>
       <div className="home-content">
         <HomeScreen
+          selectedItem={selectedItem}
+          setSelectedItem={setSelectedItem}
           address={address}
           loading={loading}
           accountInfo={accountInfo}

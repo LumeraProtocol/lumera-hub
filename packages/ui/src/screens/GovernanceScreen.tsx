@@ -28,6 +28,8 @@ import { formatNumber, formatToken } from '@/utils/format';
 import { VoteModal } from './HomeScreen';
 
 interface IGovernanceScreen {
+  selectedItem: IProposal | null;
+  setSelectedItem: (item: IProposal) => void;
   isLoading: boolean,
   isSumaryLoading: boolean,
   governances: IProposal[];
@@ -112,6 +114,8 @@ export const GovernanceScreen = ({
   totalVotes,
   nextKey,
   voteTransactionHash,
+  selectedItem,
+  setSelectedItem,
   onCloseVoteCongratulationsModal,
   handlePageClick,
   onTabChange,
@@ -121,7 +125,6 @@ export const GovernanceScreen = ({
   handleResetError,
   setVoteOpen
 }: IGovernanceScreen) => {
-  const [selectedItem, setSelectedItem] = React.useState<IProposal | null>(null)
 
   const getStatus = (status: string) => {
     switch (status) {
@@ -178,9 +181,10 @@ export const GovernanceScreen = ({
     }
   }
 
-  const handleDepositClick = (id: string) => {
-    deposit.setProposalId(id);
+  const handleDepositClick = (item: IProposal) => {
+    deposit.setProposalId(item.id);
     deposit.setModalOpen(true);
+    setSelectedItem(item);
   }
 
   const getControls = (item: IProposal) => {
@@ -197,7 +201,7 @@ export const GovernanceScreen = ({
           {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
             <Button onPress={() => handleVotePress(item)}>Vote</Button> : null
           }
-          <Button onPress={() => handleDepositClick(item.id)}>Deposit</Button>
+          <Button onPress={() => handleDepositClick(item)}>Deposit</Button>
         </div>
       </div>
     );
@@ -436,14 +440,14 @@ export const GovernanceScreen = ({
                 </Card>
               )
             })}
-            {Number(totalVotes) > 0 && nextKey ?
-              (
-                <div className='w-full flex justify-end mt-2'>
-                  <Button onPress={handlePageClick}>Load More</Button>
-                </div>
-              ) : null
-            }
           </div>
+          {nextKey ?
+            (
+              <div className='w-full flex justify-end mt-2'>
+                <Button onPress={handlePageClick}>Load More</Button>
+              </div>
+            ) : null
+          }
         </Card>
         <VoteModal
           isOpen={isVoteOpen}

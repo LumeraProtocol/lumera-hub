@@ -74,6 +74,8 @@ interface IHomeScreen {
   onCloseCongratulationsModal?: () => void;
   voteTransactionHash?: string;
   onCloseVoteCongratulationsModal?: () => void;
+  selectedItem: IProposal | null;
+  setSelectedItem: (item: IProposal) => void;
 }
 
 interface IPortfolioOverviewChart {
@@ -661,10 +663,11 @@ export const HomeScreen = ({
   onCloseCongratulationsModal,
   voteTransactionHash,
   onCloseVoteCongratulationsModal,
+  selectedItem,
+  setSelectedItem,
 }: IHomeScreen) => {
   const { stacked, liquid } = getPortfolioData(accountInfo);
   const [isVoteOpen, setVoteOpen] = React.useState(false);
-  const [selectedItem, setSelectedItem] = useState<IProposal | null>(null)
 
   const getActivity = (item: IRecentActivity) => {
     const messages = item.tx.body.messages;

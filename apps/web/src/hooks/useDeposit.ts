@@ -11,6 +11,7 @@ import { RPC_ENDPOINT, DENOM } from '@/contants/network';
 
 interface UseDepositOptions {
   callback?: () => void;
+  customMemo?: string;
 }
 
 export const RATE_VALUE = 1000000;
@@ -53,6 +54,15 @@ const useDeposit = (options: UseDepositOptions = {}) => {
         }
     }, [address]);
 
+    useEffect(() => {
+      if (options?.customMemo) {
+        setDepositAdvanced({
+          ...depositAdvanced,
+          memo: options?.customMemo,
+        });
+      }
+    }, [options?.customMemo]);
+
     const resetData = () => {
         setShowAdvanced(false);
         setModalOpen(false);
@@ -61,7 +71,7 @@ const useDeposit = (options: UseDepositOptions = {}) => {
             senderAddress: address,
             fees: '2000',
             gas: '200000',
-            memo: 'Lumera Hub',
+            memo: options?.customMemo || 'Lumera Hub',
             depositAmount: '',
         });
     }
@@ -73,10 +83,10 @@ const useDeposit = (options: UseDepositOptions = {}) => {
     }, [isModalOpen])
 
     const handleDepositChange = (name: string, value: string) => {
-        setDepositAdvanced({
-            ...depositAdvanced,
-            [name]: value,
-        });
+      setDepositAdvanced({
+        ...depositAdvanced,
+        [name]: value,
+      });
     }
 
     const handleShowAdvancedChange = (status: boolean) => {

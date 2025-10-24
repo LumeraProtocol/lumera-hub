@@ -63,7 +63,7 @@ interface IStakingScreen {
     onSendClick: () => void;
     onInputChange: (name: string, value: string) => void;
     onAdvancedCheckedChange: (checked: boolean) => void;
-    onOpenModal: (validator: string) => void;
+    onOpenModal: (validator: string, customMemo?: string) => void;
   };
   staking: {
     validators: IValidator[];
@@ -424,7 +424,7 @@ export const StakingScreen = ({
                                       {validator.jailed ?
                                         <div className='btn-jailed'>Jailed</div> :
                                         <div className='btn-secondary'>
-                                          <Button onPress={() => delegateOptions.onOpenModal(validator.operator_address)}>Delegate</Button>
+                                          <Button onPress={() => delegateOptions.onOpenModal(validator.operator_address, validator?.description?.moniker ? `Delegate for the ${validator?.description?.moniker}` : '')}>Delegate</Button>
                                         </div>
                                       }
                                     </div>
