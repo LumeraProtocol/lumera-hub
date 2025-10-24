@@ -38,7 +38,7 @@ const useStaking = (address = '') => {
   const [apr, setAPR] = useState(0);
   const [isAPRLoading, setAPRLoading] = useState(false);
 
-    const fetchValidator = async () => {
+  const fetchValidator = async () => {
     setLoading(true);
     try {
       const [undondingRes, unbondedRes] = await Promise.all([
@@ -132,16 +132,26 @@ const useStaking = (address = '') => {
   }
 
   useEffect(() => {
-    fetchValidator();
-    fetchParams();
-    fetchDataForAPR();
+    if (validatorTab === 'all') {
+      fetchValidator();
+      fetchParams();
+      fetchDataForAPR();
+    }
   }, []);
 
   useEffect(() => {
     if (address) {
-      fetchRewards();
-      fetchActivities();
-      fetchUnbondingDelegations();
+      if (validatorTab === 'my') {
+        if (subTab === 'activities') {
+          fetchActivities();
+        }
+        if (subTab === 'unstake') {
+          fetchUnbondingDelegations();
+        }
+      }
+      if (validatorTab === 'all') {
+        fetchRewards();
+      }
     }
   }, [address]);
 
@@ -155,6 +165,12 @@ const useStaking = (address = '') => {
 
   const handleSubTabChange = (tab: string) => {
     setSubTab(tab);
+    if (tab === 'activities') {
+      fetchActivities();
+    }
+    if (tab === 'unstake') {
+      fetchUnbondingDelegations();
+    }
   }
 
   return {

@@ -534,6 +534,13 @@ export const StakingScreen = ({
                                 <div className="col-span-3 text-right">Claimable</div>
                                 <div className="col-span-2"></div>
                               </div>
+                              {!isAccountInfoLoading && !accountInfo?.delegations.length ? (
+                                <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
+                                  <div className='col-span-12'>
+                                    <H3>No data</H3>
+                                  </div>
+                                </div>
+                              ) : null}
                               {accountInfo?.delegations.map(delegation => {
                                 const validator = getAllValidators().find(v => v.operator_address === delegation.delegation.validator_address);
                                 const reward = accountInfo?.rewards.find(v => v.validator_address === delegation.delegation.validator_address);
@@ -584,7 +591,7 @@ export const StakingScreen = ({
                                 <div className="col-span-2 text-right">Balance</div>
                                 <div className="col-span-5 text-right">Completion Time</div>
                               </div>
-                              {!unbonding.unbondingDelegations.length ? (
+                              {!unbonding.isLoading && !unbonding.unbondingDelegations.length ? (
                                 <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
                                   <div className='col-span-12'>
                                     <H3>No data</H3>
@@ -636,7 +643,7 @@ export const StakingScreen = ({
                                     <div className="col-span-2 text-right">Amount</div>
                                     <div className="col-span-3 text-right">Time</div>
                                 </div>
-                                {!activityData.activities.length ? (
+                                {!activityData.isActivitiesLoading && !activityData.activities.length ? (
                                   <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
                                     <div className='col-span-12'>
                                       <H3>No data</H3>
