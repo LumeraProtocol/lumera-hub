@@ -10,6 +10,7 @@ import {
 import dayjs from 'dayjs';
 import { ChevronLeft } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
+import ReactPaginate from 'react-paginate';
 
 import Loading from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
@@ -17,8 +18,9 @@ import CountDown from '@/components/CountDown';
 import PastTime from '@/components/PastTime';
 import AppLink from '@/components/AppLink';
 import { IProposal } from '@/hooks/useProposals';
+import { VOTE_LIMIT } from '@/hooks/useGovernanceDetails';
 import { IBlock, IVote } from '@/hooks/useGovernanceDetails';
-import { formatAddress, formatNumber, formatToken } from '@/utils/format';
+import { formatAddress, formatToken } from '@/utils/format';
 import { DENOM } from '@/contants/network';
 import { VoteModal } from './HomeScreen';
 
@@ -76,9 +78,8 @@ interface IGovernanceDetailsScreen {
     };
     block: IBlock | null;
     votes: IVote[];
-    nextKey: string;
     totalVotes: number;
-    handlePageClick: () => void;
+    handlePageClick: ({ selected }: { selected: number }) => void;
 }
 
 interface IVoteChartOptions {
@@ -99,7 +100,6 @@ export const GovernanceDetailsScreen = ({
     block,
     votes,
     totalVotes,
-    nextKey,
     isVoteLoading,
     handlePageClick,
 }: IGovernanceDetailsScreen) => {
@@ -210,14 +210,14 @@ export const GovernanceDetailsScreen = ({
             return null;
         }
         return (
-            <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
-            <div className='btn-blue flex justify-end gap-3'>
-                {governance.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
+          <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
+            <div className='btn-primary flex justify-end gap-3'>
+              {governance.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
                 <Button onPress={handleVotePress}>Vote</Button> : null
-                }
-                <Button onPress={() => handleDepositClick(governance.id)}>Deposit</Button>
+              }
+              <Button onPress={() => handleDepositClick(governance.id)}>Deposit</Button>
             </div>
-            </div>
+          </div>
         );
     }
 
@@ -576,7 +576,7 @@ export const GovernanceDetailsScreen = ({
                                     no: yes.value ? Number(formatToken({ amount: `${no.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
                                     noWithVeto: yes.value ? Number(formatToken({ amount: `${noWithVeto.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
                                     abstain: yes.value ? Number(formatToken({ amount: `${abstain.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
-                                })} style={{ height: '200px', width: '100%' }} />
+                                })} style={{ height: '240px', width: '100%' }} />
                             </div>
                             <div className="w-full mt-4 space-y-2">
                                <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
@@ -618,20 +618,33 @@ export const GovernanceDetailsScreen = ({
                             </div>
                         </div>
 
-                        <div className='w-full'>
-                            <div className="space-y-2 h-96 overflow-y-auto pr-2">
-                                {votes.map((voter, index) => (
-                                    <div key={`${index}-${voter.proposal_id}-${voter.voter}`} className="flex justify-between items-center p-3 bg-gray-900/50 rounded-md">
-                                        <span className="font-mono text-sm text-gray-300 truncate">{formatAddress(voter.voter, 10, -10)}</span>
-                                        {VoterTypePill(voter)}
-                                    </div>
-                                ))}
-                            </div>
-                            {Number(totalVotes) > 0 && nextKey ? (
-                                <div className='w-full flex justify-end mt-2'>
-                                  <Button onPress={handlePageClick} disabled={isVoteLoading}>Load More</Button>
-                                </div>
-                            ) : null
+                        <div className='w-full relative'>
+                          <Loading isLoading={isVoteLoading} />
+                          <div className="space-y-2 h-96 overflow-y-auto pr-2">
+                              {votes.map((voter, index) => (
+                                  <div key={`${index}-${voter.proposal_id}-${voter.voter}`} className="flex justify-between items-center p-3 bg-gray-900/50 rounded-md">
+                                      <span className="font-mono text-sm text-gray-300 truncate">{formatAddress(voter.voter, 10, -10)}</span>
+                                      {VoterTypePill(voter)}
+                                  </div>
+                              ))}
+                          </div>
+                          {Number(totalVotes) > 0 ?
+                            <div className="flex justify-between items-center mt-4 flex-col sm:flex-row">
+                              <div className='whitespace-nowrap'>Total pages: {totalVotes * VOTE_LIMIT}</div>
+                              <div className='w-auto paginate-wrapper mt-3 sm:mt-0'>
+                                <ReactPaginate
+                                  breakLabel="..."
+                                  nextLabel=">"
+                                  onPageChange={handlePageClick}
+                                  pageRangeDisplayed={2}
+                                  marginPagesDisplayed={1}
+                                  pageCount={totalVotes}
+                                  previousLabel="<"
+                                  renderOnZeroPageCount={null}
+                                  className='react-paginate'
+                                />
+                              </div>
+                            </div> : null
                             }
                         </div>
                     </div>

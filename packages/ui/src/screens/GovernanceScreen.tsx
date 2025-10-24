@@ -193,7 +193,7 @@ export const GovernanceScreen = ({
     }
     return (
       <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
-        <div className='btn-blue flex justify-end gap-3'>
+        <div className='btn-primary flex justify-end gap-3'>
           {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
             <Button onPress={() => handleVotePress(item)}>Vote</Button> : null
           }

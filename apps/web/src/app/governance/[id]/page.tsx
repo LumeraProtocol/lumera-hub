@@ -23,7 +23,6 @@ export default function Page({ params }: Props) {
     latestBlock,
     votes,
     totalVotes,
-    nextKey,
     isVoteLoading,
     handlePageClick,
     fetchGovernanceDetail,
@@ -49,7 +48,6 @@ export default function Page({ params }: Props) {
           block={latestBlock}
           votes={votes}
           totalVotes={totalVotes}
-          nextKey={nextKey}
           isVoteLoading={isVoteLoading}
           handlePageClick={handlePageClick}
           deposit={{

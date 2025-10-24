@@ -325,7 +325,7 @@
 .tabs-secondary .tab-item.active .tab-button,
 .tabs-secondary .tab-item .tab-button:hover {
   color: #fff;
-  background-color: #4d4adc;
+  background-color: #078A8A;
 }
 .cascade-top-left {
   width: 66%;
@@ -444,6 +444,9 @@
   color: #fff;
   border-radius: 9px;
   font-size: 16px;
+}
+.inactive {
+  cursor: default;
 }
 @media screen and (min-width: 1025px) and (max-width: 1290px) {
   .governance-card-header {

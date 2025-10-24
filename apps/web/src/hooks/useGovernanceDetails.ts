@@ -65,7 +65,7 @@ export interface IVote {
    options: TVoteOption[];
 }
 
-const VOTE_LIMIT = 20;
+export const VOTE_LIMIT = 20;
 
 const useGovernanceDetails = (id: string) => {
     const [isLoading, setLoading] = useState(false);
@@ -80,24 +80,18 @@ const useGovernanceDetails = (id: string) => {
     const [isVoteLoading, setVoteLoading] = useState(false);
     const [errorVote, setErrorVote] = useState('');
     const [totalVotes, setTotalVotes] = useState(0);
-    const [nextKey, setNextKey] = useState('');
 
-    const fetchVotes = async (key = '') => {
-        setVoteLoading(true);
-        setErrorVote('');
-        try {
-            let nextKey = '';
-            if (key) {
-                nextKey = `&pagination.key=${key}`;
-            }
-            const { data } = await instance.get(`/cosmos/gov/v1/proposals/${id}/votes?pagination.limit=${VOTE_LIMIT}&pagination.count_total=true&pagination.reverse=true${nextKey}`);
-            setTotalVotes(Math.ceil(Number(data.pagination.total) / VOTE_LIMIT));
-            setVotes(prev => [...prev, ...data.votes]);
-            setNextKey(data.pagination.next_key);
-        } catch (error) {
-           setErrorVote(error instanceof Error ? error.message : 'An unknown error occurred.');
-        }
-        setVoteLoading(false);
+  const fetchVotes = async (offset = 0) => {
+      setVoteLoading(true);
+      setErrorVote('');
+      try {
+        const { data } = await instance.get(`/cosmos/gov/v1/proposals/${id}/votes?pagination.limit=${VOTE_LIMIT}&pagination.count_total=true&pagination.reverse=true&pagination.offset=${offset}`);
+        setTotalVotes(Math.ceil(Number(data.pagination.total) / VOTE_LIMIT));
+        setVotes(data.votes);
+      } catch (error) {
+          setErrorVote(error instanceof Error ? error.message : 'An unknown error occurred.');
+      }
+      setVoteLoading(false);
     }
 
     const fetchGovernanceDetail = async (id: string) => {
@@ -124,13 +118,14 @@ const useGovernanceDetails = (id: string) => {
 
     useEffect(() => {
         if (id) {
-            fetchGovernanceDetail(id);
-            fetchVotes();
+          fetchGovernanceDetail(id);
+          fetchVotes();
         }
     }, [id]);
 
-    const handlePageClick = () => {
-        fetchVotes(nextKey);
+    const handlePageClick = ({ selected }: { selected: number }) => {
+      const offset = selected * VOTE_LIMIT;
+      fetchVotes(offset);
     }
 
     return {
@@ -143,7 +138,6 @@ const useGovernanceDetails = (id: string) => {
       isVoteLoading,
       totalVotes,
       errorVote,
-      nextKey,
       fetchGovernanceDetail,
       handlePageClick,
     }

@@ -904,7 +904,7 @@ export const HomeScreen = ({
                       {isProposalLoading ?
                         <Skeleton /> :
                         <>
-                          {!proposals?.length ?
+                          {!isProposalLoading && !proposals?.length ?
                             <div className='flex items-center justify-center min-h-28 md:min-h-[284px] my-2'>
                               <H3 className='text-2xl'>No active proposals</H3>
                             </div> : null
