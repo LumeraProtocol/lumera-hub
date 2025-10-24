@@ -648,6 +648,8 @@ export const GovernanceDetailsScreen = ({
                 error={vote.error}
                 voteAdvanced={vote.voteAdvanced}
                 handleVoteAdvancedChange={vote.handleVoteAdvancedChange}
+                transactionHash={vote.transactionHash}
+                onCloseCongratulationsModal={vote.handleCloseCongratulationsModal}
             />
             <DepositModal
                 isOpen={deposit.isOpen}
@@ -661,6 +663,8 @@ export const GovernanceDetailsScreen = ({
                 onVoteClick={deposit.onVoteClick}
                 handleVoteAdvancedChange={deposit.handleVoteAdvancedChange}
                 handleAdvancedCheckedChange={deposit.handleAdvancedCheckedChange}
+                transactionHash={deposit.transactionHash}
+                onCloseCongratulationsModal={deposit.handleCloseCongratulationsModal}
             />
         </YStack>
     )
