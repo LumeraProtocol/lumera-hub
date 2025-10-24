@@ -10,17 +10,17 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 
 export default function Page() {
   const { address } = useWalletConnect();
-  const { 
-    accountInfo, 
-    loading, 
-    handleClaimButtonClick, 
-    isClaimLoading, 
-    claimInfo, 
-    errorClaim, 
-    handleClaimChange, 
-    handleToggleClaimModal, 
-    isClaimModalOpen, 
-    transactionHash, 
+  const {
+    accountInfo,
+    loading,
+    handleClaimButtonClick,
+    isClaimLoading,
+    claimInfo,
+    errorClaim,
+    handleClaimChange,
+    handleToggleClaimModal,
+    isClaimModalOpen,
+    transactionHash,
     handleCloseCongratulationsModal,
   } = useAccountInfo();
   const proposals = useProposals();
@@ -32,8 +32,8 @@ export default function Page() {
           <title>Lumera</title>
       </Helmet>
       <div className="home-content">
-        <HomeScreen 
-          address={address} 
+        <HomeScreen
+          address={address}
           loading={loading}
           accountInfo={accountInfo}
           proposals={proposals.proposalsInfo}
@@ -42,6 +42,8 @@ export default function Page() {
           isRecentActivityLoading={recentActivityData.loading}
           onOptionChange={proposals.handleOptionChange}
           onVoteClick={proposals.handleVote}
+          voteTransactionHash={proposals.transactionHash}
+          onCloseVoteCongratulationsModal={proposals.handleCloseCongratulationsModal}
           isVoteLoading={proposals.isVoteLoading}
           error={proposals.errorVote}
           voteAdvanced={proposals.voteAdvanced}

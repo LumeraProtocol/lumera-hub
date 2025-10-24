@@ -324,7 +324,7 @@ export const StakingScreen = ({
                 <Card.Header padded>
                   <H3 className='text-lumera-label'>Total LUME Staked</H3>
                   <div className='text-[40px] font-bold text-white !leading-11'>
-                    {staking.isLoading || delegateOptions.isLoading ?
+                    {staking.isLoading ?
                       <Skeleton /> : <>
                         {staking.bondedTokens ? formatToken({
                           amount: `${staking.bondedTokens}`,
@@ -366,7 +366,7 @@ export const StakingScreen = ({
                   </div>
                 </div>
                 <div className='mt-5 relative'>
-                  {staking.isLoading || delegateOptions.isLoading || !staking?.params?.bond_denom ? (
+                  {staking.isLoading || !staking?.params?.bond_denom ? (
                       <div className='my-2 min-h-11'>
                         <Loading isLoading />
                       </div>

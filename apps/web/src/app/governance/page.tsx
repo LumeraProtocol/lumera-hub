@@ -21,6 +21,9 @@ export default function Page() {
     sumary,
     currentTab,
     isSumaryLoading,
+    totalVotes,
+    nextKey,
+    handlePageClick,
     handleTabChange,
     fetchGovernances,
   } = useGovernances();
@@ -41,6 +44,9 @@ export default function Page() {
           msg={msg}
           sumary={sumary}
           isSumaryLoading={isSumaryLoading}
+          totalVotes={totalVotes}
+          nextKey={nextKey}
+          handlePageClick={handlePageClick}
           currentTab={currentTab}
           onTabChange={handleTabChange}
           onOptionChange={proposals.handleOptionChange}
@@ -52,6 +58,8 @@ export default function Page() {
           handleResetError={proposals.handleResetError}
           isVoteOpen={proposals.isVoteOpen}
           setVoteOpen={proposals.setVoteOpen}
+          voteTransactionHash={proposals.transactionHash}
+          onCloseVoteCongratulationsModal={proposals.handleCloseCongratulationsModal}
           deposit={{
             isOpen: deposit.isModalOpen,
             sender: address,
@@ -60,12 +68,14 @@ export default function Page() {
             voteAdvanced: deposit.depositAdvanced,
             showAdvanced: deposit.showAdvanced,
             availableAmount: deposit.availableAmount,
+            transactionHash: deposit.transactionHash,
             setProposalId: deposit.setProposalId,
             setOpen: deposit.setModalOpen,
             onVoteClick: deposit.handleSendClick,
             setModalOpen: deposit.setModalOpen,
             handleVoteAdvancedChange: deposit.handleDepositChange,
             handleAdvancedCheckedChange: deposit.handleShowAdvancedChange,
+            handleCloseCongratulationsModal: deposit.handleCloseCongratulationsModal,
           }}
         />
       </div>

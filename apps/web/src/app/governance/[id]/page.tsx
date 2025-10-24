@@ -23,6 +23,7 @@ export default function Page({ params }: Props) {
     latestBlock,
     votes,
     totalVotes,
+    nextKey,
     handlePageClick,
     fetchGovernanceDetail,
   } = useGovernanceDetails(id);
@@ -40,27 +41,28 @@ export default function Page({ params }: Props) {
         <title>{governance?.title || 'Governance Detail'}</title>
       </Helmet>
       <div className="governance-content-details">
-        <GovernanceDetailsScreen 
+        <GovernanceDetailsScreen
           isLoading={isLoading}
           governance={governance}
           pool={pool}
           block={latestBlock}
           votes={votes}
           totalVotes={totalVotes}
+          nextKey={nextKey}
           handlePageClick={handlePageClick}
           deposit={{
-            isOpen: deposit.isModalOpen, 
-            sender: address, 
-            isVoteLoading: deposit.isLoading, 
+            isOpen: deposit.isModalOpen,
+            sender: address,
+            isVoteLoading: deposit.isLoading,
             error: deposit.error,
             voteAdvanced: deposit.depositAdvanced,
             showAdvanced: deposit.showAdvanced,
             availableAmount: deposit.availableAmount,
-            setProposalId: deposit.setProposalId, 
-            setOpen: deposit.setModalOpen, 
-            onVoteClick: deposit.handleSendClick, 
-            setModalOpen: deposit.setModalOpen, 
-            handleVoteAdvancedChange: deposit.handleDepositChange, 
+            setProposalId: deposit.setProposalId,
+            setOpen: deposit.setModalOpen,
+            onVoteClick: deposit.handleSendClick,
+            setModalOpen: deposit.setModalOpen,
+            handleVoteAdvancedChange: deposit.handleDepositChange,
             handleAdvancedCheckedChange: deposit.handleShowAdvancedChange,
           }}
           vote={{
