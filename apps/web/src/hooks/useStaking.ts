@@ -37,6 +37,7 @@ const useStaking = (address = '') => {
   const [unbondingDelegationsError, setUnbondingDelegationsError] = useState('');
   const [apr, setAPR] = useState(0);
   const [isAPRLoading, setAPRLoading] = useState(false);
+  const [bondedTokens, setBondedTokens] = useState(0);
 
   const fetchValidator = async () => {
     setLoading(true);
@@ -124,7 +125,8 @@ const useStaking = (address = '') => {
       const bondedTokens = Number(resPool.data.pool.bonded_tokens);
       const bondedRatio =  bondedTokens / totalSupply;
       const aprVal = inflation / bondedRatio * (1 - communityTax);
-      setAPR(aprVal * 100)
+      setAPR(aprVal * 100);
+      setBondedTokens(bondedTokens);
     } catch (error) {
       console.error(error)
     }
@@ -193,6 +195,7 @@ const useStaking = (address = '') => {
     unbondingDelegationsError,
     apr,
     isAPRLoading,
+    bondedTokens,
     handleSubTabChange,
     handleValidatorTabChange,
     handleTabChange,

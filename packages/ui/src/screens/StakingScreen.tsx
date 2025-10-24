@@ -91,6 +91,7 @@ interface IStakingScreen {
     subTab: string;
     apr: number;
     isAPRLoading: boolean;
+    bondedTokens: number;
     onSubTabChange: (tab: string) => void;
     onValidatorTabChange: (tab: string) => void;
     onTabChange: (tab: string) => void;
@@ -236,11 +237,11 @@ export const StakingScreen = ({
 
   const totalPower = calculateTotalPower(getValidators());
 
-  const getTotalStaked = () => {
+  const getMyTotalStaked = () => {
     if (staking.validatorTab === 'my') {
       return accountInfo?.delegations?.reduce((total, item) => Number(item.balance.amount) + total, 0) || 0;
     }
-    return calculateTotalPower(getAllValidators());
+    return 0;
   }
 
   const getValidatorsBySort = () => {
@@ -302,8 +303,6 @@ export const StakingScreen = ({
     return total;
   }
 
-  const totalStaked = getTotalStaked();
-
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className='w-full'>
@@ -327,8 +326,8 @@ export const StakingScreen = ({
                   <div className='text-[40px] font-bold text-white !leading-11'>
                     {staking.isLoading || delegateOptions.isLoading ?
                       <Skeleton /> : <>
-                        {totalStaked ? formatToken({
-                          amount: `${totalStaked}`,
+                        {staking.bondedTokens ? formatToken({
+                          amount: `${staking.bondedTokens}`,
                           denom: staking.params.bond_denom,
                         }, false, '0,0.[00]') : 0}<span className='text-2xl ml-1'>LUME</span>
                       </>
@@ -466,7 +465,7 @@ export const StakingScreen = ({
                             {staking.isLoading || isAccountInfoLoading ?
                               <Skeleton /> : <>
                                   {formatToken({
-                                  amount: `${totalStaked}`,
+                                  amount: `${getMyTotalStaked()}`,
                                   denom: staking.params.bond_denom,
                                 }, true, '0,0.[000000]')}
                               </>
