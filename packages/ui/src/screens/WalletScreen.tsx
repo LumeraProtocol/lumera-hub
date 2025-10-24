@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { 
-    Landmark, 
-    XCircle, 
-    X, 
-    ArrowUpRight, 
-    Copy, 
-    Coins, 
-    Send, 
-    ArrowDown, 
-    ArrowLeftRight, 
-    ArrowDownLeft, 
-    Check,
+import {
+  Landmark,
+  XCircle,
+  X,
+  ArrowUpRight,
+  Copy,
+  Coins,
+  Send,
+  ArrowDown,
+  ArrowLeftRight,
+  ArrowDownLeft,
+  Check,
 } from 'lucide-react';
 import { YStack, H2, Paragraph, Card as TamaguiCard } from 'tamagui';
 import ReactPaginate from 'react-paginate';
@@ -52,13 +52,13 @@ interface IWalletScreen {
         isVoteLoading: boolean;
         error: string | null;
         optionsAdvanced: {
-            fees: string; 
-            gas: string; 
-            memo: string; 
-            senderAddress: string; 
-            amount: string; 
-            recipient: string; 
-            balances: string; 
+            fees: string;
+            gas: string;
+            memo: string;
+            senderAddress: string;
+            amount: string;
+            recipient: string;
+            balances: string;
         };
         showAdvanced: boolean;
         transactionHash?: string;
@@ -72,12 +72,12 @@ interface IWalletScreen {
         isVoteLoading: boolean;
         error: string | null;
         optionsAdvanced: {
-           fees: string; 
-            gas: string; 
-            memo: string; 
-            senderAddress: string; 
-            amount: string; 
-            validator: string; 
+           fees: string;
+            gas: string;
+            memo: string;
+            senderAddress: string;
+            amount: string;
+            validator: string;
         };
         showAdvanced: boolean;
         validators: IValidator[];
@@ -110,16 +110,16 @@ export const WalletScreen = ({
         switch(type) {
             case 'Send':
                 return <ArrowUpRight className="w-5 h-5 text-red-400" />;
-            case 'Received': 
+            case 'Received':
                 return <ArrowDownLeft className="w-5 h-5 text-green-400" />;
             case 'BeginRedelegate':
-            case 'Delegate': 
+            case 'Delegate':
                 return <Landmark className="w-5 h-5 text-indigo-400" />;
-            case 'WithdrawDelegatorReward×2': 
+            case 'WithdrawDelegatorReward×2':
                 return <Coins className="w-5 h-5 text-amber-400" />;
-            case 'Failed': 
+            case 'Failed':
                 return <XCircle className="w-5 h-5 text-gray-500" />;
-            default: 
+            default:
                 return <ArrowLeftRight className="w-5 h-5 text-gray-400" />;
         }
     };
@@ -129,13 +129,13 @@ export const WalletScreen = ({
             case 'Send':
             case 'Failed':
                 return 'bg-red-500/20';
-            case 'Delegate': 
+            case 'Delegate':
             case 'BeginRedelegate':
                 return 'bg-green-400/20';
-            case 'WithdrawDelegatorReward×2': 
-            case 'Received': 
+            case 'WithdrawDelegatorReward×2':
+            case 'Received':
                 return 'bg-green-500/20';
-            default: 
+            default:
                 return 'bg-red-500/20';
         }
     }
@@ -162,7 +162,7 @@ export const WalletScreen = ({
                 }
             }
         }
-        
+
         return total;
     }
 
@@ -178,7 +178,7 @@ export const WalletScreen = ({
                 }
             }
         }
-       
+
         return total;
     }
 
@@ -211,10 +211,10 @@ export const WalletScreen = ({
 
     return (
         <div className="space-y-8">
-            <ReceiveModal 
-                isOpen={selectedModal === 'receive'} 
-                onClose={onCloseModal} 
-                walletAddress={walletAddress} 
+            <ReceiveModal
+                isOpen={selectedModal === 'receive'}
+                onClose={onCloseModal}
+                walletAddress={walletAddress}
             />
             <SendModal
                 isOpen={selectedModal === 'send'}
@@ -259,23 +259,25 @@ export const WalletScreen = ({
                         }
                     </p>
                     <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <AppButton 
-                            className="w-full cursor-pointer" 
-                            onClick={() => onOpenModal('send')}
-                            disabled={isLoading}
+                      <div className='btn-primary'>
+                        <AppButton
+                          className="w-full cursor-pointer"
+                          onClick={() => onOpenModal('send')}
+                          disabled={isLoading}
                         >
-                            <Send className="w-5 h-5"/> Send
+                          <Send className="w-5 h-5"/> Send
                         </AppButton>
-                        <AppButton 
-                            variant="secondary" 
-                            className="w-full cursor-pointer" 
+                      </div>
+                        <AppButton
+                            variant="secondary"
+                            className="w-full cursor-pointer"
                             onClick={() => onOpenModal('receive')}
                             disabled={isLoading}
                         >
                             <ArrowDown className="w-5 h-5"/> Receive
                         </AppButton>
-                        <AppButton 
-                            variant="secondary" 
+                        <AppButton
+                            variant="secondary"
                             className="w-full cursor-pointer"
                             onClick={() => onOpenModal('stake')}
                             disabled={isLoading}
@@ -332,14 +334,14 @@ export const WalletScreen = ({
                     {totalTransactions > 1 ?
                         <div className="paginate-wrapper pt-3">
                             <ReactPaginate
-                                breakLabel="..."
-                                nextLabel=">"
-                                onPageChange={handlePageClick}
-                                pageRangeDisplayed={3}
-                                pageCount={totalTransactions}
-                                previousLabel="<"
-                                renderOnZeroPageCount={null}
-                                className='react-paginate'
+                              breakLabel="..."
+                              nextLabel=">"
+                              onPageChange={handlePageClick}
+                              pageRangeDisplayed={3}
+                              pageCount={totalTransactions}
+                              previousLabel="<"
+                              renderOnZeroPageCount={null}
+                              className='react-paginate'
                             />
                         </div> : null
                     }
