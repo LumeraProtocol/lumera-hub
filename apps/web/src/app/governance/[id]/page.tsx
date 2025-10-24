@@ -24,6 +24,7 @@ export default function Page({ params }: Props) {
     votes,
     totalVotes,
     nextKey,
+    isVoteLoading,
     handlePageClick,
     fetchGovernanceDetail,
   } = useGovernanceDetails(id);
@@ -49,6 +50,7 @@ export default function Page({ params }: Props) {
           votes={votes}
           totalVotes={totalVotes}
           nextKey={nextKey}
+          isVoteLoading={isVoteLoading}
           handlePageClick={handlePageClick}
           deposit={{
             isOpen: deposit.isModalOpen,
@@ -58,12 +60,14 @@ export default function Page({ params }: Props) {
             voteAdvanced: deposit.depositAdvanced,
             showAdvanced: deposit.showAdvanced,
             availableAmount: deposit.availableAmount,
+            transactionHash: deposit.transactionHash,
             setProposalId: deposit.setProposalId,
             setOpen: deposit.setModalOpen,
             onVoteClick: deposit.handleSendClick,
             setModalOpen: deposit.setModalOpen,
             handleVoteAdvancedChange: deposit.handleDepositChange,
             handleAdvancedCheckedChange: deposit.handleShowAdvancedChange,
+            handleCloseCongratulationsModal: deposit.handleCloseCongratulationsModal,
           }}
           vote={{
             address,
@@ -72,10 +76,12 @@ export default function Page({ params }: Props) {
             isVoteLoading: proposals.isVoteLoading,
             error: proposals.errorVote,
             voteAdvanced: proposals.voteAdvanced,
+            transactionHash: proposals.transactionHash,
             handleVoteAdvancedChange: proposals.handleVoteAdvancedChange,
             handleResetError: proposals.handleResetError,
             isVoteOpen: proposals.isVoteOpen,
             setVoteOpen: proposals.setVoteOpen,
+            handleCloseCongratulationsModal: proposals.handleCloseCongratulationsModal,
           }}
         />
       </div>
