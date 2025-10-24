@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { 
-  MsgVote, 
+import {
+  MsgVote,
 } from 'cosmjs-types/cosmos/gov/v1/tx';
 import { Registry } from '@cosmjs/proto-signing';
 import { SigningStargateClient } from '@cosmjs/stargate';
@@ -86,6 +86,7 @@ const useProposals = () => {
         broadcastMode: broadcastModeOptions[0].value,
     });
     const [isVoteOpen, setVoteOpen] = useState(false);
+    const [transactionHash, setTransactionHash] = useState('');
 
     const fetchData = async () => {
         setLoading(true);
@@ -142,10 +143,10 @@ const useProposals = () => {
             const client = await SigningStargateClient.connectWithSigner(
                 RPC_ENDPOINT,
                 offlineSigner,
-                { 
+                {
                     registry: new Registry([
                     ["/cosmos.gov.v1.MsgVote", MsgVote],
-                    ]), 
+                    ]),
                 }
             );
             const msg = {
@@ -163,8 +164,9 @@ const useProposals = () => {
             };
             const result = await client.signAndBroadcast(address, [msg], fee, voteAdvanced.memo);
             if (result?.transactionHash) {
-                setVoteOpen(false);
-                fetchData();
+              setTransactionHash(result?.transactionHash);
+              // setVoteOpen(false);
+              fetchData();
             }
         } catch (error) {
             setErrorVote(error instanceof Error ? error?.message : 'An unknown error occurred.')
@@ -181,23 +183,30 @@ const useProposals = () => {
     }
 
     const handleResetError = () => {
-        setErrorVote(null);
-        setErrorVote(null);
+      setErrorVote(null);
+    }
+
+    const handleCloseCongratulationsModal = () => {
+      setTransactionHash('');
+      setVoteOpen(false);
+      setErrorVote(null);
     }
 
     return {
-        proposalsInfo,
-        loading,
-        error,
-        errorVote,
-        isVoteLoading,
-        voteAdvanced,
-        isVoteOpen,
-        setVoteOpen,
-        handleResetError,
-        handleVoteAdvancedChange,
-        handleOptionChange,
-        handleVote,
+      proposalsInfo,
+      loading,
+      error,
+      errorVote,
+      isVoteLoading,
+      voteAdvanced,
+      isVoteOpen,
+      transactionHash,
+      handleCloseCongratulationsModal,
+      setVoteOpen,
+      handleResetError,
+      handleVoteAdvancedChange,
+      handleOptionChange,
+      handleVote,
     }
 }
 

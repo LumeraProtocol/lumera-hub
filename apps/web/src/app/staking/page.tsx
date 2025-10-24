@@ -71,6 +71,7 @@ export default function Page() {
             subTab: staking.subTab,
             apr: staking.apr,
             isAPRLoading: staking.isAPRLoading,
+            bondedTokens: staking.bondedTokens,
             onSubTabChange: staking.handleSubTabChange,
             onValidatorTabChange: staking.handleValidatorTabChange,
             onTabChange: staking.handleTabChange,

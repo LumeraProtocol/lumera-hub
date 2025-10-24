@@ -43,7 +43,7 @@ export interface IBlock {
         height: string;
         round: number;
         block_id: {
-           hash: string; 
+           hash: string;
            part_set_header: {
             total: number;
             hash: string;
@@ -80,9 +80,9 @@ const useGovernanceDetails = (id: string) => {
     const [isVoteLoading, setVoteLoading] = useState(false);
     const [errorVote, setErrorVote] = useState('');
     const [totalVotes, setTotalVotes] = useState(0);
-    const [nextKey, setNextKey] = useState(null);
+    const [nextKey, setNextKey] = useState('');
 
-    const fetchVotes = async (key = null) => {
+    const fetchVotes = async (key = '') => {
         setVoteLoading(true);
         setErrorVote('');
         try {
@@ -104,12 +104,16 @@ const useGovernanceDetails = (id: string) => {
         setLoading(true);
         setError('');
         try {
-            const [resProposal, resPool, resLatestBlock] = await Promise.all([
-                instance.get(`/cosmos/gov/v1/proposals/${id}`),
-                instance.get('/cosmos/staking/v1beta1/pool'),
-                instance.get('/cosmos/base/tendermint/v1beta1/blocks/latest'),
+            const [resProposal, resPool, resLatestBlock, resTally] = await Promise.all([
+              instance.get(`/cosmos/gov/v1/proposals/${id}`),
+              instance.get('/cosmos/staking/v1beta1/pool'),
+              instance.get('/cosmos/base/tendermint/v1beta1/blocks/latest'),
+              instance.get(`/cosmos/gov/v1/proposals/${id}/tally`),
             ]);
-            setGovernance(resProposal.data.proposal)
+            setGovernance({
+              ...resProposal.data.proposal,
+              final_tally_result: resTally.data.tally,
+            })
             setPool(resPool.data.pool)
             setLatestBlock(resLatestBlock.data.block)
         } catch (error) {
@@ -130,17 +134,18 @@ const useGovernanceDetails = (id: string) => {
     }
 
     return {
-        isLoading,
-        governance,
-        error,
-        pool,
-        latestBlock,
-        votes,
-        isVoteLoading,
-        totalVotes,
-        errorVote,
-        fetchGovernanceDetail,
-        handlePageClick,
+      isLoading,
+      governance,
+      error,
+      pool,
+      latestBlock,
+      votes,
+      isVoteLoading,
+      totalVotes,
+      errorVote,
+      nextKey,
+      fetchGovernanceDetail,
+      handlePageClick,
     }
 }
 

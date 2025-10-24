@@ -71,6 +71,7 @@ interface IGovernanceDetailsScreen {
     };
     block: IBlock | null;
     votes: IVote[];
+    nextKey: string;
     totalVotes: number;
     handlePageClick: () => void;
 }
@@ -93,6 +94,7 @@ export const GovernanceDetailsScreen = ({
     block,
     votes,
     totalVotes,
+    nextKey,
     handlePageClick,
 }: IGovernanceDetailsScreen) => {
     const getMessage = () => {
@@ -619,9 +621,9 @@ export const GovernanceDetailsScreen = ({
                                     </div>
                                 ))}
                             </div>
-                            {Number(totalVotes) > 0 ? (
+                            {Number(totalVotes) > 0 && nextKey ? (
                                 <div className='w-full flex justify-end mt-2'>
-                                    <Button onPress={handlePageClick}>More</Button>
+                                  <Button onPress={handlePageClick}>Load More</Button>
                                 </div>
                             ) : null
                             }

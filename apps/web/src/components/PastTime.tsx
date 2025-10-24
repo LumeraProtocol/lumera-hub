@@ -14,9 +14,13 @@ const PastTime: React.FC<PastTimeProps> = ({ pastDate, className = '' }) => {
       const diff = now - pastDate.getTime();
 
       let result = '';
-
       if (diff < 0) {
-        result = 'in the future';
+        const days = Math.ceil(diff * -1 / (1000 * 60 * 60 * 24));
+        if (days === 1) {
+          result = 'in a day';
+        } else {
+          result = 'in the future';
+        }
       } else {
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         if (days > 0) {

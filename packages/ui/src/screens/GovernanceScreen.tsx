@@ -31,6 +31,9 @@ interface IGovernanceScreen {
   isLoading: boolean,
   isSumaryLoading: boolean,
   governances: IProposal[];
+  totalVotes: number;
+  nextKey: string;
+  handlePageClick: () => void;
   msg: {
     type: string;
     message: string;
@@ -86,7 +89,11 @@ interface IGovernanceScreen {
     showAdvanced: boolean;
     handleAdvancedCheckedChange: (checked: boolean) => void;
     availableAmount: number;
-  }
+    transactionHash: string;
+    handleCloseCongratulationsModal: () => void;
+  };
+  voteTransactionHash?: string;
+  onCloseVoteCongratulationsModal?: () => void;
 }
 
 export const GovernanceScreen = ({
@@ -102,6 +109,11 @@ export const GovernanceScreen = ({
   isVoteOpen,
   deposit,
   isSumaryLoading,
+  totalVotes,
+  nextKey,
+  voteTransactionHash,
+  onCloseVoteCongratulationsModal,
+  handlePageClick,
   onTabChange,
   onOptionChange,
   onVoteClick,
@@ -194,10 +206,10 @@ export const GovernanceScreen = ({
   const getPoolPercent = (item: IProposal) => {
     const total = Number(item.final_tally_result.abstain_count) + Number(item.final_tally_result.no_count) + Number(item.final_tally_result.no_with_veto_count) + Number(item.final_tally_result.yes_count)
     return {
-      yesPercent: item.final_tally_result.yes_count ? Number(item.final_tally_result.yes_count) * 100 / total : 0,
-      noPercent: item.final_tally_result.yes_count ? Number(item.final_tally_result.no_count) * 100 / total : 0,
-      noWithVetoPercent: item.final_tally_result.yes_count ? Number(item.final_tally_result.no_with_veto_count) * 100 / total : 0,
-      abstainPercent: item.final_tally_result.yes_count ? Number(item.final_tally_result.abstain_count || 0) * 100 / total : 0,
+      yesPercent: Number(item.final_tally_result.yes_count) ? Number(item.final_tally_result.yes_count) * 100 / total : 0,
+      noPercent: Number(item.final_tally_result.no_count) ? Number(item.final_tally_result.no_count) * 100 / total : 0,
+      noWithVetoPercent: Number(item.final_tally_result.no_with_veto_count) ? Number(item.final_tally_result.no_with_veto_count) * 100 / total : 0,
+      abstainPercent: Number(item.final_tally_result.abstain_count) ? Number(item.final_tally_result.abstain_count) * 100 / total : 0,
     }
   }
 
@@ -218,8 +230,7 @@ export const GovernanceScreen = ({
         </div>
       </div>
       <div className='relative w-full'>
-        <Loading isLoading={isLoading || isSumaryLoading} />
-        <div className='mt-5 grid grid-cols-4 gap-6 w-full governance-overview'>
+        <div className='mt-5 grid grid-cols-4 gap-6 w-full governance-overview relative'>
           <Card elevate size="$4" bordered className='w-full'>
             <Card.Header padded>
               <div className='flex items-center gap-3'>
@@ -310,7 +321,8 @@ export const GovernanceScreen = ({
           </Card>
         </div>
         <Card elevate size="$4" bordered className='w-full p-5 mt-4'>
-          <div className='flex justify-between items-center governance-control'>
+          <div className='flex justify-between items-center governance-control relative'>
+            <Loading isLoading={isSumaryLoading} />
             <ul className='tabs-secondary flex-wrap'>
               <li className={`tab-item ${!currentTab ? 'active' : ''}`}>
                 <button
@@ -376,53 +388,61 @@ export const GovernanceScreen = ({
               </span>
             </div>
           </div>
-          <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 governance-card-wrapper'>
+          <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 governance-card-wrapper relative'>
+            <Loading isLoading={isLoading} />
             {!governances?.length && !isLoading ?
               <div><H3 className='!leading-6'>No data</H3></div> : null
             }
             {governances?.map((item) => {
               const { yesPercent, noPercent, noWithVetoPercent, abstainPercent } = getPoolPercent(item);
               return (
-              <Card elevate size="$4" bordered className='w-full' key={item.id}>
-                <div className='p-5'>
-                  <div className='flex justify-between items-start gap-6 governance-card-header'>
-                    <div className='flex flex-col'>
-                      <AppLink href={`/governance/${item.id}`}>
-                        <H3 className='!leading-6'>{item.title}</H3>
-                      </AppLink>
+                <Card elevate size="$4" bordered className='w-full' key={item.id}>
+                  <div className='p-5'>
+                    <div className='flex justify-between items-start gap-6 governance-card-header'>
+                      <div className='flex flex-col'>
+                        <AppLink href={`/governance/${item.id}`}>
+                          <H3 className='!leading-6'>{item.title}</H3>
+                        </AppLink>
+                      </div>
+                      {getStatus(item.status)}
                     </div>
-                    {getStatus(item.status)}
-                  </div>
-                  <div className='mt-5 min-h-12'>
-                    {item.summary}
-                  </div>
-                  <div className='mt-5'>
-                    <div className='status-bar-wrapper'>
-                      <div className='status-bar-yes' style={{ width: `${yesPercent}%` }}></div>
-                      <div className='status-bar-no' style={{ width: `${noPercent}%` }}></div>
-                      <div className='status-bar-no-with-veto' style={{ width: `${noWithVetoPercent}%` }}></div>
-                      <div className='status-bar-abstain' style={{ width: `${abstainPercent}%` }}></div>
+                    <div className='mt-5 min-h-12'>
+                      {item.summary}
                     </div>
-                    <div className='flex justify-between gap-3 mt-2 status-bar-label'>
-                      <div className='text-lumera-label'>
-                        <span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(1)}%
+                    <div className='mt-5'>
+                      <div className='status-bar-wrapper'>
+                        <div className='status-bar-yes' style={{ width: `${yesPercent}%` }}></div>
+                        <div className='status-bar-no' style={{ width: `${noPercent}%` }}></div>
+                        <div className='status-bar-no-with-veto' style={{ width: `${noWithVetoPercent}%` }}></div>
+                        <div className='status-bar-abstain' style={{ width: `${abstainPercent}%` }}></div>
                       </div>
-                      <div className='text-lumera-label'>
-                        <span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(1)}%
-                      </div>
-                      <div className='text-lumera-label'>
-                        <span className='text-lumera-red-light'>No With Veto</span>: {noWithVetoPercent.toFixed(1)}%
-                      </div>
-                      <div className='text-lumera-label'>
-                        <span className='text-lumera-sub-label'>Abstain</span>: {abstainPercent.toFixed(1)}%
+                      <div className='flex justify-between gap-3 mt-2 status-bar-label'>
+                        <div className='text-lumera-label'>
+                          <span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(1)}%
+                        </div>
+                        <div className='text-lumera-label'>
+                          <span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(1)}%
+                        </div>
+                        <div className='text-lumera-label'>
+                          <span className='text-lumera-red-light'>No With Veto</span>: {noWithVetoPercent.toFixed(1)}%
+                        </div>
+                        <div className='text-lumera-label'>
+                          <span className='text-lumera-sub-label'>Abstain</span>: {abstainPercent.toFixed(1)}%
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                {getControls(item)}
-              </Card>
-            )
+                  {getControls(item)}
+                </Card>
+              )
             })}
+            {Number(totalVotes) > 0 && nextKey ?
+              (
+                <div className='w-full flex justify-end mt-2'>
+                  <Button onPress={handlePageClick}>Load More</Button>
+                </div>
+              ) : null
+            }
           </div>
         </Card>
         <VoteModal
@@ -436,6 +456,8 @@ export const GovernanceScreen = ({
           error={error}
           voteAdvanced={voteAdvanced}
           handleVoteAdvancedChange={handleVoteAdvancedChange}
+          transactionHash={voteTransactionHash}
+          onCloseCongratulationsModal={onCloseVoteCongratulationsModal}
         />
         <DepositModal
           isOpen={deposit.isOpen}
@@ -445,10 +467,12 @@ export const GovernanceScreen = ({
           voteAdvanced={deposit.voteAdvanced}
           showAdvanced={deposit.showAdvanced}
           availableAmount={deposit.availableAmount}
+          transactionHash={deposit.transactionHash}
           setOpen={deposit.setOpen}
           onVoteClick={deposit.onVoteClick}
           handleVoteAdvancedChange={deposit.handleVoteAdvancedChange}
           handleAdvancedCheckedChange={deposit.handleAdvancedCheckedChange}
+          onCloseCongratulationsModal={deposit.handleCloseCongratulationsModal}
         />
       </div>
     </YStack>

@@ -91,6 +91,7 @@ interface IStakingScreen {
     subTab: string;
     apr: number;
     isAPRLoading: boolean;
+    bondedTokens: number;
     onSubTabChange: (tab: string) => void;
     onValidatorTabChange: (tab: string) => void;
     onTabChange: (tab: string) => void;
@@ -236,11 +237,11 @@ export const StakingScreen = ({
 
   const totalPower = calculateTotalPower(getValidators());
 
-  const getTotalStaked = () => {
+  const getMyTotalStaked = () => {
     if (staking.validatorTab === 'my') {
       return accountInfo?.delegations?.reduce((total, item) => Number(item.balance.amount) + total, 0) || 0;
     }
-    return calculateTotalPower(getAllValidators());
+    return 0;
   }
 
   const getValidatorsBySort = () => {
@@ -302,8 +303,6 @@ export const StakingScreen = ({
     return total;
   }
 
-  const totalStaked = getTotalStaked();
-
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className='w-full'>
@@ -325,10 +324,10 @@ export const StakingScreen = ({
                 <Card.Header padded>
                   <H3 className='text-lumera-label'>Total LUME Staked</H3>
                   <div className='text-[40px] font-bold text-white !leading-11'>
-                    {staking.isLoading || delegateOptions.isLoading ?
+                    {staking.isLoading ?
                       <Skeleton /> : <>
-                        {totalStaked ? formatToken({
-                          amount: `${totalStaked}`,
+                        {staking.bondedTokens ? formatToken({
+                          amount: `${staking.bondedTokens}`,
                           denom: staking.params.bond_denom,
                         }, false, '0,0.[00]') : 0}<span className='text-2xl ml-1'>LUME</span>
                       </>
@@ -367,7 +366,7 @@ export const StakingScreen = ({
                   </div>
                 </div>
                 <div className='mt-5 relative'>
-                  {staking.isLoading || delegateOptions.isLoading || !staking?.params?.bond_denom ? (
+                  {staking.isLoading || !staking?.params?.bond_denom ? (
                       <div className='my-2 min-h-11'>
                         <Loading isLoading />
                       </div>
@@ -466,7 +465,7 @@ export const StakingScreen = ({
                             {staking.isLoading || isAccountInfoLoading ?
                               <Skeleton /> : <>
                                   {formatToken({
-                                  amount: `${totalStaked}`,
+                                  amount: `${getMyTotalStaked()}`,
                                   denom: staking.params.bond_denom,
                                 }, true, '0,0.[000000]')}
                               </>
@@ -534,6 +533,13 @@ export const StakingScreen = ({
                                 <div className="col-span-3 text-right">Claimable</div>
                                 <div className="col-span-2"></div>
                               </div>
+                              {!isAccountInfoLoading && !accountInfo?.delegations.length ? (
+                                <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
+                                  <div className='col-span-12'>
+                                    <H3>No data</H3>
+                                  </div>
+                                </div>
+                              ) : null}
                               {accountInfo?.delegations.map(delegation => {
                                 const validator = getAllValidators().find(v => v.operator_address === delegation.delegation.validator_address);
                                 const reward = accountInfo?.rewards.find(v => v.validator_address === delegation.delegation.validator_address);
@@ -584,7 +590,7 @@ export const StakingScreen = ({
                                 <div className="col-span-2 text-right">Balance</div>
                                 <div className="col-span-5 text-right">Completion Time</div>
                               </div>
-                              {!unbonding.unbondingDelegations.length ? (
+                              {!unbonding.isLoading && !unbonding.unbondingDelegations.length ? (
                                 <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
                                   <div className='col-span-12'>
                                     <H3>No data</H3>
@@ -636,7 +642,7 @@ export const StakingScreen = ({
                                     <div className="col-span-2 text-right">Amount</div>
                                     <div className="col-span-3 text-right">Time</div>
                                 </div>
-                                {!activityData.activities.length ? (
+                                {!activityData.isActivitiesLoading && !activityData.activities.length ? (
                                   <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
                                     <div className='col-span-12'>
                                       <H3>No data</H3>
