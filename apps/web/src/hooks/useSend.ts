@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { SigningStargateClient } from '@cosmjs/stargate';
 import { Registry } from '@cosmjs/proto-signing';
-import { 
-  MsgSend, 
+import {
+  MsgSend,
 } from 'cosmjs-types/cosmos/bank/v1beta1/tx';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { RPC_ENDPOINT, DENOM } from '@/contants/network';
@@ -10,6 +10,7 @@ import { Coin } from '@/hooks/useAccountInfo';
 
 interface UseDepositOptions {
   callback?: () => void;
+  customMemo?: string;
 }
 
 export const RATE_VALUE = 1000000
@@ -21,7 +22,7 @@ const useSend = (options: UseDepositOptions = {}) => {
         senderAddress: address,
         fees: '2000',
         gas: '200000',
-        memo: 'Lumera Hub',
+        memo: '',
         amount: '',
         recipient: '',
         balances: '',
@@ -38,18 +39,27 @@ const useSend = (options: UseDepositOptions = {}) => {
         }
     }, [isConnected]);
 
-    const resetData = () => {
-        setShowAdvanced(false);
-        setLoading(false);
+    useEffect(() => {
+      if (options?.customMemo) {
         setOptionsAdvanced({
-            senderAddress: address,
-            fees: '2000',
-            gas: '200000',
-            memo: 'Lumera Hub',
-            amount: '',
-            recipient: '',
-            balances: '',
-        });
+          ...optionsAdvanced,
+          memo: options?.customMemo,
+        })
+      }
+    }, [options?.customMemo]);
+
+    const resetData = () => {
+      setShowAdvanced(false);
+      setLoading(false);
+      setOptionsAdvanced({
+        senderAddress: address,
+        fees: '2000',
+        gas: '200000',
+        memo: options?.customMemo || '',
+        amount: '',
+        recipient: '',
+        balances: '',
+      });
     }
 
     const handleInputChange = (name: string, value: string) => {
@@ -95,10 +105,10 @@ const useSend = (options: UseDepositOptions = {}) => {
             const client = await SigningStargateClient.connectWithSigner(
                 RPC_ENDPOINT,
                 offlineSigner,
-                { 
+                {
                     registry: new Registry([
                         ["/cosmos.bank.v1beta1.MsgSend", MsgSend],
-                    ]), 
+                    ]),
                 }
             );
             const msg = {

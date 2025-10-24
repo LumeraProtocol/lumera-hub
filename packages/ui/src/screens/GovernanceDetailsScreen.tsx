@@ -188,8 +188,8 @@ export const GovernanceDetailsScreen = ({
         }
     }
 
-    const handleDepositClick = (id: string) => {
-        deposit.setProposalId(id);
+    const handleDepositClick = (item: IProposal) => {
+        deposit.setProposalId(item.id);
         deposit.setModalOpen(true);
     }
 
@@ -215,7 +215,7 @@ export const GovernanceDetailsScreen = ({
               {governance.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
                 <Button onPress={handleVotePress}>Vote</Button> : null
               }
-              <Button onPress={() => handleDepositClick(governance.id)}>Deposit</Button>
+              <Button onPress={() => handleDepositClick(governance)}>Deposit</Button>
             </div>
           </div>
         );

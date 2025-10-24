@@ -71,7 +71,11 @@ export interface IProposal {
     failed_reason: string;
 }
 
-const useProposals = () => {
+interface UseDepositOptions {
+  customMemo?: string;
+}
+
+const useProposals = (options: UseDepositOptions = {}) => {
     const { address, getOfflineSigner } = useWalletConnect();
     const [proposalsInfo, setProposalsInfo] = useState<IProposal[]>([]);
     const [loading, setLoading] = useState(false);
@@ -111,16 +115,25 @@ const useProposals = () => {
     }, []);
 
     useEffect(() => {
+      if (options?.customMemo) {
+        setAdvanced({
+          ...voteAdvanced,
+          memo: options?.customMemo,
+        });
+      }
+    }, [options?.customMemo]);
+
+    useEffect(() => {
         if (!isVoteOpen) {
-            setVoteOpen(false);
-            setVoteLoading(false);
-            setLoading(false);
-            setAdvanced({
-                fees: '2000',
-                gas: '200000',
-                memo: 'Lumera Hub',
-                broadcastMode: broadcastModeOptions[0].value,
-            })
+          setVoteOpen(false);
+          setVoteLoading(false);
+          setLoading(false);
+          setAdvanced({
+            fees: '2000',
+            gas: '200000',
+            memo: options?.customMemo || 'Lumera Hub',
+            broadcastMode: broadcastModeOptions[0].value,
+          })
         }
     }, [isVoteOpen])
 

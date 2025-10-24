@@ -27,8 +27,13 @@ export default function Page({ params }: Props) {
     handlePageClick,
     fetchGovernanceDetail,
   } = useGovernanceDetails(id);
-  const deposit = useDeposit({ callback: () => fetchGovernanceDetail(id) });
-  const proposals = useProposals();
+  const deposit = useDeposit({
+    callback: () => fetchGovernanceDetail(id),
+    customMemo: governance?.title ? `Deposit for the ${governance?.title}` : '',
+  });
+  const proposals = useProposals({
+    customMemo: governance?.title ? `Vote for the ${governance?.title}` : '',
+  });
   const { address } = useWalletConnect();
 
   useEffect(() => {
