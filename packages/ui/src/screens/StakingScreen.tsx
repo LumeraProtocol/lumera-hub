@@ -9,6 +9,8 @@ import PastTime from '@/components/PastTime';
 import Loading from '@/components/Loading';
 import CountDown from '@/components/CountDown';
 import DelegateModal from '@/components/DelegateModal';
+import UnbondModal from '@/components/UnbondModal';
+import RedelegateModal from '@/components/RedelegateModal';
 import Skeleton from '@/components/Skeleton';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import AppButton from '@/components/AppButton';
@@ -124,6 +126,52 @@ interface IStakingScreen {
     unbondingDelegationsError: string;
   };
   isAccountInfoLoading: boolean;
+  unbondOptions: {
+    isUnbondLoading: boolean;
+    error: string | null;
+    optionsAdvanced: {
+      fees: string;
+      gas: string;
+      memo: string;
+      senderAddress: string;
+      amount: string;
+      validator: string;
+    };
+    showAdvanced: boolean;
+    isOpenModal: boolean;
+    availableAmount?: string;
+    transactionHash?: string;
+    onCloseCongratulationsModal?: () => void;
+    onCloseDailogChange: () => void;
+    onSendClick: () => void;
+    onInputChange: (name: string, value: string) => void;
+    onAdvancedCheckedChange: (checked: boolean) => void;
+    onOpenModal: (validator: string, amount: string, customMemo?: string) => void;
+  };
+  redelegateOptions: {
+    isRedelegateLoading: boolean;
+    error: string | null;
+    optionsAdvanced: {
+      fees: string;
+      gas: string;
+      memo: string;
+      senderAddress: string;
+      amount: string;
+      destinationValidator: string;
+      sourceValidator: string;
+    };
+    showAdvanced: boolean;
+    isOpenModal: boolean;
+    availableAmount?: string;
+    validators: IValidator[];
+    transactionHash?: string;
+    onCloseCongratulationsModal?: () => void;
+    onCloseDailogChange: () => void;
+    onSendClick: () => void;
+    onInputChange: (name: string, value: string) => void;
+    onAdvancedCheckedChange: (checked: boolean) => void;
+    onOpenModal: (validator: string, amount: string, customMemo?: string) => void;
+  };
 }
 
 interface IRewardsCalculator {
@@ -214,6 +262,8 @@ export const StakingScreen = ({
   activityData,
   unbonding,
   isAccountInfoLoading,
+  unbondOptions,
+  redelegateOptions,
 }: IStakingScreen) => {
   const getValidators = () => {
     const validators = staking?.currentTab === 'active' ? delegateOptions.validators : staking.validators;
@@ -528,10 +578,10 @@ export const StakingScreen = ({
                           <div className="overflow-x-auto">
                             <div className="min-w-[700px] space-y-2">
                               <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase">
-                                <div className="col-span-4">Validator</div>
-                                <div className="col-span-3 text-right">Staked</div>
-                                <div className="col-span-3 text-right">Claimable</div>
-                                <div className="col-span-2"></div>
+                                <div className="col-span-3">Validator1</div>
+                                <div className="col-span-2 text-right">Staked</div>
+                                <div className="col-span-2 text-right">Claimable</div>
+                                <div className="col-span-5"></div>
                               </div>
                               {!isAccountInfoLoading && !accountInfo?.delegations.length ? (
                                 <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
@@ -550,7 +600,7 @@ export const StakingScreen = ({
                                     className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg"
                                   >
                                     <div
-                                      className="col-span-4"
+                                      className="col-span-3"
                                     >
                                       <AppLink
                                         href={`/staking/${delegation.delegation.validator_address}`}
@@ -559,17 +609,49 @@ export const StakingScreen = ({
                                         {validator?.description?.moniker}
                                       </AppLink>
                                     </div>
-                                    <div className="col-span-3 text-right font-mono text-white">
-                                        {formatToken({
-                                          amount: delegation.balance.amount,
-                                          denom: delegation.balance.denom,
-                                        }, true, '0,0.[000000]')}
+                                    <div className="col-span-2 text-right font-mono text-white">
+                                      {formatToken({
+                                        amount: delegation.balance.amount,
+                                        denom: delegation.balance.denom,
+                                      }, true, '0,0.[000000]')}
                                     </div>
-                                    <div className="col-span-3 text-right font-mono text-teal-400">
+                                    <div className="col-span-2 text-right font-mono text-teal-400">
                                       {formatTokens(reward?.reward)}
                                     </div>
-                                    <div className="col-span-2 flex justify-end">
-                                        {reward && getReward(reward) > 0 && <AppButton variant="secondary" className="!py-1.5 !px-4 text-sm" onClick={() => claim.handleToggleClaimModal(true)}>Claim</AppButton>}
+                                    <div className="col-span-5 flex justify-end gap-1">
+                                        <AppButton
+                                          className="!py-1.5 !px-4 !text-sm"
+                                          onClick={() => delegateOptions.onOpenModal(delegation.delegation.validator_address, validator?.description?.moniker ? `Delegate for the ${validator?.description?.moniker}` : '')}
+                                        >
+                                          Delegate
+                                        </AppButton>
+                                        <AppButton
+                                          className="!py-1.5 !px-4 !text-sm"
+                                          onClick={() => redelegateOptions.onOpenModal(
+                                            delegation.delegation.validator_address,
+                                            formatToken({
+                                              amount: delegation.balance.amount,
+                                              denom: delegation.balance.denom,
+                                            }, false, '0,0.[000000]'),
+                                            validator?.description?.moniker ? `Redelegate for the ${validator?.description?.moniker}` : ''
+                                          )}
+                                        >
+                                          Redelegate
+                                        </AppButton>
+                                        <AppButton
+                                          className="!py-1.5 !px-4 !text-sm"
+                                          onClick={() => unbondOptions.onOpenModal(
+                                            delegation.delegation.validator_address,
+                                            formatToken({
+                                              amount: delegation.balance.amount,
+                                              denom: delegation.balance.denom,
+                                            }, false, '0,0.[000000]'),
+                                            validator?.description?.moniker ? `Unbond for the ${validator?.description?.moniker}` : ''
+                                          )}
+                                        >
+                                          Unbond
+                                        </AppButton>
+                                        {reward && getReward(reward) > 0 && <AppButton variant="secondary" className="!py-1.5 !px-4 !text-sm" onClick={() => claim.handleToggleClaimModal(true)}>Claim</AppButton>}
                                     </div>
                                   </div>
                                 )
@@ -705,6 +787,35 @@ export const StakingScreen = ({
         validators={delegateOptions.validators}
         transactionHash={delegateOptions.transactionHash}
         onCloseCongratulationsModal={delegateOptions.onCloseCongratulationsModal}
+      />
+      <UnbondModal
+        isOpen={unbondOptions.isOpenModal}
+        isUnbondLoading={unbondOptions.isUnbondLoading}
+        availableAmount={parseFloat(unbondOptions.availableAmount || '0')}
+        onAdvancedCheckedChange={unbondOptions.onAdvancedCheckedChange}
+        onCloseDailogChange={unbondOptions.onCloseDailogChange}
+        onInputChange={unbondOptions.onInputChange}
+        onSendClick={unbondOptions.onSendClick}
+        optionsAdvanced={unbondOptions.optionsAdvanced}
+        showAdvanced={unbondOptions.showAdvanced}
+        error={unbondOptions.error}
+        transactionHash={unbondOptions.transactionHash}
+        onCloseCongratulationsModal={unbondOptions.onCloseCongratulationsModal}
+      />
+      <RedelegateModal
+        isOpen={redelegateOptions.isOpenModal}
+        isRedelegateLoading={redelegateOptions.isRedelegateLoading}
+        availableAmount={parseFloat(redelegateOptions.availableAmount || '0')}
+        onAdvancedCheckedChange={redelegateOptions.onAdvancedCheckedChange}
+        onCloseDailogChange={redelegateOptions.onCloseDailogChange}
+        onInputChange={redelegateOptions.onInputChange}
+        onSendClick={redelegateOptions.onSendClick}
+        optionsAdvanced={redelegateOptions.optionsAdvanced}
+        showAdvanced={redelegateOptions.showAdvanced}
+        error={redelegateOptions.error}
+        transactionHash={redelegateOptions.transactionHash}
+        onCloseCongratulationsModal={redelegateOptions.onCloseCongratulationsModal}
+        validators={redelegateOptions.validators}
       />
       <ClaimableRewardsModal
         isOpen={claim.isClaimModalOpen}

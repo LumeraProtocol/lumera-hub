@@ -78,19 +78,20 @@ const useDelegate = (options: UseDepositOptions = {}) => {
     }
 
     const handleInputChange = (name: string, value: string) => {
-        setOptionsAdvanced({
-            ...optionsAdvanced,
-            [name]: value,
-        });
-        if (name === 'validator') {
-          const item = validators.find((v) => v.operator_address === value);
-          if (item) {
-            setOptionsAdvanced({
-            ...optionsAdvanced,
+      let newOptionsAdvanced = optionsAdvanced;
+      if (name === 'validator') {
+        const item = validators.find((v) => v.operator_address === value);
+        if (item) {
+          newOptionsAdvanced = {
+            ...newOptionsAdvanced,
             memo: `Stake for ${item?.description?.moniker}`,
-        });
           }
         }
+      }
+      setOptionsAdvanced({
+          ...newOptionsAdvanced,
+          [name]: value,
+      });
     }
 
     const handleShowAdvancedChange = (status: boolean) => {

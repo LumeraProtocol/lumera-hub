@@ -36,7 +36,7 @@ export const TransactionDetailsScreen = ({
         <div className='p-5 pt-0 text-lumera-label'>
           <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
             <div className='w-full md:w-32'>Tx Hash</div>
-            <div className='w-ful'>{transaction?.tx_response?.txhash}</div>
+            <div className='w-ful truncate'>{transaction?.tx_response?.txhash}</div>
           </div>
           <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
             <div className='w-full md:w-32'>Height</div>
