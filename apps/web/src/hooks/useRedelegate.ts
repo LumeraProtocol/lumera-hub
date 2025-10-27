@@ -25,7 +25,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
   const [optionsAdvanced, setOptionsAdvanced] = useState({
       senderAddress: address,
       fees: '2000',
-      gas: '200000',
+      gas: '300000',
       memo: 'Lumera Hub',
       amount: '',
       destinationValidator: '',
