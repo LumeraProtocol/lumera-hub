@@ -120,8 +120,6 @@ interface IClaimableRewardsModal {
   onCloseCongratulationsModal?: () => void;
 }
 
-const RATE_VALUE = 1000000
-
 const getOption = (data: IPortfolioOverviewChart) => {
   return {
     tooltip: {
@@ -804,7 +802,8 @@ export const HomeScreen = ({
                 <Card.Header padded>
                   <H3>Portfolio Overview</H3>
                   <div className='mt-5 flex justify-between items-center chart-wrapper'>
-                    <div className='w-1/2'>
+                    <div className='w-1/2 relative'>
+                      <Loading isLoading={loading} />
                       <ReactECharts option={getOption({
                         stacked: Number(formatToken({
                                 amount: `${stacked}`,

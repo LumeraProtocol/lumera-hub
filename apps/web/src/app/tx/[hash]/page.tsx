@@ -3,9 +3,12 @@
 import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
+import useTransactionDetails from '@/hooks/useTransactionDetails';
 import { TransactionDetailsScreen } from '@lumera-hub/ui/src/screens/TransactionDetailsScreen';
 
 export default function Page() {
+  const { isLoading, transaction } = useTransactionDetails();
+
   useEffect(() => {
     document.title = 'Transaction Details';
   }, []);
@@ -16,7 +19,7 @@ export default function Page() {
         <title>Transaction Details</title>
       </Helmet>
       <div className="sense-content">
-        <TransactionDetailsScreen />
+        <TransactionDetailsScreen isLoading={isLoading} transaction={transaction} />
       </div>
     </>
   )

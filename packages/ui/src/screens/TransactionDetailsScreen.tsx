@@ -1,17 +1,165 @@
-import { H2, Card } from 'tamagui';
-import { Construction } from '@tamagui/lucide-icons';
+import { H3, Card } from 'tamagui';
+import dayjs from 'dayjs';
+import ReactJson from 'react-json-view'
 
-export const TransactionDetailsScreen = () => {
+import Loading from '@/components/Loading';
+import AppLink from '@/components/AppLink';
+import { formatTokens, formatNumber } from '@/utils/format';
+import { ITransaction } from '@/hooks/useTransactionDetails';
+
+interface ITransactionDetailsScreen {
+  transaction: ITransaction | null;
+  isLoading: boolean;
+}
+
+export const TransactionDetailsScreen = ({
+  transaction,
+  isLoading,
+}: ITransactionDetailsScreen) => {
+
+  if (!isLoading && !transaction) {
     return (
-        <div className="space-y-8">
-            <Card elevate size="$4" bordered className='w-full'>
-                <div className='flex flex-col items-center justify-center min-h-[80vh]'>
-                    <div className="w-20 h-20 rounded-full grid place-items-center staking-icon wallet">
-                        <Construction size="$3" />
-                    </div>
-                    <H2 className='font-bold text-white text-[32px] leading-none !mt-5'>Coming soon</H2>
-                </div>
-            </Card>
-        </div>
+      <div className="space-y-8">
+        <H3 className='text-lumera-label'>Not found</H3>
+      </div>
     )
+  }
+  const messages = transaction?.tx?.body?.messages || [];
+
+  return (
+    <div className="space-y-8 relative">
+      <Loading isLoading={isLoading} />
+      <Card elevate size="$4" bordered className='w-full'>
+        <Card.Header padded>
+          <H3 className='text-lumera-label'>Summary</H3>
+        </Card.Header>
+        <div className='p-5 pt-0 text-lumera-label'>
+          <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+            <div className='w-full md:w-32'>Tx Hash</div>
+            <div className='w-ful'>{transaction?.tx_response?.txhash}</div>
+          </div>
+          <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+            <div className='w-full md:w-32'>Height</div>
+            <div className='w-ful'>
+              <AppLink href={`/block/${transaction?.tx_response?.height}`} className='text-lumera-teal hover:text-lumera-green'>
+                {transaction?.tx_response?.height}
+              </AppLink>
+            </div>
+          </div>
+          <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+            <div className='w-full md:w-32'>Status</div>
+            <div className='w-ful'>
+              {!isLoading && transaction ?
+              <>
+                <span className={`text-xs truncate relative py-2 px-4 w-fit mr-2 rounded text-white ${transaction?.tx_response?.code === 0 ? 'bg-lumera-teal' : 'bg-red-800'}`}>
+                  { transaction?.tx_response?.code === 0 ? 'Success' : 'Failed' }
+                </span>
+                <span>
+                  {transaction?.tx_response.code !== 0 ? '' : transaction?.tx_response?.raw_log}
+                </span>
+              </> : null
+              }
+            </div>
+          </div>
+          <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+            <div className='w-full md:w-32'>Time</div>
+            <div className='w-ful'>
+              {transaction?.tx_response?.timestamp ?
+              <>
+                {dayjs(transaction.tx_response.timestamp).format('MM/DD/YYYY hh:mm:ss A')} ({dayjs(transaction.tx_response.timestamp).fromNow()})
+              </> : '--'}
+            </div>
+          </div>
+          <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+            <div className='w-full md:w-32'>Gas</div>
+            <div className='w-ful'>
+               {formatNumber(transaction?.tx_response?.gas_used || '', { decimalsLength: 0 })} / {formatNumber(transaction?.tx_response?.gas_wanted || '', { decimalsLength: 0 })}
+            </div>
+          </div>
+          <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+            <div className='w-full md:w-32'>Fee</div>
+            <div className='w-ful'>
+              {
+                transaction ? formatTokens(
+                  transaction.tx?.auth_info?.fee?.amount,
+                  true,
+                  '0,0.[00]'
+                ) : '0'
+              }
+            </div>
+          </div>
+          <div className='flex items-center flex-col md:flex-row pt-3 px-4'>
+            <div className='w-full md:w-32'>Memo</div>
+            <div className='w-ful'>{transaction?.tx?.body?.memo}</div>
+          </div>
+        </div>
+      </Card>
+      <Card elevate size="$4" bordered className='w-full mt-5'>
+        <Card.Header padded>
+          <H3>Messages: ({messages.length})</H3>
+        </Card.Header>
+        <div className='p-5 pt-0'>
+          {!messages.length ?
+            <H3 className='text-lumera-label'>No messages</H3> :
+            <>
+              {messages.map((msg, index) => (
+                <div className="border border-slate-800 rounded-md text-lumera-label" key={index}>
+                  <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                    <div className='w-full md:w-48'>@type</div>
+                    <div className='w-ful'>
+                      {msg['@type']}
+                    </div>
+                  </div>
+                  <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                    <div className='w-full md:w-48'>Delegator Address</div>
+                    <div className='w-ful'>
+                      {msg.delegator_address}
+                    </div>
+                  </div>
+                  <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                    <div className='w-full md:w-48'>Validator Address</div>
+                    <div className='w-ful'>
+                      {msg.validator_address}
+                    </div>
+                  </div>
+                  {msg?.amount?.amount ?
+                    <div className='flex items-center flex-col md:flex-row py-3 px-4'>
+                      <div className='w-full md:w-48'>Amount</div>
+                      <div className='w-ful'>
+                        {formatNumber(msg.amount.amount, { decimalsLength: 0 })} {msg.amount.denom}
+                      </div>
+                    </div> : null
+                  }
+                </div>
+              ))}
+            </>
+          }
+        </div>
+      </Card>
+      <Card elevate size="$4" bordered className='w-full mt-5'>
+        <Card.Header padded>
+          <H3 className='text-lumera-label'>JSON</H3>
+        </Card.Header>
+        <div className='p-5 pt-0'>
+          {transaction ?
+            <div>
+              <ReactJson
+                src={transaction}
+                collapsed={2}
+                displayObjectSize={false}
+                displayDataTypes={false}
+                theme="apathy"
+                style={{
+                  padding: '10px',
+                  borderRadius: '9px',
+                  backgroundColor: '#151c29',
+                }}
+              />
+            </div> :
+            <H3 className='text-lumera-label'>No JSON</H3>
+          }
+        </div>
+      </Card>
+    </div>
+  )
 }
