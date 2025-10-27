@@ -118,10 +118,10 @@ const useAccountInfo = () => {
       const client = await SigningStargateClient.connectWithSigner(
         RPC_ENDPOINT,
         offlineSigner,
-        { 
+        {
           registry: new Registry([
             ["/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward", MsgWithdrawDelegatorReward],
-          ]), 
+          ]),
         }
       );
       const msgWithdraw = [];
@@ -142,7 +142,7 @@ const useAccountInfo = () => {
       const result = await client.signAndBroadcast(claimInfo.senderAddress, msgWithdraw, fee, claimInfo.memo);
       if (result?.transactionHash) {
         setTransactionHash(result.transactionHash);
-        setClaimModalOpen(false);
+        // setClaimModalOpen(false);
         fetchData();
       }
     } catch (e) {
@@ -184,18 +184,18 @@ const useAccountInfo = () => {
     setClaimLoading(false);
   }
 
-  return { 
-    accountInfo, 
-    loading, 
-    error, 
-    isClaimLoading, 
+  return {
+    accountInfo,
+    loading,
+    error,
+    isClaimLoading,
     errorClaim,
     claimInfo,
     isClaimModalOpen,
     selectedModal,
     transactionHash,
     handleCloseCongratulationsModal,
-    handleClaimButtonClick, 
+    handleClaimButtonClick,
     handleClaimChange,
     handleToggleClaimModal,
     handleOpenModal,
