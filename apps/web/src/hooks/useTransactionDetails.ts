@@ -50,6 +50,8 @@ type TxMessages = {
   '@type': string;
   delegator_address: string;
   validator_address: string;
+  validator_dst_address?: string;
+  validator_src_address?: string;
   amount: {
     amount: string;
     denom: string;

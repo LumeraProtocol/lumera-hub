@@ -112,16 +112,32 @@ export const TransactionDetailsScreen = ({
                   </div>
                   <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
                     <div className='w-full md:w-48'>Delegator Address</div>
-                    <div className='w-ful'>
+                    <div className='w-ful truncate'>
                       {msg.delegator_address}
                     </div>
                   </div>
-                  <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-                    <div className='w-full md:w-48'>Validator Address</div>
-                    <div className='w-ful'>
-                      {msg.validator_address}
+                  {msg['@type'].indexOf('MsgBeginRedelegate') !== -1 ?
+                    <>
+                      <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                        <div className='w-full md:w-48'>Source Validator</div>
+                        <div className='w-ful truncate'>
+                          {msg.validator_src_address}
+                        </div>
+                      </div>
+                      <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                        <div className='w-full md:w-48'>Destination Validator</div>
+                        <div className='w-ful truncate'>
+                          {msg.validator_dst_address}
+                        </div>
+                      </div>
+                    </> :
+                    <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                      <div className='w-full md:w-48'>Validator Address</div>
+                      <div className='w-ful truncate'>
+                        {msg.validator_address}
+                      </div>
                     </div>
-                  </div>
+                  }
                   {msg?.amount?.amount ?
                     <div className='flex items-center flex-col md:flex-row py-3 px-4'>
                       <div className='w-full md:w-48'>Amount</div>

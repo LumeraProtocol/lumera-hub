@@ -71,7 +71,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
     setOptionsAdvanced({
       senderAddress: address,
       fees: '2000',
-      gas: '200000',
+      gas: '300000',
       memo: options?.customMemo || 'Lumera Hub',
       amount: '',
       destinationValidator: '',
