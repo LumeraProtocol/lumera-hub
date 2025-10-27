@@ -26,10 +26,26 @@ interface ValidatorRewards {
   reward: Coin[];
 }
 
+interface IEntries {
+  balance: string;
+  completion_time: string;
+  creation_height: string;
+  initial_balance: string;
+  unbonding_id: string;
+  unbonding_on_hold_ref_count: string;
+}
+
+interface ValidatorUnbonding {
+  delegator_address: string;
+  validator_address: string;
+  entries: IEntries[];
+}
+
 export interface AccountInfoData {
   balances: Coin[];
   delegations: DelegationResponse[];
   rewards: ValidatorRewards[];
+  unbonding: ValidatorUnbonding[];
 }
 
 const useAccountInfo = () => {
@@ -39,6 +55,7 @@ const useAccountInfo = () => {
     balances: [],
     delegations: [],
     rewards: [],
+    unbonding: [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -59,10 +76,11 @@ const useAccountInfo = () => {
     setError(null);
 
     try {
-      const [balanceRes, delegationsRes, rewardsRes] = await Promise.all([
+      const [balanceRes, delegationsRes, rewardsRes, resUnbonding] = await Promise.all([
         instance.get(`/cosmos/bank/v1beta1/balances/${address}`),
         instance.get(`/cosmos/staking/v1beta1/delegations/${address}`),
         instance.get(`/cosmos/distribution/v1beta1/delegators/${address}/rewards`),
+        instance.get(`/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`),
       ]);
 
       const balanceData = balanceRes.data;
@@ -72,6 +90,7 @@ const useAccountInfo = () => {
         balances: balanceData.balances,
         delegations: delegationsData.delegation_responses,
         rewards: rewardsData.rewards,
+        unbonding: resUnbonding.unbonding_responses,
       });
     } catch (e) {
       console.error('API Error:', e);
@@ -87,7 +106,7 @@ const useAccountInfo = () => {
 
   useEffect(() => {
     if (!address) {
-      setAccountInfo({ balances: [], delegations: [], rewards: [] });
+      setAccountInfo({ balances: [], delegations: [], rewards: [], unbonding: [], });
       setLoading(false);
       setError(null);
       return;

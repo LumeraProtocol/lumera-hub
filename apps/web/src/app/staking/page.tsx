@@ -8,11 +8,15 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import useDelegate from '@/hooks/useDelegate';
 import useStaking from '@/hooks/useStaking';
 import useAccountInfo from '@/hooks/useAccountInfo';
+import useUnbond from '@/hooks/useUnbond';
+import useRedelegate from '@/hooks/useRedelegate';
 
 export default function Page() {
  const { address } = useWalletConnect();
  const delegate = useDelegate();
  const staking = useStaking(address);
+ const unbond = useUnbond();
+ const redelegate = useRedelegate();
  const {
     loading,
     accountInfo,
@@ -34,7 +38,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-          <title>Staking</title>
+        <title>Staking</title>
       </Helmet>
       <div className="staking-content">
         <StakingScreen
@@ -96,6 +100,37 @@ export default function Page() {
             isLoading: staking.isUnbondingDelegationsLoading,
             unbondingDelegations: staking.unbondingDelegations,
             unbondingDelegationsError: staking.unbondingDelegationsError,
+          }}
+          unbondOptions={{
+            isUnbondLoading: unbond.isLoading,
+            error: unbond.error,
+            optionsAdvanced: unbond.optionsAdvanced,
+            showAdvanced: unbond.showAdvanced,
+            isOpenModal: unbond.isOpenModal,
+            availableAmount: unbond.availableAmount,
+            transactionHash: unbond.transactionHash,
+            onCloseCongratulationsModal: unbond.handleCloseCongratulationsModal,
+            onCloseDailogChange: unbond.handleCloseModal,
+            onOpenModal: unbond.handleOpenModal,
+            onSendClick: unbond.handleSendClick,
+            onInputChange: unbond.handleInputChange,
+            onAdvancedCheckedChange: unbond.handleShowAdvancedChange,
+          }}
+          redelegateOptions={{
+            isRedelegateLoading: redelegate.isLoading,
+            error: redelegate.error,
+            optionsAdvanced: redelegate.optionsAdvanced,
+            showAdvanced: redelegate.showAdvanced,
+            isOpenModal: redelegate.isOpenModal,
+            availableAmount: redelegate.availableAmount,
+            validators: redelegate.validators,
+            transactionHash: redelegate.transactionHash,
+            onCloseCongratulationsModal: redelegate.handleCloseCongratulationsModal,
+            onCloseDailogChange: redelegate.handleCloseModal,
+            onOpenModal: redelegate.handleOpenModal,
+            onSendClick: redelegate.handleSendClick,
+            onInputChange: redelegate.handleInputChange,
+            onAdvancedCheckedChange: redelegate.handleShowAdvancedChange,
           }}
         />
       </div>

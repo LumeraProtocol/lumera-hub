@@ -16,9 +16,9 @@ import Loading from '@/components/Loading';
 import { IValidator } from '@/types/validator';
 import AppLink from '@/components/AppLink';
 
-interface IVoteModal {
+interface IRedelegateModal {
   isOpen: boolean;
-  isVoteLoading: boolean;
+  isRedelegateLoading: boolean;
   error: string | null;
   optionsAdvanced: {
     fees: string;
@@ -26,7 +26,8 @@ interface IVoteModal {
     memo: string;
     senderAddress: string;
     amount: string;
-    validator: string;
+    destinationValidator: string;
+    sourceValidator: string;
   };
   availableAmount: number;
   showAdvanced: boolean;
@@ -39,9 +40,9 @@ interface IVoteModal {
   onCloseCongratulationsModal?: () => void;
 }
 
-export default function DelegateModal({
+export default function RedelegateModal({
     isOpen,
-    isVoteLoading,
+    isRedelegateLoading,
     error,
     optionsAdvanced,
     showAdvanced,
@@ -53,7 +54,7 @@ export default function DelegateModal({
     onInputChange,
     onAdvancedCheckedChange,
     onCloseCongratulationsModal,
-}: IVoteModal) {
+}: IRedelegateModal) {
   if (transactionHash) {
     return (
       <Dialog
@@ -93,7 +94,7 @@ export default function DelegateModal({
             y={0}
           >
             <div className='withdraw-main-content relative text-center p-5'>
-              <H3 className='!text-green-500 text-[32px]'>Congratulations! delegate completed successfully.</H3>
+              <H3 className='!text-green-500 text-[32px]'>Congratulations! redelegate completed successfully.</H3>
               <div className='mt-3'>
                 <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</AppLink>
               </div>
@@ -142,9 +143,9 @@ export default function DelegateModal({
           y={0}
         >
           <div className='withdraw-main-content relative'>
-            <Loading isLoading={isVoteLoading} />
+            <Loading isLoading={isRedelegateLoading} />
             <div className='flex justify-between items-center'>
-              <H3 className='text-lumera-label text-[32px]'>Stake</H3>
+              <H3 className='text-lumera-label text-[32px]'>Redelegate</H3>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseDailogChange}><CircleX /></button>
             </div>
             <div className='mt-1'>
@@ -160,15 +161,27 @@ export default function DelegateModal({
               </div>
             </div>
             <div className='mt-1'>
-              <Label htmlFor="validator" className='text-base'>Validator</Label>
-              <div className=''>
-                  <Select
-                    id="validator"
-                    value={optionsAdvanced.validator}
-                    onValueChange={(newValue) => onInputChange('validator', newValue)}
-                  >
+              <Label htmlFor="sourceValidator" className='text-base'>Source Validator</Label>
+              <div className='input-wrapper'>
+                <Input
+                  id="sourceValidator"
+                  placeholder="Source Validator"
+                  className='input'
+                  value={optionsAdvanced.sourceValidator}
+                  onChangeText={(newValue) => onInputChange('sourceValidator', newValue)}
+                />
+              </div>
+            </div>
+            <div className='mt-1'>
+              <Label htmlFor="destinationValidator" className='text-base'>Destination Validator</Label>
+              <div className='w-full'>
+                <Select
+                  id="destinationValidator"
+                  value={optionsAdvanced.destinationValidator}
+                  onValueChange={(newValue) => onInputChange('destinationValidator', newValue)}
+                >
                   <Select.Trigger width={'100%'} iconAfter={<ChevronDown size="$1" />}>
-                      <Select.Value placeholder="Select a validator" />
+                    <Select.Value placeholder="Select a destination validator" />
                   </Select.Trigger>
                   <Select.Content zIndex={200000}>
                       <Select.Viewport minWidth={200}>
@@ -176,33 +189,33 @@ export default function DelegateModal({
                         {validators?.map((item, index) => {
                           return (
                             <Select.Item
-                                key={index}
-                                index={index}
-                                value={item.operator_address}
+                              key={index}
+                              index={index}
+                              value={item.operator_address}
                             >
-                                <Select.ItemText>{item.description.moniker} ({Number(Number(item.commission.commission_rates.rate).toFixed(2)) * 100}%)</Select.ItemText>
-                                <XStack flex={1} />
-                                <Select.ItemIndicator marginLeft="auto">
-                                  <CheckIcon size={16} />
-                                </Select.ItemIndicator>
+                              <Select.ItemText>{item.description.moniker} ({Number(Number(item.commission.commission_rates.rate).toFixed(2)) * 100}%)</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon size={16} />
+                              </Select.ItemIndicator>
                             </Select.Item>
                           )
                         })}
                       </Select.Group>
                       </Select.Viewport>
                   </Select.Content>
-                  </Select>
+                </Select>
               </div>
             </div>
             <div className='mt-1'>
               <div className='flex items-center justify-between'>
                   <Label htmlFor="amount" className='text-base'>Amount</Label>
-                  <span className='text-sm text-gray-600'>{formatNumber(availableAmount, { decimalsLength: 6})} lume</span>
+                  <span className='text-sm text-gray-600'>{formatNumber(availableAmount, { decimalsLength: 2})} lume</span>
               </div>
               <div className='input-wrapper'>
                   <Input
                       id="amount"
-                      placeholder={`Available: ${formatNumber(availableAmount, { decimalsLength: 6})} lume`}
+                      placeholder={`Available: ${formatNumber(availableAmount, { decimalsLength: 2})} lume`}
                       className='input has-symbol'
                       value={optionsAdvanced.amount}
                       onChangeText={(newValue) => onInputChange('amount', newValue)}
@@ -272,11 +285,11 @@ export default function DelegateModal({
                   </Label>
                 </div>
                 <div className='btn-primary flex justify-end mt-3'>
-                  <Button onPress={onSendClick} disabled={isVoteLoading}>Send</Button>
+                  <Button onPress={onSendClick} disabled={isRedelegateLoading}>Send</Button>
                 </div>
               </div>
             </YStack>
-            {error && !isVoteLoading ?
+            {error && !isRedelegateLoading ?
               <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
             }
           </div>
