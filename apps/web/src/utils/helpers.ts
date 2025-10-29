@@ -6,6 +6,9 @@ import {
   toHex,
 } from '@cosmjs/encoding';
 import { Ripemd160, sha256 } from '@cosmjs/crypto';
+import chainMainnet from 'chain-registry/mainnet'
+import chainTestnet from 'chain-registry/testnet';
+export { parseCoins } from '@cosmjs/stargate';
 
 import { IValidator } from '@/types/validator';
 
@@ -77,3 +80,33 @@ export const mapAmount = (events:{type: string, attributes: {key: string, value:
     .filter(x => x.key === 'YW1vdW50'|| x.key === `amount`)
     .map(x => x.key==='amount'? x.value : String.fromCharCode(...fromBase64(x.value)))
 }
+
+export const getChains = () => {
+  if (process.env.NEXT_PUBLIC_NODE_ENV === 'dev') {
+    return {
+      assetLists: chainTestnet.assetLists,
+      chains: chainTestnet.chains,
+    }
+  }
+  return {
+    assetLists: chainMainnet.assetLists,
+    chains: chainMainnet.chains,
+  }
+}
+
+export function stringToUint8Array(str: string) {
+  const arr = [];
+  for (let i = 0, j = str.length; i < j; ++i) {
+    arr.push(str.charCodeAt(i));
+  }
+  return new Uint8Array(arr);
+}
+
+export function uint8ArrayToString(arr: Uint8Array) {
+  let str = '';
+  for (let i = 0, j = arr.length; i < j; ++i) {
+    str += String.fromCharCode(arr[i]);
+  }
+  return str;
+}
+
