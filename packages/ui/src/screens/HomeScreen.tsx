@@ -118,6 +118,7 @@ interface IClaimableRewardsModal {
   handleVoteAdvancedChange: (name: string, value: string) => void;
   transactionHash?: string;
   onCloseCongratulationsModal?: () => void;
+  congratulationsMessage?: string;
 }
 
 const getOption = (data: IPortfolioOverviewChart) => {
@@ -449,6 +450,7 @@ export const ClaimableRewardsModal = ({
   handleVoteAdvancedChange,
   transactionHash,
   onCloseCongratulationsModal,
+  congratulationsMessage,
 }: IClaimableRewardsModal) => {
   if (!isOpen) {
     return null;
@@ -494,10 +496,14 @@ export const ClaimableRewardsModal = ({
             opacity={1}
             y={0}
           >
-            <div className='withdraw-main-content relative text-center p-5'>
-              <H3 className='!text-green-500 text-[32px]'>Congratulations! claim all rewards completed successfully.</H3>
+            <div className='withdraw-main-content relative text-center p-5 max-w-[650px]'>
+              <H3 className='!text-green-500 text-[32px] !leading-9'>
+                {congratulationsMessage || 'Congratulations! claim all rewards completed successfully.'}
+              </H3>
               <div className='mt-3'>
-                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</AppLink>
+                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>
+                  View Transaction
+                </AppLink>
               </div>
             </div>
           </Dialog.Content>

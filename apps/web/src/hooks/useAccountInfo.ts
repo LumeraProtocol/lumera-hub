@@ -6,13 +6,14 @@ import { MsgWithdrawDelegatorReward } from 'cosmjs-types/cosmos/distribution/v1b
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { RPC_ENDPOINT, DENOM } from '@/contants/network';
+import { GAS_LIMIT } from '@/contants';
 
 export interface Coin {
   denom: string;
   amount: string;
 }
 
-interface DelegationResponse {
+export interface DelegationResponse {
   delegation: {
     delegator_address: string;
     validator_address: string;
@@ -64,12 +65,13 @@ const useAccountInfo = () => {
   const [claimInfo, setClaimInfo] = useState({
     senderAddress: '',
     fees: '2000',
-    gas: '200000',
+    gas: GAS_LIMIT,
     memo: 'Claim rewards',
   });
   const [isClaimModalOpen, setClaimModalOpen] = useState(false);
   const [selectedModal, setSelectedModal] = useState('');
   const [transactionHash, setTransactionHash] = useState('');
+  const [selectedClaim, setSelectedClaim] = useState<DelegationResponse | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -144,19 +146,35 @@ const useAccountInfo = () => {
         }
       );
       const msgWithdraw = [];
-      const { data } = await instance.get(`/cosmos/staking/v1beta1/delegations/${claimInfo.senderAddress}`);
-      for (const item of data?.delegation_responses) {
+      if (selectedClaim) {
         msgWithdraw.push({
           typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
           value: {
-            delegatorAddress: item.delegation.delegator_address,
-            validatorAddress: item.delegation.validator_address,
+            delegatorAddress: selectedClaim.delegation.delegator_address,
+            validatorAddress: selectedClaim.delegation.validator_address,
           },
         })
+      } else {
+        const { data } = await instance.get(`/cosmos/staking/v1beta1/delegations/${claimInfo.senderAddress}`);
+        for (const item of data?.delegation_responses) {
+          msgWithdraw.push({
+            typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+            value: {
+              delegatorAddress: item.delegation.delegator_address,
+              validatorAddress: item.delegation.validator_address,
+            },
+          })
+        }
       }
+      let gasLimit = claimInfo.gas
+      if (claimInfo.gas === GAS_LIMIT) {
+        const gasEstimate = await client.simulate(claimInfo.senderAddress, msgWithdraw, claimInfo.memo);
+        gasLimit = `${Math.round(gasEstimate * 1.3)}`;
+      }
+
       const fee = {
-        amount: [{ denom: DENOM, amount: claimInfo.fees }], // Fee gas
-        gas: claimInfo.gas, // Gas limit
+        amount: [{ denom: DENOM, amount: claimInfo.fees }],
+        gas: gasLimit,
       };
       const result = await client.signAndBroadcast(claimInfo.senderAddress, msgWithdraw, fee, claimInfo.memo);
       if (result?.transactionHash) {
@@ -201,6 +219,17 @@ const useAccountInfo = () => {
     setTransactionHash('');
     setClaimModalOpen(false);
     setClaimLoading(false);
+    setSelectedClaim(null);
+  }
+
+  const handleToggleClaimItemModal = (status: boolean, item: DelegationResponse) => {
+    setClaimLoading(false);
+    setClaimModalOpen(status);
+    if (!status) {
+      setSelectedClaim(null);
+    } else {
+      setSelectedClaim(item);
+    }
   }
 
   return {
@@ -213,6 +242,8 @@ const useAccountInfo = () => {
     isClaimModalOpen,
     selectedModal,
     transactionHash,
+    selectedClaim,
+    handleToggleClaimItemModal,
     handleCloseCongratulationsModal,
     handleClaimButtonClick,
     handleClaimChange,

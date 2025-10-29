@@ -8,13 +8,12 @@ import {
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { RPC_ENDPOINT, DENOM } from '@/contants/network';
+import { RATE_VALUE, GAS_LIMIT } from '@/contants';
 
 interface UseDepositOptions {
   callback?: () => void;
   customMemo?: string;
 }
-
-export const RATE_VALUE = 1000000;
 
 const useDeposit = (options: UseDepositOptions = {}) => {
     const { address, getOfflineSigner } = useWalletConnect();
@@ -22,7 +21,7 @@ const useDeposit = (options: UseDepositOptions = {}) => {
     const [depositAdvanced, setDepositAdvanced] = useState({
         senderAddress: address,
         fees: '2000',
-        gas: '200000',
+        gas: GAS_LIMIT,
         memo: 'Lumera Hub',
         depositAmount: '',
     });
@@ -70,7 +69,7 @@ const useDeposit = (options: UseDepositOptions = {}) => {
         setDepositAdvanced({
             senderAddress: address,
             fees: '2000',
-            gas: '200000',
+            gas: GAS_LIMIT,
             memo: options?.customMemo || 'Lumera Hub',
             depositAmount: '',
         });
@@ -128,19 +127,24 @@ const useDeposit = (options: UseDepositOptions = {}) => {
               }
           );
           const msg = {
-              typeUrl: '/cosmos.gov.v1.MsgDeposit',
-              value: MsgDeposit.fromPartial({
-                  proposalId: BigInt(proposalId),
-                  depositor: address,
-                  amount: [{
-                      denom: DENOM,
-                      amount: `${Number(depositAdvanced.depositAmount) * 1000000}`,
-                  }],
-              }),
+            typeUrl: '/cosmos.gov.v1.MsgDeposit',
+            value: MsgDeposit.fromPartial({
+                proposalId: BigInt(proposalId),
+                depositor: address,
+                amount: [{
+                    denom: DENOM,
+                    amount: `${Number(depositAdvanced.depositAmount) * 1000000}`,
+                }],
+            }),
           };
+          let gasLimit = depositAdvanced.gas
+          if (depositAdvanced.gas === GAS_LIMIT) {
+            const gasEstimate = await client.simulate(depositAdvanced.senderAddress, [msg], depositAdvanced.memo);
+            gasLimit = `${Math.round(gasEstimate * 1.3)}`;
+          }
           const fee = {
               amount: [{ denom: DENOM, amount: depositAdvanced.fees }], // Fee gas
-              gas: depositAdvanced.gas, // Gas limit
+              gas: gasLimit, // Gas limit
           };
           const result = await client.signAndBroadcast(depositAdvanced.senderAddress, [msg], fee, depositAdvanced.memo);
           if (result?.transactionHash) {

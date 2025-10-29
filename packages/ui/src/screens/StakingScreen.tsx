@@ -14,7 +14,8 @@ import RedelegateModal from '@/components/RedelegateModal';
 import Skeleton from '@/components/Skeleton';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import AppButton from '@/components/AppButton';
-import { RATE_VALUE } from '@/hooks/useDeposit';
+import { RATE_VALUE } from '@/contants';
+import { DelegationResponse } from '@/hooks/useAccountInfo';
 import {
   TSigningInfos,
   IReward,
@@ -110,10 +111,12 @@ interface IStakingScreen {
     errorClaim: string | null;
     handleClaimChange: (name: string, value: string) => void;
     handleToggleClaimModal: (status: boolean) => void;
+    handleToggleClaimItemModal: (status: boolean, item: DelegationResponse) => void;
     isClaimModalOpen: boolean;
     transactionHash?: string;
     onCloseCongratulationsModal?: () => void;
     onClaimButtonClick: () => void;
+    selectedClaim?: DelegationResponse | null;
   };
   activityData: {
     isActivitiesLoading: boolean;
@@ -351,6 +354,18 @@ export const StakingScreen = ({
     }
 
     return total;
+  }
+
+  const getCongratulationsMessage = () => {
+    if (!claim.selectedClaim) {
+      return '';
+    }
+     const validator = getAllValidators().find(v => v.operator_address === claim.selectedClaim?.delegation.validator_address);
+     if (!validator) {
+      return '';
+     }
+
+     return `Congratulations! Rewards have been claimed from ${validator.description.moniker} successfully.`
   }
 
   return (
@@ -651,7 +666,15 @@ export const StakingScreen = ({
                                         >
                                           Unbond
                                         </AppButton>
-                                        {reward && getReward(reward) > 0 && <AppButton variant="secondary" className="!py-1.5 !px-4 !text-sm" onClick={() => claim.handleToggleClaimModal(true)}>Claim</AppButton>}
+                                        {reward && getReward(reward) > 0 && (
+                                          <AppButton
+                                            variant="secondary"
+                                            className="!py-1.5 !px-4 !text-sm"
+                                            onClick={() => claim.handleToggleClaimItemModal(true, delegation)}
+                                          >
+                                            Claim
+                                          </AppButton>
+                                        )}
                                     </div>
                                   </div>
                                 )
@@ -828,6 +851,7 @@ export const StakingScreen = ({
         handleVoteAdvancedChange={claim.handleClaimChange}
         transactionHash={claim.transactionHash}
         onCloseCongratulationsModal={claim.onCloseCongratulationsModal}
+        congratulationsMessage={getCongratulationsMessage()}
       />
     </div>
     </YStack>

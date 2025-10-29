@@ -10,6 +10,7 @@ import { SigningStargateClient } from '@cosmjs/stargate';
 import { REST_AI_URL, DENOM, RPC_ENDPOINT } from '@/contants/network';
 import { Coin } from '@/hooks/useAccountInfo'
 import useWalletConnect from '@/hooks/useWalletConnect';
+import { GAS_LIMIT } from '@/contants';
 
 type TMessage = {
     '@type': string;
@@ -85,7 +86,7 @@ const useProposals = (options: UseDepositOptions = {}) => {
     const [errorVote, setErrorVote] = useState<string | null>(null);
     const [voteAdvanced, setAdvanced] = useState({
         fees: '2000',
-        gas: '200000',
+        gas: GAS_LIMIT,
         memo: 'Lumera Hub',
         broadcastMode: broadcastModeOptions[0].value,
     });
@@ -124,17 +125,17 @@ const useProposals = (options: UseDepositOptions = {}) => {
     }, [options?.customMemo]);
 
     useEffect(() => {
-        if (!isVoteOpen) {
-          setVoteOpen(false);
-          setVoteLoading(false);
-          setLoading(false);
-          setAdvanced({
-            fees: '2000',
-            gas: '200000',
-            memo: options?.customMemo || 'Lumera Hub',
-            broadcastMode: broadcastModeOptions[0].value,
-          })
-        }
+      if (!isVoteOpen) {
+        setVoteOpen(false);
+        setVoteLoading(false);
+        setLoading(false);
+        setAdvanced({
+          fees: '2000',
+          gas: GAS_LIMIT,
+          memo: options?.customMemo || 'Lumera Hub',
+          broadcastMode: broadcastModeOptions[0].value,
+        })
+      }
     }, [isVoteOpen])
 
     const handleOptionChange = (val: string) => {
@@ -171,9 +172,14 @@ const useProposals = (options: UseDepositOptions = {}) => {
                     option: voteOption as any,
                 }),
             };
+            let gasLimit = voteAdvanced.gas
+            if (voteAdvanced.gas === GAS_LIMIT) {
+              const gasEstimate = await client.simulate(address, [msg], voteAdvanced.memo);
+              gasLimit = `${Math.round(gasEstimate * 1.3)}`;
+            }
             const fee = {
-                amount: [{ denom: DENOM, amount: voteAdvanced.fees } as Coin],
-                gas: voteAdvanced.gas,
+              amount: [{ denom: DENOM, amount: voteAdvanced.fees } as Coin],
+              gas: gasLimit,
             };
             const result = await client.signAndBroadcast(address, [msg], fee, voteAdvanced.memo);
             if (result?.transactionHash) {

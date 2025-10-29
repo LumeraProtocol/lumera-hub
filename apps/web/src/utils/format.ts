@@ -1,8 +1,7 @@
 import numeral from 'numeral';
-import { assetLists } from 'chain-registry/mainnet'
-// import { assetLists, chains } from 'chain-registry/testnet';
 
 import { CHAIN_NAME } from '@/contants/network';
+import { getChains } from '@/utils/helpers';
 
 export const formatNumber = (
   total: number | string,
@@ -27,7 +26,9 @@ export const formatAddress = (address: string, length = 20, endLength = -6): str
 };
 
 const findGlobalAssetConfig = (denom: string) => {
-  const lumeraAssets = assetLists.find(({chainName})=>chainName === CHAIN_NAME);
+  const { assetLists } = getChains();
+  const lumeraAssets = assetLists.find(({chainName})=> chainName === CHAIN_NAME);
+
   if (lumeraAssets) {
     const conf = lumeraAssets.assets.find(a => a.base === denom)
     if(conf) {
@@ -46,7 +47,6 @@ export const formatToken = (
     let amount = Number(token.amount);
     let denom = token.denom;
     const conf = findGlobalAssetConfig(token.denom);
-
     if (conf) {
       let unit = { exponent: 0, denom: '' };
       // find the max exponent for display

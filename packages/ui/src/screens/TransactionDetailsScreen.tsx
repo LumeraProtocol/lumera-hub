@@ -169,6 +169,7 @@ export const TransactionDetailsScreen = ({
                   padding: '10px',
                   borderRadius: '9px',
                   backgroundColor: '#151c29',
+                  wordBreak: 'break-all',
                 }}
               />
             </div> :
