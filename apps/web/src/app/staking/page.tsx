@@ -37,6 +37,18 @@ export default function Page() {
     document.title = 'Staking';
   }, []);
 
+  const handleRedelegate = () => {
+    const { amount, customMemo, validator } = staking.selectedData;
+    staking.handleCloseModal();
+    redelegate.handleOpenModal(validator, amount, customMemo);
+  }
+
+  const handleUnbond = () => {
+    const { amount, customMemo, validator } = staking.selectedData;
+    staking.handleCloseModal();
+    unbond.handleOpenModal(validator, amount, customMemo);
+  }
+
   return (
     <>
       <Helmet>
@@ -78,9 +90,14 @@ export default function Page() {
             apr: staking.apr,
             isAPRLoading: staking.isAPRLoading,
             bondedTokens: staking.bondedTokens,
+            selectedModal: staking.selectedModal,
+            selectedData: staking.selectedData,
             onSubTabChange: staking.handleSubTabChange,
             onValidatorTabChange: staking.handleValidatorTabChange,
             onTabChange: staking.handleTabChange,
+            handleOpenModal: staking.handleOpenModal,
+            handleCloseModal: staking.handleCloseModal,
+            handleShowConfirmModal: staking.handleShowConfirmModal,
           }}
           claim={{
             onClaimButtonClick: handleClaimButtonClick,
@@ -115,7 +132,7 @@ export default function Page() {
             transactionHash: unbond.transactionHash,
             onCloseCongratulationsModal: unbond.handleCloseCongratulationsModal,
             onCloseDailogChange: unbond.handleCloseModal,
-            onOpenModal: unbond.handleOpenModal,
+            onOpenModal: handleUnbond,
             onSendClick: unbond.handleSendClick,
             onInputChange: unbond.handleInputChange,
             onAdvancedCheckedChange: unbond.handleShowAdvancedChange,
@@ -131,7 +148,7 @@ export default function Page() {
             transactionHash: redelegate.transactionHash,
             onCloseCongratulationsModal: redelegate.handleCloseCongratulationsModal,
             onCloseDailogChange: redelegate.handleCloseModal,
-            onOpenModal: redelegate.handleOpenModal,
+            onOpenModal: handleRedelegate,
             onSendClick: redelegate.handleSendClick,
             onInputChange: redelegate.handleInputChange,
             onAdvancedCheckedChange: redelegate.handleShowAdvancedChange,

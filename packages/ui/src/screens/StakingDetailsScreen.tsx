@@ -5,8 +5,10 @@ import { fromHex, toBase64, fromBase64, toHex, fromBech32 } from '@cosmjs/encodi
 
 import Loading from '@/components/Loading';
 import AppLink from '@/components/AppLink';
+import DelegateModal from '@/components/DelegateModal';
 import { IValidator } from '@/types/validator';
-import { TSigningInfos, IBlock } from '@/types';
+import { RATE_VALUE } from '@/contants';
+import { TSigningInfos, IBlock, AccountInfoData } from '@/types';
 import { formatToken, formatCommissionRate, percent } from '@/utils/format';
 import {
   consensusPubkeyToHexAddress,
@@ -60,6 +62,31 @@ interface IStakingDetailsScreen {
   validators: IValidator[];
   isFetchDelegatorsLoading: boolean;
   delegators: TTXResponse[];
+  delegateOptions: {
+    isVoteLoading: boolean;
+    error: string | null;
+    optionsAdvanced: {
+        fees: string;
+        gas: string;
+        memo: string;
+        senderAddress: string;
+        amount: string;
+        validator: string;
+    };
+    showAdvanced: boolean;
+    validators: IValidator[];
+    totalValidators: string;
+    isLoading: boolean;
+    isOpenModal: boolean;
+    transactionHash?: string;
+    onCloseCongratulationsModal?: () => void;
+    onCloseDailogChange: () => void;
+    onSendClick: () => void;
+    onInputChange: (name: string, value: string) => void;
+    onAdvancedCheckedChange: (checked: boolean) => void;
+    onOpenModal: (validator: string, customMemo?: string) => void;
+  };
+  accountInfo: AccountInfoData | null;
 }
 
 type TDelegators = {
@@ -162,6 +189,8 @@ export const StakingDetailsScreen = ({
   validators,
   isFetchDelegatorsLoading,
   delegators,
+  delegateOptions,
+  accountInfo,
 }: IStakingDetailsScreen) => {
   const [isCopied, setCopied] = useState(false);
 
@@ -239,13 +268,30 @@ export const StakingDetailsScreen = ({
     return parseFloat(percentValue.toFixed(7)) > 0 ? `${percentValue.toFixed(7)}%` : '0%';
   }
 
+   const getTotalBalances = () => {
+    let total = 0;
+    if (accountInfo?.balances?.length) {
+      for (const item of accountInfo?.balances) {
+        if (item.denom === DENOM) {
+          total += Number(item.amount);
+        }
+        if (item.denom === 'lume') {
+          total += Number(item.amount) * RATE_VALUE;
+        }
+      }
+    }
+    return total / RATE_VALUE;
+  }
+
   return (
     <div className="space-y-8">
       <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
           <H2 className='!font-bold text-white text-[32px] leading-none'>{validator?.description?.moniker}</H2>
           <div className='btn-primary'>
-          <Button>
-              <span className='font-bold whitespace-nowrap'>Delegate</span>
+          <Button
+            onPress={() => delegateOptions.onOpenModal(validator?.operator_address || '', validator?.description?.moniker ? `Delegate for the ${validator?.description?.moniker}` : '')}
+          >
+            <span className='font-bold whitespace-nowrap'>Delegate</span>
           </Button>
           </div>
       </div>
@@ -369,6 +415,21 @@ export const StakingDetailsScreen = ({
           </div>
         </Card.Header>
       </Card>
+      <DelegateModal
+        isOpen={delegateOptions.isOpenModal}
+        availableAmount={getTotalBalances()}
+        isVoteLoading={delegateOptions.isVoteLoading}
+        onAdvancedCheckedChange={delegateOptions.onAdvancedCheckedChange}
+        onCloseDailogChange={delegateOptions.onCloseDailogChange}
+        onInputChange={delegateOptions.onInputChange}
+        onSendClick={delegateOptions.onSendClick}
+        optionsAdvanced={delegateOptions.optionsAdvanced}
+        showAdvanced={delegateOptions.showAdvanced}
+        error={delegateOptions.error}
+        validators={delegateOptions.validators}
+        transactionHash={delegateOptions.transactionHash}
+        onCloseCongratulationsModal={delegateOptions.onCloseCongratulationsModal}
+      />
     </div>
   )
 }
