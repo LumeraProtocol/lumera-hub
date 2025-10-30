@@ -2,7 +2,7 @@ import React from 'react'
 import { YStack, H2, Paragraph, Card, SizableText, H3, Input, Label, Text, Progress, Button } from 'tamagui'
 import { Wallet, Calculator, Search } from '@tamagui/lucide-icons'
 import { fromHex, toBase64 } from '@cosmjs/encoding';
-import { Coins, ArrowUpRight } from 'lucide-react';
+import { Coins, ArrowUpRight, TriangleAlert } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
 import PastTime from '@/components/PastTime';
@@ -14,6 +14,7 @@ import RedelegateModal from '@/components/RedelegateModal';
 import Skeleton from '@/components/Skeleton';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import AppButton from '@/components/AppButton';
+import ConfirmModal from '@/components/ConfirmModal';
 import { RATE_VALUE } from '@/contants';
 import { DelegationResponse } from '@/hooks/useAccountInfo';
 import {
@@ -95,9 +96,25 @@ interface IStakingScreen {
     apr: number;
     isAPRLoading: boolean;
     bondedTokens: number;
+    selectedModal: string;
+    selectedData: {
+      validator: string;
+      amount: string;
+      customMemo: string;
+      rewards: string;
+    };
     onSubTabChange: (tab: string) => void;
     onValidatorTabChange: (tab: string) => void;
     onTabChange: (tab: string) => void;
+    handleOpenModal: (name: string) => void;
+    handleCloseModal: () => void;
+    handleShowConfirmModal: (
+      name: string,
+      validator: string,
+      amount: string,
+      customMemo: string,
+      rewards: string,
+    ) => void;
   };
   accountInfo: AccountInfoData | null;
   claim: {
@@ -149,7 +166,7 @@ interface IStakingScreen {
     onSendClick: () => void;
     onInputChange: (name: string, value: string) => void;
     onAdvancedCheckedChange: (checked: boolean) => void;
-    onOpenModal: (validator: string, amount: string, customMemo?: string) => void;
+    onOpenModal: () => void;
   };
   redelegateOptions: {
     isRedelegateLoading: boolean;
@@ -173,7 +190,7 @@ interface IStakingScreen {
     onSendClick: () => void;
     onInputChange: (name: string, value: string) => void;
     onAdvancedCheckedChange: (checked: boolean) => void;
-    onOpenModal: (validator: string, amount: string, customMemo?: string) => void;
+    onOpenModal: () => void;
   };
 }
 
@@ -366,6 +383,17 @@ export const StakingScreen = ({
      }
 
      return `Congratulations! Rewards have been claimed from ${validator.description.moniker} successfully.`
+  }
+
+  const getConfirmContent = (title: string) => {
+    return (
+      <div>
+        <H3 textAlign='center' className='!flex items-center flex-col sm:flex-row gap-1 sm:gap-3 justify-center !leading-5'>
+          <TriangleAlert color='#f8aa0f' /> Warning: Claim Your Rewards First!
+        </H3>
+        <p className='mt-4'>If you proceed with {title} now, you will forfeit your currently claimable rewards of <strong>{staking?.selectedData?.rewards}</strong>. Please Claim Rewards before continuing to ensure you don’t lose them.</p>
+      </div>
+    );
   }
 
   return (
@@ -642,26 +670,30 @@ export const StakingScreen = ({
                                         </AppButton>
                                         <AppButton
                                           className="!py-1.5 !px-4 !text-sm"
-                                          onClick={() => redelegateOptions.onOpenModal(
+                                          onClick={() => staking.handleShowConfirmModal(
+                                            'redelegate',
                                             delegation.delegation.validator_address,
                                             formatToken({
                                               amount: delegation.balance.amount,
                                               denom: delegation.balance.denom,
                                             }, false, '0,0.[000000]'),
-                                            validator?.description?.moniker ? `Redelegate for the ${validator?.description?.moniker}` : ''
+                                            validator?.description?.moniker ? `Redelegate for the ${validator?.description?.moniker}` : '',
+                                            formatTokens(reward?.reward),
                                           )}
                                         >
                                           Redelegate
                                         </AppButton>
                                         <AppButton
                                           className="!py-1.5 !px-4 !text-sm"
-                                          onClick={() => unbondOptions.onOpenModal(
+                                          onClick={() => staking.handleShowConfirmModal(
+                                            'unbond',
                                             delegation.delegation.validator_address,
                                             formatToken({
                                               amount: delegation.balance.amount,
                                               denom: delegation.balance.denom,
                                             }, false, '0,0.[000000]'),
-                                            validator?.description?.moniker ? `Unbond for the ${validator?.description?.moniker}` : ''
+                                            validator?.description?.moniker ? `Unbond for the ${validator?.description?.moniker}` : '',
+                                            formatTokens(reward?.reward)
                                           )}
                                         >
                                           Unbond
@@ -852,6 +884,24 @@ export const StakingScreen = ({
         transactionHash={claim.transactionHash}
         onCloseCongratulationsModal={claim.onCloseCongratulationsModal}
         congratulationsMessage={getCongratulationsMessage()}
+      />
+      <ConfirmModal
+        isOpen={staking.selectedModal === 'redelegate'}
+        content={getConfirmContent('Redelegating')}
+        onCloseModal={staking.handleCloseModal}
+        onCancelClick={staking.handleCloseModal}
+        onConfirmClick={redelegateOptions.onOpenModal}
+        btnConfirmLabel='Continue'
+        btnCancelLabel='Claim Rewards'
+      />
+      <ConfirmModal
+        isOpen={staking.selectedModal === 'unbond'}
+        content={getConfirmContent('Unbonding')}
+        onCloseModal={staking.handleCloseModal}
+        onCancelClick={staking.handleCloseModal}
+        onConfirmClick={unbondOptions.onOpenModal}
+        btnConfirmLabel='Continue'
+        btnCancelLabel='Claim Rewards'
       />
     </div>
     </YStack>

@@ -1,6 +1,6 @@
 'use client'
 import { Wallet, LogOut, X } from '@tamagui/lucide-icons'
-import { Dialog, Unspaced, Button } from 'tamagui'
+import { Dialog, Unspaced, Button, VisuallyHidden } from 'tamagui'
 import Image from 'next/image';
 
 import useWalletConnect from '@/hooks/useWalletConnect';
@@ -50,24 +50,27 @@ export function WalletModalComponent() {
           opacity={1}
           y={0}
         >
+          <VisuallyHidden>
+            <Dialog.Title></Dialog.Title>
+          </VisuallyHidden>
           <div className='vote-main-content'>
             <div className='flex flex-col gap-3'>
-              <button 
-                className='flex gap-4 items-center bg-gray-900 border border-gray-800 rounded-lg py-2 px-4 min-w-52 hover:bg-gray-800 hover:border-gray-700 cursor-pointer' 
+              <button
+                className='flex gap-4 items-center bg-gray-900 border border-gray-800 rounded-lg py-2 px-4 min-w-52 hover:bg-gray-800 hover:border-gray-700 cursor-pointer'
                 onClick={() => handleConnect('keplr')}
                 disabled={isLoading}
               >
                 <Image src="/keplr.svg" alt="Keplr wallet" width={32} height={32} /> <span className='text-xl'>Keplr</span>
               </button>
-              <button 
-                className='flex gap-4 items-center bg-gray-900 border border-gray-800 rounded-lg py-2 px-4 min-w-52 hover:bg-gray-800 hover:border-gray-700 cursor-pointer' 
+              <button
+                className='flex gap-4 items-center bg-gray-900 border border-gray-800 rounded-lg py-2 px-4 min-w-52 hover:bg-gray-800 hover:border-gray-700 cursor-pointer'
                 onClick={() => handleConnect('leap')}
                 disabled={isLoading}
               >
                 <Image src="/leap.svg" alt="Leap wallet" width={32} height={32} />  <span className='text-xl'>Leap</span>
               </button>
             </div>
-            {error ? 
+            {error ?
               <div className='text-lumera-red-light mt-3'>{error}</div> : null
             }
           </div>

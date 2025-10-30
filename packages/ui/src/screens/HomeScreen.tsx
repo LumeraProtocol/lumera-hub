@@ -18,6 +18,7 @@ import {
   Checkbox,
   Select,
   XStack,
+  VisuallyHidden,
 } from 'tamagui';
 import { LaptopMinimalCheck, BarChart2, Warehouse, Send } from '@tamagui/lucide-icons'
 import { CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons';
@@ -250,6 +251,9 @@ export const VoteModal = ({
             opacity={1}
             y={0}
           >
+            <VisuallyHidden>
+              <Dialog.Title></Dialog.Title>
+            </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5'>
               <H3 className='!text-green-500 text-[32px]'>Congratulations! vote completed successfully.</H3>
               <div className='mt-3'>
@@ -299,6 +303,9 @@ export const VoteModal = ({
             opacity={1}
             y={0}
           >
+            <VisuallyHidden>
+              <Dialog.Title></Dialog.Title>
+            </VisuallyHidden>
             <div className='vote-main-content relative'>
               <Loading isLoading={isVoteLoading} />
               <div className='flex justify-between items-center'>
@@ -496,6 +503,9 @@ export const ClaimableRewardsModal = ({
             opacity={1}
             y={0}
           >
+            <VisuallyHidden>
+              <Dialog.Title></Dialog.Title>
+            </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5 max-w-[650px]'>
               <H3 className='!text-green-500 text-[32px] !leading-9'>
                 {congratulationsMessage || 'Congratulations! claim all rewards completed successfully.'}
@@ -553,6 +563,9 @@ export const ClaimableRewardsModal = ({
             opacity={1}
             y={0}
           >
+            <VisuallyHidden>
+              <Dialog.Title></Dialog.Title>
+            </VisuallyHidden>
             <div className='withdraw-main-content relative'>
               <Loading isLoading={isVoteLoading} />
               <div className='flex justify-between items-center'>
