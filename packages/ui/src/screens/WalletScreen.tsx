@@ -28,7 +28,7 @@ import SendModal from '@/components/SendModal';
 import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
 import { AccountInfoData } from '@/hooks/useAccountInfo';
-import { RATE_VALUE } from '@/hooks/useDeposit';
+import { RATE_VALUE } from '@/contants';
 import { ITransaction } from '@/hooks/useTransaction';
 import { formatAddress, formatToken } from '@/utils/format';
 import { getMessages } from '@/utils/helpers';
@@ -387,26 +387,31 @@ export const WalletScreen = ({
                     <div className='w-full overflow-x-auto'>
                         <div className='w-full min-w-[968px]'>
                             {transactions.map((tx) => (
-                                <div key={tx.txhash} className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors">
-                                    <div className="col-span-2 flex items-center">
-                                        <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
-                                            {getTxIcon(getMessages(tx.tx.body.messages))}
-                                        </div>
-                                        <AppLink href={`/block/${tx.height}`} className="font-semibold text-white ml-2">{tx.height}</AppLink>
-                                    </div>
-                                    <div className="col-span-4">
-                                        <AppLink href={`/tx/${tx.txhash}`} className="font-semibold text-white whitespace-nowrap">
-                                            {formatAddress(tx.txhash, 15, -6)}
-                                        </AppLink>
-                                    </div>
-                                    <div className="col-span-3 text-left whitespace-nowrap">
-                                        {getMessages(tx.tx.body.messages)}
-                                    </div>
-                                    <div className="col-span-3 text-sm text-gray-500 flex justify-end">
-                                        <span className="text-white pr-1 whitespace-nowrap">{dayjs(tx.timestamp).format('YYYY-MM-DD HH:mm:ss')}</span>
-                                        (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm whitespace-nowrap' />)
-                                    </div>
+                              <div key={tx.txhash} className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors">
+                                <div className="col-span-2 flex items-center">
+                                  <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
+                                      {getTxIcon(getMessages(tx.tx.body.messages))}
+                                  </div>
+                                  <AppLink href={`/block/${tx.height}`} className="font-semibold text-white ml-2">{tx.height}</AppLink>
                                 </div>
+                                <div className="col-span-3">
+                                  <AppLink href={`/tx/${tx.txhash}`} className="font-semibold text-white whitespace-nowrap">
+                                      {formatAddress(tx.txhash, 15, -6)}
+                                  </AppLink>
+                                </div>
+                                <div className="col-span-3 text-left whitespace-nowrap">
+                                  {getMessages(tx.tx.body.messages)}
+                                </div>
+                                <div className="col-span-2 text-left whitespace-nowrap">
+                                  <span className={`text-xs truncate relative py-2 px-4 w-fit mr-2 rounded text-white ${tx?.code === 0 ? 'bg-lumera-teal' : 'bg-red-800'}`}>
+                                    {tx?.code === 0 ? 'Success' : 'Failed'}
+                                  </span>
+                                </div>
+                                <div className="col-span-2 text-sm text-gray-500 flex justify-end">
+                                    <span className="text-white pr-1 whitespace-nowrap">{dayjs(tx.timestamp).format('YYYY-MM-DD HH:mm:ss')}</span>
+                                    (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm whitespace-nowrap' />)
+                                </div>
+                              </div>
                             ))}
                         </div>
                     </div>

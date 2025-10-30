@@ -38,6 +38,13 @@ const useStaking = (address = '') => {
   const [apr, setAPR] = useState(0);
   const [isAPRLoading, setAPRLoading] = useState(false);
   const [bondedTokens, setBondedTokens] = useState(0);
+  const [selectedModal, setSelectedModal] = useState('');
+  const [selectedData, setSelectedData] = useState({
+    validator: '',
+    amount: '',
+    customMemo: '',
+    rewards: '',
+  })
 
   const fetchValidator = async () => {
     setLoading(true);
@@ -175,6 +182,36 @@ const useStaking = (address = '') => {
     }
   }
 
+  const handleOpenModal = (name: string) => {
+    setSelectedModal(name)
+  }
+
+  const handleCloseModal = () => {
+    setSelectedModal('');
+    setSelectedData({
+      validator: '',
+      amount: '',
+      customMemo: '',
+      rewards: '',
+    });
+  }
+
+  const handleShowConfirmModal = (
+    name: string,
+    validator: string,
+    amount: string,
+    customMemo: string,
+    rewards: string,
+  ) => {
+    handleOpenModal(name);
+    setSelectedData({
+      validator,
+      amount,
+      customMemo,
+      rewards,
+    })
+  }
+
   return {
     isLoading,
     error,
@@ -196,6 +233,11 @@ const useStaking = (address = '') => {
     apr,
     isAPRLoading,
     bondedTokens,
+    selectedModal,
+    selectedData,
+    handleShowConfirmModal,
+    handleOpenModal,
+    handleCloseModal,
     handleSubTabChange,
     handleValidatorTabChange,
     handleTabChange,

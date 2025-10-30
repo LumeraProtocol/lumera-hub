@@ -82,7 +82,7 @@ export interface IBlock {
         height: string;
         round: number;
         block_id: {
-           hash: string; 
+           hash: string;
            part_set_header: {
             total: number;
             hash: string;

@@ -8,6 +8,7 @@ import {
   Checkbox,
   Select,
   XStack,
+  VisuallyHidden,
 } from 'tamagui';
 import { CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons';
 
@@ -93,6 +94,9 @@ export default function RedelegateModal({
             opacity={1}
             y={0}
           >
+            <VisuallyHidden>
+              <Dialog.Title></Dialog.Title>
+            </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5'>
               <H3 className='!text-green-500 text-[32px]'>Congratulations! redelegate completed successfully.</H3>
               <div className='mt-3'>
@@ -142,6 +146,9 @@ export default function RedelegateModal({
           opacity={1}
           y={0}
         >
+          <VisuallyHidden>
+            <Dialog.Title></Dialog.Title>
+          </VisuallyHidden>
           <div className='withdraw-main-content relative'>
             <Loading isLoading={isRedelegateLoading} />
             <div className='flex justify-between items-center'>

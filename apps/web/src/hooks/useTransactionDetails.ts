@@ -35,18 +35,18 @@ type TAttribute = {
   index?: boolean;
 }
 
-type TEvent = {
+export type TEvent = {
   type: string;
   attributes: TAttribute[];
 }
 
-type TLog = {
+export type TLog = {
   msg_index: number;
   log: string;
   events: TEvent[]
 }
 
-type TxMessages = {
+export type TxMessages = {
   '@type': string;
   delegator_address: string;
   validator_address: string;

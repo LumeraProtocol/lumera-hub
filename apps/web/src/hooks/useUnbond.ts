@@ -7,14 +7,12 @@ import {
 
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { RPC_ENDPOINT, DENOM } from '@/contants/network';
-
+import { GAS_LIMIT } from '@/contants';
 
 interface UseDepositOptions {
   callback?: () => void;
   customMemo?: string;
 }
-
-export const RATE_VALUE = 1000000;
 
 const useUnbond = (options: UseDepositOptions = {}) => {
     const { address, getOfflineSigner } = useWalletConnect();
@@ -22,7 +20,7 @@ const useUnbond = (options: UseDepositOptions = {}) => {
     const [optionsAdvanced, setOptionsAdvanced] = useState({
       senderAddress: address,
       fees: '2000',
-      gas: '200000',
+      gas: GAS_LIMIT,
       memo: 'Lumera Hub',
       amount: '',
       validator: '',
@@ -48,7 +46,7 @@ const useUnbond = (options: UseDepositOptions = {}) => {
       setOptionsAdvanced({
         senderAddress: address,
         fees: '2000',
-        gas: '200000',
+        gas: GAS_LIMIT,
         memo: options?.customMemo || 'Lumera Hub',
         amount: '',
         validator: '',
@@ -111,9 +109,14 @@ const useUnbond = (options: UseDepositOptions = {}) => {
                 },
             }),
         };
+         let gasLimit = optionsAdvanced.gas
+        if (optionsAdvanced.gas === GAS_LIMIT) {
+          const gasEstimate = await client.simulate(optionsAdvanced.senderAddress, [msg], optionsAdvanced.memo);
+          gasLimit = `${Math.round(gasEstimate * 1.3)}`;
+        }
         const fee = {
             amount: [{ denom: DENOM, amount: optionsAdvanced.fees }], // Fee gas
-            gas: optionsAdvanced.gas, // Gas limit
+            gas: gasLimit, // Gas limit
         };
         const result = await client.signAndBroadcast(optionsAdvanced.senderAddress, [msg], fee, optionsAdvanced.memo);
         if (result?.transactionHash) {

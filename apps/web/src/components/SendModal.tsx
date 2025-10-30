@@ -1,11 +1,12 @@
-import { 
-  YStack, 
-  H3, 
-  Button, 
-  Dialog, 
-  Label, 
-  Input, 
-  Checkbox, 
+import {
+  YStack,
+  H3,
+  Button,
+  Dialog,
+  Label,
+  Input,
+  Checkbox,
+  VisuallyHidden,
 } from 'tamagui';
 import { CircleX, Check as CheckIcon } from '@tamagui/lucide-icons';
 
@@ -18,13 +19,13 @@ interface IVoteModal {
   isVoteLoading: boolean;
   error: string | null;
   optionsAdvanced: {
-    fees: string; 
-    gas: string; 
-    memo: string; 
-    senderAddress: string; 
-    amount: string; 
-    recipient: string; 
-    balances: string; 
+    fees: string;
+    gas: string;
+    memo: string;
+    senderAddress: string;
+    amount: string;
+    recipient: string;
+    balances: string;
   };
   availableAmount: number;
   showAdvanced: boolean;
@@ -37,15 +38,15 @@ interface IVoteModal {
 }
 
 export default function SendModal({
-    isOpen, 
-    isVoteLoading, 
+    isOpen,
+    isVoteLoading,
     error,
     optionsAdvanced,
     showAdvanced,
     availableAmount,
     transactionHash,
-    onCloseDailogChange, 
-    onSendClick, 
+    onCloseDailogChange,
+    onSendClick,
     onInputChange,
     onAdvancedCheckedChange,
     onCloseCongratulationsModal,
@@ -88,6 +89,9 @@ export default function SendModal({
             opacity={1}
             y={0}
           >
+            <VisuallyHidden>
+              <Dialog.Title></Dialog.Title>
+            </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5'>
               <H3 className='!text-green-500 text-[32px]'>Congratulations! send completed successfully.</H3>
               <div className='mt-3'>
@@ -96,7 +100,7 @@ export default function SendModal({
             </div>
           </Dialog.Content>
         </Dialog.Portal>
-      </Dialog> 
+      </Dialog>
     )
   }
 
@@ -137,6 +141,9 @@ export default function SendModal({
           opacity={1}
           y={0}
         >
+          <VisuallyHidden>
+            <Dialog.Title></Dialog.Title>
+          </VisuallyHidden>
           <div className='withdraw-main-content relative'>
             <Loading isLoading={isVoteLoading} />
             <div className='flex justify-between items-center'>
@@ -146,11 +153,11 @@ export default function SendModal({
             <div className='mt-1'>
               <Label htmlFor="sender" className='text-base'>Sender</Label>
               <div className='input-wrapper'>
-                <Input 
-                  id="sender" 
-                  placeholder="Sender" 
-                  className='input' 
-                  value={optionsAdvanced.senderAddress} 
+                <Input
+                  id="sender"
+                  placeholder="Sender"
+                  className='input'
+                  value={optionsAdvanced.senderAddress}
                   onChangeText={(newValue) => onInputChange('senderAddress', newValue)}
                 />
               </div>
@@ -158,12 +165,12 @@ export default function SendModal({
             <div className='mt-1'>
               <Label htmlFor="recipient" className='text-base'>Recipient</Label>
               <div className='input-wrapper'>
-                <Input 
-                  id="recipient" 
-                  placeholder="Recipient" 
-                  className='input' 
-                  value={optionsAdvanced.recipient} 
-                  onChangeText={(newValue) => onInputChange('recipient', newValue)} 
+                <Input
+                  id="recipient"
+                  placeholder="Recipient"
+                  className='input'
+                  value={optionsAdvanced.recipient}
+                  onChangeText={(newValue) => onInputChange('recipient', newValue)}
                 />
               </div>
             </div>
@@ -173,12 +180,12 @@ export default function SendModal({
                   <span className='text-sm text-gray-600'>{formatNumber(availableAmount, { decimalsLength: 6})} lume</span>
               </div>
               <div className='input-wrapper'>
-                  <Input 
-                      id="amount" 
+                  <Input
+                      id="amount"
                       placeholder={`Available: ${formatNumber(availableAmount, { decimalsLength: 6})} lume`}
-                      className='input has-symbol' 
-                      value={optionsAdvanced.amount} 
-                      onChangeText={(newValue) => onInputChange('amount', newValue)} 
+                      className='input has-symbol'
+                      value={optionsAdvanced.amount}
+                      onChangeText={(newValue) => onInputChange('amount', newValue)}
                   />
                   <span className='input-symbol'>lume</span>
               </div>
@@ -189,12 +196,12 @@ export default function SendModal({
                 <div>
                   <Label htmlFor="fees" className='text-base'>Fees</Label>
                   <div className='input-wrapper'>
-                    <Input 
-                      id="fees" 
-                      placeholder="Fees" 
-                      className='input has-symbol' 
-                      value={optionsAdvanced.fees} 
-                      onChangeText={(newValue) => onInputChange('fees', newValue)} 
+                    <Input
+                      id="fees"
+                      placeholder="Fees"
+                      className='input has-symbol'
+                      value={optionsAdvanced.fees}
+                      onChangeText={(newValue) => onInputChange('fees', newValue)}
                     />
                     <span className='input-symbol'>ulume</span>
                   </div>
@@ -202,24 +209,24 @@ export default function SendModal({
                 <div className='mt-1'>
                   <Label htmlFor="gas" className='text-base'>Gas</Label>
                   <div className='input-wrapper'>
-                    <Input 
-                      id="gas" 
-                      placeholder="Gas" 
-                      className='input' 
-                      value={optionsAdvanced.gas} 
-                      onChangeText={(newValue) => onInputChange('gas', newValue)} 
+                    <Input
+                      id="gas"
+                      placeholder="Gas"
+                      className='input'
+                      value={optionsAdvanced.gas}
+                      onChangeText={(newValue) => onInputChange('gas', newValue)}
                     />
                   </div>
                 </div>
                 <div className='mt-1'>
                   <Label htmlFor="memo" className='text-base'>Memo</Label>
                   <div className='input-wrapper'>
-                    <Input 
-                      id="memo" 
-                      placeholder="Memo" 
-                      className='input' 
-                      value={optionsAdvanced.memo} 
-                      onChangeText={(newValue) => onInputChange('memo', newValue)} 
+                    <Input
+                      id="memo"
+                      placeholder="Memo"
+                      className='input'
+                      value={optionsAdvanced.memo}
+                      onChangeText={(newValue) => onInputChange('memo', newValue)}
                     />
                   </div>
                 </div>
@@ -229,10 +236,10 @@ export default function SendModal({
             <YStack space="$2" marginTop="$3">
               <div className='flex justify-between items-center'>
                 <div className='flex gap-3 items-center'>
-                  <Checkbox 
-                    id="advanced" 
-                    size="$4" 
-                    checked={showAdvanced} 
+                  <Checkbox
+                    id="advanced"
+                    size="$4"
+                    checked={showAdvanced}
                     onCheckedChange={onAdvancedCheckedChange}
                   >
                     <Checkbox.Indicator>
@@ -249,12 +256,12 @@ export default function SendModal({
                 </div>
               </div>
             </YStack>
-            {error && !isVoteLoading ? 
+            {error && !isVoteLoading ?
               <div className='text-lumera-red-light mt-3'>{error}</div> : null
             }
           </div>
         </Dialog.Content>
       </Dialog.Portal>
-    </Dialog>  
+    </Dialog>
   )
 }
