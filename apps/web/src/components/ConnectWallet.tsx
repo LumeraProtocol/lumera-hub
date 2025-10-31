@@ -33,7 +33,18 @@ export function WalletModalComponent() {
 }
 
 export function ConnectWallet() {
+  const dispatch = useDispatch();
   const { address, disconnect, openView } = useChain(CHAIN_NAME);
+
+  const handleDesconnect = () => {
+    disconnect();
+     dispatch(setAddress({
+      address: '',
+    }));
+    dispatch(setConnected({
+      status: false,
+    }));
+  }
 
   return (
     <div style={{ display: 'flex', gap: 8 }}>
@@ -46,7 +57,7 @@ export function ConnectWallet() {
         </button> :
         <>
           <span className='btn-address'>{formatAddress(address, 5, -4)}</span>
-          <button onClick={() => disconnect()} className='btn-logout'><LogOut /></button>
+          <button onClick={handleDesconnect} className='btn-logout'><LogOut /></button>
         </>
       }
     </div>
