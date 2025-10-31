@@ -14,7 +14,7 @@ import '@interchain-ui/react/styles'
 import { ThemeProvider, OverlaysManager } from '@interchain-ui/react'
 
 import { CHAIN_NAME } from '@/contants/network';
-
+import { RegistryProvider } from "./RegistryContext";
 import store, { persistor } from '@/store';
 
 export function WebWalletProviders({ children }: { children: React.ReactNode }) {
@@ -38,8 +38,10 @@ export function WebWalletProviders({ children }: { children: React.ReactNode }) 
               chains={[lumeraChain]}
               assetLists={[lumeraAssets]}
             >
-              {children}
-              <OverlaysManager />
+              <RegistryProvider>
+                {children}
+                <OverlaysManager />
+              </RegistryProvider>
             </ChainProvider>
           </ThemeProvider>
         </HelmetProvider>

@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
-import { SigningStargateClient } from '@cosmjs/stargate';
-import { Registry } from '@cosmjs/proto-signing';
 import {
   MsgBeginRedelegate,
 } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { RPC_ENDPOINT, DENOM } from '@/contants/network';
-import { GAS_LIMIT } from '@/contants';
+import { DENOM } from '@/contants/network';
+import { GAS_LIMIT, FEE_VALUE } from '@/contants';
 import {
   IValidator,
 } from '@/types';
@@ -19,11 +17,11 @@ interface UseDepositOptions {
 }
 
 const useRedelegate = (options: UseDepositOptions = {}) => {
-  const { address, getOfflineSigner } = useWalletConnect();
+  const { address, getClient } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [optionsAdvanced, setOptionsAdvanced] = useState({
       senderAddress: address,
-      fees: '2000',
+      fees: FEE_VALUE,
       gas: GAS_LIMIT,
       memo: 'Lumera Hub',
       amount: '',
@@ -69,7 +67,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
     setLoading(false);
     setOptionsAdvanced({
       senderAddress: address,
-      fees: '2000',
+      fees: FEE_VALUE,
       gas: GAS_LIMIT,
       memo: options?.customMemo || 'Lumera Hub',
       amount: '',
@@ -127,20 +125,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
     }
     setLoading(true);
     try {
-      const offlineSigner = await getOfflineSigner();
-      if (!offlineSigner) {
-        setError('Please connect wallet before using');
-        return;
-      }
-      const client = await SigningStargateClient.connectWithSigner(
-        RPC_ENDPOINT,
-        offlineSigner,
-        {
-          registry: new Registry([
-            ["/cosmos.staking.v1beta1.MsgBeginRedelegate", MsgBeginRedelegate],
-          ]),
-        }
-      );
+      const client = await getClient();
       const msg = {
         typeUrl: '/cosmos.staking.v1beta1.MsgBeginRedelegate',
         value: MsgBeginRedelegate.fromPartial({
@@ -158,8 +143,12 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
         const gasEstimate = await client.simulate(optionsAdvanced.senderAddress, [msg], optionsAdvanced.memo);
         gasLimit = `${Math.round(gasEstimate * 1.3)}`;
       }
+      let estimatedFee = optionsAdvanced.fees;
+      if (optionsAdvanced.fees === FEE_VALUE) {
+        estimatedFee = `${Math.ceil(Number(gasLimit) * 0.028)}`;// 0.028 ulume/gas
+      }
       const fee = {
-        amount: [{ denom: DENOM, amount: optionsAdvanced.fees }], // Fee gas
+        amount: [{ denom: DENOM, amount: estimatedFee }], // Fee gas
         gas: gasLimit, // Gas limit
       };
       const result = await client.signAndBroadcast(optionsAdvanced.senderAddress, [msg], fee, optionsAdvanced.memo);
