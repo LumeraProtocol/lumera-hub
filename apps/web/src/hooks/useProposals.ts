@@ -4,13 +4,11 @@ import dayjs from 'dayjs';
 import {
   MsgVote,
 } from 'cosmjs-types/cosmos/gov/v1/tx';
-import { Registry } from '@cosmjs/proto-signing';
-import { SigningStargateClient } from '@cosmjs/stargate';
 
-import { REST_AI_URL, DENOM, RPC_ENDPOINT } from '@/contants/network';
+import { REST_AI_URL, DENOM } from '@/contants/network';
 import { Coin } from '@/hooks/useAccountInfo'
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { GAS_LIMIT } from '@/contants';
+import { GAS_LIMIT, FEE_VALUE } from '@/contants';
 
 type TMessage = {
     '@type': string;
@@ -77,7 +75,7 @@ interface UseDepositOptions {
 }
 
 const useProposals = (options: UseDepositOptions = {}) => {
-    const { address, getOfflineSigner } = useWalletConnect();
+    const { address, getClient } = useWalletConnect();
     const [proposalsInfo, setProposalsInfo] = useState<IProposal[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
@@ -85,7 +83,7 @@ const useProposals = (options: UseDepositOptions = {}) => {
     const [isVoteLoading, setVoteLoading] = useState(false);
     const [errorVote, setErrorVote] = useState<string | null>(null);
     const [voteAdvanced, setAdvanced] = useState({
-        fees: '2000',
+        fees: FEE_VALUE,
         gas: GAS_LIMIT,
         memo: 'Lumera Hub',
         broadcastMode: broadcastModeOptions[0].value,
@@ -130,7 +128,7 @@ const useProposals = (options: UseDepositOptions = {}) => {
         setVoteLoading(false);
         setLoading(false);
         setAdvanced({
-          fees: '2000',
+          fees: FEE_VALUE,
           gas: GAS_LIMIT,
           memo: options?.customMemo || 'Lumera Hub',
           broadcastMode: broadcastModeOptions[0].value,
@@ -149,44 +147,35 @@ const useProposals = (options: UseDepositOptions = {}) => {
         setVoteLoading(true);
         setErrorVote(null);
         try {
-            const offlineSigner = await getOfflineSigner();
-            if (!offlineSigner) {
-                setErrorVote('Please connect wallet before using');
-                return;
-            }
-            const client = await SigningStargateClient.connectWithSigner(
-                RPC_ENDPOINT,
-                offlineSigner,
-                {
-                    registry: new Registry([
-                    ["/cosmos.gov.v1.MsgVote", MsgVote],
-                    ]),
-                }
-            );
-            const msg = {
-                typeUrl: '/cosmos.gov.v1.MsgVote',
-                value: MsgVote.fromPartial({
-                    proposalId: BigInt(item.id),
-                    voter: address,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    option: voteOption as any,
-                }),
-            };
-            let gasLimit = voteAdvanced.gas
-            if (voteAdvanced.gas === GAS_LIMIT) {
-              const gasEstimate = await client.simulate(address, [msg], voteAdvanced.memo);
-              gasLimit = `${Math.round(gasEstimate * 1.3)}`;
-            }
-            const fee = {
-              amount: [{ denom: DENOM, amount: voteAdvanced.fees } as Coin],
-              gas: gasLimit,
-            };
-            const result = await client.signAndBroadcast(address, [msg], fee, voteAdvanced.memo);
-            if (result?.transactionHash) {
-              setTransactionHash(result?.transactionHash);
-              // setVoteOpen(false);
-              fetchData();
-            }
+          const client = await getClient();
+          const msg = {
+              typeUrl: '/cosmos.gov.v1.MsgVote',
+              value: MsgVote.fromPartial({
+                  proposalId: BigInt(item.id),
+                  voter: address,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  option: voteOption as any,
+              }),
+          };
+          let gasLimit = voteAdvanced.gas
+          if (voteAdvanced.gas === GAS_LIMIT) {
+            const gasEstimate = await client.simulate(address, [msg], voteAdvanced.memo);
+            gasLimit = `${Math.round(gasEstimate * 1.3)}`;
+          }
+          let estimatedFee = voteAdvanced.fees;
+          if (voteAdvanced.fees === FEE_VALUE) {
+            estimatedFee = `${Math.ceil(Number(gasLimit) * 0.028)}`;// 0.028 ulume/gas
+          }
+          const fee = {
+            amount: [{ denom: DENOM, amount: estimatedFee } as Coin],
+            gas: gasLimit,
+          };
+          const result = await client.signAndBroadcast(address, [msg], fee, voteAdvanced.memo);
+          if (result?.transactionHash) {
+            setTransactionHash(result?.transactionHash);
+            // setVoteOpen(false);
+            fetchData();
+          }
         } catch (error) {
             setErrorVote(error instanceof Error ? error?.message : 'An unknown error occurred.')
         } finally {
