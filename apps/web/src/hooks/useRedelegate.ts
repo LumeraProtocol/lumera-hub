@@ -191,6 +191,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
 
   const handleCloseCongratulationsModal = () => {
     setTransactionHash('');
+    resetData();
   }
 
   return {

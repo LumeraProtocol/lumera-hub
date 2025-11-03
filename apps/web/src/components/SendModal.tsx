@@ -93,7 +93,13 @@ export default function SendModal({
               <Dialog.Title></Dialog.Title>
             </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
-              <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! send completed successfully.</H3>
+              <div className='flex justify-between items-center'>
+                <div>&nbsp;</div>
+                <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
+              </div>
+              <div className='mt-4'>
+                <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! send completed successfully.</H3>
+              </div>
               <div className='mt-3'>
                 <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</AppLink>
               </div>
