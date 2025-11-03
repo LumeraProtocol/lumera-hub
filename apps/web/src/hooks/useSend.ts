@@ -31,9 +31,9 @@ const useSend = (options: UseDepositOptions = {}) => {
     const [transactionHash, setTransactionHash] = useState('');
 
     useEffect(() => {
-        if (isConnected) {
-            queryBalances();
-        }
+      if (isConnected) {
+        queryBalances();
+      }
     }, [isConnected]);
 
     useEffect(() => {
@@ -136,13 +136,17 @@ const useSend = (options: UseDepositOptions = {}) => {
     const queryBalances = async (): Promise<void> => {
       try {
         const client = await getClient();
+        if (!client) {
+          return
+        }
         const allBalances = await client.getAllBalances(address);
         setBalances(allBalances.filter(b => parseInt(b.amount) > 0));
         if (allBalances.length > 0) {
           setSelectedDenom(allBalances[0].denom);
         }
-      } catch (err) {
-          console.error('Query balances error:', err);
+      } catch {
+        // console.error('Query balances error:', err);
+        // noop
       }
     };
 

@@ -16,6 +16,7 @@ import { YStack, H2, Paragraph, Card as TamaguiCard } from 'tamagui';
 import ReactPaginate from 'react-paginate';
 import dayjs from 'dayjs';
 import { Wallet } from '@tamagui/lucide-icons';
+import { toast } from 'react-toastify';
 
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
@@ -233,8 +234,20 @@ export const WalletScreen = ({
       navigator.clipboard.writeText(walletAddress)
       setCopied(true);
       setTimeout(() => {
-          setCopied(false);
-      }, 3000)
+        setCopied(false);
+      }, 3000);
+      toast('The address has been copied.', {
+        position: "bottom-center",
+        theme: "dark",
+      });
+    }
+
+    const handleCopyAddress2 = () => {
+      navigator.clipboard.writeText(walletAddress)
+      toast('The address has been copied.', {
+        position: "bottom-center",
+        theme: "dark",
+      });
     }
 
     if (!walletAddress) {
@@ -308,28 +321,28 @@ export const WalletScreen = ({
                     </p>
                     <ul className='text-sm flex justify-end flex-wrap gap-x-4 gap-y-2 mt-3 text-lumera-label'>
                       <li className='w-[40%]'>
-                        <span className='inline-block'></span> <span>Balance: </span>
+                        <span className='inline-block'></span> <span>Available: </span>
                         {formatToken({
                           amount: `${getAvailableBalances()}`,
                           denom: DENOM,
                           }, false, '0,0.[00000]')}<span className='text-[11px] ml-1'>LUME</span>
                       </li>
                       <li className='w-[40%]'>
-                        <span className='inline-block'></span> <span>Delegation: </span>
+                        <span className='inline-block'></span> <span>Staking: </span>
                          {formatToken({
                           amount: `${getDelegations()}`,
                           denom: DENOM,
                           }, false, '0,0.[00000]')}<span className='text-[11px] ml-1'>LUME</span>
                       </li>
                       <li className='w-[40%]'>
-                        <span className='inline-block'></span> <span>Reward: </span>
+                        <span className='inline-block'></span> <span>Rewards: </span>
                         {formatToken({
                           amount: `${getRewards()}`,
                           denom: DENOM,
                           }, false, '0,0.[00000]')}<span className='text-[11px] ml-1'>LUME</span>
                       </li>
                       <li className='w-[40%]'>
-                        <span className='inline-block'></span> <span>Unbonding: </span>
+                        <span className='inline-block'></span> <span>Unstaking: </span>
                         {formatToken({
                           amount: `${getUnbonding()}`,
                           denom: DENOM,
@@ -368,7 +381,7 @@ export const WalletScreen = ({
                 <Card className='w-1/3'>
                   <h3 className="font-semibold text-gray-400 mb-2">Your Address</h3>
                     <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg">
-                      <span className="font-mono text-sm text-gray-300 truncate">{walletAddress}</span>
+                      <span className="font-mono text-sm text-gray-300 truncate cursor-pointer" onClick={handleCopyAddress2}>{walletAddress}</span>
                       <button onClick={handleCopyAddress} className="ml-auto p-1 text-gray-400 hover:text-white transition-colors">
                           {!isCopied ?
                               <Copy className="w-4 h-4"/> :
@@ -392,23 +405,23 @@ export const WalletScreen = ({
                                   <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
                                       {getTxIcon(getMessages(tx.tx.body.messages))}
                                   </div>
-                                  <AppLink href={`/block/${tx.height}`} className="font-semibold text-white ml-2">{tx.height}</AppLink>
+                                  <AppLink href={`/block/${tx.height}`} className="text-white ml-2">{tx.height}</AppLink>
                                 </div>
-                                <div className="col-span-3">
-                                  <AppLink href={`/tx/${tx.txhash}`} className="font-semibold text-white whitespace-nowrap">
-                                      {formatAddress(tx.txhash, 15, -6)}
+                                <div className="col-span-2">
+                                  <AppLink href={`/tx/${tx.txhash}`} className="text-white whitespace-nowrap">
+                                      {formatAddress(tx.txhash, 10, -4)}
                                   </AppLink>
                                 </div>
                                 <div className="col-span-3 text-left whitespace-nowrap">
                                   {getMessages(tx.tx.body.messages)}
                                 </div>
                                 <div className="col-span-2 text-left whitespace-nowrap">
-                                  <span className={`text-xs truncate relative py-2 px-4 w-fit mr-2 rounded text-white ${tx?.code === 0 ? 'bg-lumera-teal' : 'bg-red-800'}`}>
+                                  <span className={`truncate relative py-2 px-4 w-fit mr-2 rounded ${tx?.code === 0 ? 'text-lumera-teal' : 'text-red-500'}`}>
                                     {tx?.code === 0 ? 'Success' : 'Failed'}
                                   </span>
                                 </div>
-                                <div className="col-span-2 text-sm text-gray-500 flex justify-end">
-                                    <span className="text-white pr-1 whitespace-nowrap">{dayjs(tx.timestamp).format('YYYY-MM-DD HH:mm:ss')}</span>
+                                <div className="col-span-3 text-sm text-gray-500 flex justify-end">
+                                    <span className="text-white pr-1 whitespace-nowrap">{dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}</span>
                                     (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm whitespace-nowrap' />)
                                 </div>
                               </div>
@@ -416,18 +429,18 @@ export const WalletScreen = ({
                         </div>
                     </div>
                     {totalTransactions > 1 ?
-                        <div className="paginate-wrapper pt-3">
-                            <ReactPaginate
-                              breakLabel="..."
-                              nextLabel=">"
-                              onPageChange={handlePageClick}
-                              pageRangeDisplayed={3}
-                              pageCount={totalTransactions}
-                              previousLabel="<"
-                              renderOnZeroPageCount={null}
-                              className='react-paginate'
-                            />
-                        </div> : null
+                      <div className="paginate-wrapper pt-3">
+                        <ReactPaginate
+                          breakLabel="..."
+                          nextLabel=">"
+                          onPageChange={handlePageClick}
+                          pageRangeDisplayed={3}
+                          pageCount={totalTransactions}
+                          previousLabel="<"
+                          renderOnZeroPageCount={null}
+                          className='react-paginate'
+                        />
+                      </div> : null
                     }
                 </div>
             </Card>

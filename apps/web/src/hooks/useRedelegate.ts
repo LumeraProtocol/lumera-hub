@@ -87,6 +87,13 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
         }
       }
     }
+    if (name === 'destinationValidator') {
+      const item = validators.find((v) => v.operator_address === value);
+       newOptionsAdvanced = {
+          ...newOptionsAdvanced,
+          memo: `${newOptionsAdvanced.memo} to ${item?.description?.moniker}`,
+        }
+    }
     setOptionsAdvanced({
         ...newOptionsAdvanced,
         [name]: value,

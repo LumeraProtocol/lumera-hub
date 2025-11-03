@@ -32,6 +32,7 @@
     "react-native": "0.79.5",
     "react-native-svg": "^15.12.1",
     "react-paginate": "^8.3.0",
+    "react-toastify": "^11.0.5",
     "tamagui": "^1.132.16"
   },
   "devDependencies": {

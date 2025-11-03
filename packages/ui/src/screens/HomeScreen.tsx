@@ -20,18 +20,26 @@ import {
   XStack,
   VisuallyHidden,
 } from 'tamagui';
-import { LaptopMinimalCheck, BarChart2, Warehouse, Send } from '@tamagui/lucide-icons'
 import { CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import {
+  Vote,
+  ArrowUpRight,
+  BanknoteArrowUp,
+  Unlink,
+  Star,
+  ClockPlus,
+  Layers,
+} from 'lucide-react';
 
 import Loading from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import Skeleton from '@/components/Skeleton';
-import { AccountInfoData } from '@/hooks/useAccountInfo'
-import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity'
-import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/useProposals'
-import { formatToken } from '@/utils/format'
+import { AccountInfoData } from '@/hooks/useAccountInfo';
+import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity';
+import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/useProposals';
+import { formatToken } from '@/utils/format';
 import { NAV_ITEMS } from '@/components/layout/AppShell';
 import { DENOM } from '@/contants/network';
 
@@ -254,8 +262,8 @@ export const VoteModal = ({
             <VisuallyHidden>
               <Dialog.Title></Dialog.Title>
             </VisuallyHidden>
-            <div className='withdraw-main-content relative text-center p-5'>
-              <H3 className='!text-green-500 text-[32px]'>Congratulations! vote completed successfully.</H3>
+            <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
+              <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! vote completed successfully.</H3>
               <div className='mt-3'>
                 <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</AppLink>
               </div>
@@ -506,8 +514,8 @@ export const ClaimableRewardsModal = ({
             <VisuallyHidden>
               <Dialog.Title></Dialog.Title>
             </VisuallyHidden>
-            <div className='withdraw-main-content relative text-center p-5 max-w-[650px]'>
-              <H3 className='!text-green-500 text-[32px] !leading-9'>
+            <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
+              <H3 className='!text-green-500 text-[32px] !leading-0'>
                 {congratulationsMessage || 'Congratulations! claim all rewards completed successfully.'}
               </H3>
               <div className='mt-3'>
@@ -688,12 +696,14 @@ export const HomeScreen = ({
 
   const getActivity = (item: IRecentActivity) => {
     const messages = item.tx.body.messages;
-    switch (formatMessage(messages)?.toLowerCase()) {
+    const message = formatMessage(messages)?.toLowerCase();
+
+    switch (message) {
       case 'delegate':
         return (
           <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
-            <div className="rounded-full grid place-items-center recent-activity-icon stacked-icon">
-              <Warehouse size="$1" />
+            <div className="rounded-full grid place-items-center recent-activity-icon">
+              <Layers className='w-5 h-5 text-teal-400' />
             </div>
             <div className='w-full flex flex-col'>
               <Text>
@@ -711,11 +721,71 @@ export const HomeScreen = ({
             </div>
           </div>
         )
+      case 'deposit':
+        return (
+          <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
+            <div className="rounded-full grid place-items-center recent-activity-icon">
+              <BanknoteArrowUp className='w-5 h-5 text-lumera-red-light' />
+            </div>
+            <div className='w-full flex flex-col'>
+              <Text>
+                Deposit {formatToken({
+                  amount: `${messages[0].amount[0].amount}`,
+                  denom: messages[0].amount[0].denom,
+                }, true, '0,0.[000000]')}
+              </Text>
+              <SizableText className='!text-sm text-lumera-label leading-none'>
+                {dayjs(item.timestamp).fromNow()}
+              </SizableText>
+            </div>
+          </div>
+        )
+      case 'undelegate':
+        return (
+          <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
+            <div className="rounded-full grid place-items-center recent-activity-icon">
+              <Unlink className='w-5 h-5 text-red-600' />
+            </div>
+            <div className='w-full flex flex-col'>
+              <Text>
+                Unbond {messages[0]?.amount?.length ? formatToken({
+                  amount: `${messages[0].amount[0].amount}`,
+                  denom: messages[0].amount[0].denom,
+                }, true, '0,0.[000000]') : formatToken({
+                  amount: `${messages[0].amount.amount}`,
+                  denom: messages[0].amount.denom,
+                }, true, '0,0.[000000]')}
+              </Text>
+              <SizableText className='!text-sm text-lumera-label leading-none'>
+                {dayjs(item?.timestamp).fromNow()}
+              </SizableText>
+            </div>
+          </div>
+        )
+      case 'beginredelegate':
+        return (
+          <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
+            <div className="rounded-full grid place-items-center recent-activity-icon">
+              <ClockPlus className='w-5 h-5 text-lumera-blue-light' />
+            </div>
+            <div className='w-full flex flex-col'>
+              <Text>
+                Begin redelegate {formatToken({
+                  amount: `${messages?.[0]?.amount?.amount}`,
+                  denom: messages?.[0]?.amount?.denom,
+                }, true, '0,0.[000000]')}
+              </Text>
+              <SizableText className='!text-sm text-lumera-label leading-none'>
+                {dayjs(item?.timestamp).fromNow()}
+              </SizableText>
+            </div>
+          </div>
+        )
       case 'send':
         return (
           <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
-            <div className="rounded-full grid place-items-center recent-activity-icon stacked-icon">
-              <Send size="$1" />
+            <div className="rounded-full grid place-items-center recent-activity-icon">
+              <ArrowUpRight className="w-5 h-5 text-lumera-green" />
             </div>
             <div className='w-full flex flex-col'>
               <Text>Send {formatToken({
@@ -726,29 +796,29 @@ export const HomeScreen = ({
             </div>
           </div>
         )
-      case 'withdrawdelegatorreward×2':
-      case 'withdrawdelegatorreward':
-        const event = item.events.find((i) => i.type === 'withdraw_rewards');
-        const amount = event?.attributes?.find((i) => i.key === 'amount');
-        return (
-          <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
-            <div className="rounded-full grid place-items-center recent-activity-icon claimed-icon">
-              <BarChart2 size="$1" />
-            </div>
-            <div className='w-full flex flex-col'>
-              <Text>Claimed {formatToken({
-                                amount: `${amount?.value.replace('ulume', '').replace('stake', '')}`,
-                                denom: DENOM,
-                              }, true, '0,0.[000000]')} in rewards</Text>
-              <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
-            </div>
-          </div>
-        )
       default:
+        if (message?.indexOf('withdrawdelegatorreward') !== -1) {
+          const event = item.events.find((i) => i.type === 'withdraw_rewards');
+          const amount = event?.attributes?.find((i) => i.key === 'amount');
+          return (
+            <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
+              <div className="rounded-full grid place-items-center recent-activity-icon claimed-icon">
+                <Star className="w-5 h-5 text-amber-400" />
+              </div>
+              <div className='w-full flex flex-col'>
+                <Text>Claimed {formatToken({
+                                  amount: `${amount?.value.replace('ulume', '').replace('stake', '')}`,
+                                  denom: DENOM,
+                                }, true, '0,0.[000000]')} in rewards</Text>
+                <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
+              </div>
+            </div>
+          )
+        }
         return (
           <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
             <div className="rounded-full  grid place-items-center recent-activity-icon voted-icon">
-              <LaptopMinimalCheck size="$1" />
+              <Vote className="w-5 h-5 text-indigo-400" />
             </div>
             <div className='w-full flex flex-col'>
               <Text>{formatMessage(messages)}</Text>
@@ -757,24 +827,6 @@ export const HomeScreen = ({
           </div>
         )
     }
-    // <div className='flex justify-between gap-3 mb-3'>
-    //   <div className="rounded-full  grid place-items-center recent-activity-icon voted-icon">
-    //     <LaptopMinimalCheck size="$1" />
-    //   </div>
-    //   <div className='w-full flex flex-col'>
-    //     <Text>Voted 'For' on Proposal LIP-007</Text>
-    //     <SizableText className='!text-sm text-lumera-label leading-none'>3 hours ago</SizableText>
-    //   </div>
-    // </div>
-    // <div className='flex justify-between gap-3'>
-    // <div className="rounded-full grid place-items-center recent-activity-icon uploaded-icon">
-    //     <Database size="$1" />
-    //   </div>
-    //   <div className='w-full flex flex-col'>
-    //     <Text>Uploaded document to Cascade</Text>
-    //     <SizableText className='!text-sm text-lumera-label leading-none'>5 days ago</SizableText>
-    //   </div>
-    // </div>
   }
 
   const handleVotePress = (item: IProposal) => {

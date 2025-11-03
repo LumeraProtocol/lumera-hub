@@ -1,4 +1,5 @@
-import React from 'react'
+import React from 'react';
+import dayjs from 'dayjs';
 import { YStack, H2, Paragraph, Card, SizableText, H3, Input, Label, Text, Progress, Button } from 'tamagui'
 import { Wallet, Calculator, Search } from '@tamagui/lucide-icons'
 import { fromHex, toBase64 } from '@cosmjs/encoding';
@@ -396,6 +397,24 @@ export const StakingScreen = ({
     );
   }
 
+  const getValidatorName = (delegation: TUnbondingDelegation, validator: IValidator | undefined) => {
+    if (delegation.type !== 'redelegations') {
+      return validator?.description?.moniker || formatAddress(delegation.validator_address, 12, -6)
+    }
+    const sourceValidator = getAllValidators().find(v => v.operator_address === delegation.validator_src_address);
+    const destinationValidator = getAllValidators().find(v => v.operator_address === delegation.validator_dst_address);
+
+    if (!sourceValidator || !destinationValidator) {
+      return '--'
+    }
+
+    return (
+      <span className='flex flex-wrap items-center gap-1'>
+        <span>{sourceValidator?.description?.moniker?.slice(0, 5)}...</span> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-arrow-right-icon lucide-arrow-right w-5 h-5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> <span>{destinationValidator?.description?.moniker}</span>
+      </span>
+    )
+  }
+
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className='w-full'>
@@ -604,7 +623,7 @@ export const StakingScreen = ({
                           onClick={() => staking.onSubTabChange('unstake')}
                           className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'unstake' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
                         >
-                          Unstake/Restake
+                          Unstaking/Redelegates
                         </button>
                         <button
                           onClick={() => staking.onSubTabChange('activities')}
@@ -677,7 +696,7 @@ export const StakingScreen = ({
                                               amount: delegation.balance.amount,
                                               denom: delegation.balance.denom,
                                             }, false, '0,0.[000000]'),
-                                            validator?.description?.moniker ? `Redelegate for the ${validator?.description?.moniker}` : '',
+                                            validator?.description?.moniker ? `Redelegate from ${validator?.description?.moniker}` : '',
                                             formatTokens(reward?.reward),
                                           )}
                                         >
@@ -722,10 +741,11 @@ export const StakingScreen = ({
                           <div className="overflow-x-auto">
                             <div className="min-w-[700px] space-y-2">
                               <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase">
-                                <div className="col-span-3">Validator</div>
+                                <div className="col-span-2">Validator</div>
                                 <div className="col-span-2 text-right">Initial balance</div>
                                 <div className="col-span-2 text-right">Balance</div>
-                                <div className="col-span-5 text-right">Completion Time</div>
+                                <div className="col-span-2 text-right">Action</div>
+                                <div className="col-span-4 text-right">Completion Time</div>
                               </div>
                               {!unbonding.isLoading && !unbonding.unbondingDelegations.length ? (
                                 <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
@@ -738,10 +758,10 @@ export const StakingScreen = ({
                                 const validator = getAllValidators().find(v => v.operator_address === delegation.validator_address);
 
                                 return (
-                                  <div key={`${delegation.delegator_address}-${delegation.validator_address}`} className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg">
-                                    <div className="col-span-3 font-semibold text-white hover:text-lumera-teal cursor-pointer">
+                                  <div key={`${delegation.type}-${delegation.delegator_address}-${delegation.validator_address}-${delegation.validator_src_address}-${delegation.validator_dst_address}`} className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg">
+                                    <div className="col-span-2 text-white hover:text-lumera-teal cursor-pointer">
                                       <AppLink href={`/staking/${delegation.validator_address}`} className="hover:text-lumera-teal">
-                                        {validator?.description?.moniker || formatAddress(delegation.validator_address, 12, -6)}
+                                        {getValidatorName(delegation, validator)}
                                       </AppLink>
                                     </div>
                                     <div className="col-span-2 text-right font-mono text-white">
@@ -756,7 +776,10 @@ export const StakingScreen = ({
                                         denom: staking.params.bond_denom,
                                       }, true, '0,0.[00]')}
                                     </div>
-                                    <div className="col-span-5 text-right font-mono text-gray-300">
+                                    <div className="col-span-2 text-right font-mono text-white">
+                                      {delegation.type === 'redelegations' ? 'Redelegate' : 'Unstaking'}
+                                    </div>
+                                    <div className="col-span-4 text-right font-mono text-gray-300">
                                       <CountDown targetDate={new Date(delegation.entries[0].completion_time)} className="whitespace-nowrap" />
                                     </div>
                                   </div>
@@ -775,9 +798,9 @@ export const StakingScreen = ({
                                 <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase">
                                     <div className="col-span-1">Block</div>
                                     <div className="col-span-3">TX Hash</div>
-                                    <div className="col-span-3">Messages</div>
+                                    <div className="col-span-2">Messages</div>
                                     <div className="col-span-2 text-right">Amount</div>
-                                    <div className="col-span-3 text-right">Time</div>
+                                    <div className="col-span-4 text-right">Time</div>
                                 </div>
                                 {!activityData.isActivitiesLoading && !activityData.activities.length ? (
                                   <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
@@ -804,14 +827,14 @@ export const StakingScreen = ({
                                             {formatAddress(tx.txhash, 12, -6)}<ArrowUpRight className="w-3 h-3"/>
                                           </AppLink>
                                         </div>
-                                        <div className="col-span-3 font-medium text-white">
+                                        <div className="col-span-2 font-medium text-white">
                                           {getMessages(tx.tx.body.messages)}
                                         </div>
                                         <div className="col-span-2 text-right text-white">
                                           {mapAmount(tx.events)?.join(", ")}
                                         </div>
-                                        <div className="col-span-3 text-gray-400 flex justify-end whitespace-nowrap">
-                                          {tx.timestamp}
+                                        <div className="col-span-4 text-gray-400 flex justify-end whitespace-nowrap">
+                                          {dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}
                                           (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm whitespace-nowrap' />)
                                         </div>
                                     </div>

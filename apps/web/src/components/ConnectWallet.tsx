@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Wallet, LogOut } from '@tamagui/lucide-icons';
 import { useChain } from '@interchain-kit/react';
 import { InterchainWalletModal } from '@interchain-kit/react';
+import { toast } from 'react-toastify';
 
 import { useDispatch } from '@/redux/hooks';
 import { formatAddress } from '@/utils/format';
@@ -46,6 +47,14 @@ export function ConnectWallet() {
     }));
   }
 
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(address);
+    toast('The address has been copied.', {
+      position: "bottom-center",
+      theme: "dark",
+    })
+  }
+
   return (
     <div style={{ display: 'flex', gap: 8 }}>
       {!address ?
@@ -56,7 +65,7 @@ export function ConnectWallet() {
           <Wallet size="$1" /> <div className="ml-1 connect-wallet-label">Connect Wallet</div>
         </button> :
         <>
-          <span className='btn-address'>{formatAddress(address, 5, -4)}</span>
+          <span className='btn-address cursor-pointer' onClick={handleCopyAddress}>{formatAddress(address, 5, -4)}</span>
           <button onClick={handleDesconnect} className='btn-logout'><LogOut /></button>
         </>
       }
