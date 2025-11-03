@@ -146,6 +146,7 @@ const useUnbond = (options: UseDepositOptions = {}) => {
 
     const handleCloseCongratulationsModal = () => {
       setTransactionHash('');
+      resetData();
     }
 
     return {

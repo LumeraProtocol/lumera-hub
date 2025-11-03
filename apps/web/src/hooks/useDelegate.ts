@@ -174,7 +174,8 @@ const useDelegate = (options: UseDepositOptions = {}) => {
     }
 
     const handleCloseCongratulationsModal = () => {
-        setTransactionHash('');
+      setTransactionHash('');
+      resetData();
     }
 
     return {
