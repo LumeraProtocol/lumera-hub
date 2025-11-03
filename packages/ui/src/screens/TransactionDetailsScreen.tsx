@@ -66,7 +66,7 @@ export const TransactionDetailsScreen = ({
             <div className='w-ful'>
               {transaction?.tx_response?.timestamp ?
               <>
-                {dayjs(transaction.tx_response.timestamp).format('MM/DD/YYYY hh:mm:ss A')} ({dayjs(transaction.tx_response.timestamp).fromNow()})
+                {dayjs(transaction.tx_response.timestamp).format('MMMM DD, YYYY')} at {dayjs(transaction.tx_response.timestamp).format('HH:mm:ss')}({dayjs(transaction.tx_response.timestamp).fromNow()})
               </> : '--'}
             </div>
           </div>

@@ -109,4 +109,3 @@ export function uint8ArrayToString(arr: Uint8Array) {
   }
   return str;
 }
-

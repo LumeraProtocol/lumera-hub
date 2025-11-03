@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import dayjs from 'dayjs';
 
 import * as instance from '@/utils/api';
 import { DENOM } from '@/contants/network';
 import { IValidator } from '@/types/validator';
+import { TUnbondingDelegation } from '@/types';
 
 const useStaking = (address = '') => {
   const [isLoading, setLoading] = useState(false);
@@ -33,7 +35,7 @@ const useStaking = (address = '') => {
   const [activities, setActivities] = useState([]);
   const [activitiesError, setActivitiesError] = useState('');
   const [isUnbondingDelegationsLoading, setUnbondingDelegationsLoading] = useState(false);
-  const [unbondingDelegations, setUnbondingDelegations] = useState([]);
+  const [unbondingDelegations, setUnbondingDelegations] = useState<TUnbondingDelegation[]>([]);
   const [unbondingDelegationsError, setUnbondingDelegationsError] = useState('');
   const [apr, setAPR] = useState(0);
   const [isAPRLoading, setAPRLoading] = useState(false);
@@ -104,8 +106,35 @@ const useStaking = (address = '') => {
     setUnbondingDelegationsLoading(true);
     setUnbondingDelegationsError('');
     try {
-      const { data } = await instance.get(`/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`);
-      setUnbondingDelegations(data.unbonding_responses);
+      const [unbondingRes, redelegationsRes] = await Promise.all([
+        instance.get(`/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`),
+        instance.get(`/cosmos/staking/v1beta1/delegators/${address}/redelegations`),
+      ]);
+      const items: TUnbondingDelegation[] = unbondingRes.data.unbonding_responses.map((item: TUnbondingDelegation) => ({
+        ...item,
+        completion_time: item.entries[0].completion_time,
+        type: 'unbonding',
+      }));
+      for (const item of redelegationsRes.data.redelegation_responses) {
+        items.push({
+          delegator_address: item.redelegation.delegator_address,
+          validator_address: item.redelegation.validator_dst_address,
+          validator_src_address: item.redelegation.validator_src_address,
+          validator_dst_address: item.redelegation.validator_dst_address,
+          type: 'redelegations',
+          completion_time: item.entries[0].redelegation_entry.completion_time,
+          entries: [{
+            creation_height: item.entries[0].redelegation_entry.creation_height,
+            completion_time: item.entries[0].redelegation_entry.completion_time,
+            initial_balance: item.entries[0].redelegation_entry.initial_balance,
+            unbonding_id: item.entries[0].redelegation_entry.unbonding_id,
+            unbonding_on_hold_ref_count: '',
+            balance: item.entries[0].balance,
+          }]
+        })
+      }
+      console.log('items', items)
+      setUnbondingDelegations(items.sort((a, b) => dayjs(a.completion_time).valueOf() - dayjs(b.completion_time).valueOf()));
     } catch (error) {
       setUnbondingDelegationsError(error instanceof Error ? error.message : 'An unknown error occurred.');
     }
