@@ -1,15 +1,15 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { 
-  X, 
-  BarChart2, 
-  Hotel, 
-  LaptopMinimalCheck, 
-  Database, 
-  ShieldCheck, 
-  Image as ImageIcon, 
-  BrainCircuit, 
+import {
+  X,
+  BarChart2,
+  Hotel,
+  LaptopMinimalCheck,
+  Database,
+  ShieldCheck,
+  Image as ImageIcon,
+  BrainCircuit,
   Wallet,
 } from '@tamagui/lucide-icons';
 import Image from 'next/image';
@@ -53,7 +53,7 @@ const VIEW_TITLES: Record<ViewId, string> = {
   inference: "Inference",
   nfts: "NFTs",
   wallet: "Wallet",
-  block: "Block",
+  block: "Block Details",
 }
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -71,7 +71,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         activeView: navItem?.id || "dashboard",
       }));
     }
-  }, []);
+  }, [window?.location?.pathname])
 
   const onNavClick = (id: ViewId) => {
     dispatch(setActiveView({
@@ -96,7 +96,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       currentPath: item.url,
     }));
   }
-  
+
   return (
     <div className="min-h-screen bg-lumera-navy text-white">
       {/* Sidebar (desktop) */}
@@ -117,8 +117,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.id}
                 href={item?.url || '#'}
                 className="text-base font-medium">
-                <span 
-                  onClick={() => handleMenuItemClick(item)} 
+                <span
+                  onClick={() => handleMenuItemClick(item)}
                   className={`flex items-center gap-3 px-4 py-3 transition-colors duration-200 rounded-lg w-full ${
                     isActive(currentPath, item.url)
                       ? "text-white bg-indigo-600/30"
@@ -164,8 +164,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     key={item.id}
                     href={item?.url || '#'}
                     className="text-base font-medium">
-                    <span 
-                      onClick={() => handleMenuItemClick(item)} 
+                    <span
+                      onClick={() => handleMenuItemClick(item)}
                       className={`flex items-center gap-3 px-4 py-3  transition-colors duration-200 rounded-lg w-full ${
                         isActive(currentPath, item.url)
                           ? "text-white bg-indigo-600/30"
