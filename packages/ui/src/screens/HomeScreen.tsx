@@ -128,6 +128,10 @@ interface IClaimableRewardsModal {
   transactionHash?: string;
   onCloseCongratulationsModal?: () => void;
   congratulationsMessage?: string;
+  message?: {
+    amount: string;
+    from: string;
+  };
 }
 
 const getOption = (data: IPortfolioOverviewChart) => {
@@ -462,16 +466,17 @@ export const VoteModal = ({
 
 export const ClaimableRewardsModal = ({
   isOpen,
-  setOpen,
   sender,
-  onSendClick,
   isVoteLoading,
   error,
   voteAdvanced,
-  handleVoteAdvancedChange,
   transactionHash,
-  onCloseCongratulationsModal,
   congratulationsMessage,
+  message,
+  setOpen,
+  onSendClick,
+  handleVoteAdvancedChange,
+  onCloseCongratulationsModal,
 }: IClaimableRewardsModal) => {
   if (!isOpen) {
     return null;
@@ -586,21 +591,24 @@ export const ClaimableRewardsModal = ({
             <VisuallyHidden>
               <Dialog.Title></Dialog.Title>
             </VisuallyHidden>
-            <div className='withdraw-main-content relative'>
+            <div className='withdraw-main-content relative max-w-2xl'>
               <Loading isLoading={isVoteLoading} />
               <div className='flex justify-between items-center'>
                 <H3 className='text-lumera-label text-[32px]'>Withdraw</H3>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
               </div>
-              <div className='mt-1'>
+              <div className='mt-1 hidden'>
                 <Label htmlFor="sender" className='text-base'>Sender</Label>
                 <div className='input-wrapper'>
                   <Input id="sender" placeholder="Sender" className='input' defaultValue={sender} readOnly />
                 </div>
               </div>
+              <div className='mt-5 text-lg'>
+                Claim <strong>{message?.amount} LUME</strong> available rewards from <strong>{message?.from}</strong> Delegation Now!
+              </div>
 
               {showAdvanced ?
-                <div className='mt-1'>
+                <div className='mt-1 hidden'>
                   <div>
                     <Label htmlFor="fees" className='text-base'>Fees</Label>
                     <div className='input-wrapper'>
@@ -642,31 +650,20 @@ export const ClaimableRewardsModal = ({
               }
 
               <YStack space="$2" marginTop="$3">
-                <div className='flex justify-between items-center'>
-                  <div className='flex gap-3 items-center'>
-                    <Checkbox
-                      id="advanced"
-                      size="$4"
-                      checked={showAdvanced}
-                      onCheckedChange={handleAdvancedCheckedChange}
-                    >
-                      <Checkbox.Indicator>
-                        <CheckIcon />
-                      </Checkbox.Indicator>
-                    </Checkbox>
-
-                    <Label size="$4" htmlFor="advanced">
-                      Advanced
-                    </Label>
+                <div className='flex justify-between items-center gap-4 btn-primary mt-5'>
+                  <div>
+                    {error && !isVoteLoading ?
+                      <div className='text-lumera-red-light mt-3'>{error}</div> : null
+                    }
                   </div>
-                  <div className='btn-primary flex justify-end mt-3'>
-                    <Button onPress={onSendClick} disabled={isVoteLoading}>Send</Button>
+                  <div>
+                    <Button onPress={onSendClick} disabled={isVoteLoading}>
+                      <span className='font-bold'>Claim</span>
+                    </Button>
                   </div>
                 </div>
               </YStack>
-              {error && !isVoteLoading ?
-                <div className='text-lumera-red-light mt-3'>{error}</div> : null
-              }
+
             </div>
           </Dialog.Content>
         </Dialog.Portal>
@@ -1058,6 +1055,13 @@ export const HomeScreen = ({
             handleVoteAdvancedChange={handleClaimChange}
             transactionHash={transactionHash}
             onCloseCongratulationsModal={onCloseCongratulationsModal}
+            message={{
+              amount: formatToken({
+                amount: `${getTotalRewards()}`,
+                denom: DENOM,
+              }, false, '0,0.[0000]'),
+              from: 'All',
+            }}
           />
         </>
       }

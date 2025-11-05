@@ -191,14 +191,19 @@ const useAccountInfo = () => {
   const handleToggleClaimModal = (status: boolean) => {
     setClaimLoading(false);
     setClaimModalOpen(status);
+    setSelectedClaim(null);
+    setErrorClaim('');
   }
 
   const handleOpenModal = (modal: string) => {
     setSelectedModal(modal);
+    setErrorClaim('');
   }
 
   const handleCloseModal = () => {
     setSelectedModal('');
+    setSelectedClaim(null);
+    setErrorClaim('');
   }
 
   const handleCloseCongratulationsModal = () => {
@@ -206,11 +211,13 @@ const useAccountInfo = () => {
     setClaimModalOpen(false);
     setClaimLoading(false);
     setSelectedClaim(null);
+    setErrorClaim('');
   }
 
   const handleToggleClaimItemModal = (status: boolean, item: DelegationResponse) => {
     setClaimLoading(false);
     setClaimModalOpen(status);
+    setErrorClaim('');
     if (!status) {
       setSelectedClaim(null);
     } else {

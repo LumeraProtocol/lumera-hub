@@ -180,6 +180,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   }
 
   const handleStakingButtonClick = (amount: string) => {
+    setError('');
     setSelectedModal('validator');
     setOptionsAdvanced({
       ...optionsAdvanced,
@@ -188,6 +189,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   }
 
   const handleSelectValidator = (validator: string) => {
+    setError('');
     setSelectedModal('stake');
     setOptionsAdvanced({
       ...optionsAdvanced,

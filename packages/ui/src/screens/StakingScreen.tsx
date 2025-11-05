@@ -248,6 +248,7 @@ interface IStakeModal {
   validators: IValidator[];
   validator: string;
   amount: string;
+  error: string;
   transactionHash?: string;
   onClose: () => void;
   onSendClick: () => void;
@@ -275,10 +276,11 @@ interface IAllValidators {
   delegateOptions: {
     onOpenModal: (validator: string, customMemo?: string) => void;
     validators: IValidator[];
+    onSelectValidator: (validator: string) => void;
   }
 }
 
-const StakeModal = ({
+export const StakeModal = ({
   isOpen,
   availableAmount,
   validators,
@@ -286,6 +288,7 @@ const StakeModal = ({
   amount,
   transactionHash,
   isLoading,
+  error,
   onClose,
   onStakingAmountChange,
   onSendClick,
@@ -459,9 +462,12 @@ const StakeModal = ({
               </div>
               <div className='mt-8 btn-primary full'>
                 <Button onPress={onSendClick} disabled={!isYes}>
-                  <span className='font-bold'>Save</span>
+                  <span className='font-bold'>Send</span>
                 </Button>
               </div>
+              {error && !isLoading ?
+                <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
+              }
             </div>
           </div>
         </Dialog.Content>
@@ -470,7 +476,7 @@ const StakeModal = ({
   )
 }
 
-const ValidatorModal = ({
+export const ValidatorModal = ({
   isOpen,
   bond_denom,
   validators,
@@ -907,7 +913,11 @@ const AllValidators = ({
                               {validator.jailed ?
                                 <div className='btn-jailed'>Jailed</div> :
                                 <div className='btn-primary'>
-                                  <Button onPress={() => delegateOptions.onOpenModal(validator.operator_address, validator?.description?.moniker ? `Delegate for the ${validator?.description?.moniker}` : '')}>Delegate</Button>
+                                  <Button
+                                    onPress={() => delegateOptions.onSelectValidator(validator.operator_address)}
+                                  >
+                                    Delegate
+                                  </Button>
                                 </div>
                               }
                             </div>
@@ -1049,6 +1059,27 @@ export const StakingScreen = ({
       </span>
     )
   }
+
+  const getValidatorInfo = () => {
+    if (claim.selectedClaim) {
+      const validator = getAllValidators().find((item) => item.operator_address === claim.selectedClaim?.delegation.validator_address)
+      const reward = accountInfo?.rewards.find(v => v.validator_address === claim.selectedClaim?.delegation.validator_address);
+      console.log('reward', reward, accountInfo?.rewards, claim.selectedClaim)
+      return {
+        amount: formatTokens(reward?.reward, false, '0,0.[000000]'),
+        name: validator?.description?.moniker,
+      }
+    }
+
+    return {
+      amount: formatToken({
+        amount: `${getTotalRewards()}`,
+        denom: staking.params.bond_denom,
+      }, false, '0,0.[000000]'),
+      name: 'All'
+    }
+  }
+  const validatorInfo = getValidatorInfo();
 
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
@@ -1237,7 +1268,7 @@ export const StakingScreen = ({
                                     <div className="col-span-5 flex justify-end gap-1">
                                         <AppButton
                                           className="!py-1.5 !px-4 !text-sm"
-                                          onClick={() => delegateOptions.onOpenModal(delegation.delegation.validator_address, validator?.description?.moniker ? `Delegate for the ${validator?.description?.moniker}` : '')}
+                                          onClick={() => delegateOptions.onSelectValidator(delegation.delegation.validator_address)}
                                         >
                                           Delegate
                                         </AppButton>
@@ -1462,6 +1493,11 @@ export const StakingScreen = ({
         transactionHash={claim.transactionHash}
         onCloseCongratulationsModal={claim.onCloseCongratulationsModal}
         congratulationsMessage={getCongratulationsMessage()}
+        message={{
+          amount: validatorInfo.amount,
+          from: validatorInfo.name || '',
+        }}
+
       />
       <ConfirmModal
         isOpen={staking.selectedModal === 'redelegate'}
@@ -1497,11 +1533,12 @@ export const StakingScreen = ({
         onStakingAmountChange={delegateOptions.onStakingAmountChange}
         onCloseContinueToStakingModal={delegateOptions.onCloseContinueToStakingModal}
         onSendClick={delegateOptions.onSendClick}
-        validators={delegateOptions.validators}
+        validators={getAllValidators()}
         validator={delegateOptions.optionsAdvanced.validator}
         amount={delegateOptions.optionsAdvanced.amount}
         transactionHash={delegateOptions.transactionHash}
         isLoading={delegateOptions.isVoteLoading}
+        error={delegateOptions.error || ''}
       />
     </div>
     </YStack>
