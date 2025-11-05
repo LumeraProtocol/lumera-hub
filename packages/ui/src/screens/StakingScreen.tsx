@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation';
 import dayjs from 'dayjs';
 import {
   YStack,
@@ -674,7 +674,7 @@ const AllValidators = ({
   delegateOptions,
   getUptime,
 }: IAllValidators) => {
-  const router = useRouter();
+  // const router = useRouter();
   const [keyword, setKeyword] = useState('');
   const [sortBy, setSortBy] = useState('uptime');
   const [sort, setSort] = useState('DESC');
@@ -762,7 +762,8 @@ const AllValidators = ({
   }
 
   const handleValidatorClick = (operator_address: string) => {
-    router.push(`/staking/${operator_address}`);
+    // router.push(`/staking/${operator_address}`);
+    document.location.href = `/staking/${operator_address}`;
   }
 
   return (
