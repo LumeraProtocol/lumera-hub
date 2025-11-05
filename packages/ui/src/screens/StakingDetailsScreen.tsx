@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { H2, Card, Button, H3 } from 'tamagui';
 import { ArrowUpRight, Copy, Check } from 'lucide-react';
 import { fromHex, toBase64, fromBase64, toHex, fromBech32 } from '@cosmjs/encoding';
@@ -144,7 +144,7 @@ const LatestBlocks = () => {
       signed,
       proposed,
       missed,
-    }
+    };
   }
 
   const { signed, proposed, missed } = getSumary();

@@ -163,7 +163,7 @@ const useStaking = (address = '') => {
       setAPR(aprVal * 100);
       setBondedTokens(bondedTokens);
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
     setAPRLoading(false);
   }

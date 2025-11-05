@@ -109,9 +109,7 @@ const useAccountInfo = () => {
       setLoading(false);
       setError(null);
       return;
-    }
-
-    if (address) {
+    } else {
       setClaimInfo({
         ...claimInfo,
         senderAddress: address,

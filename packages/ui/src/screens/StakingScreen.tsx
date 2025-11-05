@@ -632,7 +632,7 @@ const RewardsCalculator = ({
                 <span className='input-symbol'>LUME</span>
               </div>
               <div className='btn-primary mt-5'>
-                <Button onPress={() => onStakingButtonClick(`${amount}`)}>
+                <Button onPress={() => onStakingButtonClick(`${amount}`)} disabled={!amount || amount === '0'}>
                   <span className='font-bold'>Continue to Staking</span>
                 </Button>
               </div>

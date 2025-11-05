@@ -104,8 +104,8 @@ const useGovernances = () => {
                 if (res?.data?.tally) {
                   item = {
                     ...item,
-                    final_tally_result: res?.data?.tally,
-                  }
+                    final_tally_result: res.data.tally,
+                  };
                 }
               } catch (error) {
                 console.error(error);
