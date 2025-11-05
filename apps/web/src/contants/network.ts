@@ -7,5 +7,5 @@ export const WALLET_CONNECT_PROJECTID = process.env.NEXT_PUBLIC_WALLET_CONNECT_P
 export const WALLET_CONNECT_RELAY_URL = process.env.NEXT_PUBLIC_WALLET_CONNECT_RELAY_URL || 'wss://relay.walletconnect.org';
 export const WALLET_CONNECT_NAME = process.env.NEXT_PUBLIC_WALLET_CONNECT_NAME || 'Lumera Hub';
 export const WALLET_CONNECT_DESCRIPTION = process.env.NEXT_PUBLIC_WALLET_CONNECT_DESCRIPTION || 'Lumera Hub';
-export const WALLET_CONNECT_URL = process.env.NEXT_PUBLIC_WALLET_CONNECT_URL || 'http://localhost:3000';
+export const WALLET_CONNECT_URL = process.env.NEXT_PUBLIC_WALLET_CONNECT_URL || 'https://hub.testnet.lumera.io/';
 export const WALLET_CONNECT_ICON = process.env.NEXT_PUBLIC_WALLET_CONNECT_ICON || 'https://portal.testnet.lumera.io/assets/logo-5cb73fc7.png';

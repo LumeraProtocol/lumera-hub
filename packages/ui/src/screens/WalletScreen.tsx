@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   Landmark,
   XCircle,
-  X,
   ArrowUpRight,
   Copy,
   Coins,
