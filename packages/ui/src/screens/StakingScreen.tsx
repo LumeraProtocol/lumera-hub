@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// import { useRouter } from 'next/navigation';
 import dayjs from 'dayjs';
 import {
   YStack,
@@ -40,6 +39,7 @@ import Skeleton from '@/components/Skeleton';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import AppButton from '@/components/AppButton';
 import ConfirmModal from '@/components/ConfirmModal';
+import useAppRouter from '@/hooks/useAppRouter';
 import { RATE_VALUE } from '@/contants';
 import { DelegationResponse } from '@/hooks/useAccountInfo';
 import {
@@ -674,7 +674,7 @@ const AllValidators = ({
   delegateOptions,
   getUptime,
 }: IAllValidators) => {
-  // const router = useRouter();
+  const { redirect } = useAppRouter();
   const [keyword, setKeyword] = useState('');
   const [sortBy, setSortBy] = useState('uptime');
   const [sort, setSort] = useState('DESC');
@@ -762,8 +762,7 @@ const AllValidators = ({
   }
 
   const handleValidatorClick = (operator_address: string) => {
-    // router.push(`/staking/${operator_address}`);
-    document.location.href = `/staking/${operator_address}`;
+    redirect(`/staking/${operator_address}`);
   }
 
   return (
@@ -1106,7 +1105,6 @@ export const StakingScreen = ({
               getUptime={getUptime}
               staking={staking}
               totalPower={totalPower}
-              validators={getValidators()}
             />
           </> :
           <div className='mt-6'>
