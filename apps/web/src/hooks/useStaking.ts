@@ -133,7 +133,6 @@ const useStaking = (address = '') => {
           }]
         })
       }
-      console.log('items', items)
       setUnbondingDelegations(items.sort((a, b) => dayjs(a.completion_time).valueOf() - dayjs(b.completion_time).valueOf()));
     } catch (error) {
       setUnbondingDelegationsError(error instanceof Error ? error.message : 'An unknown error occurred.');

@@ -69,12 +69,17 @@ export default function Page() {
             isLoading: delegate.isFetchValidatorLoading,
             isOpenModal: delegate.isOpenModal,
             transactionHash: delegate.transactionHash,
+            selectedModal: delegate.selectedModal,
             onCloseCongratulationsModal: delegate.handleCloseCongratulationsModal,
             onCloseDailogChange: delegate.handleCloseModal,
             onOpenModal: delegate.handleOpenModal,
             onSendClick: delegate.handleSendClick,
             onInputChange: delegate.handleInputChange,
             onAdvancedCheckedChange: delegate.handleShowAdvancedChange,
+            onStakingButtonClick: delegate.handleStakingButtonClick,
+            onCloseContinueToStakingModal: delegate.handleCloseContinueToStakingModal,
+            onSelectValidator: delegate.handleSelectValidator,
+            onStakingAmountChange: delegate.handleStakingAmountChange,
           }}
           staking={{
             totalValidators: staking.totalValidators,
