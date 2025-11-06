@@ -104,7 +104,7 @@ export default function UnbondModal({
                 </div>
                 <div className='mt-5 text-2xl'>Unbond Successfully</div>
                 {optionsAdvanced?.amount ?
-                  <div className='mt-1'>You have staked {optionsAdvanced?.amount} Lume</div> : null
+                  <div className='mt-1'>You have unbonded {optionsAdvanced?.amount} Lume</div> : null
                 }
                 <div className='mt-5'>
                   <AppLink

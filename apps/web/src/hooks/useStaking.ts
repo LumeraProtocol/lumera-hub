@@ -189,16 +189,14 @@ const useStaking = (address = '') => {
       fetchParams();
       fetchDataForAPR();
     }
-  }, []);
+  }, [validatorTab]);
 
   useEffect(() => {
     if (address) {
       if (validatorTab === 'my') {
         handleFetchDataForSubTab(subTab);
       }
-      if (validatorTab === 'all') {
-        fetchRewards();
-      }
+      fetchRewards();
     }
   }, [address]);
 
