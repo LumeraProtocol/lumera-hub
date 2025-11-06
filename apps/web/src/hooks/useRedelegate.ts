@@ -27,6 +27,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
       amount: '',
       destinationValidator: '',
       sourceValidator: '',
+      validatorName: '',
   });
   const [error, setError] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -73,6 +74,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
       amount: '',
       destinationValidator: '',
       sourceValidator: '',
+      validatorName: '',
     });
   }
 
@@ -142,10 +144,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
       }];
 
       let gasLimit = optionsAdvanced.gas;
-      let memo = `Claim rewards`;
-      if (options?.customMemo) {
-        memo = `Claim reward from ${options.customMemo}`;
-      }
+      const memo = `Claim reward from ${optionsAdvanced.validatorName}`;
       if (optionsAdvanced.gas === GAS_LIMIT) {
         const gasEstimate = await client.simulate(optionsAdvanced.senderAddress, msgWithdraw, memo);
         gasLimit = `${Math.round(gasEstimate * 1.3)}`;
@@ -179,10 +178,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
             },
           }),
         };
-        let memo = optionsAdvanced.memo;
-        if (options?.customMemo) {
-          memo = `Redelegate from ${options.customMemo}`;
-        }
+        const memo = optionsAdvanced.memo;
         let gasLimit = optionsAdvanced.gas;
         if (optionsAdvanced.gas === GAS_LIMIT) {
           const gasEstimate = await client.simulate(optionsAdvanced.senderAddress, [msg], memo);
@@ -199,7 +195,6 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
         const result = await client.signAndBroadcast(optionsAdvanced.senderAddress, [msg], fee, memo);
         if (result?.transactionHash) {
           setTransactionHash(result?.transactionHash);
-          resetData();
           if (options?.callback) {
             options.callback();
           }
@@ -216,9 +211,10 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
     if (validator) {
       setOptionsAdvanced({
         ...optionsAdvanced,
-        memo: customMemo || options?.customMemo || 'Lumera Hub',
+        memo: customMemo ? `Redelegate from ${customMemo}` : options?.customMemo || 'Lumera Hub',
         sourceValidator: validator,
         amount,
+        validatorName: customMemo || options?.customMemo || 'Lumera Hub',
       });
       setAvailableAmount(amount);
     }
@@ -230,6 +226,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
 
   const handleCloseCongratulationsModal = () => {
     setTransactionHash('');
+    setOpenModal(false);
     resetData();
   }
 

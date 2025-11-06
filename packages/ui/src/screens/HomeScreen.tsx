@@ -30,6 +30,7 @@ import {
   Star,
   ClockPlus,
   Layers,
+  Check as CheckCircle,
 } from 'lucide-react';
 
 import Loading from '@/components/Loading';
@@ -471,7 +472,6 @@ export const ClaimableRewardsModal = ({
   error,
   voteAdvanced,
   transactionHash,
-  congratulationsMessage,
   message,
   setOpen,
   onSendClick,
@@ -527,28 +527,39 @@ export const ClaimableRewardsModal = ({
             </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
               <div className='flex justify-between items-center'>
-                <div>&nbsp;</div>
+                <H3 className='text-lumera-label text-[32px]'>Claim Rewards</H3>
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
               </div>
-              <div className='mt-4'>
-                <H3 className='!text-green-500 text-[32px] !leading-0'>
-                  {congratulationsMessage || 'Congratulations! claim all rewards completed successfully.'}
-                </H3>
-              </div>
-              <div className='mt-3'>
-                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>
-                  View Transaction
-                </AppLink>
+              <div className='mt-2 text-center'>
+                <div className='flex justify-center'>
+                  <CheckCircle className='w-12 h-12 text-lumera-green border border-lumera-green rounded-full p-3' />
+                </div>
+                <div className='mt-5 text-2xl'>Claim Rewards Successfully</div>
+                {message?.amount ?
+                  <div className='mt-1'>You have claim {message?.amount} Lume</div> : null
+                }
+                <div className='mt-5'>
+                  <AppLink
+                    href={`/tx/${transactionHash}`}
+                    className='text-lumera-teal hover:text-lumera-green text-sm'
+                  >
+                    View Transaction
+                  </AppLink>
+                </div>
+                <div className='mt-2 pb-3'>
+                  <button
+                    className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
+                    onClick={onCloseCongratulationsModal}
+                  >
+                    Back to Staking
+                  </button>
+                </div>
               </div>
             </div>
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog>
     )
-  }
-
-  const handleAdvancedCheckedChange = (checked: boolean) => {
-    setShowAdvanced(checked);
   }
 
   return (

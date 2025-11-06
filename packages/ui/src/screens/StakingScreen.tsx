@@ -21,7 +21,6 @@ import { fromHex, toBase64 } from '@cosmjs/encoding';
 import {
   Coins,
   ArrowUpRight,
-  TriangleAlert,
   ChevronRight,
   Check as CheckCircle,
   ArrowUp,
@@ -186,6 +185,7 @@ interface IStakingScreen {
       senderAddress: string;
       amount: string;
       validator: string;
+      validatorName: string;
     };
     showAdvanced: boolean;
     isOpenModal: boolean;
@@ -209,6 +209,7 @@ interface IStakingScreen {
       amount: string;
       destinationValidator: string;
       sourceValidator: string;
+      validatorName: string;
     };
     showAdvanced: boolean;
     isOpenModal: boolean;
