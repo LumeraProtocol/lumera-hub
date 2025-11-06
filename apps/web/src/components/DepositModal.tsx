@@ -51,7 +51,7 @@ export default function DepositModal({
   handleAdvancedCheckedChange,
   onCloseCongratulationsModal,
 }: IVoteModal) {
-  if (transactionHash) {
+  if (transactionHash && isOpen) {
      return (
       <Dialog
         open

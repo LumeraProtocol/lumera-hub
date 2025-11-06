@@ -109,3 +109,7 @@ export function uint8ArrayToString(arr: Uint8Array) {
   }
   return str;
 }
+
+export const isNumber = (value: number) => {
+  return typeof value === 'number' && Number.isFinite(value);
+}

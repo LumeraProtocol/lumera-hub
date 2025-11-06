@@ -38,7 +38,6 @@ import RedelegateModal from '@/components/RedelegateModal';
 import Skeleton from '@/components/Skeleton';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import AppButton from '@/components/AppButton';
-import ConfirmModal from '@/components/ConfirmModal';
 import useAppRouter from '@/hooks/useAppRouter';
 import { RATE_VALUE } from '@/contants';
 import { DelegationResponse } from '@/hooks/useAccountInfo';
@@ -197,7 +196,7 @@ interface IStakingScreen {
     onSendClick: () => void;
     onInputChange: (name: string, value: string) => void;
     onAdvancedCheckedChange: (checked: boolean) => void;
-    onOpenModal: () => void;
+    onOpenModal: (validator: string, amount: string, customMemo?: string) => void;
   };
   redelegateOptions: {
     isRedelegateLoading: boolean;
@@ -221,7 +220,7 @@ interface IStakingScreen {
     onSendClick: () => void;
     onInputChange: (name: string, value: string) => void;
     onAdvancedCheckedChange: (checked: boolean) => void;
-    onOpenModal: () => void;
+    onOpenModal: (validator: string, amount: string, customMemo?: string) => void;
   };
 }
 
@@ -948,6 +947,7 @@ export const StakingScreen = ({
   unbondOptions,
   redelegateOptions,
 }: IStakingScreen) => {
+
   const getValidators = () => {
     const validators = staking?.currentTab === 'active' ? delegateOptions.validators : staking.validators;
     return validators
@@ -1031,17 +1031,6 @@ export const StakingScreen = ({
      return `Congratulations! Rewards have been claimed from ${validator.description.moniker} successfully.`
   }
 
-  const getConfirmContent = (title: string) => {
-    return (
-      <div>
-        <H3 textAlign='center' className='!flex items-center flex-col sm:flex-row gap-1 sm:gap-3 justify-center !leading-5'>
-          <TriangleAlert color='#f8aa0f' /> Warning: Claim Your Rewards First!
-        </H3>
-        <p className='mt-4'>If you proceed with {title} now, you will forfeit your currently claimable rewards of <strong>{staking?.selectedData?.rewards}</strong>. Please Claim Rewards before continuing to ensure you don’t lose them.</p>
-      </div>
-    );
-  }
-
   const getValidatorName = (delegation: TUnbondingDelegation, validator: IValidator | undefined) => {
     if (delegation.type !== 'redelegations') {
       return validator?.description?.moniker || formatAddress(delegation.validator_address, 12, -6)
@@ -1055,28 +1044,36 @@ export const StakingScreen = ({
 
     return (
       <span className='flex flex-wrap items-center gap-1'>
-        <span>{sourceValidator?.description?.moniker?.slice(0, 5)}...</span> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-arrow-right-icon lucide-arrow-right w-5 h-5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> <span>{destinationValidator?.description?.moniker}</span>
+        <span>{sourceValidator?.description?.moniker?.slice(0, 5)}...</span> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right-icon lucide-arrow-right w-5 h-5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> <span>{destinationValidator?.description?.moniker}</span>
       </span>
     )
   }
 
   const getValidatorInfo = () => {
+    let amount = formatToken({
+      amount: `${getTotalRewards()}`,
+      denom: staking.params.bond_denom,
+    }, false, '0,0.[000000]');
+    let name = 'All';
+    let validatorName = '';
+
     if (claim.selectedClaim) {
       const validator = getAllValidators().find((item) => item.operator_address === claim.selectedClaim?.delegation.validator_address)
       const reward = accountInfo?.rewards.find(v => v.validator_address === claim.selectedClaim?.delegation.validator_address);
-      console.log('reward', reward, accountInfo?.rewards, claim.selectedClaim)
-      return {
-        amount: formatTokens(reward?.reward, false, '0,0.[000000]'),
-        name: validator?.description?.moniker,
-      }
+
+      amount = formatTokens(reward?.reward, false, '0,0.[000000]');
+      name = validator?.description?.moniker || '';
+    }
+
+    if (unbondOptions?.optionsAdvanced?.validator) {
+      const validator = getAllValidators().find((item) => item.operator_address === unbondOptions?.optionsAdvanced?.validator);
+      validatorName = validator?.description?.moniker || '';
     }
 
     return {
-      amount: formatToken({
-        amount: `${getTotalRewards()}`,
-        denom: staking.params.bond_denom,
-      }, false, '0,0.[000000]'),
-      name: 'All'
+      amount,
+      name,
+      validatorName,
     }
   }
   const validatorInfo = getValidatorInfo();
@@ -1283,35 +1280,30 @@ export const StakingScreen = ({
                                         )}
                                         <AppButton
                                           className="!py-1.5 !px-4 !text-sm"
-                                          onClick={() => staking.handleShowConfirmModal(
-                                            'redelegate',
+                                          onClick={() => redelegateOptions.onOpenModal(
                                             delegation.delegation.validator_address,
                                             formatToken({
                                               amount: delegation.balance.amount,
                                               denom: delegation.balance.denom,
                                             }, false, '0,0.[000000]'),
-                                            validator?.description?.moniker ? `Redelegate from ${validator?.description?.moniker}` : '',
-                                            formatTokens(reward?.reward),
+                                            validator?.description?.moniker ? `${validator?.description?.moniker}` : '',
                                           )}
                                         >
                                           Redelegate
                                         </AppButton>
                                         <AppButton
                                           className="!py-1.5 !px-4 !text-sm"
-                                          onClick={() => staking.handleShowConfirmModal(
-                                            'unbond',
+                                          onClick={() => unbondOptions.onOpenModal(
                                             delegation.delegation.validator_address,
                                             formatToken({
                                               amount: delegation.balance.amount,
                                               denom: delegation.balance.denom,
                                             }, false, '0,0.[000000]'),
-                                            validator?.description?.moniker ? `Unbond for the ${validator?.description?.moniker}` : '',
-                                            formatTokens(reward?.reward)
+                                            validator?.description?.moniker ? `${validator?.description?.moniker}` : '',
                                           )}
                                         >
                                           Unbond
                                         </AppButton>
-
                                     </div>
                                   </div>
                                 )
@@ -1465,6 +1457,7 @@ export const StakingScreen = ({
         error={unbondOptions.error}
         transactionHash={unbondOptions.transactionHash}
         onCloseCongratulationsModal={unbondOptions.onCloseCongratulationsModal}
+        validatorName={validatorInfo.validatorName || ''}
       />
       <RedelegateModal
         isOpen={redelegateOptions.isOpenModal}
@@ -1497,25 +1490,6 @@ export const StakingScreen = ({
           amount: validatorInfo.amount,
           from: validatorInfo.name || '',
         }}
-
-      />
-      <ConfirmModal
-        isOpen={staking.selectedModal === 'redelegate'}
-        content={getConfirmContent('Redelegating')}
-        onCloseModal={staking.handleCloseModal}
-        onCancelClick={staking.handleCloseModal}
-        onConfirmClick={redelegateOptions.onOpenModal}
-        btnConfirmLabel='Continue'
-        btnCancelLabel='Claim Rewards'
-      />
-      <ConfirmModal
-        isOpen={staking.selectedModal === 'unbond'}
-        content={getConfirmContent('Unbonding')}
-        onCloseModal={staking.handleCloseModal}
-        onCancelClick={staking.handleCloseModal}
-        onConfirmClick={unbondOptions.onOpenModal}
-        btnConfirmLabel='Continue'
-        btnCancelLabel='Claim Rewards'
       />
       <ValidatorModal
         isOpen={delegateOptions.selectedModal === 'validator'}

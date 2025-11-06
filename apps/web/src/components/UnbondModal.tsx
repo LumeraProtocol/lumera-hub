@@ -1,16 +1,14 @@
 import {
-  YStack,
   H3,
   Button,
   Dialog,
   Label,
   Input,
-  Checkbox,
   VisuallyHidden,
 } from 'tamagui';
-import { CircleX, Check as CheckIcon } from '@tamagui/lucide-icons';
+import { CircleX } from '@tamagui/lucide-icons';
+import numeral from 'numeral';
 
-import { formatNumber } from '@/utils/format';
 import Loading from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 
@@ -28,29 +26,29 @@ interface IUnbondModal {
   };
   availableAmount: number;
   showAdvanced: boolean;
+  transactionHash?: string;
+  validatorName?: string;
   onCloseDailogChange: () => void;
   onSendClick: () => void;
   onInputChange: (name: string, value: string) => void;
   onAdvancedCheckedChange: (checked: boolean) => void;
-  transactionHash?: string;
   onCloseCongratulationsModal?: () => void;
 }
 
 export default function UnbondModal({
-    isOpen,
-    isUnbondLoading,
-    error,
-    optionsAdvanced,
-    showAdvanced,
-    availableAmount,
-    transactionHash = '',
-    onCloseDailogChange,
-    onSendClick,
-    onInputChange,
-    onAdvancedCheckedChange,
-    onCloseCongratulationsModal,
+  isOpen,
+  isUnbondLoading,
+  error,
+  optionsAdvanced,
+  availableAmount,
+  transactionHash = '',
+  validatorName = '',
+  onCloseDailogChange,
+  onSendClick,
+  onInputChange,
+  onCloseCongratulationsModal,
 }: IUnbondModal) {
-  if (transactionHash) {
+  if (transactionHash && isOpen) {
     return (
       <Dialog
         open
@@ -152,30 +150,21 @@ export default function UnbondModal({
           <div className='withdraw-main-content relative'>
             <Loading isLoading={isUnbondLoading} />
             <div className='flex justify-between items-center'>
-              <H3 className='text-lumera-label text-[32px]'>Unbond</H3>
+              <H3 className='text-lumera-label text-[32px]'>Unstake {validatorName}</H3>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseDailogChange}><CircleX /></button>
-            </div>
-            <div className='mt-1'>
-              <Label htmlFor="sender" className='text-base'>Sender</Label>
-              <div className='input-wrapper'>
-                <Input
-                  id="sender"
-                  placeholder="Sender"
-                  className='input'
-                  value={optionsAdvanced.senderAddress}
-                  onChangeText={(newValue) => onInputChange('senderAddress', newValue)}
-                />
-              </div>
             </div>
             <div className='mt-1'>
               <div className='flex items-center justify-between'>
                 <Label htmlFor="amount" className='text-base'>Amount</Label>
-                <span className='text-sm text-gray-600'>{formatNumber(availableAmount, { decimalsLength: 2})} lume</span>
+                <div className='text-sm font-normal flex gap-2 items-center text-gray-600'>
+                  <span>Available: {numeral(availableAmount).format('0.[000000]')}</span>
+                  <button type='button' className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer' onClick={() => onInputChange('amount', `${availableAmount}`)}>MAX</button>
+                </div>
               </div>
               <div className='input-wrapper'>
                 <Input
                   id="amount"
-                  placeholder={`Available: ${formatNumber(availableAmount, { decimalsLength: 2})} lume`}
+                  placeholder={`Available: ${numeral(availableAmount).format('0.[000000]%')} lume`}
                   className='input has-symbol'
                   value={optionsAdvanced.amount}
                   onChangeText={(newValue) => onInputChange('amount', newValue)}
@@ -184,74 +173,15 @@ export default function UnbondModal({
               </div>
             </div>
 
-            {showAdvanced ?
-              <div className='mt-1'>
-                <div>
-                  <Label htmlFor="fees" className='text-base'>Fees</Label>
-                  <div className='input-wrapper'>
-                    <Input
-                      id="fees"
-                      placeholder="Fees"
-                      className='input has-symbol'
-                      value={optionsAdvanced.fees}
-                      onChangeText={(newValue) => onInputChange('fees', newValue)}
-                    />
-                    <span className='input-symbol'>ulume</span>
-                  </div>
-                </div>
-                <div className='mt-1'>
-                  <Label htmlFor="gas" className='text-base'>Gas</Label>
-                  <div className='input-wrapper'>
-                    <Input
-                      id="gas"
-                      placeholder="Gas"
-                      className='input'
-                      value={optionsAdvanced.gas}
-                      onChangeText={(newValue) => onInputChange('gas', newValue)}
-                    />
-                  </div>
-                </div>
-                <div className='mt-1'>
-                  <Label htmlFor="memo" className='text-base'>Memo</Label>
-                  <div className='input-wrapper'>
-                    <Input
-                      id="memo"
-                      placeholder="Memo"
-                      className='input'
-                      value={optionsAdvanced.memo}
-                      onChangeText={(newValue) => onInputChange('memo', newValue)}
-                    />
-                  </div>
-                </div>
-              </div>: null
-            }
-
-            <YStack space="$2" marginTop="$3">
-              <div className='flex justify-between items-center'>
-                <div className='flex gap-3 items-center'>
-                  <Checkbox
-                    id="advanced"
-                    size="$4"
-                    checked={showAdvanced}
-                    onCheckedChange={onAdvancedCheckedChange}
-                  >
-                    <Checkbox.Indicator>
-                      <CheckIcon />
-                    </Checkbox.Indicator>
-                  </Checkbox>
-
-                  <Label size="$4" htmlFor="advanced">
-                    Advanced
-                  </Label>
-                </div>
-                <div className='btn-primary flex justify-end mt-3'>
-                  <Button onPress={onSendClick} disabled={isUnbondLoading}>Send</Button>
-                </div>
+            <div className='mt-5'>
+               {error && !isUnbondLoading ?
+                <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
+              }
+              <div className='btn-primary full mt-3'>
+                <Button onPress={onSendClick} disabled={isUnbondLoading}><strong>Unstake</strong></Button>
               </div>
-            </YStack>
-            {error && !isUnbondLoading ?
-              <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
-            }
+            </div>
+
           </div>
         </Dialog.Content>
       </Dialog.Portal>

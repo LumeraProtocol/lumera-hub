@@ -6,6 +6,7 @@ import { fromHex, toBase64, fromBase64, toHex, fromBech32 } from '@cosmjs/encodi
 import Loading from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import DelegateModal from '@/components/DelegateModal';
+import useAppRouter from '@/hooks/useAppRouter';
 import { IValidator } from '@/types/validator';
 import { RATE_VALUE } from '@/contants';
 import { TSigningInfos, IBlock, AccountInfoData } from '@/types';
@@ -96,6 +97,7 @@ type TDelegators = {
 
 const LatestBlocks = () => {
   const { blocks, validators } = useLatestBlocks();
+  const { redirect } = useAppRouter();
 
   const getBlockStatus = (block: IBlock) => {
     const { header } = block;
@@ -169,7 +171,8 @@ const LatestBlocks = () => {
           {blocks?.map((block) => (
             <div
               key={block.last_commit.height}
-              className={`h-6 rounded ${getBlockStatus(block) === 'signed' ? 'bg-green-500' : getBlockStatus(block) === 'proposed' ? 'bg-sky-500' : 'bg-red-500'} transition-colors duration-500`} title={`Block ${block.last_commit.height}: ${getBlockStatus(block)}`} />
+              onClick={() => redirect(`/block/${block.last_commit.height}`)}
+              className={`h-6 rounded cursor-pointer ${getBlockStatus(block) === 'signed' ? 'bg-green-500' : getBlockStatus(block) === 'proposed' ? 'bg-sky-500' : 'bg-red-500'} transition-colors duration-500`} title={`Block ${block.last_commit.height}: ${getBlockStatus(block)}`} />
             ))}
           </div>
       </div>
@@ -185,7 +188,6 @@ export const StakingDetailsScreen = ({
   slashingParams,
   signingInfos,
   isFetchParamsLoading,
-  isFetchValidatorsLoading,
   validators,
   isFetchDelegatorsLoading,
   delegators,

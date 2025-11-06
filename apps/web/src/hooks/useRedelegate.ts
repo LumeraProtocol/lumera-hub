@@ -133,37 +133,76 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
     setLoading(true);
     try {
       const client = await getClient();
-      const msg = {
-        typeUrl: '/cosmos.staking.v1beta1.MsgBeginRedelegate',
-        value: MsgBeginRedelegate.fromPartial({
+      const msgWithdraw = [{
+        typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+        value: {
           delegatorAddress: optionsAdvanced.senderAddress,
-          validatorSrcAddress: optionsAdvanced.sourceValidator,
-          validatorDstAddress: optionsAdvanced.destinationValidator,
-          amount: {
-            denom: DENOM,
-            amount: `${Number(optionsAdvanced.amount) * 1000000}`,
-          },
-        }),
-      };
-      let gasLimit = optionsAdvanced.gas
+          validatorAddress: optionsAdvanced.sourceValidator,
+        },
+      }];
+
+      let gasLimit = optionsAdvanced.gas;
+      let memo = `Claim rewards`;
+      if (options?.customMemo) {
+        memo = `Claim reward from ${options.customMemo}`;
+      }
       if (optionsAdvanced.gas === GAS_LIMIT) {
-        const gasEstimate = await client.simulate(optionsAdvanced.senderAddress, [msg], optionsAdvanced.memo);
+        const gasEstimate = await client.simulate(optionsAdvanced.senderAddress, msgWithdraw, memo);
         gasLimit = `${Math.round(gasEstimate * 1.3)}`;
       }
+
       let estimatedFee = optionsAdvanced.fees;
       if (optionsAdvanced.fees === FEE_VALUE) {
         estimatedFee = `${Math.ceil(Number(gasLimit) * 0.028)}`;// 0.028 ulume/gas
       }
       const fee = {
-        amount: [{ denom: DENOM, amount: estimatedFee }], // Fee gas
-        gas: gasLimit, // Gas limit
+        amount: [{ denom: DENOM, amount: estimatedFee }],
+        gas: gasLimit,
       };
-      const result = await client.signAndBroadcast(optionsAdvanced.senderAddress, [msg], fee, optionsAdvanced.memo);
+      const result = await client.signAndBroadcast(
+        optionsAdvanced.senderAddress,
+        msgWithdraw,
+        fee,
+        memo,
+      );
+
       if (result?.transactionHash) {
-        setTransactionHash(result?.transactionHash);
-        resetData();
-        if (options?.callback) {
-          options.callback();
+        const msg = {
+          typeUrl: '/cosmos.staking.v1beta1.MsgBeginRedelegate',
+          value: MsgBeginRedelegate.fromPartial({
+            delegatorAddress: optionsAdvanced.senderAddress,
+            validatorSrcAddress: optionsAdvanced.sourceValidator,
+            validatorDstAddress: optionsAdvanced.destinationValidator,
+            amount: {
+              denom: DENOM,
+              amount: `${Number(optionsAdvanced.amount) * 1000000}`,
+            },
+          }),
+        };
+        let memo = optionsAdvanced.memo;
+        if (options?.customMemo) {
+          memo = `Redelegate from ${options.customMemo}`;
+        }
+        let gasLimit = optionsAdvanced.gas;
+        if (optionsAdvanced.gas === GAS_LIMIT) {
+          const gasEstimate = await client.simulate(optionsAdvanced.senderAddress, [msg], memo);
+          gasLimit = `${Math.round(gasEstimate * 1.3)}`;
+        }
+        let estimatedFee = optionsAdvanced.fees;
+        if (optionsAdvanced.fees === FEE_VALUE) {
+          estimatedFee = `${Math.ceil(Number(gasLimit) * 0.028)}`;// 0.028 ulume/gas
+        }
+        const fee = {
+          amount: [{ denom: DENOM, amount: estimatedFee }], // Fee gas
+          gas: gasLimit, // Gas limit
+        };
+        const result = await client.signAndBroadcast(optionsAdvanced.senderAddress, [msg], fee, memo);
+        if (result?.transactionHash) {
+          setTransactionHash(result?.transactionHash);
+          resetData();
+          if (options?.callback) {
+            options.callback();
+          }
         }
       }
     } catch (error) {

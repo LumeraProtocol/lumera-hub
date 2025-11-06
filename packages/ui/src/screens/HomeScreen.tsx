@@ -591,7 +591,7 @@ export const ClaimableRewardsModal = ({
             <VisuallyHidden>
               <Dialog.Title></Dialog.Title>
             </VisuallyHidden>
-            <div className='withdraw-main-content relative max-w-2xl'>
+            <div className='withdraw-main-content relative max-w-[450px]'>
               <Loading isLoading={isVoteLoading} />
               <div className='flex justify-between items-center'>
                 <H3 className='text-lumera-label text-[32px]'>Withdraw</H3>
@@ -649,20 +649,16 @@ export const ClaimableRewardsModal = ({
                 </div>: null
               }
 
-              <YStack space="$2" marginTop="$3">
-                <div className='flex justify-between items-center gap-4 btn-primary mt-5'>
-                  <div>
-                    {error && !isVoteLoading ?
-                      <div className='text-lumera-red-light mt-3'>{error}</div> : null
-                    }
-                  </div>
-                  <div>
-                    <Button onPress={onSendClick} disabled={isVoteLoading}>
-                      <span className='font-bold'>Claim</span>
-                    </Button>
-                  </div>
+              <div className='mt-5'>
+                {error && !isVoteLoading ?
+                  <div className='text-lumera-red-light'>{error}</div> : null
+                }
+                <div className='btn-primary full mt-3'>
+                  <Button onPress={onSendClick} disabled={isVoteLoading}>
+                    <span className='font-bold'>Claim</span>
+                  </Button>
                 </div>
-              </YStack>
+              </div>
 
             </div>
           </Dialog.Content>

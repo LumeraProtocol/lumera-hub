@@ -37,18 +37,6 @@ export default function Page() {
     document.title = 'Staking';
   }, []);
 
-  const handleRedelegate = () => {
-    const { amount, customMemo, validator } = staking.selectedData;
-    staking.handleCloseModal();
-    redelegate.handleOpenModal(validator, amount, customMemo);
-  }
-
-  const handleUnbond = () => {
-    const { amount, customMemo, validator } = staking.selectedData;
-    staking.handleCloseModal();
-    unbond.handleOpenModal(validator, amount, customMemo);
-  }
-
   return (
     <>
       <Helmet>
@@ -137,7 +125,7 @@ export default function Page() {
             transactionHash: unbond.transactionHash,
             onCloseCongratulationsModal: unbond.handleCloseCongratulationsModal,
             onCloseDailogChange: unbond.handleCloseModal,
-            onOpenModal: handleUnbond,
+            onOpenModal: unbond.handleOpenModal,
             onSendClick: unbond.handleSendClick,
             onInputChange: unbond.handleInputChange,
             onAdvancedCheckedChange: unbond.handleShowAdvancedChange,
@@ -153,7 +141,7 @@ export default function Page() {
             transactionHash: redelegate.transactionHash,
             onCloseCongratulationsModal: redelegate.handleCloseCongratulationsModal,
             onCloseDailogChange: redelegate.handleCloseModal,
-            onOpenModal: handleRedelegate,
+            onOpenModal: redelegate.handleOpenModal,
             onSendClick: redelegate.handleSendClick,
             onInputChange: redelegate.handleInputChange,
             onAdvancedCheckedChange: redelegate.handleShowAdvancedChange,
