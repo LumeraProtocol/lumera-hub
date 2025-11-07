@@ -96,7 +96,7 @@ type TDelegators = {
 }
 
 const LatestBlocks = () => {
-  const { blocks, validators } = useLatestBlocks();
+  const { blocks, validators, isFetchBlockLoading } = useLatestBlocks();
   const { redirect } = useAppRouter();
 
   const getBlockStatus = (block: IBlock) => {
@@ -107,7 +107,8 @@ const LatestBlocks = () => {
 
     const txt = toHex(fromBase64(header.proposer_address)).toUpperCase();
     const validator = validators.find(
-      (x) => consensusPubkeyToHexAddress(x.consensus_pubkey) === txt
+      (x) => consensusPubkeyToHexAddress(x.consensus_pubkey) === txt ||
+      consensusPubkeyToHexAddress(x.consensus_pubkey) ===header.proposer_address
     );
 
     if (validator) {
@@ -167,7 +168,8 @@ const LatestBlocks = () => {
             <span className='inline-block w-3.5 h-3.5 bg-red-600 rounded-full mr-1'></span> Missed: {missed}
           </li>
         </ul>
-        <div className="grid grid-cols-10 md:grid-cols-20 gap-1.5 mt-3">
+        <div className="grid grid-cols-10 md:grid-cols-20 gap-1.5 mt-3 relative">
+          <Loading isLoading={isFetchBlockLoading} />
           {blocks?.map((block) => (
             <div
               key={block.last_commit.height}
