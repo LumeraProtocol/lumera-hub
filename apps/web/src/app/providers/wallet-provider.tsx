@@ -26,12 +26,28 @@ import { RegistryProvider } from "./RegistryContext";
 import store, { persistor } from '@/store';
 
 export function WebWalletProviders({ children }: { children: React.ReactNode }) {
-  const lumeraChain = chains.find(({chainName}) =>chainName === CHAIN_NAME)
-  const lumeraAssets = assetLists.find(({chainName})=>chainName === CHAIN_NAME);
+  const isBrowser = typeof window !== 'undefined';
 
-  if (!lumeraChain || !lumeraAssets) {
-    throw new Error(`Chain or assets not found for ${CHAIN_NAME}`)
-  }
+  // Resolve chain & assets only in the browser to avoid throwing during Next.js prerender/export
+  // Use loose typing to avoid importing chain-registry types; runtime values come from the registry data.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [chainData, setChainData] = React.useState<{ chain: any; assets: any } | null>(null);
+
+  React.useEffect(() => {
+    if (!isBrowser) return;
+    const foundChain = chains.find(({ chainName }) => chainName === CHAIN_NAME);
+    const foundAssets = assetLists.find(({ chainName }) => chainName === CHAIN_NAME);
+
+    if (!foundChain || !foundAssets) {
+      console.warn(
+        `Chain or assets not found for ${CHAIN_NAME}. Available chains: ${chains
+          .map((c) => c.chainName)
+          .join(', ')}`
+      );
+      return;
+    }
+    setChainData({ chain: foundChain, assets: foundAssets });
+  }, [isBrowser]);
 
   // Setup WalletConnect with custom metadata
   const walletConnect = React.useMemo(() => new WCWallet(undefined, {
@@ -53,16 +69,19 @@ export function WebWalletProviders({ children }: { children: React.ReactNode }) 
       <PersistGate loading={null} persistor={persistor}>
         <HelmetProvider>
           <ThemeProvider>
-            <ChainProvider
-              wallets={walletAdapters}
-              chains={[lumeraChain]}
-              assetLists={[lumeraAssets]}
-            >
-              <RegistryProvider>
-                {children}
-                <OverlaysManager />
-              </RegistryProvider>
-            </ChainProvider>
+            <RegistryProvider>
+              {isBrowser && chainData ? (
+                <ChainProvider wallets={walletAdapters} chains={[chainData.chain]} assetLists={[chainData.assets]}>
+                  {children}
+                  <OverlaysManager />
+                </ChainProvider>
+              ) : (
+                // During SSR or while resolving on client, render app shell without ChainProvider to avoid build-time throws
+                <>
+                  {children}
+                </>
+              )}
+            </RegistryProvider>
           </ThemeProvider>
         </HelmetProvider>
       </PersistGate>
