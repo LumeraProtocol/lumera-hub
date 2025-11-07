@@ -272,6 +272,7 @@ const useStaking = (address = '') => {
     bondedTokens,
     selectedModal,
     selectedData,
+    fetchUnbondingDelegations,
     handleShowConfirmModal,
     handleOpenModal,
     handleCloseModal,

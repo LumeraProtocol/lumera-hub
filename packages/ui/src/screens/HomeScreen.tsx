@@ -37,12 +37,15 @@ import Loading from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import Skeleton from '@/components/Skeleton';
-import { AccountInfoData } from '@/hooks/useAccountInfo';
+import { AccountInfoData, getTotalRewards } from '@/hooks/useAccountInfo';
+import useAppRouter from '@/hooks/useAppRouter';
 import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity';
 import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/useProposals';
 import { formatToken } from '@/utils/format';
 import { NAV_ITEMS } from '@/components/layout/AppShell';
 import { DENOM } from '@/contants/network';
+import { useDispatch } from '@/redux/hooks';
+import { setActiveView, setCurrentPath } from '@/redux/app.slice';
 
 dayjs.extend(relativeTime);
 
@@ -75,6 +78,7 @@ interface IHomeScreen {
     fees: string;
     gas: string;
     memo: string;
+    totalRewards: string;
   };
   errorClaim: string | null;
   handleClaimChange: (name: string, value: string) => void;
@@ -133,6 +137,7 @@ interface IClaimableRewardsModal {
     amount: string;
     from: string;
   };
+  backButtonText?: string;
 }
 
 const getOption = (data: IPortfolioOverviewChart) => {
@@ -470,19 +475,16 @@ export const ClaimableRewardsModal = ({
   sender,
   isVoteLoading,
   error,
-  voteAdvanced,
   transactionHash,
   message,
   setOpen,
   onSendClick,
-  handleVoteAdvancedChange,
   onCloseCongratulationsModal,
+  backButtonText = 'Back to Staking',
 }: IClaimableRewardsModal) => {
   if (!isOpen) {
     return null;
   }
-
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   if (transactionHash) {
     return (
@@ -551,7 +553,7 @@ export const ClaimableRewardsModal = ({
                     className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
                     onClick={onCloseCongratulationsModal}
                   >
-                    Back to Staking
+                    {backButtonText}
                   </button>
                 </div>
               </div>
@@ -618,48 +620,6 @@ export const ClaimableRewardsModal = ({
                 Claim <strong>{message?.amount} LUME</strong> available rewards from <strong>{message?.from}</strong> Delegation Now!
               </div>
 
-              {showAdvanced ?
-                <div className='mt-1 hidden'>
-                  <div>
-                    <Label htmlFor="fees" className='text-base'>Fees</Label>
-                    <div className='input-wrapper'>
-                      <Input
-                        id="fees"
-                        placeholder="Fees"
-                        className='input has-symbol'
-                        value={voteAdvanced.fees}
-                        onChangeText={(newValue) => handleVoteAdvancedChange('fees', newValue)}
-                      />
-                      <span className='input-symbol'>ulume</span>
-                    </div>
-                  </div>
-                  <div className='mt-1'>
-                    <Label htmlFor="gas" className='text-base'>Gas</Label>
-                    <div className='input-wrapper'>
-                      <Input
-                        id="gas"
-                        placeholder="Gas"
-                        className='input'
-                        value={voteAdvanced.gas}
-                        onChangeText={(newValue) => handleVoteAdvancedChange('gas', newValue)}
-                      />
-                    </div>
-                  </div>
-                  <div className='mt-1'>
-                    <Label htmlFor="memo" className='text-base'>Memo</Label>
-                    <div className='input-wrapper'>
-                      <Input
-                        id="memo"
-                        placeholder="Memo"
-                        className='input'
-                        value={voteAdvanced.memo}
-                        onChangeText={(newValue) => handleVoteAdvancedChange('memo', newValue)}
-                      />
-                    </div>
-                  </div>
-                </div>: null
-              }
-
               <div className='mt-5'>
                 {error && !isVoteLoading ?
                   <div className='text-lumera-red-light'>{error}</div> : null
@@ -707,7 +667,9 @@ export const HomeScreen = ({
   selectedItem,
   setSelectedItem,
 }: IHomeScreen) => {
+  const dispatch = useDispatch();
   const { stacked, liquid } = getPortfolioData(accountInfo);
+  const { redirect } = useAppRouter();
   const [isVoteOpen, setVoteOpen] = React.useState(false);
 
   const getActivity = (item: IRecentActivity) => {
@@ -851,18 +813,17 @@ export const HomeScreen = ({
     setSelectedItem(item);
   }
 
-  const getTotalRewards = () => {
-    let total = 0;
-    if (accountInfo?.rewards?.length) {
-      for (const item of accountInfo?.rewards) {
-        for (const reward of item.reward) {
-          if (reward.denom === DENOM) {
-            total += Number(reward.amount);
-          }
-        }
-      }
+  const handleViewAllProposalsClick = () => {
+    if (!governanceNav?.url) {
+      return
     }
-    return total;
+    dispatch(setCurrentPath({
+      currentPath: NAV_ITEMS[3].url,
+    }));
+    dispatch(setActiveView({
+      activeView: NAV_ITEMS[3].id,
+    }));
+    redirect(governanceNav.url);
   }
 
   return (
@@ -908,7 +869,7 @@ export const HomeScreen = ({
                           <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[0] }}></span>
                           <SizableText className='text-lumera-label !font-bold'>Staked</SizableText>
                         </div>
-                        <div className='text-2xl font-bold'>
+                        <div className='text-2xl font-bold truncate'>
                           {loading ?
                            <Skeleton /> : <>
                               {formatToken({
@@ -924,7 +885,7 @@ export const HomeScreen = ({
                           <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[1] }}></span>
                           <SizableText className='text-lumera-label !font-bold'>Liquid</SizableText>
                         </div>
-                        <div className='text-2xl font-bold'>
+                        <div className='text-2xl font-bold truncate'>
                           {loading ?
                             <Skeleton /> :
                             <>
@@ -948,7 +909,7 @@ export const HomeScreen = ({
                       {loading ?
                         <Skeleton /> :
                         <>
-                          <span className='text-3xl font-bold text-white break-words'>
+                          <span className='text-3xl font-bold text-white break-words truncate'>
                             {formatToken({
                               amount: `${stacked + liquid}`,
                               denom: DENOM,
@@ -963,11 +924,11 @@ export const HomeScreen = ({
                   <Card.Header padded>
                     <H3 className='text-lumera-label'>Claimable Rewards</H3>
                     <div>
-                      <H4 className='!text-lumera-green !font-bold !text-3xl'>
+                      <H4 className='!text-lumera-green !font-bold !text-3xl truncate'>
                         {loading ? <Skeleton /> :
                           <>
                           {formatToken({
-                            amount: `${getTotalRewards()}`,
+                            amount: `${getTotalRewards(accountInfo)}`,
                             denom: DENOM,
                           }, false, '0,0.[0000]')}<span className='text-xl ml-1'>LUME</span>
                           </>
@@ -987,7 +948,12 @@ export const HomeScreen = ({
                   <Card.Header padded>
                     <div className='flex justify-between items-center'>
                       <H3 className='proposals-title'>Active Governance Proposals</H3>
-                      <AppLink href={governanceNav?.url || '#'} className='text-link text-sm whitespace-nowrap'>View All</AppLink>
+                      <span
+                        onClick={handleViewAllProposalsClick}
+                        className='text-link text-sm whitespace-nowrap cursor-pointer'
+                      >
+                        View All
+                      </span>
                     </div>
                     <div className='mt-5'>
                       {isProposalLoading ?
@@ -1064,11 +1030,12 @@ export const HomeScreen = ({
             onCloseCongratulationsModal={onCloseCongratulationsModal}
             message={{
               amount: formatToken({
-                amount: `${getTotalRewards()}`,
+                amount: `${claimInfo.totalRewards}`,
                 denom: DENOM,
               }, false, '0,0.[0000]'),
               from: 'All',
             }}
+            backButtonText="Back to Dashboard"
           />
         </>
       }

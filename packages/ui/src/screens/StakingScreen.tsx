@@ -16,7 +16,7 @@ import {
   VisuallyHidden,
   Checkbox,
 } from 'tamagui';
-import { Wallet, Calculator, Search, CircleX, Check as CheckIcon } from '@tamagui/lucide-icons'
+import { Wallet, Calculator, Search, CircleX, Check as CheckIcon } from '@tamagui/lucide-icons';
 import { fromHex, toBase64 } from '@cosmjs/encoding';
 import {
   Coins,
@@ -25,13 +25,13 @@ import {
   Check as CheckCircle,
   ArrowUp,
   ArrowDown,
+  RefreshCcw,
 } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
 import PastTime from '@/components/PastTime';
 import Loading from '@/components/Loading';
 import CountDown from '@/components/CountDown';
-import DelegateModal from '@/components/DelegateModal';
 import UnbondModal from '@/components/UnbondModal';
 import RedelegateModal from '@/components/RedelegateModal';
 import Skeleton from '@/components/Skeleton';
@@ -223,12 +223,15 @@ interface IStakingScreen {
     onAdvancedCheckedChange: (checked: boolean) => void;
     onOpenModal: (validator: string, amount: string, customMemo?: string) => void;
   };
+  onRefreshBalance: () => void;
 }
 
 interface IRewardsCalculator {
   apr: number;
   availableAmount: number;
+  isLoading: boolean;
   onStakingButtonClick: (amount: string) => void;
+  onRefreshBalance: () => void;
 }
 
 interface IValidatorModal {
@@ -250,6 +253,8 @@ interface IStakeModal {
   amount: string;
   error: string;
   transactionHash?: string;
+  isAccountLoading: boolean;
+  onRefreshBalance: () => void;
   onClose: () => void;
   onSendClick: () => void;
   onCloseContinueToStakingModal: () => void;
@@ -280,6 +285,21 @@ interface IAllValidators {
   }
 }
 
+export const getTotalBalances = (accountInfo: AccountInfoData | null) => {
+  let total = 0;
+  if (accountInfo?.balances?.length) {
+    for (const item of accountInfo?.balances) {
+      if (item.denom === DENOM) {
+        total += Number(item.amount);
+      }
+      if (item.denom === 'lume') {
+        total += Number(item.amount) * RATE_VALUE;
+      }
+    }
+  }
+  return total / RATE_VALUE;
+}
+
 export const StakeModal = ({
   isOpen,
   availableAmount,
@@ -289,6 +309,8 @@ export const StakeModal = ({
   transactionHash,
   isLoading,
   error,
+  isAccountLoading,
+  onRefreshBalance,
   onClose,
   onStakingAmountChange,
   onSendClick,
@@ -418,18 +440,37 @@ export const StakeModal = ({
           <div className='withdraw-main-content relative p-5'>
             <Loading isLoading={isLoading} />
             <div className='flex justify-between items-center mb-4'>
-              <H3 className='text-lumera-label text-[32px]'>Stake {info?.description?.moniker}</H3>
+              <H3 className='text-lumera-label text-[32px]'>Stake LUME</H3>
               <button className='btn-close-modal cursor-pointer' onClick={onClose}><CircleX /></button>
             </div>
-            <div className='mt-2 relative'>
+            <div className='mt-5 relative'>
+              {info?.description?.moniker ?
+                <div className='mb-1 flex gap-2 justify-between flex-nowrap sm:flex-wrap'>
+                  <span>Selected Validator</span><span className='font-bold'>{info?.description?.moniker}</span>
+                </div> : null
+              }
               <div className='flex justify-between items-center gap-3'>
                 <Label htmlFor="amount" className='text-base !font-semibold'>
                   Amount
                 </Label>
                 {availableAmount ?
                   <div className='text-sm font-normal flex gap-2 items-center'>
-                    <span>Available: {formatNumber(availableAmount, { decimalsLength: 6})}</span>
-                    <button type='button' className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer' onClick={() => onStakingAmountChange(`${availableAmount}`)}>MAX</button>
+                    {isAccountLoading ?
+                      <Skeleton /> :
+                      <>
+                        <button type="button" onClick={onRefreshBalance} className='cursor-pointer'>
+                          <RefreshCcw className='w-4 h-4' />
+                        </button>
+                        <span>Available: {formatNumber(availableAmount, { decimalsLength: 6})}</span>
+                        <button
+                          type='button'
+                          className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer'
+                          onClick={() => onStakingAmountChange(`${availableAmount}`)}
+                        >
+                          MAX
+                        </button>
+                      </>
+                    }
                   </div> : null
                 }
               </div>
@@ -460,9 +501,9 @@ export const StakeModal = ({
                   I understand that unstaking will take 21 days for LUME to become liquid upon withdrawal.
                 </Label>
               </div>
-              <div className='mt-8 btn-primary full'>
+              <div className={`${!isYes ? 'btn-secondary' : 'btn-primary'} mt-8 full`}>
                 <Button onPress={onSendClick} disabled={!isYes}>
-                  <span className='font-bold'>Send</span>
+                  <span className='font-bold'>Stake</span>
                 </Button>
               </div>
               {error && !isLoading ?
@@ -585,9 +626,12 @@ export const ValidatorModal = ({
 const RewardsCalculator = ({
   apr,
   availableAmount,
+  isLoading,
   onStakingButtonClick,
+  onRefreshBalance,
 }: IRewardsCalculator) => {
   const [amount, setAmount] = React.useState('0');
+  const [error, setError] = React.useState('');
   const [estimatedRewards, setEstimatedRewards] = React.useState(0);
 
   const handleAmountChange = (text: string) => {
@@ -607,6 +651,23 @@ const RewardsCalculator = ({
     setEstimatedRewards(result);
   }
 
+  const handleStakingClick = () => {
+    setError('');
+    if (!Number(amount)) {
+      setError('Please enter amount.');
+      return
+    }
+    if (Number(amount) <= 0) {
+      setError('Amount must not be less than 0.');
+      return
+    }
+    if (Number(amount) >= Number(availableAmount)) {
+      setError('Amount cannot exceed the available balance.');
+      return
+    }
+    onStakingButtonClick(`${amount}`);
+  }
+
   return (
     <Card elevate size="$4" bordered className='w-full mt-6'>
       <Card.Header padded>
@@ -621,8 +682,22 @@ const RewardsCalculator = ({
                 </Label>
                 {availableAmount ?
                   <div className='text-sm font-normal flex gap-2 items-center'>
-                    <span>Available: {formatNumber(availableAmount, { decimalsLength: 6})}</span>
-                    <button type='button' className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer' onClick={() => handleAmountChange(`${availableAmount}`)}>MAX</button>
+                    {isLoading ?
+                      <Skeleton /> :
+                      <>
+                        <button type="button" onClick={onRefreshBalance} className='cursor-pointer'>
+                          <RefreshCcw className='w-4 h-4' />
+                        </button>
+                        <span>Available: {formatNumber(availableAmount, { decimalsLength: 6})}</span>
+                        <button
+                          type='button'
+                          className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer'
+                          onClick={() => handleAmountChange(`${availableAmount}`)}
+                        >
+                          MAX
+                        </button>
+                      </>
+                    }
                   </div> : null
                 }
               </div>
@@ -637,8 +712,11 @@ const RewardsCalculator = ({
                 />
                 <span className='input-symbol'>LUME</span>
               </div>
-              <div className='btn-primary mt-5'>
-                <Button onPress={() => onStakingButtonClick(`${amount}`)} disabled={!amount || amount === '0'}>
+              {error ?
+                <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
+              }
+              <div className={`${!amount || amount === '0' ? 'btn-secondary' : 'btn-primary'} mt-5`}>
+                <Button onPress={handleStakingClick} disabled={!amount || amount === '0'}>
                   <span className='font-bold'>Continue to Staking</span>
                 </Button>
               </div>
@@ -688,13 +766,14 @@ const AllValidators = ({
   useEffect(() => {
     setSortBy('uptime');
     setSort('DESC');
-  }, [staking?.currentTab])
+  }, [staking?.currentTab]);
+
 
   const sortFunc = (a: IValidator, b: IValidator) => {
     switch (sortBy) {
       case 'name':
         if (sort === 'DESC') {
-          return b.description.moniker.toLowerCase().localeCompare(b.description.moniker.toLowerCase());
+          return b.description.moniker.toLowerCase().localeCompare(a.description.moniker.toLowerCase());
         }
         return a.description.moniker.toLowerCase().localeCompare(b.description.moniker.toLowerCase());
       case 'amount':
@@ -726,8 +805,7 @@ const AllValidators = ({
     if (keyword) {
       validators = validators.filter((validator) => validator.description.moniker.toLowerCase().indexOf(keyword.toLowerCase()) !== -1);
     }
-
-    return validators.sort((a, b) => sortFunc(a, b));
+    return [...validators.sort((a, b) => sortFunc(a, b))];
   }
 
   const handleInputChange = (text: string) => {
@@ -751,7 +829,8 @@ const AllValidators = ({
   }
 
   const handleSort = (name: string) => {
-    setSort(name === sortBy ? sort === 'DESC' ? 'ASC' : 'DESC' : 'DESC');
+    const newSort = name === sortBy ? sort === 'DESC' ? 'ASC' : 'DESC' : 'DESC'
+    setSort(newSort);
     setSortBy(name);
   }
 
@@ -947,6 +1026,7 @@ export const StakingScreen = ({
   isAccountInfoLoading,
   unbondOptions,
   redelegateOptions,
+  onRefreshBalance,
 }: IStakingScreen) => {
 
   const getValidators = () => {
@@ -965,21 +1045,6 @@ export const StakingScreen = ({
       return accountInfo?.delegations?.reduce((total, item) => Number(item.balance.amount) + total, 0) || 0;
     }
     return 0;
-  }
-
-  const getTotalBalances = () => {
-    let total = 0;
-    if (accountInfo?.balances?.length) {
-      for (const item of accountInfo?.balances) {
-        if (item.denom === DENOM) {
-          total += Number(item.amount);
-        }
-        if (item.denom === 'lume') {
-          total += Number(item.amount) * RATE_VALUE;
-        }
-      }
-    }
-    return total / RATE_VALUE;
   }
 
   const getUptime = (validator: IValidator) => {
@@ -1114,7 +1179,7 @@ export const StakingScreen = ({
               <Card elevate size="$4" bordered className='w-full'>
                 <Card.Header padded>
                   <H3 className='text-lumera-label'>Staking Rewards APR</H3>
-                  <div className='!text-lumera-green font-bold text-3xl !leading-11'>
+                  <div className='!text-lumera-green font-bold text-[40px] !leading-11'>
                     {staking.isAPRLoading ?
                       <Skeleton /> : <>
                         {staking.apr ? staking.apr.toFixed(2) : 0}%
@@ -1126,8 +1191,10 @@ export const StakingScreen = ({
             </div>
             <RewardsCalculator
               apr={staking.apr}
-              availableAmount={getTotalBalances()}
+              availableAmount={getTotalBalances(accountInfo)}
               onStakingButtonClick={delegateOptions.onStakingButtonClick}
+              onRefreshBalance={onRefreshBalance}
+              isLoading={isAccountInfoLoading}
             />
             <AllValidators
               delegateOptions={delegateOptions}
@@ -1248,7 +1315,7 @@ export const StakingScreen = ({
                                         href={`/staking/${delegation.delegation.validator_address}`}
                                         className="font-semibold text-white hover:text-lumera-teal cursor-pointer"
                                       >
-                                        {validator?.description?.moniker}
+                                        {validator?.description?.moniker || formatAddress(delegation.delegation.validator_address, 10, -5)}
                                       </AppLink>
                                     </div>
                                     <div className="col-span-2 text-right font-mono text-white">
@@ -1268,11 +1335,10 @@ export const StakingScreen = ({
                                           className="!py-1.5 !px-4 !text-sm"
                                           onClick={() => delegateOptions.onSelectValidator(delegation.delegation.validator_address)}
                                         >
-                                          Delegate
+                                          Stake
                                         </AppButton>
                                         {reward && getReward(reward) > 0 && (
                                           <AppButton
-                                            variant="secondary"
                                             className="!py-1.5 !px-4 !text-sm"
                                             onClick={() => claim.handleToggleClaimItemModal(true, delegation)}
                                           >
@@ -1290,7 +1356,7 @@ export const StakingScreen = ({
                                             validator?.description?.moniker ? `${validator?.description?.moniker}` : '',
                                           )}
                                         >
-                                          Redelegate
+                                          Unstake
                                         </AppButton>
                                         <AppButton
                                           className="!py-1.5 !px-4 !text-sm"
@@ -1430,21 +1496,6 @@ export const StakingScreen = ({
           </div>
         }
       </div>
-      <DelegateModal
-        isOpen={delegateOptions.isOpenModal}
-        availableAmount={getTotalBalances()}
-        isVoteLoading={delegateOptions.isVoteLoading}
-        onAdvancedCheckedChange={delegateOptions.onAdvancedCheckedChange}
-        onCloseDailogChange={delegateOptions.onCloseDailogChange}
-        onInputChange={delegateOptions.onInputChange}
-        onSendClick={delegateOptions.onSendClick}
-        optionsAdvanced={delegateOptions.optionsAdvanced}
-        showAdvanced={delegateOptions.showAdvanced}
-        error={delegateOptions.error}
-        validators={delegateOptions.validators}
-        transactionHash={delegateOptions.transactionHash}
-        onCloseCongratulationsModal={delegateOptions.onCloseCongratulationsModal}
-      />
       <UnbondModal
         isOpen={unbondOptions.isOpenModal}
         isUnbondLoading={unbondOptions.isUnbondLoading}
@@ -1503,7 +1554,7 @@ export const StakingScreen = ({
       />
       <StakeModal
         isOpen={delegateOptions.selectedModal === 'stake'}
-        availableAmount={getTotalBalances()}
+        availableAmount={getTotalBalances(accountInfo)}
         onClose={delegateOptions.onCloseContinueToStakingModal}
         onStakingAmountChange={delegateOptions.onStakingAmountChange}
         onCloseContinueToStakingModal={delegateOptions.onCloseContinueToStakingModal}
@@ -1514,6 +1565,8 @@ export const StakingScreen = ({
         transactionHash={delegateOptions.transactionHash}
         isLoading={delegateOptions.isVoteLoading}
         error={delegateOptions.error || ''}
+        isAccountLoading={isAccountInfoLoading}
+        onRefreshBalance={onRefreshBalance}
       />
     </div>
     </YStack>

@@ -308,7 +308,7 @@ export const WalletScreen = ({
           <Card className='w-full lg:w-2/3'>
             <h3 className="font-semibold text-gray-400">Total Wallet Balance</h3>
             <div className='w-full flex justify-between'>
-              <p className="text-4xl xl:text-5xl font-bold text-white mt-2">
+              <p className="text-4xl xl:text-5xl font-bold text-white mt-2 truncate">
                 {isLoading ?
                   <Skeleton /> : <>
                     {formatToken({
@@ -320,28 +320,28 @@ export const WalletScreen = ({
               </p>
             </div>
             <ul className='text-sm flex justify-between flex-wrap gap-x-4 gap-y-1 text-lumera-label mt-2'>
-              <li className='w-[40%]'>
+              <li className='w-[48%] truncate'>
                 <span className='inline-block'></span> <span>Available: </span>
                 {formatToken({
                   amount: `${getAvailableBalances()}`,
                   denom: DENOM,
                   }, false, '0,0.[00000]')}<span className='text-[11px] ml-1'>LUME</span>
               </li>
-              <li className='w-[40%]'>
+              <li className='w-[48%] truncate'>
                 <span className='inline-block'></span> <span>Staking: </span>
                   {formatToken({
                   amount: `${getDelegations()}`,
                   denom: DENOM,
                   }, false, '0,0.[00000]')}<span className='text-[11px] ml-1'>LUME</span>
               </li>
-              <li className='w-[40%]'>
+              <li className='w-[48%] truncate'>
                 <span className='inline-block'></span> <span>Rewards: </span>
                 {formatToken({
                   amount: `${getRewards()}`,
                   denom: DENOM,
                   }, false, '0,0.[00000]')}<span className='text-[11px] ml-1'>LUME</span>
               </li>
-              <li className='w-[40%]'>
+              <li className='w-[48%] truncate'>
                 <span className='inline-block'></span> <span>Unstaking: </span>
                 {formatToken({
                   amount: `${getUnbonding()}`,

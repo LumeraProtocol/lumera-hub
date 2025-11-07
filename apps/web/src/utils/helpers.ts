@@ -113,3 +113,7 @@ export function uint8ArrayToString(arr: Uint8Array) {
 export const isNumber = (value: number) => {
   return typeof value === 'number' && Number.isFinite(value);
 }
+
+export function hashTx(raw: Uint8Array) {
+  return toHex(sha256(raw)).toUpperCase();
+}

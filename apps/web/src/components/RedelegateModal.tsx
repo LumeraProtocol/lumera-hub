@@ -262,7 +262,7 @@ export default function RedelegateModal({
 
             <div className='mt-5 btn-primary full'>
               <Button onPress={onSendClick} disabled={isRedelegateLoading}>
-                <strong>Restate</strong>
+                <strong>Restake</strong>
               </Button>
             </div>
             {error && !isRedelegateLoading ?

@@ -2,11 +2,11 @@ import { ReactNode } from 'react';
 import Link from 'next/link';
 
 interface IAppLink {
-    href: string;
-    className?: string;
-    target?: string;
-    rel?: string;
-    children: ReactNode;
+  href: string;
+  className?: string;
+  target?: string;
+  rel?: string;
+  children: ReactNode;
 }
 
 interface DynamicProps {
@@ -14,22 +14,22 @@ interface DynamicProps {
 }
 
 export default function AppLink({
-    href,
-    children,
-    className = '',
-    target = '',
-    rel = '',
+  href,
+  children,
+  className = '',
+  target = '',
+  rel = '',
 }: IAppLink) {
-    const props: DynamicProps = {};
-    if (target) {
-        props.target = target;
-    }
-    if (rel) {
-        props.rel = rel;
-    }
-    return (
-        <Link href={href} className={className} target={target}>
-            {children}
-        </Link>
-    );
+  const props: DynamicProps = {};
+  if (target) {
+    props.target = target;
+  }
+  if (rel) {
+    props.rel = rel;
+  }
+  return (
+    <Link href={href} className={`text-lumera-teal hover:text-lumera-green ${className}`} target={target}>
+      {children}
+    </Link>
+  );
 }

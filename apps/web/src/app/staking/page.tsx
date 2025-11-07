@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
-import { StakingScreen } from '@lumera-hub/ui/src/screens/StakingScreen'
+import { StakingScreen, getTotalBalances } from '@lumera-hub/ui/src/screens/StakingScreen'
 import useWalletConnect from '@/hooks/useWalletConnect';
 import useDelegate from '@/hooks/useDelegate';
 import useStaking from '@/hooks/useStaking';
@@ -12,12 +12,9 @@ import useUnbond from '@/hooks/useUnbond';
 import useRedelegate from '@/hooks/useRedelegate';
 
 export default function Page() {
- const { address } = useWalletConnect();
- const delegate = useDelegate();
- const staking = useStaking(address);
- const unbond = useUnbond();
- const redelegate = useRedelegate();
- const {
+  const { address } = useWalletConnect();
+  const staking = useStaking(address);
+  const {
     loading,
     accountInfo,
     isClaimLoading,
@@ -26,12 +23,29 @@ export default function Page() {
     isClaimModalOpen,
     transactionHash,
     selectedClaim,
+    fetchData,
     handleToggleClaimItemModal,
     handleClaimButtonClick,
     handleClaimChange,
     handleToggleClaimModal,
     handleCloseCongratulationsModal,
   } = useAccountInfo();
+  const delegate = useDelegate({
+    availableAmount: `${getTotalBalances(accountInfo)}`,
+    callback: fetchData,
+  });
+  const unbond = useUnbond({
+    callback: () => {
+      staking.fetchUnbondingDelegations();
+      fetchData();
+    },
+  });
+  const redelegate = useRedelegate({
+    callback: () => {
+      staking.fetchUnbondingDelegations();
+      fetchData();
+    },
+  });
 
   useEffect(() => {
     document.title = 'Staking';
@@ -47,6 +61,7 @@ export default function Page() {
           address={address}
           accountInfo={accountInfo}
           isAccountInfoLoading={loading}
+          onRefreshBalance={fetchData}
           delegateOptions={{
             isVoteLoading: delegate.isLoading,
             error: delegate.error,

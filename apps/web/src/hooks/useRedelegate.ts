@@ -108,6 +108,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
 
   const handleSendClick = async () => {
     setError('');
+    setTransactionHash('');
     if (!optionsAdvanced.amount) {
       setError('Please enter amount.');
       return
@@ -222,6 +223,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
 
   const handleCloseModal = () => {
     setOpenModal(false);
+    setTransactionHash('');
   }
 
   const handleCloseCongratulationsModal = () => {

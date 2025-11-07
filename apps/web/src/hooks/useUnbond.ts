@@ -66,8 +66,17 @@ const useUnbond = (options: UseDepositOptions = {}) => {
 
     const handleSendClick = async () => {
       setError('');
+      setTransactionHash('');
       if (!optionsAdvanced.amount) {
         setError('Please enter amount.');
+        return
+      }
+      if (Number(optionsAdvanced.amount) <= 0) {
+        setError('Amount must not be less than 0.');
+        return
+      }
+      if (availableAmount && Number(optionsAdvanced.amount) > Number(availableAmount)) {
+        setError('Amount cannot exceed the available balance.');
         return
       }
       if (!optionsAdvanced.senderAddress) {

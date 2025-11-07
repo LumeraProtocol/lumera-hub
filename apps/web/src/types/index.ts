@@ -283,3 +283,14 @@ export type ViewId =
   | "nfts"
   | "wallet"
   | "block"
+
+export interface IFullBlock {
+  block: IBlock;
+  block_id: {
+    hash: string;
+    part_set_header: {
+      hash: string;
+      total: number;
+    };
+  };
+}

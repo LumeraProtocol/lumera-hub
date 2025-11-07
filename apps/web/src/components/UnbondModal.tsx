@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   H3,
   Button,
@@ -5,6 +6,7 @@ import {
   Label,
   Input,
   VisuallyHidden,
+  Checkbox,
 } from 'tamagui';
 import { CircleX } from '@tamagui/lucide-icons';
 import numeral from 'numeral';
@@ -52,6 +54,12 @@ export default function UnbondModal({
   onInputChange,
   onCloseCongratulationsModal,
 }: IUnbondModal) {
+  const [isYes, setYes] = useState(false);
+
+  const handleAdvancedCheckedChange = (checked: boolean) => {
+    setYes(checked);
+  }
+
   if (transactionHash && isOpen) {
     return (
       <Dialog
@@ -173,10 +181,15 @@ export default function UnbondModal({
           <div className='withdraw-main-content relative'>
             <Loading isLoading={isUnbondLoading} />
             <div className='flex justify-between items-center'>
-              <H3 className='text-lumera-label text-[32px]'>Unstake {validatorName}</H3>
+              <H3 className='text-lumera-label text-[32px]'>Unstake LUME</H3>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseDailogChange}><CircleX /></button>
             </div>
-            <div className='mt-1'>
+            <div className='mt-5'>
+              {validatorName ?
+                <div className='mb-1 flex gap-2 justify-between flex-nowrap sm:flex-wrap'>
+                  <span>Selected Validator</span><span className='font-bold'>{validatorName}</span>
+                </div> : null
+              }
               <div className='flex items-center justify-between'>
                 <Label htmlFor="amount" className='text-base'>Amount</Label>
                 <div className='text-sm font-normal flex gap-2 items-center text-gray-600'>
@@ -195,16 +208,30 @@ export default function UnbondModal({
                 <span className='input-symbol'>lume</span>
               </div>
             </div>
+            <div className='flex gap-3 items-start mt-5'>
+              <Checkbox
+                id="termOfUse"
+                size="$4"
+                checked={isYes}
+                onCheckedChange={handleAdvancedCheckedChange}
+              >
+                <Checkbox.Indicator>
+                  <CheckCircle />
+                </Checkbox.Indicator>
+              </Checkbox>
 
+              <Label size="$4" htmlFor="termOfUse" className='!leading-[20px]'>
+                I understand unstaking process will take 21 days and I will not be able to use my LUME during this period.
+              </Label>
+            </div>
             <div className='mt-5'>
                {error && !isUnbondLoading ?
                 <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
               }
-              <div className='btn-primary full mt-3'>
+              <div className={`${!isYes ? 'btn-secondary' : 'btn-primary'} mt-8 full`}>
                 <Button onPress={onSendClick} disabled={isUnbondLoading}><strong>Unstake</strong></Button>
               </div>
             </div>
-
           </div>
         </Dialog.Content>
       </Dialog.Portal>
