@@ -1,235 +1,484 @@
 import React from 'react'
-import { YStack, H2, Button, Card, H3, Input, SizableText } from 'tamagui'
-import { Logs, BadgeCheck, Beaker, Search, Activity, Coins, Timer, CheckCircle } from '@tamagui/lucide-icons'
+import {
+  YStack,
+  H2,
+  Button,
+  Card,
+  H3,
+  Input,
+} from 'tamagui';
+import {
+  Logs,
+  BadgeCheck,
+  Beaker,
+  Search,
+  Activity,
+  Coins,
+  Timer,
+  CheckCircle,
+} from '@tamagui/lucide-icons';
+import dayjs from 'dayjs';
 
-export const GovernanceScreen = () => {
+import AppLink from '@/components/AppLink';
+import Loading from '@/components/Loading';
+import DepositModal from '@/components/DepositModal';
+import Skeleton from '@/components/Skeleton';
+import { IProposal } from '@/hooks/useProposals';
+import { formatNumber, formatToken } from '@/utils/format';
+import { VoteModal } from './HomeScreen';
+
+interface IGovernanceScreen {
+  selectedItem: IProposal | null;
+  setSelectedItem: (item: IProposal) => void;
+  isLoading: boolean,
+  isSumaryLoading: boolean,
+  governances: IProposal[];
+  totalVotes: number;
+  nextKey: string;
+  handlePageClick: () => void;
+  msg: {
+    type: string;
+    message: string;
+  };
+  sumary: {
+    totalProposals: number;
+    passed: number;
+    votingPeriod: number;
+    depositRequired: number;
+    rejected: number;
+    unspecified: number;
+    failed: number;
+    depositRequiredParam: {
+      denom: string;
+      amount: string;
+    };
+    votingPeriodParam: string;
+  };
+  onTabChange: (status: string) => void;
+  currentTab: string;
+  onOptionChange: (val: string) => void;
+  onVoteClick: (item: IProposal | null) => void;
+  isVoteLoading: boolean;
+  error: string | null;
+  voteAdvanced: {
+    fees: string;
+    gas: string;
+    memo: string;
+    broadcastMode: string;
+  };
+  handleVoteAdvancedChange: (name: string, value: string) => void;
+  handleResetError: () => void;
+  address: string;
+  isVoteOpen: boolean;
+  setVoteOpen: (status: boolean) => void;
+  deposit: {
+    isOpen: boolean;
+    setOpen: (status: boolean) => void;
+    sender: string;
+    onVoteClick: () => void;
+    setModalOpen: (status: boolean) => void;
+    setProposalId: (id: string) => void;
+    isVoteLoading: boolean;
+    error: string | null;
+    voteAdvanced: {
+      fees: string;
+      gas: string;
+      memo: string;
+      senderAddress: string;
+      depositAmount: string;
+    };
+    handleVoteAdvancedChange: (name: string, value: string) => void;
+    showAdvanced: boolean;
+    handleAdvancedCheckedChange: (checked: boolean) => void;
+    availableAmount: number;
+    transactionHash: string;
+    handleCloseCongratulationsModal: () => void;
+  };
+  voteTransactionHash?: string;
+  onCloseVoteCongratulationsModal?: () => void;
+}
+
+export const GovernanceScreen = ({
+  isLoading,
+  governances,
+  msg,
+  sumary,
+  currentTab,
+  address,
+  isVoteLoading,
+  error,
+  voteAdvanced,
+  isVoteOpen,
+  deposit,
+  isSumaryLoading,
+  totalVotes,
+  nextKey,
+  voteTransactionHash,
+  selectedItem,
+  setSelectedItem,
+  onCloseVoteCongratulationsModal,
+  handlePageClick,
+  onTabChange,
+  onOptionChange,
+  onVoteClick,
+  handleVoteAdvancedChange,
+  handleResetError,
+  setVoteOpen
+}: IGovernanceScreen) => {
+
+  const getStatus = (status: string) => {
+    switch (status) {
+      case 'PROPOSAL_STATUS_PASSED':
+        return (
+          <div className='btn-green'>
+            <Button>
+              <CheckCircle /> <span>Passed</span>
+            </Button>
+          </div>
+        )
+      case 'PROPOSAL_STATUS_DEPOSIT_PERIOD':
+        return (
+          <div className='btn-yellow'>
+            <Button>
+              <Coins /> <span>Deposit</span>
+            </Button>
+          </div>
+        )
+      case 'PROPOSAL_STATUS_VOTING_PERIOD':
+        return (
+          <div className='btn-emerald'>
+            <Button>
+              <Timer /> <span>Voting</span>
+            </Button>
+          </div>
+        )
+      case 'PROPOSAL_STATUS_UNSPECIFIED':
+        return (
+          <div className='btn-purple'>
+            <Button>
+              <Activity /> <span>Unspecified</span>
+            </Button>
+          </div>
+        )
+      case 'PROPOSAL_STATUS_REJECTED':
+        return (
+          <div className='btn-black'>
+            <Button>
+              <Activity /> <span>Rejected</span>
+            </Button>
+          </div>
+        )
+      case 'PROPOSAL_STATUS_FAILED':
+        return (
+          <div className='btn-red'>
+            <Button>
+              <Activity /> <span>Failed</span>
+            </Button>
+          </div>
+        )
+      default:
+        return '';
+    }
+  }
+
+  const handleDepositClick = (item: IProposal) => {
+    deposit.setProposalId(item.id);
+    deposit.setModalOpen(true);
+    setSelectedItem(item);
+  }
+
+  const getControls = (item: IProposal) => {
+    const now = dayjs();
+    const expiryDate = dayjs(item.deposit_end_time);
+    const isExpired = expiryDate.isBefore(now);
+
+    if (['PROPOSAL_STATUS_FAILED', 'PROPOSAL_STATUS_REJECTED'].includes(item?.status) || (isExpired && item.status !== 'PROPOSAL_STATUS_VOTING_PERIOD')) {
+      return null;
+    }
+    return (
+      <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
+        <div className='btn-primary flex justify-end gap-3'>
+          {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
+            <Button onPress={() => handleVotePress(item)}>Vote</Button> : null
+          }
+          <Button onPress={() => handleDepositClick(item)}>Deposit</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const getPoolPercent = (item: IProposal) => {
+    const total = Number(item.final_tally_result.abstain_count) + Number(item.final_tally_result.no_count) + Number(item.final_tally_result.no_with_veto_count) + Number(item.final_tally_result.yes_count)
+    return {
+      yesPercent: Number(item.final_tally_result.yes_count) ? Number(item.final_tally_result.yes_count) * 100 / total : 0,
+      noPercent: Number(item.final_tally_result.no_count) ? Number(item.final_tally_result.no_count) * 100 / total : 0,
+      noWithVetoPercent: Number(item.final_tally_result.no_with_veto_count) ? Number(item.final_tally_result.no_with_veto_count) * 100 / total : 0,
+      abstainPercent: Number(item.final_tally_result.abstain_count) ? Number(item.final_tally_result.abstain_count) * 100 / total : 0,
+    }
+  }
+
+  const handleVotePress = (item: IProposal) => {
+    handleResetError();
+    setVoteOpen(true);
+    setSelectedItem(item);
+  }
+
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
-      <div className='flex justify-between w-full items-center'>
-        <H2 className='font-bold text-white text-[32px] leading-none'>Governance</H2>
+      <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
+        <H2 className='!font-bold text-white text-[32px] leading-none'>Governance</H2>
         <div className='btn-primary'>
           <Button>
-            <span className='font-bold'>Create Proposal</span>
+            <span className='font-bold whitespace-nowrap'>Create Proposal</span>
           </Button>
         </div>
       </div>
-      <div className='mt-5 grid grid-cols-4 gap-6 w-full governance-overview'>
-        <Card elevate size="$4" bordered className='w-full'>
-          <Card.Header padded>
-            <div className='flex items-center gap-3'>
-              <div className='governance-proposals-icon'>
-                <Logs size="$3" />
-              </div>
-              <div>
-                <H3 className='text-base text-lumera-label leading-none'>Total Proposals</H3>
-                <div className='leading-none mt-3'>
-                  <span className='text-[32px] font-bold text-white'>5</span>
+      <div className='relative w-full'>
+        <div className='mt-5 grid grid-cols-4 gap-6 w-full governance-overview relative'>
+          <Card elevate size="$4" bordered className='w-full'>
+            <Card.Header padded>
+              <div className='flex items-center gap-3'>
+                <div className='governance-proposals-icon'>
+                  <Logs size="$3" />
+                </div>
+                <div>
+                  <H3 className='text-base text-lumera-label leading-none'>Total Proposals</H3>
+                  <div className='leading-none mt-3'>
+                    <span className='text-[32px] font-bold text-white'>
+                      {isSumaryLoading ?
+                        <Skeleton /> : <>
+                          {formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })}
+                        </>
+                      }
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Card.Header>
-        </Card>
-        <Card elevate size="$4" bordered className='w-full'>
-          <Card.Header padded>
-            <div className='flex items-center gap-3'>
-              <div className='governance-passed-icon'>
-                <BadgeCheck size="$3" />
-              </div>
-              <div>
-                <H3 className='text-base text-lumera-label leading-none'>Passed</H3>
-                <div className='leading-none mt-3'>
-                  <span className='text-[32px] font-bold text-white'>1</span>
+            </Card.Header>
+          </Card>
+          <Card elevate size="$4" bordered className='w-full'>
+            <Card.Header padded>
+              <div className='flex items-center gap-3'>
+                <div className='governance-passed-icon'>
+                  <BadgeCheck size="$3" />
+                </div>
+                <div>
+                  <H3 className='text-base text-lumera-label leading-none'>Passed</H3>
+                  <div className='leading-none mt-3'>
+                    <span className='text-[32px] font-bold text-white'>
+                      {isSumaryLoading ?
+                        <Skeleton /> : <>
+                          {formatNumber(sumary?.passed || 0, { decimalsLength: 0 })}
+                        </>
+                      }
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Card.Header>
-        </Card>
-        <Card elevate size="$4" bordered className='w-full'>
-          <Card.Header padded>
-            <div className='flex items-center gap-3'>
-              <div className='governance-voting-period-icon'>
-                <Beaker size="$3" />
-              </div>
-              <div>
-                <H3 className='text-base text-lumera-label leading-none'>Voting Period</H3>
-                <div className='leading-none mt-3'>
-                  <span className='text-[32px] font-bold text-white'>7 Days</span>
+            </Card.Header>
+          </Card>
+          <Card elevate size="$4" bordered className='w-full'>
+            <Card.Header padded>
+              <div className='flex items-center gap-3'>
+                <div className='governance-voting-period-icon'>
+                  <Beaker size="$3" />
+                </div>
+                <div>
+                  <H3 className='text-base text-lumera-label leading-none'>Voting Period</H3>
+                  <div className='leading-none mt-3'>
+                    <span className='text-[32px] font-bold text-white'>
+                      {isSumaryLoading ?
+                        <Skeleton /> : <>
+                          {formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days
+                        </>
+                      }
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Card.Header>
-        </Card>
-        <Card elevate size="$4" bordered className='w-full'>
-          <Card.Header padded>
-            <div className='flex items-center gap-3'>
-              <div className='governance-deposit-icon'>
-                <Beaker size="$3" />
-              </div>
-              <div>
-                <H3 className='text-base text-lumera-label leading-none'>Deposit Required</H3>
-                <div className='leading-none mt-3'>
-                  <span className='text-[32px] font-bold text-white'>500 LUME</span>
+            </Card.Header>
+          </Card>
+          <Card elevate size="$4" bordered className='w-full'>
+            <Card.Header padded>
+              <div className='flex items-center gap-3'>
+                <div className='governance-deposit-icon'>
+                  <Beaker size="$3" />
+                </div>
+                <div>
+                  <H3 className='text-base text-lumera-label leading-none'>Deposit Required</H3>
+                  <div className='leading-none mt-3'>
+                    {isSumaryLoading ?
+                      <Skeleton /> : <>
+                        <span className='text-[32px] font-bold text-white'>
+                          {formatToken({
+                            amount: sumary.depositRequiredParam.amount,
+                            denom: sumary.depositRequiredParam.denom,
+                          }, false, '0,0')}<span className='text-xl ml-1'>LUME</span>
+                        </span>
+                      </>
+                    }
+
+                  </div>
                 </div>
               </div>
+            </Card.Header>
+          </Card>
+        </div>
+        <Card elevate size="$4" bordered className='w-full p-5 mt-4'>
+          <div className='flex justify-between items-center governance-control relative'>
+            <Loading isLoading={isSumaryLoading} />
+            <ul className='tabs-secondary flex-wrap'>
+              <li className={`tab-item ${!currentTab ? 'active' : ''}`}>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('')}
+                >
+                  All ({formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })})
+                </button>
+              </li>
+              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_UNSPECIFIED' ? 'active' : ''}`}>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('PROPOSAL_STATUS_UNSPECIFIED')}
+                >
+                  Unspecified ({formatNumber(sumary?.unspecified || 0, { decimalsLength: 0 })})
+                </button>
+              </li>
+              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? 'active' : ''}`}>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('PROPOSAL_STATUS_DEPOSIT_PERIOD')}
+                >
+                  Deposit ({formatNumber(sumary?.depositRequired || 0, { decimalsLength: 0 })})
+                </button>
+              </li>
+              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_VOTING_PERIOD' ? 'active' : ''}`}>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('PROPOSAL_STATUS_VOTING_PERIOD')}
+                >
+                  Voting ({formatNumber(sumary?.votingPeriod || 0, { decimalsLength: 0 })})
+                </button>
+              </li>
+              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_PASSED' ? 'active' : ''}`}>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('PROPOSAL_STATUS_PASSED')}
+                >
+                  Passed ({formatNumber(sumary?.passed || 0, { decimalsLength: 0 })})
+                </button>
+              </li>
+              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_REJECTED' ? 'active' : ''}`}>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('PROPOSAL_STATUS_REJECTED')}
+                >
+                  Rejected ({formatNumber(sumary?.rejected || 0, { decimalsLength: 0 })})
+                </button>
+              </li>
+              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_FAILED' ? 'active' : ''}`}>
+                <button
+                  className='tab-button whitespace-nowrap'
+                  onClick={() => onTabChange('PROPOSAL_STATUS_FAILED')}
+                >
+                  Failed ({formatNumber(sumary?.failed || 0, { decimalsLength: 0 })})
+                </button>
+              </li>
+            </ul>
+            <div className='input-wrapper hidden'>
+              <Input id="amount" placeholder="Search validator" className='input has-symbol' />
+              <span className='input-symbol'>
+                <Search />
+              </span>
             </div>
-          </Card.Header>
-        </Card>
-      </div>
-      <Card elevate size="$4" bordered className='w-full p-5 mt-4'>
-        <div className='flex justify-between items-center governance-control'>
-          <ul className='tabs-secondary'>
-            <li className='tab-item active'>
-              <button className='tab-button whitespace-nowrap'>All (5)</button>
-            </li>
-            <li className='tab-item'>
-              <button className='tab-button whitespace-nowrap'>Expedited (1)</button>
-            </li>
-            <li className='tab-item'>
-              <button className='tab-button whitespace-nowrap'>Deposit (1)</button>
-            </li>
-            <li className='tab-item'>
-              <button className='tab-button whitespace-nowrap'>Voting (1)</button>
-            </li>
-            <li className='tab-item'>
-              <button className='tab-button whitespace-nowrap'>Passed (1)</button>
-            </li>
-            <li className='tab-item'>
-              <button className='tab-button whitespace-nowrap'>Rejected (1)</button>
-            </li>
-          </ul>
-          <div className='input-wrapper'>
-            <Input id="amount" placeholder="Search validator" className='input has-symbol' />
-            <span className='input-symbol'>
-              <Search />
-            </span>
           </div>
-        </div>
-        <div className='mt-6 grid grid-cols-2 gap-6 governance-card-wrapper'>
-          <Card elevate size="$4" bordered className='w-full'>
-            <div className='p-5'>
-              <div className='flex justify-between items-start gap-6 governance-card-header'>
-                <div className='flex flex-col'>
-                  <SizableText className='text-lumera-label'>LIP-009</SizableText>
-                  <H3 className='!leading-6'>Emergence Security Patch for a/staking Module</H3>
-                </div>
-                <div className='btn-purple'>
-                  <Button>
-                    <Activity /> <span>Expedited</span>
-                  </Button>
-                </div>
+          <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 governance-card-wrapper relative'>
+            <Loading isLoading={isLoading} />
+            {!governances?.length && !isLoading ?
+              <div><H3 className='!leading-6'>No data</H3></div> : null
+            }
+            {governances?.map((item) => {
+              const { yesPercent, noPercent, noWithVetoPercent, abstainPercent } = getPoolPercent(item);
+              return (
+                <Card elevate size="$4" bordered className='w-full' key={item.id}>
+                  <div className='p-5'>
+                    <div className='flex justify-between items-start gap-6 governance-card-header'>
+                      <div className='flex flex-col'>
+                        <AppLink href={`/governance/${item.id}`}>
+                          <H3 className='!leading-6'>{item.title}</H3>
+                        </AppLink>
+                      </div>
+                      {getStatus(item.status)}
+                    </div>
+                    <div className='mt-5 min-h-12'>
+                      {item.summary}
+                    </div>
+                    <div className='mt-5'>
+                      <div className='status-bar-wrapper'>
+                        <div className='status-bar-yes' style={{ width: `${yesPercent}%` }}></div>
+                        <div className='status-bar-no' style={{ width: `${noPercent}%` }}></div>
+                        <div className='status-bar-no-with-veto' style={{ width: `${noWithVetoPercent}%` }}></div>
+                        <div className='status-bar-abstain' style={{ width: `${abstainPercent}%` }}></div>
+                      </div>
+                      <div className='flex justify-between gap-3 mt-2 status-bar-label'>
+                        <div className='text-lumera-label'>
+                          <span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(1)}%
+                        </div>
+                        <div className='text-lumera-label'>
+                          <span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(1)}%
+                        </div>
+                        <div className='text-lumera-label'>
+                          <span className='text-lumera-red-light'>No With Veto</span>: {noWithVetoPercent.toFixed(1)}%
+                        </div>
+                        <div className='text-lumera-label'>
+                          <span className='text-lumera-sub-label'>Abstain</span>: {abstainPercent.toFixed(1)}%
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {getControls(item)}
+                </Card>
+              )
+            })}
+          </div>
+          {nextKey ?
+            (
+              <div className='w-full flex justify-end mt-2'>
+                <Button onPress={handlePageClick}>Load More</Button>
               </div>
-              <div className='mt-5'>
-                This is an emergence proposal to patch a critical vulnerability found in the a/staking module. An Expedited voting period is requested to ...
-              </div>
-              <div className='mt-5'>
-                <div className='status-bar-wrapper'>
-                  <div className='status-bar-left' style={{ width: '90%' }}></div>
-                  <div className='status-bar-center' style={{ width: '5%' }}></div>
-                </div>
-                <div className='flex justify-between mt-2'>
-                  <div className='text-lumera-label'><span className='text-lumera-green-light'>For</span>: 1.2M</div>
-                  <div className='text-lumera-label'><span className='text-lumera-red-light'>No</span>: 0.1M</div>
-                  <div className='text-lumera-label'><span className='text-lumera-sub-label'>Abstain</span>: 0.0M</div>
-                </div>
-              </div>
-            </div>
-            <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>Voting ends in -30 days</div>
-          </Card>
-          <Card elevate size="$4" bordered className='w-full'>
-            <div className='p-5'>
-              <div className='flex justify-between items-start gap-6 governance-card-header'>
-                <div className='flex flex-col'>
-                  <SizableText className='text-lumera-label'>LIP-008</SizableText>
-                  <H3 className='!leading-6'>Fund a new Community Marketing Initiative</H3>
-                </div>
-                <div className='btn-yellow'>
-                  <Button>
-                    <Coins /> <span>Deposit</span>
-                  </Button>
-                </div>
-              </div>
-              <div className='mt-5'>
-                This proposal seeks to allocate 100,000 LUME to a community-led marketing campaign to increase brand awareness and attract new ...
-              </div>
-              <div className='mt-5'>
-                <div className='status-bar-wrapper'>
-                  <div className='status-bar-left' style={{ width: '0' }}></div>
-                  <div className='status-bar-center' style={{ width: '0%' }}></div>
-                </div>
-                <div className='flex justify-between mt-2'>
-                  <div className='text-lumera-label'><span className='text-lumera-green-light'>For</span>: 0.0M</div>
-                  <div className='text-lumera-label'><span className='text-lumera-red-light'>No</span>: 0.0M</div>
-                  <div className='text-lumera-label'><span className='text-lumera-sub-label'>Abstain</span>: 0.0M</div>
-                </div>
-              </div>
-            </div>
-            <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
-              <div className='btn-blue flex justify-end'>
-                <Button>Deposit</Button>
-              </div>
-            </div>
-          </Card>
-          <Card elevate size="$4" bordered className='w-full'>
-            <div className='p-5'>
-              <div className='flex justify-between items-start gap-6 governance-card-header'>
-                <div className='flex flex-col'>
-                  <SizableText className='text-lumera-label'>LIP-007</SizableText>
-                  <H3 className='!leading-6'>Integrate New Cross-Chain Bridge for Enhanced Liquidity</H3>
-                </div>
-                <div className='btn-emerald'>
-                  <Button>
-                    <Timer /> <span>Voting</span>
-                  </Button>
-                </div>
-              </div>
-              <div className='mt-5'>
-                This proposal suggests integrating the Stargate bridge to allow seamless asset transfer from other major chains, aiming to increase...
-              </div>
-              <div className='mt-5'>
-                <div className='status-bar-wrapper'>
-                  <div className='status-bar-left' style={{ width: '80%' }}></div>
-                  <div className='status-bar-center' style={{ width: '15%' }}></div>
-                </div>
-                <div className='flex justify-between mt-2'>
-                  <div className='text-lumera-label'><span className='text-lumera-green-light'>For</span>: 8.2M</div>
-                  <div className='text-lumera-label'><span className='text-lumera-red-light'>No</span>: 1.5M</div>
-                  <div className='text-lumera-label'><span className='text-lumera-sub-label'>Abstain</span>: 0.3M</div>
-                </div>
-              </div>
-            </div>
-            <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>Voting ends in -29 days</div>
-          </Card>
-          <Card elevate size="$4" bordered className='w-full'>
-            <div className='p-5'>
-              <div className='flex justify-between items-start gap-6 governance-card-header'>
-                <div className='flex flex-col'>
-                  <SizableText className='text-lumera-label'>LIP-006</SizableText>
-                  <H3 className='!leading-6'>Adjust Staking APY to Stabilize Token Emissions</H3>
-                </div>
-                <div className='btn-green'>
-                  <Button>
-                    <CheckCircle /> <span>Passed</span>
-                  </Button>
-                </div>
-              </div>
-              <div className='mt-5'>
-                A proposal to slightly decrease the base staking APY from 9.5% to 8.72% to ensure long-term sustainability of the rewards pool.
-              </div>
-              <div className='mt-5'>
-                <div className='status-bar-wrapper'>
-                  <div className='status-bar-left' style={{ width: '90%' }}></div>
-                  <div className='status-bar-center' style={{ width: '5%' }}></div>
-                </div>
-                <div className='flex justify-between mt-2'>
-                  <div className='text-lumera-label'><span className='text-lumera-green-light'>For</span>: 11.5M</div>
-                  <div className='text-lumera-label'><span className='text-lumera-red-light'>No</span>: 0.8M</div>
-                  <div className='text-lumera-label'><span className='text-lumera-sub-label'>Abstain</span>: 0.3M</div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </Card>
+            ) : null
+          }
+        </Card>
+        <VoteModal
+          isOpen={isVoteOpen}
+          setOpen={setVoteOpen}
+          sender={address}
+          onOptionChange={onOptionChange}
+          onVoteClick={onVoteClick}
+          item={selectedItem}
+          isVoteLoading={isVoteLoading}
+          error={error}
+          voteAdvanced={voteAdvanced}
+          handleVoteAdvancedChange={handleVoteAdvancedChange}
+          transactionHash={voteTransactionHash}
+          onCloseCongratulationsModal={onCloseVoteCongratulationsModal}
+        />
+        <DepositModal
+          isOpen={deposit.isOpen}
+          sender={deposit.sender}
+          isVoteLoading={deposit.isVoteLoading}
+          error={deposit.error}
+          voteAdvanced={deposit.voteAdvanced}
+          showAdvanced={deposit.showAdvanced}
+          availableAmount={deposit.availableAmount}
+          transactionHash={deposit.transactionHash}
+          setOpen={deposit.setOpen}
+          onVoteClick={deposit.onVoteClick}
+          handleVoteAdvancedChange={deposit.handleVoteAdvancedChange}
+          handleAdvancedCheckedChange={deposit.handleAdvancedCheckedChange}
+          onCloseCongratulationsModal={deposit.handleCloseCongratulationsModal}
+        />
+      </div>
     </YStack>
   )
 }

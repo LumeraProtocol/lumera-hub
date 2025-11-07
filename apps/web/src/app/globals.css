@@ -1,8 +1,22 @@
 @import "tailwindcss";
 
+@source "../../../../packages/ui/src/**/*.tsx";
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+@theme {
+  --color-lumera-gray: #F5F5FA;
+  --color-lumera-green: #47C78A;
+  --color-lumera-teal: #078A8A;
+  --color-lumera-navy: #001432;
+  --color-lumera-sub-label: #6c727f;
+  --color-lumera-red-light: #e77975;
+  --color-lumera-label: #9da3ae;
+  --color-lumera-green-light: #68d1bf;
+  --color-lumera-blue-light: #838df1;
 }
 
 @theme inline {

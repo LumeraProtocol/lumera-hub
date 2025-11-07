@@ -7,6 +7,9 @@ import AppShell from '@/components/layout/AppShell'
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+          <link rel="icon" type="image/png" href="/lumera.png" />
+      </head>
       <body>
         <ClientRoot>
           <AppShell>{children}</AppShell>

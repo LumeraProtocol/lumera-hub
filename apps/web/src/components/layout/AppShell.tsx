@@ -1,22 +1,47 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { X, BarChart2, Hotel, LaptopMinimalCheck, Database, ShieldCheck, Image, BrainCircuit } from '@tamagui/lucide-icons'
+import {
+  X,
+  BarChart2,
+  Hotel,
+  LaptopMinimalCheck,
+  Database,
+  ShieldCheck,
+  Image as ImageIcon,
+  BrainCircuit,
+  Wallet,
+} from '@tamagui/lucide-icons';
+import Image from 'next/image';
 
 import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
+import AppLink from '@/components/AppLink';
+
+import { useSelector, useDispatch } from '@/redux/hooks';
+import { setActiveView, setCurrentPath, setViewTitle } from '@/redux/app.slice';
+
+import { ViewId } from '@/types';
 
 // Minimal application shell with a left sidebar and a top panel
 // Inspired by docs/preliminary-ui-design.html but simplified and dependency-free (no icon libs)
 // TailwindCSS v4 classes are used (configured via globals.css)
 
-export const NAV_ITEMS: { id: ViewId; label: string, url: string, icon: React.ReactNode }[] = [
+type TNaxItems = {
+  id: ViewId;
+  label: string;
+  url: string;
+  icon: React.ReactNode;
+}
+
+export const NAV_ITEMS: TNaxItems[] = [
   { id: "dashboard", label: "Dashboard", url: "/", icon: <BarChart2 /> },
+  { id: "wallet", label: "Wallet", url: "/wallet", icon: <Wallet /> },
   { id: "staking", label: "Staking", url: "/staking", icon: <Hotel /> },
   { id: "governance", label: "Governance", url: "/governance", icon: <LaptopMinimalCheck /> },
   { id: "cascade", label: "Cascade", url: "/cascade", icon: <Database /> },
-  { id: "sense", label: "Sense", url: "#", icon: <ShieldCheck /> },
-  { id: "inference", label: "Inference", url: "#", icon: <BrainCircuit /> },
-  { id: "nfts", label: "NFTs", url: "#", icon: <Image /> },
+  { id: "sense", label: "Sense", url: "/sense", icon: <ShieldCheck /> },
+  { id: "inference", label: "Inference", url: "/inference", icon: <BrainCircuit /> },
+  { id: "nfts", label: "NFTs", url: "/nfts", icon: <ImageIcon /> },
 ]
 
 const VIEW_TITLES: Record<ViewId, string> = {
@@ -27,33 +52,49 @@ const VIEW_TITLES: Record<ViewId, string> = {
   sense: "Sense",
   inference: "Inference",
   nfts: "NFTs",
+  wallet: "Wallet",
+  block: "Block Details",
 }
 
-type ViewId =
-  | "dashboard"
-  | "staking"
-  | "governance"
-  | "cascade"
-  | "sense"
-  | "inference"
-  | "nfts"
-
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const dispatch = useDispatch();
+  const { activeView, currentPath, viewTitle } = useSelector((state) => state.app);
   const [isSidebarOpen, setSidebarOpen] = useState(false)
-  const [activeView, setActiveView] = useState<ViewId>("dashboard")
-  const [currentPath, setCurrentPath] = useState<string>(NAV_ITEMS[0].url);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setCurrentPath(window.location.pathname);
-      const navItem = NAV_ITEMS.find((item) => item.url === window.location.pathname);
-      setActiveView(navItem?.id || "dashboard")
+    if (window?.location?.pathname) {
+      dispatch(setCurrentPath({
+        currentPath: window.location.pathname,
+      }));
+      const navItem = NAV_ITEMS.find((item) => isActive(currentPath, item.url));
+      dispatch(setActiveView({
+        activeView: navItem?.id || "dashboard",
+      }));
     }
-  }, []);
+  }, [window?.location?.pathname])
 
   const onNavClick = (id: ViewId) => {
-    setActiveView(id)
+    dispatch(setActiveView({
+      activeView: id,
+    }));
     setSidebarOpen(false)
+  }
+
+  const isActive = (currentUrl: string, url: string) => {
+    if (currentUrl === '/' && currentUrl === url) {
+      return true;
+    }
+    return url !== NAV_ITEMS[0].url && currentUrl.indexOf(url) !== -1;
+  }
+
+  const handleMenuItemClick = (item: TNaxItems) => {
+    onNavClick(item.id);
+    dispatch(setViewTitle({
+      viewTitle: '',
+    }));
+    dispatch(setCurrentPath({
+      currentPath: item.url,
+    }));
   }
 
   return (
@@ -61,33 +102,33 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Sidebar (desktop) */}
       <div className="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 z-50">
         <div className="flex flex-col flex-grow bg-lumera-navy border-r border-gray-800/50">
-          <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800">
-            <div className="w-6 h-6 grid place-items-center">
-              <img src="/lumera-symbol.svg" alt="Lumera" />
+          <AppLink href="/">
+            <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800">
+              <div className="w-6 h-6 grid place-items-center">
+                <Image src="/lumera-symbol.svg" alt="Lumera" width={24} height={24} />
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight">Lumera</h1>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">Lumera</h1>
-          </div>
+          </AppLink>
           <nav className="flex-1 px-4 py-6 space-y-2">
             <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Menu</p>
             {NAV_ITEMS.map((item) => (
-              <a
+              <AppLink
                 key={item.id}
                 href={item?.url || '#'}
-                onClick={(e) => {
-                  if (!item?.url) {
-                    e.preventDefault()
-                    onNavClick(item.id)
-                  }
-                }}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-colors duration-200 ${
-                  currentPath === item.url
-                    ? "text-white bg-indigo-600/30"
-                    : "text-lumera-gray hover:text-white hover:bg-gray-700/50"
-                }`}
-              >
-                <span className="inline-block w-6 h-6">{item.icon}</span>
-                <span>{item.label}</span>
-              </a>
+                className="text-base font-medium">
+                <span
+                  onClick={() => handleMenuItemClick(item)}
+                  className={`flex items-center gap-3 px-4 py-3 transition-colors duration-200 rounded-lg w-full ${
+                    isActive(currentPath, item.url)
+                      ? "text-white bg-indigo-600/30"
+                      : "text-lumera-gray hover:text-white hover:bg-gray-700/50"
+                  }`}
+                >
+                  <span className="inline-block w-6 h-6">{item.icon}</span>
+                  <span>{item.label}</span>
+                </span>
+              </AppLink>
             ))}
           </nav>
           <div className="px-6 py-4 mt-auto border-t border-gray-800 text-center text-xs text-gray-500">
@@ -106,35 +147,35 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="relative flex flex-1 w-full">
             <div className="flex flex-grow flex-col bg-lumera-navy border-r border-gray-800/50">
               <div className="flex justify-between items-center w-full">
-                <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800">
-                  <div className="w-6 h-6 grid place-items-center">
-                    <img src="/lumera-symbol.svg" alt="Lumera" />
+                <AppLink href="/">
+                  <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800 w-full">
+                    <div className="w-6 h-6 grid place-items-center">
+                      <Image src="/lumera-symbol.svg" alt="Lumera" width={24} height={24} />
+                    </div>
+                    <h1 className="text-2xl font-bold tracking-tight">Lumera</h1>
                   </div>
-                  <h1 className="text-2xl font-bold tracking-tight">Lumera</h1>
-                </div>
+                </AppLink>
                 <button className="btn-close" onClick={() => setSidebarOpen(false)}><X /></button>
               </div>
-              <nav className="flex-1 px-4 py-6 space-y-2">
+              <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
                 <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Menu</p>
                 {NAV_ITEMS.map((item) => (
-                  <a
+                  <AppLink
                     key={item.id}
                     href={item?.url || '#'}
-                    onClick={(e) => {
-                      if (!item?.url) {
-                        e.preventDefault()
-                        onNavClick(item.id)
-                      }
-                    }}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-colors duration-200 ${
-                      currentPath === item.url
-                        ? "text-white bg-indigo-600/30"
-                        : "text-lumera-gray hover:text-white hover:bg-gray-700/50"
-                    }`}
-                  >
-                    <span className="inline-block w-6 h-6">{item.icon}</span>
-                    <span>{item.label}</span>
-                  </a>
+                    className="text-base font-medium">
+                    <span
+                      onClick={() => handleMenuItemClick(item)}
+                      className={`flex items-center gap-3 px-4 py-3  transition-colors duration-200 rounded-lg w-full ${
+                        isActive(currentPath, item.url)
+                          ? "text-white bg-indigo-600/30"
+                          : "text-lumera-gray hover:text-white hover:bg-gray-700/50"
+                      }`}
+                    >
+                      <span className="inline-block w-6 h-6">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </span>
+                  </AppLink>
                 ))}
               </nav>
               <div className="px-6 py-4 mt-auto border-t border-gray-800 text-center text-xs text-gray-500">
@@ -157,14 +198,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           >
             {/* simple hamburger */}
             <div className="space-y-1">
-              <span className="block w-6 h-0.5 bg-gray-400" />
-              <span className="block w-6 h-0.5 bg-gray-400" />
-              <span className="block w-6 h-0.5 bg-gray-400" />
+              <span className="block w-4 sm:w-6 h-0.5 bg-gray-400" />
+              <span className="block w-4 sm:w-6 h-0.5 bg-gray-400" />
+              <span className="block w-4 sm:w-6 h-0.5 bg-gray-400" />
             </div>
           </button>
-          <div className="flex flex-1 justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-1 justify-between pl-0 pr-4 sm:px-6 lg:px-8">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold">{VIEW_TITLES[activeView]}</h1>
+              <h1 className="text-base sm:text-2xl font-bold">{viewTitle || VIEW_TITLES[activeView]}</h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6 gap-3">
               {/* Placeholder for wallet actions */}

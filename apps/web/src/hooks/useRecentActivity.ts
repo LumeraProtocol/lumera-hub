@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useChain } from '@interchain-kit/react';
 import axios from 'axios';
 
-import { CHAIN_NAME, REST_AI_URL } from '@/contants/network';
+import { REST_AI_URL } from '@/contants/network';
 import { Coin } from '@/hooks/useAccountInfo';
+import useWalletConnect from '@/hooks/useWalletConnect';
 
 export type TMessage = {
     '@type': string;
@@ -13,11 +13,11 @@ export type TMessage = {
     amount: any;
 }
 
-type TOption = {
+export type TOption = {
     '@type': string;
 }
 
-type TSignerInfos = {
+export type TSignerInfos = {
     public_key: {
         '@type': string;
         key: string;
@@ -30,13 +30,13 @@ type TSignerInfos = {
     sequence: string;
 }
 
-type TAttribute = {
+export type TAttribute = {
     key: string;
     value: string;
     index: boolean;
 }
 
-type TFee = {
+export type TFee = {
     amount: Coin[];
     gas_limit: string;
     payer: string;
@@ -53,12 +53,12 @@ type TEventAttribute = {
     value: string;
 }
 
-type TLogEvent = {
+export type TLogEvent = {
     attributes: TEventAttribute[];
     type: string;
 }
 
-type TLog = {
+export type TLog = {
     events: TLogEvent[];
     log: string;
     msg_index: number;
@@ -99,7 +99,7 @@ export interface IRecentActivity {
 }
 
 const useRecentActivity = () => {
-    const { address } = useChain(CHAIN_NAME)
+    const { address } = useWalletConnect();
     const [recentActivity, setRecentActivity] = useState<IRecentActivity[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
@@ -116,7 +116,7 @@ const useRecentActivity = () => {
             setError(null);
 
             try {
-                const { data } = await axios.get(`${REST_AI_URL}/cosmos/tx/v1beta1/txs?pagination.limit=5&order_by=ORDER_BY_UNSPECIFIED&query=message.sender%3D'${address}'`);
+                const { data } = await axios.get(`${REST_AI_URL}/cosmos/tx/v1beta1/txs?order_by=ORDER_BY_DESC&query=message.sender%3D'${address}'&pagination.limit=5`);
                 setRecentActivity(data.tx_responses)
             } catch (e) {
                 console.error('API Error:', e);
