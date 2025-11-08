@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import axios from 'axios';
 
 import * as instance from '@/utils/api';
 import { IValidator } from '@/types/validator';
+import { RPC_ENDPOINT } from '@/contants/network';
+
+export const LIMIT = 20;
 
 const useValidator = () => {
   const params = useParams();
@@ -23,13 +27,17 @@ const useValidator = () => {
   const [validators, setValidators] = useState<IValidator[]>([]);
   const [isFetchDelegatorsLoading, setFetchDelegatorsLoading] = useState(false);
   const [delegators , setDelegators] = useState([]);
+  const [totalDelegators, setTotalDelegators] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
 
-  const fetchDelegators  = async (validator: string) => {
+  const fetchDelegators  = async (validator: string, page = 1) => {
     setFetchDelegatorsLoading(true);
     try {
-      const { data } = await instance.get(`/cosmos/tx/v1beta1/txs?order_by=2&query=delegate.validator=%27${validator}%27&pagination.limit=5&pagination.offset=0&pagination.count_total=true`);
-      setDelegators(data.tx_responses);
+      const { data: { result } } = await axios.get(`${RPC_ENDPOINT}/tx_search?query="delegate.validator = %27${validator}%27"&page=${page}&per_page=${LIMIT}&order_by="desc"`);
+      setDelegators(result.txs);
+      setTotalDelegators(Number(result.total_count));
     } catch (error) {
+      console.error(error)
       setError(error instanceof Error ? error.message : 'An unknown error occurred.');
     }
     setFetchDelegatorsLoading(false);
@@ -84,6 +92,10 @@ const useValidator = () => {
     }
   }, [params?.validator]);
 
+  const handlePageClick = ({ selected }: { selected: number }) => {
+    fetchDelegators(params.validator as string, selected + 1);
+  }
+
   return {
     isLoading,
     error,
@@ -96,6 +108,8 @@ const useValidator = () => {
     validators,
     isFetchDelegatorsLoading,
     delegators,
+    totalDelegators,
+    handlePageClick,
   }
 }
 

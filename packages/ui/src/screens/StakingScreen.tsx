@@ -661,7 +661,7 @@ const RewardsCalculator = ({
       setError('Amount must not be less than 0.');
       return
     }
-    if (Number(amount) >= Number(availableAmount)) {
+    if (Number(amount) > Number(availableAmount)) {
       setError('Amount cannot exceed the available balance.');
       return
     }

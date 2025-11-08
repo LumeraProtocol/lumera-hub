@@ -9,6 +9,7 @@ import { Ripemd160, sha256 } from '@cosmjs/crypto';
 import chainMainnet from 'chain-registry/mainnet'
 import chainTestnet from 'chain-registry/testnet';
 export { parseCoins } from '@cosmjs/stargate';
+import { MsgDelegate } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
 
 import { IValidator } from '@/types/validator';
 
@@ -116,4 +117,14 @@ export const isNumber = (value: number) => {
 
 export function hashTx(raw: Uint8Array) {
   return toHex(sha256(raw)).toUpperCase();
+}
+
+export const convertUint8ArrayToJson = (encodedBytes: Uint8Array) => {
+  try {
+    const decodedMessage = MsgDelegate.decode(encodedBytes);
+
+    return MsgDelegate.toJSON(decodedMessage);
+  } catch {
+    return '';
+  }
 }

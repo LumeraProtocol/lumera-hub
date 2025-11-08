@@ -104,7 +104,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
       setError('Please enter amount.');
       return
     }
-    if (options.availableAmount && Number(optionsAdvanced.amount) >= Number(options.availableAmount)) {
+    if (options.availableAmount && Number(optionsAdvanced.amount) > Number(options.availableAmount)) {
       setError('Amount cannot exceed the available balance.');
       return
     }
