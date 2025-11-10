@@ -23,6 +23,8 @@ export default function Page() {
     validators,
     isFetchDelegatorsLoading,
     delegators,
+    totalDelegators,
+    handlePageClick,
   } = useValidator();
    const { accountInfo } = useAccountInfo();
 
@@ -65,6 +67,8 @@ export default function Page() {
             onAdvancedCheckedChange: delegate.handleShowAdvancedChange,
           }}
           accountInfo={accountInfo}
+          totalDelegators={totalDelegators}
+          onPageClick={handlePageClick}
         />
       </div>
     </>

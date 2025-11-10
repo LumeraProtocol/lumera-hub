@@ -1,6 +1,6 @@
 // apps/web/src/app/page.tsx
 'use client'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from "react-helmet-async";
 
 import useAccountInfo from '@/hooks/useAccountInfo';
@@ -11,7 +11,11 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import { IProposal } from '@/hooks/useProposals'
 
 export default function Page() {
-  const [selectedItem, setSelectedItem] = useState<IProposal | null>(null)
+  const [selectedItem, setSelectedItem] = useState<IProposal | null>(null);
+
+  useEffect(() => {
+    document.title = 'Lumera';
+  }, []);
 
   const { address } = useWalletConnect();
   const {

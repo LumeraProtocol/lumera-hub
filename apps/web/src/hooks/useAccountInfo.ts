@@ -46,6 +46,20 @@ export interface AccountInfoData {
   unbonding: ValidatorUnbonding[];
 }
 
+export const getTotalRewards = (accountInfo: AccountInfoData | null) => {
+  let total = 0;
+  if (accountInfo?.rewards?.length) {
+    for (const item of accountInfo?.rewards) {
+      for (const reward of item.reward) {
+        if (reward.denom === DENOM) {
+          total += Number(reward.amount);
+        }
+      }
+    }
+  }
+  return total;
+}
+
 const useAccountInfo = () => {
   const { address, getClient } = useWalletConnect();
 
@@ -60,10 +74,11 @@ const useAccountInfo = () => {
   const [isClaimLoading, setClaimLoading] = useState(false);
   const [errorClaim, setErrorClaim] = useState<string | null>(null);
   const [claimInfo, setClaimInfo] = useState({
-    senderAddress: '',
+    senderAddress: address,
     fees: FEE_VALUE,
     gas: GAS_LIMIT,
     memo: 'Claim rewards',
+    totalRewards: '0',
   });
   const [isClaimModalOpen, setClaimModalOpen] = useState(false);
   const [selectedModal, setSelectedModal] = useState('');
@@ -85,12 +100,17 @@ const useAccountInfo = () => {
       const balanceData = balanceRes.data;
       const delegationsData = delegationsRes.data;
       const rewardsData = rewardsRes.data;
-      setAccountInfo({
+      const _accountInfo = {
         balances: balanceData.balances,
         delegations: delegationsData.delegation_responses,
         rewards: rewardsData.rewards,
         unbonding: resUnbonding.unbonding_responses,
-      });
+      }
+      setAccountInfo(_accountInfo);
+      setClaimInfo({
+        ...claimInfo,
+        totalRewards: `${getTotalRewards(_accountInfo)}`,
+      })
     } catch (e) {
       console.error('API Error:', e);
       if (e instanceof Error) {
@@ -115,7 +135,6 @@ const useAccountInfo = () => {
         senderAddress: address,
       });
     }
-
     fetchData();
   }, [address]);
 
@@ -165,8 +184,6 @@ const useAccountInfo = () => {
       const result = await client.signAndBroadcast(claimInfo.senderAddress, msgWithdraw, fee, claimInfo.memo);
       if (result?.transactionHash) {
         setTransactionHash(result.transactionHash);
-        // setClaimModalOpen(false);
-        fetchData();
       }
     } catch (e) {
       // console.error('API Error:', e);
@@ -191,14 +208,25 @@ const useAccountInfo = () => {
   const handleToggleClaimModal = (status: boolean) => {
     setClaimLoading(false);
     setClaimModalOpen(status);
+    setSelectedClaim(null);
+    setErrorClaim('');
+    fetchData();
+    if (!status) {
+      setTransactionHash('');
+    }
   }
 
   const handleOpenModal = (modal: string) => {
     setSelectedModal(modal);
+    setErrorClaim('');
   }
 
   const handleCloseModal = () => {
     setSelectedModal('');
+    setSelectedClaim(null);
+    setErrorClaim('');
+    fetchData();
+    setTransactionHash('');
   }
 
   const handleCloseCongratulationsModal = () => {
@@ -206,16 +234,23 @@ const useAccountInfo = () => {
     setClaimModalOpen(false);
     setClaimLoading(false);
     setSelectedClaim(null);
+    setErrorClaim('');
+    fetchData();
   }
 
   const handleToggleClaimItemModal = (status: boolean, item: DelegationResponse) => {
     setClaimLoading(false);
     setClaimModalOpen(status);
+    setErrorClaim('');
     if (!status) {
       setSelectedClaim(null);
     } else {
       setSelectedClaim(item);
     }
+    if (!status) {
+      setTransactionHash('');
+    }
+    fetchData();
   }
 
   return {
@@ -229,6 +264,7 @@ const useAccountInfo = () => {
     selectedModal,
     transactionHash,
     selectedClaim,
+    fetchData,
     handleToggleClaimItemModal,
     handleCloseCongratulationsModal,
     handleClaimButtonClick,

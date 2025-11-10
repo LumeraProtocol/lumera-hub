@@ -7,12 +7,18 @@ interface IAppState {
   activeView: ViewId;
   currentPath: string;
   viewTitle: string;
+  currentTab: string;
+  validatorTab: string;
+  subTab: string;
 }
 
 const initialState: IAppState = {
   activeView: 'dashboard',
   currentPath: '/',
   viewTitle: '',
+  currentTab: 'active',
+  validatorTab: 'all',
+  subTab: 'delegations',
 };
 
 type TActiveViewAction = {
@@ -25,6 +31,18 @@ type TCurrentPathAction = {
 
 type TViewTitleAction = {
   viewTitle: string;
+};
+
+type TCurrentTabAction = {
+  currentTab: string;
+};
+
+type TValidatorTabAction = {
+  validatorTab: string;
+};
+
+type TSubTabAction = {
+  subTab: string;
 };
 
 export const appSlice = createSlice({
@@ -40,8 +58,24 @@ export const appSlice = createSlice({
     setViewTitle: (state, { payload }: PayloadAction<TViewTitleAction>) => {
       state.viewTitle = payload.viewTitle;
     },
+    setCurrentTab: (state, { payload }: PayloadAction<TCurrentTabAction>) => {
+      state.currentTab = payload.currentTab;
+    },
+    setValidatorTab: (state, { payload }: PayloadAction<TValidatorTabAction>) => {
+      state.validatorTab = payload.validatorTab;
+    },
+    setSubTab: (state, { payload }: PayloadAction<TSubTabAction>) => {
+      state.subTab = payload.subTab;
+    },
   },
 });
 
-export const { setCurrentPath, setActiveView, setViewTitle } = appSlice.actions;
+export const {
+  setCurrentPath,
+  setActiveView,
+  setViewTitle,
+  setCurrentTab,
+  setValidatorTab,
+  setSubTab,
+} = appSlice.actions;
 export default appSlice.reducer;

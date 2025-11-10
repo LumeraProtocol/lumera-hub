@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { H2, Card, Button, H3 } from 'tamagui';
 import { ArrowUpRight, Copy, Check } from 'lucide-react';
 import { fromHex, toBase64, fromBase64, toHex, fromBech32 } from '@cosmjs/encoding';
+import { decodeTxRaw } from '@cosmjs/proto-signing';
+import ReactPaginate from 'react-paginate';
 
 import Loading from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import DelegateModal from '@/components/DelegateModal';
+import useAppRouter from '@/hooks/useAppRouter';
 import { IValidator } from '@/types/validator';
 import { RATE_VALUE } from '@/contants';
 import { TSigningInfos, IBlock, AccountInfoData } from '@/types';
@@ -18,31 +21,30 @@ import {
   stringToUint8Array,
   uint8ArrayToString,
   parseCoins,
+  convertUint8ArrayToJson,
 } from '@/utils/helpers';
 import { DENOM } from '@/contants/network';
-import { TLog, TEvent, TxMessages } from '@/hooks/useTransactionDetails';
+import { TEvent } from '@/hooks/useTransactionDetails';
 import useLatestBlocks from '@/hooks/useLatestBlocks';
+import { LIMIT } from '@/hooks/useValidator';
 
-type TTXResponse = {
+import 'react-paginate/theme/basic/react-paginate.css';
+
+type TTx = {
+  hash: string;
   height: string;
-  txhash: string;
-  codespace: string;
-  code: number;
-  data: string;
-  raw_log: string;
-  logs: TLog[];
-  info: string;
-  gas_wanted: string;
-  gas_used: string;
-  tx: {
-    '@type': string;
-    body: {
-      memo: string;
-      messages: TxMessages[];
-    };
+  index: number;
+  tx_result: {
+    code: number;
+    data: string;
+    log: string;
+    info: string;
+    gas_wanted: string;
+    gas_used: string;
+    events: TEvent[];
+    codespace: string;
   };
-  timestamp: string;
-  events: TEvent[];
+  tx: string;
 }
 
 interface IStakingDetailsScreen {
@@ -61,7 +63,7 @@ interface IStakingDetailsScreen {
   isFetchValidatorsLoading: boolean;
   validators: IValidator[];
   isFetchDelegatorsLoading: boolean;
-  delegators: TTXResponse[];
+  delegators: TTx[];
   delegateOptions: {
     isVoteLoading: boolean;
     error: string | null;
@@ -87,15 +89,13 @@ interface IStakingDetailsScreen {
     onOpenModal: (validator: string, customMemo?: string) => void;
   };
   accountInfo: AccountInfoData | null;
-}
-
-type TDelegators = {
-  address: string;
-  stakedAmount: number;
+  totalDelegators: number;
+  onPageClick: ({ selected }: { selected: number }) => void;
 }
 
 const LatestBlocks = () => {
-  const { blocks, validators } = useLatestBlocks();
+  const { blocks, validators, isFetchBlockLoading } = useLatestBlocks();
+  const { redirect } = useAppRouter();
 
   const getBlockStatus = (block: IBlock) => {
     const { header } = block;
@@ -105,7 +105,8 @@ const LatestBlocks = () => {
 
     const txt = toHex(fromBase64(header.proposer_address)).toUpperCase();
     const validator = validators.find(
-      (x) => consensusPubkeyToHexAddress(x.consensus_pubkey) === txt
+      (x) => consensusPubkeyToHexAddress(x.consensus_pubkey) === txt ||
+      consensusPubkeyToHexAddress(x.consensus_pubkey) ===header.proposer_address
     );
 
     if (validator) {
@@ -165,11 +166,13 @@ const LatestBlocks = () => {
             <span className='inline-block w-3.5 h-3.5 bg-red-600 rounded-full mr-1'></span> Missed: {missed}
           </li>
         </ul>
-        <div className="grid grid-cols-10 md:grid-cols-20 gap-1.5 mt-3">
+        <div className="grid grid-cols-10 md:grid-cols-20 gap-1.5 mt-3 relative">
+          <Loading isLoading={isFetchBlockLoading} />
           {blocks?.map((block) => (
             <div
               key={block.last_commit.height}
-              className={`h-6 rounded ${getBlockStatus(block) === 'signed' ? 'bg-green-500' : getBlockStatus(block) === 'proposed' ? 'bg-sky-500' : 'bg-red-500'} transition-colors duration-500`} title={`Block ${block.last_commit.height}: ${getBlockStatus(block)}`} />
+              onClick={() => redirect(`/block/${block.last_commit.height}`)}
+              className={`h-6 rounded cursor-pointer ${getBlockStatus(block) === 'signed' ? 'bg-green-500' : getBlockStatus(block) === 'proposed' ? 'bg-sky-500' : 'bg-red-500'} transition-colors duration-500`} title={`Block ${block.last_commit.height}: ${getBlockStatus(block)}`} />
             ))}
           </div>
       </div>
@@ -185,12 +188,13 @@ export const StakingDetailsScreen = ({
   slashingParams,
   signingInfos,
   isFetchParamsLoading,
-  isFetchValidatorsLoading,
   validators,
   isFetchDelegatorsLoading,
   delegators,
   delegateOptions,
   accountInfo,
+  totalDelegators,
+  onPageClick,
 }: IStakingDetailsScreen) => {
   const [isCopied, setCopied] = useState(false);
 
@@ -231,8 +235,13 @@ export const StakingDetailsScreen = ({
   const totalPower = calculateTotalPower(validators);
 
   const mapDelegators = (messages: any[]) => {
-    if(!messages) return []
-    return Array.from(new Set(messages.map(x => x.delegator_address || x.grantee)))
+    if(!messages) return [];
+    const newMessages = messages.map((message) => {
+      return ({
+        ...convertUint8ArrayToJson(message.value),
+      })
+    })
+    return Array.from(new Set(newMessages.map(x => x.delegatorAddress)))
   }
 
   const mapEvents = (events: {type: string, attributes: {key: string, value: string}[]}[], withDenom = true, fmt = '0,0.[0]') => {
@@ -262,13 +271,13 @@ export const StakingDetailsScreen = ({
     return coins.map(coin => formatToken(coin, withDenom, fmt)).join(', ');
   }
 
-  const getStakeShare = (item: TTXResponse) => {
-    const value = mapEvents(item.events, false, '0,0.[000]');
+  const getStakeShare = (item: TTx) => {
+    const value = mapEvents(item.tx_result.events, false, '0,0.[000]');
     const percentValue = Number(value.replaceAll(',', '')) * 100 / totalPower;
     return parseFloat(percentValue.toFixed(7)) > 0 ? `${percentValue.toFixed(7)}%` : '0%';
   }
 
-   const getTotalBalances = () => {
+  const getTotalBalances = () => {
     let total = 0;
     if (accountInfo?.balances?.length) {
       for (const item of accountInfo?.balances) {
@@ -283,17 +292,19 @@ export const StakingDetailsScreen = ({
     return total / RATE_VALUE;
   }
 
+  const totalPages = Math.ceil(totalDelegators / LIMIT);
+
   return (
     <div className="space-y-8">
       <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
-          <H2 className='!font-bold text-white text-[32px] leading-none'>{validator?.description?.moniker}</H2>
-          <div className='btn-primary'>
+        <H2 className='!font-bold text-white text-[32px] leading-none'>{validator?.description?.moniker}</H2>
+        <div className='btn-primary'>
           <Button
             onPress={() => delegateOptions.onOpenModal(validator?.operator_address || '', validator?.description?.moniker ? `Delegate for the ${validator?.description?.moniker}` : '')}
           >
             <span className='font-bold whitespace-nowrap'>Delegate</span>
           </Button>
-          </div>
+        </div>
       </div>
       <div className='flex justify-between gap-5 mt-5 w-full'>
         <div className='w-2/3'>
@@ -383,7 +394,7 @@ export const StakingDetailsScreen = ({
       </div>
       <Card elevate size="$4" bordered className='w-full'>
         <Card.Header padded>
-          <H3>Delegators ({ delegators.length })</H3>
+          <H3>Delegators ({ totalDelegators })</H3>
           <div className='mt-3 relative'>
             <Loading isLoading={isFetchDelegatorsLoading} />
             <div className="overflow-x-auto">
@@ -393,25 +404,47 @@ export const StakingDetailsScreen = ({
                   <div className="col-span-2 text-right">Stake Share</div>
                   <div className="col-span-3 text-right">Amount</div>
                 </div>
-                {delegators.map((item, i) => (
-                  <div key={i} className="grid grid-cols-10 gap-4 p-3 bg-gray-900/40 rounded-lg text-sm">
-                    <div className="col-span-5 font-mono text-gray-300 truncate">
-                      {mapDelegators(item.tx?.body?.messages).map((d) => (
-                        <AppLink href={`/account/${d}`} key={d}>
-                          {d}
-                        </AppLink>
-                      ))}
+                {delegators.map((item, i) => {
+                  const tx = decodeTxRaw(fromBase64(item.tx));
+                  return (
+                    <div key={i} className="grid grid-cols-10 gap-4 p-3 bg-gray-900/40 rounded-lg text-sm">
+                      <div className="col-span-5 font-mono text-gray-300 truncate">
+                        {mapDelegators(tx?.body?.messages).map((d) => (
+                          <AppLink href={`/account/${d}`} key={d}>
+                            {d}
+                          </AppLink>
+                        ))}
+                      </div>
+                      <div className="col-span-2 text-right text-indigo-400">
+                        {getStakeShare(item)}
+                      </div>
+                      <div className="col-span-3 text-right font-mono text-white">
+                        {mapEvents(item.tx_result.events)}
+                      </div>
                     </div>
-                    <div className="col-span-2 text-right text-indigo-400">
-                      {getStakeShare(item)}
-                    </div>
-                    <div className="col-span-3 text-right font-mono text-white">
-                      {mapEvents(item.events)}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
+                {delegators?.length <= 0 ?
+                  <div>No delegators</div> : null
+                }
+
               </div>
             </div>
+            {totalPages > 1 ?
+              <div className="flex justify-end w-full paginate-wrapper mt-3">
+                <ReactPaginate
+                  breakLabel="..."
+                  nextLabel=">"
+                  onPageChange={onPageClick}
+                  pageRangeDisplayed={2}
+                  marginPagesDisplayed={1}
+                  pageCount={totalPages}
+                  previousLabel="<"
+                  renderOnZeroPageCount={null}
+                  className='react-paginate'
+                />
+              </div> : null
+            }
           </div>
         </Card.Header>
       </Card>

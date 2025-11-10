@@ -51,7 +51,7 @@ export default function SendModal({
     onAdvancedCheckedChange,
     onCloseCongratulationsModal,
 }: IVoteModal) {
-   if (transactionHash) {
+   if (transactionHash && isOpen) {
     return (
       <Dialog
         open

@@ -16,29 +16,27 @@ import {
   VisuallyHidden,
   Checkbox,
 } from 'tamagui';
-import { Wallet, Calculator, Search, CircleX, Check as CheckIcon } from '@tamagui/lucide-icons'
+import { Wallet, Calculator, Search, CircleX, Check as CheckIcon } from '@tamagui/lucide-icons';
 import { fromHex, toBase64 } from '@cosmjs/encoding';
 import {
   Coins,
   ArrowUpRight,
-  TriangleAlert,
   ChevronRight,
   Check as CheckCircle,
   ArrowUp,
   ArrowDown,
+  RefreshCcw,
 } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
 import PastTime from '@/components/PastTime';
 import Loading from '@/components/Loading';
 import CountDown from '@/components/CountDown';
-import DelegateModal from '@/components/DelegateModal';
 import UnbondModal from '@/components/UnbondModal';
 import RedelegateModal from '@/components/RedelegateModal';
 import Skeleton from '@/components/Skeleton';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import AppButton from '@/components/AppButton';
-import ConfirmModal from '@/components/ConfirmModal';
 import useAppRouter from '@/hooks/useAppRouter';
 import { RATE_VALUE } from '@/contants';
 import { DelegationResponse } from '@/hooks/useAccountInfo';
@@ -187,6 +185,7 @@ interface IStakingScreen {
       senderAddress: string;
       amount: string;
       validator: string;
+      validatorName: string;
     };
     showAdvanced: boolean;
     isOpenModal: boolean;
@@ -197,7 +196,7 @@ interface IStakingScreen {
     onSendClick: () => void;
     onInputChange: (name: string, value: string) => void;
     onAdvancedCheckedChange: (checked: boolean) => void;
-    onOpenModal: () => void;
+    onOpenModal: (validator: string, amount: string, customMemo?: string) => void;
   };
   redelegateOptions: {
     isRedelegateLoading: boolean;
@@ -210,6 +209,7 @@ interface IStakingScreen {
       amount: string;
       destinationValidator: string;
       sourceValidator: string;
+      validatorName: string;
     };
     showAdvanced: boolean;
     isOpenModal: boolean;
@@ -221,14 +221,17 @@ interface IStakingScreen {
     onSendClick: () => void;
     onInputChange: (name: string, value: string) => void;
     onAdvancedCheckedChange: (checked: boolean) => void;
-    onOpenModal: () => void;
+    onOpenModal: (validator: string, amount: string, customMemo?: string) => void;
   };
+  onRefreshBalance: () => void;
 }
 
 interface IRewardsCalculator {
   apr: number;
   availableAmount: number;
+  isLoading: boolean;
   onStakingButtonClick: (amount: string) => void;
+  onRefreshBalance: () => void;
 }
 
 interface IValidatorModal {
@@ -248,7 +251,10 @@ interface IStakeModal {
   validators: IValidator[];
   validator: string;
   amount: string;
+  error: string;
   transactionHash?: string;
+  isAccountLoading: boolean;
+  onRefreshBalance: () => void;
   onClose: () => void;
   onSendClick: () => void;
   onCloseContinueToStakingModal: () => void;
@@ -275,10 +281,26 @@ interface IAllValidators {
   delegateOptions: {
     onOpenModal: (validator: string, customMemo?: string) => void;
     validators: IValidator[];
+    onSelectValidator: (validator: string) => void;
   }
 }
 
-const StakeModal = ({
+export const getTotalBalances = (accountInfo: AccountInfoData | null) => {
+  let total = 0;
+  if (accountInfo?.balances?.length) {
+    for (const item of accountInfo?.balances) {
+      if (item.denom === DENOM) {
+        total += Number(item.amount);
+      }
+      if (item.denom === 'lume') {
+        total += Number(item.amount) * RATE_VALUE;
+      }
+    }
+  }
+  return total / RATE_VALUE;
+}
+
+export const StakeModal = ({
   isOpen,
   availableAmount,
   validators,
@@ -286,6 +308,9 @@ const StakeModal = ({
   amount,
   transactionHash,
   isLoading,
+  error,
+  isAccountLoading,
+  onRefreshBalance,
   onClose,
   onStakingAmountChange,
   onSendClick,
@@ -415,18 +440,37 @@ const StakeModal = ({
           <div className='withdraw-main-content relative p-5'>
             <Loading isLoading={isLoading} />
             <div className='flex justify-between items-center mb-4'>
-              <H3 className='text-lumera-label text-[32px]'>Stake {info?.description?.moniker}</H3>
+              <H3 className='text-lumera-label text-[32px]'>Stake LUME</H3>
               <button className='btn-close-modal cursor-pointer' onClick={onClose}><CircleX /></button>
             </div>
-            <div className='mt-2 relative'>
+            <div className='mt-5 relative'>
+              {info?.description?.moniker ?
+                <div className='mb-1 flex gap-2 justify-between flex-nowrap sm:flex-wrap'>
+                  <span>Selected Validator</span><span className='font-bold'>{info?.description?.moniker}</span>
+                </div> : null
+              }
               <div className='flex justify-between items-center gap-3'>
                 <Label htmlFor="amount" className='text-base !font-semibold'>
                   Amount
                 </Label>
                 {availableAmount ?
                   <div className='text-sm font-normal flex gap-2 items-center'>
-                    <span>Available: {formatNumber(availableAmount, { decimalsLength: 6})}</span>
-                    <button type='button' className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer' onClick={() => onStakingAmountChange(`${availableAmount}`)}>MAX</button>
+                    {isAccountLoading ?
+                      <Skeleton /> :
+                      <>
+                        <button type="button" onClick={onRefreshBalance} className='cursor-pointer'>
+                          <RefreshCcw className='w-4 h-4' />
+                        </button>
+                        <span>Available: {formatNumber(availableAmount, { decimalsLength: 6})}</span>
+                        <button
+                          type='button'
+                          className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer'
+                          onClick={() => onStakingAmountChange(`${availableAmount}`)}
+                        >
+                          MAX
+                        </button>
+                      </>
+                    }
                   </div> : null
                 }
               </div>
@@ -457,11 +501,14 @@ const StakeModal = ({
                   I understand that unstaking will take 21 days for LUME to become liquid upon withdrawal.
                 </Label>
               </div>
-              <div className='mt-8 btn-primary full'>
+              <div className={`${!isYes ? 'btn-secondary' : 'btn-primary'} mt-8 full`}>
                 <Button onPress={onSendClick} disabled={!isYes}>
-                  <span className='font-bold'>Save</span>
+                  <span className='font-bold'>Stake</span>
                 </Button>
               </div>
+              {error && !isLoading ?
+                <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
+              }
             </div>
           </div>
         </Dialog.Content>
@@ -470,7 +517,7 @@ const StakeModal = ({
   )
 }
 
-const ValidatorModal = ({
+export const ValidatorModal = ({
   isOpen,
   bond_denom,
   validators,
@@ -579,9 +626,12 @@ const ValidatorModal = ({
 const RewardsCalculator = ({
   apr,
   availableAmount,
+  isLoading,
   onStakingButtonClick,
+  onRefreshBalance,
 }: IRewardsCalculator) => {
   const [amount, setAmount] = React.useState('0');
+  const [error, setError] = React.useState('');
   const [estimatedRewards, setEstimatedRewards] = React.useState(0);
 
   const handleAmountChange = (text: string) => {
@@ -601,6 +651,23 @@ const RewardsCalculator = ({
     setEstimatedRewards(result);
   }
 
+  const handleStakingClick = () => {
+    setError('');
+    if (!Number(amount)) {
+      setError('Please enter amount.');
+      return
+    }
+    if (Number(amount) <= 0) {
+      setError('Amount must not be less than 0.');
+      return
+    }
+    if (Number(amount) > Number(availableAmount)) {
+      setError('Amount cannot exceed the available balance.');
+      return
+    }
+    onStakingButtonClick(`${amount}`);
+  }
+
   return (
     <Card elevate size="$4" bordered className='w-full mt-6'>
       <Card.Header padded>
@@ -615,8 +682,22 @@ const RewardsCalculator = ({
                 </Label>
                 {availableAmount ?
                   <div className='text-sm font-normal flex gap-2 items-center'>
-                    <span>Available: {formatNumber(availableAmount, { decimalsLength: 6})}</span>
-                    <button type='button' className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer' onClick={() => handleAmountChange(`${availableAmount}`)}>MAX</button>
+                    {isLoading ?
+                      <Skeleton /> :
+                      <>
+                        <button type="button" onClick={onRefreshBalance} className='cursor-pointer'>
+                          <RefreshCcw className='w-4 h-4' />
+                        </button>
+                        <span>Available: {formatNumber(availableAmount, { decimalsLength: 6})}</span>
+                        <button
+                          type='button'
+                          className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer'
+                          onClick={() => handleAmountChange(`${availableAmount}`)}
+                        >
+                          MAX
+                        </button>
+                      </>
+                    }
                   </div> : null
                 }
               </div>
@@ -631,8 +712,11 @@ const RewardsCalculator = ({
                 />
                 <span className='input-symbol'>LUME</span>
               </div>
-              <div className='btn-primary mt-5'>
-                <Button onPress={() => onStakingButtonClick(`${amount}`)} disabled={!amount || amount === '0'}>
+              {error ?
+                <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
+              }
+              <div className={`${!amount || amount === '0' ? 'btn-secondary' : 'btn-primary'} mt-5`}>
+                <Button onPress={handleStakingClick} disabled={!amount || amount === '0'}>
                   <span className='font-bold'>Continue to Staking</span>
                 </Button>
               </div>
@@ -682,13 +766,14 @@ const AllValidators = ({
   useEffect(() => {
     setSortBy('uptime');
     setSort('DESC');
-  }, [staking?.currentTab])
+  }, [staking?.currentTab]);
+
 
   const sortFunc = (a: IValidator, b: IValidator) => {
     switch (sortBy) {
       case 'name':
         if (sort === 'DESC') {
-          return b.description.moniker.toLowerCase().localeCompare(b.description.moniker.toLowerCase());
+          return b.description.moniker.toLowerCase().localeCompare(a.description.moniker.toLowerCase());
         }
         return a.description.moniker.toLowerCase().localeCompare(b.description.moniker.toLowerCase());
       case 'amount':
@@ -720,8 +805,7 @@ const AllValidators = ({
     if (keyword) {
       validators = validators.filter((validator) => validator.description.moniker.toLowerCase().indexOf(keyword.toLowerCase()) !== -1);
     }
-
-    return validators.sort((a, b) => sortFunc(a, b));
+    return [...validators.sort((a, b) => sortFunc(a, b))];
   }
 
   const handleInputChange = (text: string) => {
@@ -745,7 +829,8 @@ const AllValidators = ({
   }
 
   const handleSort = (name: string) => {
-    setSort(name === sortBy ? sort === 'DESC' ? 'ASC' : 'DESC' : 'DESC');
+    const newSort = name === sortBy ? sort === 'DESC' ? 'ASC' : 'DESC' : 'DESC'
+    setSort(newSort);
     setSortBy(name);
   }
 
@@ -907,7 +992,11 @@ const AllValidators = ({
                               {validator.jailed ?
                                 <div className='btn-jailed'>Jailed</div> :
                                 <div className='btn-primary'>
-                                  <Button onPress={() => delegateOptions.onOpenModal(validator.operator_address, validator?.description?.moniker ? `Delegate for the ${validator?.description?.moniker}` : '')}>Delegate</Button>
+                                  <Button
+                                    onPress={() => delegateOptions.onSelectValidator(validator.operator_address)}
+                                  >
+                                    Delegate
+                                  </Button>
                                 </div>
                               }
                             </div>
@@ -937,7 +1026,9 @@ export const StakingScreen = ({
   isAccountInfoLoading,
   unbondOptions,
   redelegateOptions,
+  onRefreshBalance,
 }: IStakingScreen) => {
+
   const getValidators = () => {
     const validators = staking?.currentTab === 'active' ? delegateOptions.validators : staking.validators;
     return validators
@@ -954,21 +1045,6 @@ export const StakingScreen = ({
       return accountInfo?.delegations?.reduce((total, item) => Number(item.balance.amount) + total, 0) || 0;
     }
     return 0;
-  }
-
-  const getTotalBalances = () => {
-    let total = 0;
-    if (accountInfo?.balances?.length) {
-      for (const item of accountInfo?.balances) {
-        if (item.denom === DENOM) {
-          total += Number(item.amount);
-        }
-        if (item.denom === 'lume') {
-          total += Number(item.amount) * RATE_VALUE;
-        }
-      }
-    }
-    return total / RATE_VALUE;
   }
 
   const getUptime = (validator: IValidator) => {
@@ -1021,17 +1097,6 @@ export const StakingScreen = ({
      return `Congratulations! Rewards have been claimed from ${validator.description.moniker} successfully.`
   }
 
-  const getConfirmContent = (title: string) => {
-    return (
-      <div>
-        <H3 textAlign='center' className='!flex items-center flex-col sm:flex-row gap-1 sm:gap-3 justify-center !leading-5'>
-          <TriangleAlert color='#f8aa0f' /> Warning: Claim Your Rewards First!
-        </H3>
-        <p className='mt-4'>If you proceed with {title} now, you will forfeit your currently claimable rewards of <strong>{staking?.selectedData?.rewards}</strong>. Please Claim Rewards before continuing to ensure you don’t lose them.</p>
-      </div>
-    );
-  }
-
   const getValidatorName = (delegation: TUnbondingDelegation, validator: IValidator | undefined) => {
     if (delegation.type !== 'redelegations') {
       return validator?.description?.moniker || formatAddress(delegation.validator_address, 12, -6)
@@ -1045,10 +1110,39 @@ export const StakingScreen = ({
 
     return (
       <span className='flex flex-wrap items-center gap-1'>
-        <span>{sourceValidator?.description?.moniker?.slice(0, 5)}...</span> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-arrow-right-icon lucide-arrow-right w-5 h-5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> <span>{destinationValidator?.description?.moniker}</span>
+        <span>{sourceValidator?.description?.moniker?.slice(0, 5)}...</span> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right-icon lucide-arrow-right w-5 h-5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> <span>{destinationValidator?.description?.moniker}</span>
       </span>
     )
   }
+
+  const getValidatorInfo = () => {
+    let amount = formatToken({
+      amount: `${getTotalRewards()}`,
+      denom: staking.params.bond_denom,
+    }, false, '0,0.[000000]');
+    let name = 'All';
+    let validatorName = '';
+
+    if (claim.selectedClaim) {
+      const validator = getAllValidators().find((item) => item.operator_address === claim.selectedClaim?.delegation.validator_address)
+      const reward = accountInfo?.rewards.find(v => v.validator_address === claim.selectedClaim?.delegation.validator_address);
+
+      amount = formatTokens(reward?.reward, false, '0,0.[000000]');
+      name = validator?.description?.moniker || '';
+    }
+
+    if (unbondOptions?.optionsAdvanced?.validator) {
+      const validator = getAllValidators().find((item) => item.operator_address === unbondOptions?.optionsAdvanced?.validator);
+      validatorName = validator?.description?.moniker || '';
+    }
+
+    return {
+      amount,
+      name,
+      validatorName,
+    }
+  }
+  const validatorInfo = getValidatorInfo();
 
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
@@ -1085,7 +1179,7 @@ export const StakingScreen = ({
               <Card elevate size="$4" bordered className='w-full'>
                 <Card.Header padded>
                   <H3 className='text-lumera-label'>Staking Rewards APR</H3>
-                  <div className='!text-lumera-green font-bold text-3xl !leading-11'>
+                  <div className='!text-lumera-green font-bold text-[40px] !leading-11'>
                     {staking.isAPRLoading ?
                       <Skeleton /> : <>
                         {staking.apr ? staking.apr.toFixed(2) : 0}%
@@ -1097,8 +1191,10 @@ export const StakingScreen = ({
             </div>
             <RewardsCalculator
               apr={staking.apr}
-              availableAmount={getTotalBalances()}
+              availableAmount={getTotalBalances(accountInfo)}
               onStakingButtonClick={delegateOptions.onStakingButtonClick}
+              onRefreshBalance={onRefreshBalance}
+              isLoading={isAccountInfoLoading}
             />
             <AllValidators
               delegateOptions={delegateOptions}
@@ -1219,7 +1315,7 @@ export const StakingScreen = ({
                                         href={`/staking/${delegation.delegation.validator_address}`}
                                         className="font-semibold text-white hover:text-lumera-teal cursor-pointer"
                                       >
-                                        {validator?.description?.moniker}
+                                        {validator?.description?.moniker || formatAddress(delegation.delegation.validator_address, 10, -5)}
                                       </AppLink>
                                     </div>
                                     <div className="col-span-2 text-right font-mono text-white">
@@ -1237,13 +1333,12 @@ export const StakingScreen = ({
                                     <div className="col-span-5 flex justify-end gap-1">
                                         <AppButton
                                           className="!py-1.5 !px-4 !text-sm"
-                                          onClick={() => delegateOptions.onOpenModal(delegation.delegation.validator_address, validator?.description?.moniker ? `Delegate for the ${validator?.description?.moniker}` : '')}
+                                          onClick={() => delegateOptions.onSelectValidator(delegation.delegation.validator_address)}
                                         >
-                                          Delegate
+                                          Stake
                                         </AppButton>
                                         {reward && getReward(reward) > 0 && (
                                           <AppButton
-                                            variant="secondary"
                                             className="!py-1.5 !px-4 !text-sm"
                                             onClick={() => claim.handleToggleClaimItemModal(true, delegation)}
                                           >
@@ -1252,35 +1347,30 @@ export const StakingScreen = ({
                                         )}
                                         <AppButton
                                           className="!py-1.5 !px-4 !text-sm"
-                                          onClick={() => staking.handleShowConfirmModal(
-                                            'redelegate',
+                                          onClick={() => redelegateOptions.onOpenModal(
                                             delegation.delegation.validator_address,
                                             formatToken({
                                               amount: delegation.balance.amount,
                                               denom: delegation.balance.denom,
                                             }, false, '0,0.[000000]'),
-                                            validator?.description?.moniker ? `Redelegate from ${validator?.description?.moniker}` : '',
-                                            formatTokens(reward?.reward),
+                                            validator?.description?.moniker ? `${validator?.description?.moniker}` : '',
                                           )}
                                         >
-                                          Redelegate
+                                          Unstake
                                         </AppButton>
                                         <AppButton
                                           className="!py-1.5 !px-4 !text-sm"
-                                          onClick={() => staking.handleShowConfirmModal(
-                                            'unbond',
+                                          onClick={() => unbondOptions.onOpenModal(
                                             delegation.delegation.validator_address,
                                             formatToken({
                                               amount: delegation.balance.amount,
                                               denom: delegation.balance.denom,
                                             }, false, '0,0.[000000]'),
-                                            validator?.description?.moniker ? `Unbond for the ${validator?.description?.moniker}` : '',
-                                            formatTokens(reward?.reward)
+                                            validator?.description?.moniker ? `${validator?.description?.moniker}` : '',
                                           )}
                                         >
                                           Unbond
                                         </AppButton>
-
                                     </div>
                                   </div>
                                 )
@@ -1406,21 +1496,6 @@ export const StakingScreen = ({
           </div>
         }
       </div>
-      <DelegateModal
-        isOpen={delegateOptions.isOpenModal}
-        availableAmount={getTotalBalances()}
-        isVoteLoading={delegateOptions.isVoteLoading}
-        onAdvancedCheckedChange={delegateOptions.onAdvancedCheckedChange}
-        onCloseDailogChange={delegateOptions.onCloseDailogChange}
-        onInputChange={delegateOptions.onInputChange}
-        onSendClick={delegateOptions.onSendClick}
-        optionsAdvanced={delegateOptions.optionsAdvanced}
-        showAdvanced={delegateOptions.showAdvanced}
-        error={delegateOptions.error}
-        validators={delegateOptions.validators}
-        transactionHash={delegateOptions.transactionHash}
-        onCloseCongratulationsModal={delegateOptions.onCloseCongratulationsModal}
-      />
       <UnbondModal
         isOpen={unbondOptions.isOpenModal}
         isUnbondLoading={unbondOptions.isUnbondLoading}
@@ -1434,6 +1509,7 @@ export const StakingScreen = ({
         error={unbondOptions.error}
         transactionHash={unbondOptions.transactionHash}
         onCloseCongratulationsModal={unbondOptions.onCloseCongratulationsModal}
+        validatorName={validatorInfo.validatorName || ''}
       />
       <RedelegateModal
         isOpen={redelegateOptions.isOpenModal}
@@ -1462,24 +1538,10 @@ export const StakingScreen = ({
         transactionHash={claim.transactionHash}
         onCloseCongratulationsModal={claim.onCloseCongratulationsModal}
         congratulationsMessage={getCongratulationsMessage()}
-      />
-      <ConfirmModal
-        isOpen={staking.selectedModal === 'redelegate'}
-        content={getConfirmContent('Redelegating')}
-        onCloseModal={staking.handleCloseModal}
-        onCancelClick={staking.handleCloseModal}
-        onConfirmClick={redelegateOptions.onOpenModal}
-        btnConfirmLabel='Continue'
-        btnCancelLabel='Claim Rewards'
-      />
-      <ConfirmModal
-        isOpen={staking.selectedModal === 'unbond'}
-        content={getConfirmContent('Unbonding')}
-        onCloseModal={staking.handleCloseModal}
-        onCancelClick={staking.handleCloseModal}
-        onConfirmClick={unbondOptions.onOpenModal}
-        btnConfirmLabel='Continue'
-        btnCancelLabel='Claim Rewards'
+        message={{
+          amount: validatorInfo.amount,
+          from: validatorInfo.name || '',
+        }}
       />
       <ValidatorModal
         isOpen={delegateOptions.selectedModal === 'validator'}
@@ -1492,16 +1554,19 @@ export const StakingScreen = ({
       />
       <StakeModal
         isOpen={delegateOptions.selectedModal === 'stake'}
-        availableAmount={getTotalBalances()}
+        availableAmount={getTotalBalances(accountInfo)}
         onClose={delegateOptions.onCloseContinueToStakingModal}
         onStakingAmountChange={delegateOptions.onStakingAmountChange}
         onCloseContinueToStakingModal={delegateOptions.onCloseContinueToStakingModal}
         onSendClick={delegateOptions.onSendClick}
-        validators={delegateOptions.validators}
+        validators={getAllValidators()}
         validator={delegateOptions.optionsAdvanced.validator}
         amount={delegateOptions.optionsAdvanced.amount}
         transactionHash={delegateOptions.transactionHash}
         isLoading={delegateOptions.isVoteLoading}
+        error={delegateOptions.error || ''}
+        isAccountLoading={isAccountInfoLoading}
+        onRefreshBalance={onRefreshBalance}
       />
     </div>
     </YStack>
