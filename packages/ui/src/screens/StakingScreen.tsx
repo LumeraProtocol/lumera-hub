@@ -1350,16 +1350,14 @@ export const StakingScreen = ({
                                         >
                                           Stake
                                         </AppButton>
-                                        {reward && getReward(reward) > 0 && (
-                                          <AppButton
-                                            className={`!py-1.5 !px-4 !text-sm ${validator?.jailed ? 'opacity-50 !cursor-not-allowed' : ''}`}
-                                            variant='secondary'
-                                            onClick={() => claim.handleToggleClaimItemModal(true, delegation)}
-                                            disabled={validator?.jailed}
-                                          >
-                                            Claim
-                                          </AppButton>
-                                        )}
+                                        <AppButton
+                                          className={`!py-1.5 !px-4 !text-sm ${validator?.jailed || !reward || getReward(reward) <= 0 ? 'opacity-50 !cursor-not-allowed' : ''}`}
+                                          variant='secondary'
+                                          onClick={() => claim.handleToggleClaimItemModal(true, delegation)}
+                                          disabled={validator?.jailed || !reward || getReward(reward) <= 0}
+                                        >
+                                          Claim
+                                        </AppButton>
                                         <AppButton
                                           className="!py-1.5 !px-4 !text-sm"
                                           onClick={() => redelegateOptions.onOpenModal(
