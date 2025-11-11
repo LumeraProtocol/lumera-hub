@@ -198,7 +198,7 @@ const useStaking = (address = '') => {
       }
       fetchRewards();
     }
-  }, [address]);
+  }, [address, validatorTab, subTab]);
 
   const handleTabChange = (tab: string) => {
     dispatch(setCurrentTab({

@@ -11,7 +11,7 @@ import {
   ArrowDownLeft,
   Check,
 } from 'lucide-react';
-import { YStack, H2, Paragraph, Card as TamaguiCard } from 'tamagui';
+import { YStack, H2, Paragraph, Card as TamaguiCard, H3 } from 'tamagui';
 import ReactPaginate from 'react-paginate';
 import dayjs from 'dayjs';
 import { Wallet } from '@tamagui/lucide-icons';
@@ -398,6 +398,23 @@ export const WalletScreen = ({
             <Loading isLoading={isLoading} />
             <div className='w-full overflow-x-auto'>
               <div className='w-full min-w-[968px]'>
+                <div className="grid grid-cols-12 gap-4 items-center p-4">
+                  <div className="col-span-2 flex items-center text-gray-500">
+                    Block Height
+                  </div>
+                  <div className="col-span-2 text-gray-500">
+                    TX Hash
+                  </div>
+                  <div className="col-span-3 text-gray-500 text-left whitespace-nowrap">
+                    Transaction Type
+                  </div>
+                  <div className="col-span-2 text-gray-500 text-left whitespace-nowrap">
+                    Transaction Status
+                  </div>
+                  <div className="col-span-3 text-gray-500 flex justify-end">
+                    Time
+                  </div>
+                </div>
                 {transactions.map((tx) => (
                   <div key={tx.txhash} className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors">
                     <div className="col-span-2 flex items-center">
@@ -415,7 +432,7 @@ export const WalletScreen = ({
                       {getMessages(tx.tx.body.messages)}
                     </div>
                     <div className="col-span-2 text-left whitespace-nowrap">
-                      <span className={`truncate relative py-2 px-4 w-fit mr-2 rounded ${tx?.code === 0 ? 'text-lumera-teal' : 'text-red-500'}`}>
+                      <span className={`truncate relative w-fit rounded ${tx?.code === 0 ? 'text-lumera-teal' : 'text-red-500'}`}>
                         {tx?.code === 0 ? 'Success' : 'Failed'}
                       </span>
                     </div>
@@ -425,6 +442,11 @@ export const WalletScreen = ({
                     </div>
                   </div>
                 ))}
+                {!transactions?.length ?
+                  <div className="grid grid-cols-12 gap-4 items-center">
+                    <H3>No Transactions</H3>
+                  </div> : null
+                }
               </div>
             </div>
             {totalTransactions > 1 ?

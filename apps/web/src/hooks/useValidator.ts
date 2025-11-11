@@ -28,7 +28,6 @@ const useValidator = () => {
   const [isFetchDelegatorsLoading, setFetchDelegatorsLoading] = useState(false);
   const [delegators , setDelegators] = useState([]);
   const [totalDelegators, setTotalDelegators] = useState(0);
-  const [currentPage, setCurrentPage] = useState(0);
 
   const fetchDelegators  = async (validator: string, page = 1) => {
     setFetchDelegatorsLoading(true);

@@ -1328,7 +1328,11 @@ export const StakingScreen = ({
                                       {formatCommissionRate(validator?.commission?.commission_rates?.rate)}
                                     </div>
                                     <div className="col-span-2 text-right font-mono text-teal-400">
-                                      {formatTokens(reward?.reward)}
+                                      {validator?.jailed ?
+                                        <span className='text-red-600'>Jailed</span> : <>
+                                          {formatTokens(reward?.reward)}
+                                        </>
+                                      }
                                     </div>
                                     <div className="col-span-5 flex justify-end gap-1">
                                         <AppButton
@@ -1339,8 +1343,10 @@ export const StakingScreen = ({
                                         </AppButton>
                                         {reward && getReward(reward) > 0 && (
                                           <AppButton
-                                            className="!py-1.5 !px-4 !text-sm"
+                                            className={`!py-1.5 !px-4 !text-sm ${validator?.jailed ? 'opacity-50 !cursor-not-allowed' : ''}`}
+                                            variant='secondary'
                                             onClick={() => claim.handleToggleClaimItemModal(true, delegation)}
+                                            disabled={validator?.jailed}
                                           >
                                             Claim
                                           </AppButton>
@@ -1356,7 +1362,7 @@ export const StakingScreen = ({
                                             validator?.description?.moniker ? `${validator?.description?.moniker}` : '',
                                           )}
                                         >
-                                          Unstake
+                                          Restake
                                         </AppButton>
                                         <AppButton
                                           className="!py-1.5 !px-4 !text-sm"
