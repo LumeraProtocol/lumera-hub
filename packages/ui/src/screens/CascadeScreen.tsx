@@ -149,7 +149,7 @@ export const CascadeScreen = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: an
           <Card.Header padded>
             <H3 className='text-white'>Network Storage</H3>
             <div className='text-[40px] font-bold text-lumera-blue-light'>
-              25 TB
+              25 TB <span className='text-xl'>(50 Active Supernodes)</span>
             </div>
             <div className='text-lumera-label'>Total data stored across all supernodes.</div>
           </Card.Header>
@@ -158,7 +158,7 @@ export const CascadeScreen = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: an
           <Card.Header padded>
             <H3 className='text-white'>Your Usage</H3>
             <div className='text-[40px] font-bold text-white'>
-              156.83 MB
+              50 MB <span className='text-xl'>(10 Files Uploaded)</span>
             </div>
             <div className='text-lumera-label'>Your contribution to the network.</div>
           </Card.Header>
