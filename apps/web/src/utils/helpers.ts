@@ -125,6 +125,6 @@ export const convertUint8ArrayToJson = (encodedBytes: Uint8Array) => {
 
     return MsgDelegate.toJSON(decodedMessage);
   } catch {
-    return '';
+    return null;
   }
 }

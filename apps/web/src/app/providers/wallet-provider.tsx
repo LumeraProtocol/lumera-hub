@@ -48,7 +48,7 @@ export function WebWalletProviders({ children }: { children: React.ReactNode }) 
       return;
     }
     setChainData({ chain: foundChain, assets: foundAssets });
-  }, [isBrowser]);
+  }, [isBrowser, chains, assetLists]);
 
   // Setup WalletConnect with custom metadata
   const walletConnect = React.useMemo(() => new WCWallet(undefined, {
