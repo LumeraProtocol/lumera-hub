@@ -67,13 +67,13 @@ const PartSetHeader = ({
       <div className="inline-flex border-b border-gray-700 w-auto">
         <button
           onClick={() => setCurrentTab('total')}
-          className={`px-4 py-2 font-medium cursor-pointer ${currentTab === 'total' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+          className={`px-4 py-2 font-medium cursor-pointer ${currentTab === 'total' ? 'text-white border-b-2 border-lumera-teal' : 'text-gray-400 hover:text-white'}`}
         >
           Total
         </button>
         <button
           onClick={() => setCurrentTab('hash')}
-          className={`px-4 py-2 font-medium cursor-pointer ${currentTab === 'hash' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+          className={`px-4 py-2 font-medium cursor-pointer ${currentTab === 'hash' ? 'text-white border-b-2 border-lumera-teal' : 'text-gray-400 hover:text-white'}`}
         >
           Hash
         </button>
@@ -106,13 +106,13 @@ const Version = ({
       <div className="inline-flex border-b border-gray-700 w-auto">
         <button
           onClick={() => setCurrentTab('block')}
-          className={`px-4 py-2 font-medium cursor-pointer ${currentTab === 'block' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+          className={`px-4 py-2 font-medium cursor-pointer ${currentTab === 'block' ? 'text-white border-b-2 border-lumera-teal' : 'text-gray-400 hover:text-white'}`}
         >
           Block
         </button>
         <button
           onClick={() => setCurrentTab('app')}
-          className={`px-4 py-2 font-medium cursor-pointer ${currentTab === 'app' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+          className={`px-4 py-2 font-medium cursor-pointer ${currentTab === 'app' ? 'text-white border-b-2 border-lumera-teal' : 'text-gray-400 hover:text-white'}`}
         >
           App
         </button>
@@ -148,13 +148,13 @@ const LastBlockID = ({
       <div className="inline-flex border-b border-gray-700 w-auto">
         <button
           onClick={() => setCurrentTab('hash')}
-          className={`px-4 py-2 font-medium cursor-pointer ${currentTab === 'hash' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+          className={`px-4 py-2 font-medium cursor-pointer ${currentTab === 'hash' ? 'text-white border-b-2 border-lumera-teal' : 'text-gray-400 hover:text-white'}`}
         >
           Hash
         </button>
         <button
           onClick={() => setCurrentTab('part_set_header')}
-          className={`px-4 py-2 font-medium cursor-pointer ${currentTab === 'part_set_header' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+          className={`px-4 py-2 font-medium cursor-pointer ${currentTab === 'part_set_header' ? 'text-white border-b-2 border-lumera-teal' : 'text-gray-400 hover:text-white'}`}
         >
           Part Set Header
         </button>
@@ -208,7 +208,9 @@ export const BlockDetailsScreen = ({
           <div className='mt-3'>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
               <div className='w-full md:w-52'>Hash</div>
-              <HexOutput hash={block?.block_id?.hash || ''} />
+              <div className='w-full'>
+                <HexOutput hash={block?.block_id?.hash || ''} />
+              </div>
             </div>
             <div className='flex items-center flex-col md:flex-row py-3 px-4'>
               <div className='w-full md:w-52'>Part Set Header</div>
@@ -387,7 +389,7 @@ export const BlockDetailsScreen = ({
             </div>
             <div className='flex items-center flex-col md:flex-row py-3 px-4'>
               <div className='w-full md:w-52'>Signatures</div>
-              <div className="overflow-auto max-h-[380px]">
+              <div className="overflow-auto max-h-[380px] max-w-full">
                 <table className="table w-full">
                   <thead>
                     <tr className='text-sm'>

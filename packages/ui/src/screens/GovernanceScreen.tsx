@@ -22,6 +22,7 @@ import dayjs from 'dayjs';
 import AppLink from '@/components/AppLink';
 import Loading from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
+import CreateProposalModal from '@/components/CreateProposalModal';
 import Skeleton from '@/components/Skeleton';
 import { IProposal } from '@/hooks/useProposals';
 import { formatNumber, formatToken } from '@/utils/format';
@@ -96,12 +97,40 @@ interface IGovernanceScreen {
   };
   voteTransactionHash?: string;
   onCloseVoteCongratulationsModal?: () => void;
+  createProposal: {
+    step: number;
+    selectedModal: string;
+    proposal: {
+      type: string;
+      title: string;
+      description: string;
+      isExpedited: boolean;
+      recipient: string;
+      amount: string;
+      module: string;
+      key: string;
+      newValue: string;
+      upgradeVersion: string;
+      policyCID: string;
+      modelName: string;
+      newWeight: string;
+      nodeAddress: string;
+      newCommission: string;
+      delegationAddress: string;
+      initialDeposit: string;
+    };
+    onOpenCreateProposalModalClick: () => void;
+    onCloseCreateProposalModalClick: () => void;
+    onNextStepsClick: () => void;
+    onBackClick: () => void;
+    onCreateProposalClick: () => void;
+    onInputChange: (name: string, value: string, type?: string, checked?: boolean) => void;
+  };
 }
 
 export const GovernanceScreen = ({
   isLoading,
   governances,
-  msg,
   sumary,
   currentTab,
   address,
@@ -111,10 +140,10 @@ export const GovernanceScreen = ({
   isVoteOpen,
   deposit,
   isSumaryLoading,
-  totalVotes,
   nextKey,
   voteTransactionHash,
   selectedItem,
+  createProposal,
   setSelectedItem,
   onCloseVoteCongratulationsModal,
   handlePageClick,
@@ -228,7 +257,7 @@ export const GovernanceScreen = ({
       <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
         <H2 className='!font-bold text-white text-[32px] leading-none'>Governance</H2>
         <div className='btn-primary'>
-          <Button>
+          <Button onPress={createProposal.onOpenCreateProposalModalClick}>
             <span className='font-bold whitespace-nowrap'>Create Proposal</span>
           </Button>
         </div>
@@ -305,7 +334,7 @@ export const GovernanceScreen = ({
                   <Beaker size="$3" />
                 </div>
                 <div>
-                  <H3 className='text-base text-lumera-label leading-none'>Deposit Required</H3>
+                  <H3 className='text-base text-lumera-label leading-none !whitespace-nowrap'>Deposit Required</H3>
                   <div className='leading-none mt-3'>
                     {isSumaryLoading ?
                       <Skeleton /> : <>
@@ -477,6 +506,16 @@ export const GovernanceScreen = ({
           handleVoteAdvancedChange={deposit.handleVoteAdvancedChange}
           handleAdvancedCheckedChange={deposit.handleAdvancedCheckedChange}
           onCloseCongratulationsModal={deposit.handleCloseCongratulationsModal}
+        />
+        <CreateProposalModal
+          isOpen={createProposal.selectedModal === 'create'}
+          step={createProposal.step}
+          proposal={createProposal.proposal}
+          onNextClick={createProposal.onNextStepsClick}
+          onCloseModal={createProposal.onCloseCreateProposalModalClick}
+          onInputChange={createProposal.onInputChange}
+          onBackClick={createProposal.onBackClick}
+          onCreateProposalClick={createProposal.onCreateProposalClick}
         />
       </div>
     </YStack>
