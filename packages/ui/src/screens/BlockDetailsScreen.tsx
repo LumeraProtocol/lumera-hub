@@ -32,7 +32,7 @@ const HexOutput = ({
 
   if (!isConcert) {
     return (
-      <div className='w-ful flex gap-2'>
+      <div className='w-full flex gap-2'>
         <div className="truncate">{hash}</div>
         <button type='button' onClick={() => setConvert(true)} className="cursor-pointer">
           <RefreshCcw className='w-4 h-4' />
@@ -42,8 +42,8 @@ const HexOutput = ({
   }
 
   return (
-    <div className='w-ful flex gap-2'>
-      <div className="truncate">{toHex(fromBase64(hash || '')).toUpperCase()}</div>
+    <div className='w-full flex gap-2'>
+      <div className="truncate">{toHex(fromBase64(hash)).toUpperCase()}</div>
       <button type='button' onClick={() => setConvert(false)} className="cursor-pointer">
         <RefreshCcw className='w-4 h-4' />
       </button>
@@ -168,7 +168,7 @@ const LastBlockID = ({
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
               <div className='w-full md:w-52'>Total</div>
               <div className="w-full truncate">
-                {part_set_header?.total|| ''}
+                {part_set_header?.total || ''}
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row py-3 px-4'>

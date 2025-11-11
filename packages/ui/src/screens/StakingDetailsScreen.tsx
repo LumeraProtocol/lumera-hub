@@ -93,6 +93,11 @@ interface IStakingDetailsScreen {
   onPageClick: ({ selected }: { selected: number }) => void;
 }
 
+type TDelegatorMessage = {
+  typeUrl: string;
+  value: Uint8Array;
+}
+
 const LatestBlocks = () => {
   const { blocks, validators, isFetchBlockLoading } = useLatestBlocks();
   const { redirect } = useAppRouter();
@@ -106,7 +111,7 @@ const LatestBlocks = () => {
     const txt = toHex(fromBase64(header.proposer_address)).toUpperCase();
     const validator = validators.find(
       (x) => consensusPubkeyToHexAddress(x.consensus_pubkey) === txt ||
-      consensusPubkeyToHexAddress(x.consensus_pubkey) ===header.proposer_address
+      consensusPubkeyToHexAddress(x.consensus_pubkey) === header.proposer_address
     );
 
     if (validator) {
@@ -234,7 +239,7 @@ export const StakingDetailsScreen = ({
 
   const totalPower = calculateTotalPower(validators);
 
-  const mapDelegators = (messages: any[]) => {
+  const mapDelegators = (messages: TDelegatorMessage[]) => {
     if(!messages) return [];
     const newMessages = messages.map((message) => {
       return ({

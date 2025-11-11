@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
 
@@ -10,8 +10,6 @@ import { RPC_ENDPOINT } from '@/contants/network';
 type TBlock = {
   block: IBlock
 }
-
-let interval: number;
 
 function mergeArraysById(currentBlock: IBlock[], newBlock: IBlock[]) {
   const map = new Map(newBlock.map(item => [item.header.height, item]));
@@ -26,6 +24,7 @@ function mergeArraysById(currentBlock: IBlock[], newBlock: IBlock[]) {
 }
 
 const useLatestBlocks = () => {
+  const intervalRef = useRef<number | null>(null);
   const params = useParams();
   const [isFetchValidatorLoading, setFetchValidatorLoading] = useState(false);
   const [validators, setValidators] = useState<IValidator[]>([]);
@@ -61,7 +60,7 @@ const useLatestBlocks = () => {
       const { data: { result } } = await axios.get(`${RPC_ENDPOINT}/block_search?query="block.height > 0"&page=1&per_page=100&order_by="desc"`);
       setBlocks(result.blocks.map((item: TBlock) => item.block))
 
-      interval = setInterval(() => fetchLatestBlock(), 6000);
+      intervalRef.current = setInterval(() => fetchLatestBlock(), 6000);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unknown error occurred.');
     }
@@ -74,8 +73,8 @@ const useLatestBlocks = () => {
       fetchBlocks();
     }
     return () => {
-      if (interval) {
-        clearInterval(interval)
+      if (intervalRef?.current) {
+        clearInterval(intervalRef.current)
       }
     };
   }, [params?.validator]);

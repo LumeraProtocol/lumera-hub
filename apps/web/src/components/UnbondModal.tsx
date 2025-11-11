@@ -200,7 +200,7 @@ export default function UnbondModal({
               <div className='input-wrapper'>
                 <Input
                   id="amount"
-                  placeholder={`Available: ${numeral(availableAmount).format('0.[000000]%')} lume`}
+                  placeholder={`Available: ${numeral(availableAmount).format('0.[000000]')} lume`}
                   className='input has-symbol'
                   value={optionsAdvanced.amount}
                   onChangeText={(newValue) => onInputChange('amount', newValue)}
