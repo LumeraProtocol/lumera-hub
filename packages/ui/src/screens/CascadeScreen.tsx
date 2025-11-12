@@ -1,14 +1,25 @@
-import React from 'react'
-import { YStack, Card, H3, Button } from 'tamagui'
-import Dropzone from 'react-dropzone'
-import { CloudUpload } from '@tamagui/lucide-icons'
-import { worldMill } from "@react-jvectormap/world"
+import React from 'react';
+import { YStack, Card, H3, Button } from 'tamagui';
+import Dropzone from 'react-dropzone';
+import { CloudUpload } from '@tamagui/lucide-icons';
+import { worldMill } from "@react-jvectormap/world";
+
+import Loading from '@/components/Loading';
+import { ITask } from '@/hooks/useCascade';
 
 interface Marker {
   latLng: [number, number]; // [latitude, longitude]
   name: string;
   value: number;
   style?: { fill: string };
+}
+
+interface ICascadeScreen {
+  JVectorMapWithNoSSR: any;
+  onFileChange: (files: File[]) => void;
+  isUploading: boolean;
+  error: string;
+  uploadResult: ITask | null;
 }
 
 const countryNames: { [key: string]: string } = {
@@ -141,7 +152,12 @@ const SuperNodeMap = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: any }) => 
   );
 };
 
-export const CascadeScreen = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: any }) => {
+export const CascadeScreen = ({
+  JVectorMapWithNoSSR,
+  isUploading,
+  error,
+  onFileChange,
+}: ICascadeScreen) => {
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className="flex justify-between gap-6 w-full cascade-overview">
@@ -169,8 +185,9 @@ export const CascadeScreen = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: an
           <SuperNodeMap JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
         </Card>
       </div>
-      <div className='mt-6 w-full'>
-        <Dropzone onDrop={acceptedFiles => console.log(acceptedFiles)}>
+      <div className='mt-6 w-full relative'>
+        <Loading isLoading={isUploading} />
+        <Dropzone onDrop={onFileChange} multiple={false}>
           {({getRootProps, getInputProps}) => (
             <div {...getRootProps()} className='dropzone-wrapper flex flex-col justify-center items-center'>
               <input {...getInputProps()} />
@@ -183,6 +200,9 @@ export const CascadeScreen = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: an
                 <div className='mt-2 flex justify-center btn-blue'>
                   <Button className='font-bold'>Browse Files</Button>
                 </div>
+                {error ?
+                  <div className='mt-5 text-red-600'>{error}</div> : null
+                }
               </div>
             </div>
           )}
