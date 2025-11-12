@@ -311,8 +311,8 @@ export const StakingDetailsScreen = ({
           </Button>
         </div>
       </div>
-      <div className='flex justify-between gap-5 mt-5 w-full'>
-        <div className='w-2/3'>
+      <div className='flex justify-between gap-5 mt-5 w-full flex-col 2lg:flex-row'>
+        <div className='w-full 2lg:w-2/3'>
           <Card bordered className='w-full portfolio-overview'>
             <Card.Header padded>
               <H3>Description</H3>
@@ -323,15 +323,15 @@ export const StakingDetailsScreen = ({
           </Card>
           <LatestBlocks />
         </div>
-        <div className='w-1/3'>
+        <div className='w-full 2lg:w-1/3'>
           <Card bordered className='w-full portfolio-overview'>
             <Card.Header padded>
             <H3>Details</H3>
             <div className='mt-3 text-base'>
               <div className='flex justify-between items-center gap-4 w-full'>
                 <span className='text-lumera-label'>Website</span>
-                <a href={validator?.description?.website} target='_blank' rel='noopener noreferrer' className='text-lumera-label hover:text-lumera-teal flex gap-0.5 items-center'>
-                  {validator?.description?.website?.split('://')[1]} <ArrowUpRight className="w-3 h-3"/>
+                <a href={validator?.description?.website} target='_blank' rel='noopener noreferrer' className='text-lumera-label hover:text-lumera-teal flex gap-0.5 items-center truncate'>
+                  <span>{validator?.description?.website?.split('://')[1]}</span> <ArrowUpRight className="w-3 h-3"/>
                 </a>
               </div>
               <div className='flex justify-between items-center gap-4 w-full mt-4'>

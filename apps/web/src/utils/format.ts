@@ -90,3 +90,44 @@ export const formatTokens = (
   if (!tokens) return '';
   return tokens.map((x) => formatToken(x, withDenom, fmt)).join(', ');
 }
+
+export const formatTokenDisplay = (
+  token?: { denom: string; amount: string },
+  withDenom = false,
+  fmt = '0,0.[000000]',
+) => {
+  if (!token) {
+    return '--';
+  }
+
+  const tokens = formatToken({
+    amount: token.amount,
+    denom: token.denom,
+  }, false, fmt);
+  const value = Number(tokens.replaceAll(',', ''));
+
+  let result = tokens;
+  if (value > 10000000) {
+    result = formatToken({
+      amount: token.amount,
+      denom: token.denom,
+    }, withDenom, '0,0.[0]');
+  } else if (value > 1000000) {
+    result = formatToken({
+      amount: token.amount,
+      denom: token.denom,
+    }, withDenom, '0,0.[00]');
+  } else if (value > 100000) {
+    result = formatToken({
+      amount: token.amount,
+      denom: token.denom,
+    }, withDenom, '0,0.[000]');
+  } else if (value > 10000) {
+    result = formatToken({
+      amount: token.amount,
+      denom: token.denom,
+    }, withDenom, '0,0.[000]');
+  }
+
+  return result;
+}

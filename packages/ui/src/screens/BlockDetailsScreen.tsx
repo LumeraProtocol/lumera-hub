@@ -208,7 +208,9 @@ export const BlockDetailsScreen = ({
           <div className='mt-3'>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
               <div className='w-full md:w-52'>Hash</div>
-              <HexOutput hash={block?.block_id?.hash || ''} />
+              <div className='w-full'>
+                <HexOutput hash={block?.block_id?.hash || ''} />
+              </div>
             </div>
             <div className='flex items-center flex-col md:flex-row py-3 px-4'>
               <div className='w-full md:w-52'>Part Set Header</div>
@@ -387,7 +389,7 @@ export const BlockDetailsScreen = ({
             </div>
             <div className='flex items-center flex-col md:flex-row py-3 px-4'>
               <div className='w-full md:w-52'>Signatures</div>
-              <div className="overflow-auto max-h-[380px]">
+              <div className="overflow-auto max-h-[380px] max-w-full">
                 <table className="table w-full">
                   <thead>
                     <tr className='text-sm'>

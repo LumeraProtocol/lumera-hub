@@ -30,7 +30,7 @@ import AppButton from '@/components/AppButton';
 import { AccountInfoData } from '@/hooks/useAccountInfo';
 import { RATE_VALUE } from '@/contants';
 import { ITransaction } from '@/hooks/useTransaction';
-import { formatAddress, formatToken } from '@/utils/format';
+import { formatAddress, formatTokenDisplay } from '@/utils/format';
 import { getMessages } from '@/utils/helpers';
 import { IValidator } from '@/types/validator';
 import { DENOM } from '@/contants/network';
@@ -308,45 +308,45 @@ export const WalletScreen = ({
           <Card className='w-full lg:w-2/3'>
             <h3 className="font-semibold text-gray-400">Total Wallet Balance</h3>
             <div className='w-full flex justify-between'>
-              <p className="text-4xl xl:text-5xl font-bold text-white mt-2 truncate">
+              <p className="text-3xl sm:text-4xl xl:text-5xl font-bold text-white mt-2">
                 {isLoading ?
                   <Skeleton /> : <>
-                    {formatToken({
+                    {formatTokenDisplay({
                     amount: `${getTotalBalances()}`,
                     denom: DENOM,
-                    }, false, '0,0.[00000]')}<span className='text-2xl ml-1'>LUME</span>
+                    }, false, '0,0.[00000]')} <span className='text-xl sm:text-2xl'>LUME</span>
                   </>
                 }
               </p>
             </div>
             <ul className='text-sm flex justify-between flex-wrap gap-x-4 gap-y-1 text-lumera-label mt-2'>
-              <li className='w-[48%] truncate'>
+              <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
                 <span className='inline-block'></span> <span>Available: </span>
-                {formatToken({
+                {formatTokenDisplay({
                   amount: `${getAvailableBalances()}`,
                   denom: DENOM,
-                  }, false, '0,0.[00000]')}<span className='text-[11px] ml-1'>LUME</span>
+                  }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
               </li>
-              <li className='w-[48%] truncate'>
+              <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
                 <span className='inline-block'></span> <span>Staking: </span>
-                  {formatToken({
+                  {formatTokenDisplay({
                   amount: `${getDelegations()}`,
                   denom: DENOM,
-                  }, false, '0,0.[00000]')}<span className='text-[11px] ml-1'>LUME</span>
+                  }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
               </li>
-              <li className='w-[48%] truncate'>
+              <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
                 <span className='inline-block'></span> <span>Rewards: </span>
-                {formatToken({
+                {formatTokenDisplay({
                   amount: `${getRewards()}`,
                   denom: DENOM,
-                  }, false, '0,0.[00000]')}<span className='text-[11px] ml-1'>LUME</span>
+                  }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
               </li>
-              <li className='w-[48%] truncate'>
+              <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
                 <span className='inline-block'></span> <span>Unstaking: </span>
-                {formatToken({
+                {formatTokenDisplay({
                   amount: `${getUnbonding()}`,
                   denom: DENOM,
-                  }, false, '0,0.[00000]')}<span className='text-[11px] ml-1'>LUME</span>
+                  }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
               </li>
             </ul>
             <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4">

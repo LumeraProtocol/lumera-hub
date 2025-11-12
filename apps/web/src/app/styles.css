@@ -328,10 +328,10 @@
   background-color: #078A8A;
 }
 .cascade-top-left {
-  width: 66%;
+  width: 55%;
 }
 .cascade-top-right {
-  width: calc(34% - 24px);
+  width: calc(45% - 24px);
 }
 .z-1 {
   z-index: 1;
@@ -493,7 +493,6 @@
   }
   .input-wrapper {
     width: 100%;
-    max-width: 420px;
   }
 }
 @media screen and (max-width: 1200px) {

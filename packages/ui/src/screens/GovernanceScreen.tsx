@@ -305,7 +305,7 @@ export const GovernanceScreen = ({
                   <Beaker size="$3" />
                 </div>
                 <div>
-                  <H3 className='text-base text-lumera-label leading-none'>Deposit Required</H3>
+                  <H3 className='text-base text-lumera-label leading-none !whitespace-nowrap'>Deposit Required</H3>
                   <div className='leading-none mt-3'>
                     {isSumaryLoading ?
                       <Skeleton /> : <>
