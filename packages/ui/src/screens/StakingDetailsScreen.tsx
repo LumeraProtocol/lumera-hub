@@ -110,7 +110,8 @@ const LatestBlocks = () => {
 
     const txt = toHex(fromBase64(header.proposer_address)).toUpperCase();
     const validator = validators.find(
-      (x) => consensusPubkeyToHexAddress(x.consensus_pubkey) === txt
+      (x) => consensusPubkeyToHexAddress(x.consensus_pubkey) === txt ||
+      consensusPubkeyToHexAddress(x.consensus_pubkey) === header.proposer_address
     );
 
     if (validator) {
