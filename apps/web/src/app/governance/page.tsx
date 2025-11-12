@@ -25,6 +25,15 @@ export default function Page() {
     isSumaryLoading,
     totalVotes,
     nextKey,
+    step,
+    selectedModal,
+    proposal,
+    handleCreateProposalClick,
+    handleBackClick,
+    handleInputChange,
+    handleOpenCreateProposalModal,
+    handleCloseCreateProposalModal,
+    handleNextSteps,
     handlePageClick,
     handleTabChange,
     fetchGovernances,
@@ -85,6 +94,17 @@ export default function Page() {
             handleVoteAdvancedChange: deposit.handleDepositChange,
             handleAdvancedCheckedChange: deposit.handleShowAdvancedChange,
             handleCloseCongratulationsModal: deposit.handleCloseCongratulationsModal,
+          }}
+          createProposal={{
+            step,
+            selectedModal,
+            proposal,
+            onOpenCreateProposalModalClick: handleOpenCreateProposalModal,
+            onCloseCreateProposalModalClick: handleCloseCreateProposalModal,
+            onNextStepsClick: handleNextSteps,
+            onInputChange: handleInputChange,
+            onBackClick: handleBackClick,
+            onCreateProposalClick: handleCreateProposalClick,
           }}
         />
       </div>

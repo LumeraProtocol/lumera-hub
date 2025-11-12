@@ -1270,19 +1270,19 @@ export const StakingScreen = ({
                       <div className="flex border-b border-gray-700">
                         <button
                           onClick={() => staking.onSubTabChange('delegations')}
-                          className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'delegations' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+                          className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'delegations' ? 'text-white border-b-2 border-lumera-teal' : 'text-gray-400 hover:text-white'}`}
                         >
                           Staking
                         </button>
                         <button
                           onClick={() => staking.onSubTabChange('unstake')}
-                          className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'unstake' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+                          className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'unstake' ? 'text-white border-b-2 border-lumera-teal' : 'text-gray-400 hover:text-white'}`}
                         >
                           Unstake/Restake
                         </button>
                         <button
                           onClick={() => staking.onSubTabChange('activities')}
-                          className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'activities' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+                          className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'activities' ? 'text-white border-b-2 border-lumera-teal' : 'text-gray-400 hover:text-white'}`}
                         >
                           Activities
                         </button>
