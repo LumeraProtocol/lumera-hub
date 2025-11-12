@@ -100,11 +100,11 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const handleSendClick = async () => {
     setError('');
     setTransactionHash('');
-    if (!optionsAdvanced.amount || Number(optionsAdvanced.amount) <= 0) {
+    if (!optionsAdvanced?.amount || Number(optionsAdvanced.amount) <= 0) {
       setError('Please enter amount.');
       return
     }
-    if (options.availableAmount && Number(optionsAdvanced.amount) > Number(options.availableAmount)) {
+    if (options?.availableAmount && Number(optionsAdvanced.amount) > Number(options.availableAmount)) {
       setError('Amount cannot exceed the available balance.');
       return
     }

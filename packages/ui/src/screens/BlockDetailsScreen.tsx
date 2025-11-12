@@ -24,17 +24,17 @@ interface IHexOutput {
 const HexOutput = ({
   hash,
 }: IHexOutput) => {
-  const [isConcert, setConvert] = useState(false);
+  const [isConverted, setConverted] = useState(false);
 
   if (!hash) {
     return null;
   }
 
-  if (!isConcert) {
+  if (!isConverted) {
     return (
       <div className='w-full flex gap-2'>
         <div className="truncate">{hash}</div>
-        <button type='button' onClick={() => setConvert(true)} className="cursor-pointer">
+        <button type='button' onClick={() => setConverted(true)} className="cursor-pointer">
           <RefreshCcw className='w-4 h-4' />
         </button>
       </div>
@@ -44,7 +44,7 @@ const HexOutput = ({
   return (
     <div className='w-full flex gap-2'>
       <div className="truncate">{toHex(fromBase64(hash)).toUpperCase()}</div>
-      <button type='button' onClick={() => setConvert(false)} className="cursor-pointer">
+      <button type='button' onClick={() => setConverted(false)} className="cursor-pointer">
         <RefreshCcw className='w-4 h-4' />
       </button>
     </div>

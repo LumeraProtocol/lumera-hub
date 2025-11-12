@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import dayjs from 'dayjs';
 
 import * as instance from '@/utils/api';
@@ -170,7 +170,8 @@ const useStaking = (address = '') => {
     setAPRLoading(false);
   }
 
-  const handleFetchDataForSubTab = (_subTab: string) => {
+
+  const handleFetchDataForSubTab = useCallback((_subTab: string) => {
     switch (_subTab) {
       case 'activities':
         fetchActivities();
@@ -181,7 +182,7 @@ const useStaking = (address = '') => {
       default:
         break;
     }
-  }
+  }, [fetchActivities, fetchUnbondingDelegations]);
 
   useEffect(() => {
     if (validatorTab === 'all') {

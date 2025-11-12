@@ -101,7 +101,7 @@ export default function SendModal({
                 <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! send completed successfully.</H3>
               </div>
               <div className='mt-3'>
-                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</AppLink>
+                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-teal hover:text-lumera-green text-sm'>View Transaction</AppLink>
               </div>
             </div>
           </Dialog.Content>

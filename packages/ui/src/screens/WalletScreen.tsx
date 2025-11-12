@@ -421,10 +421,10 @@ export const WalletScreen = ({
                       <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
                           {getTxIcon(getMessages(tx.tx.body.messages))}
                       </div>
-                      <AppLink href={`/block/${tx.height}`} className="text-white ml-2">{tx.height}</AppLink>
+                      <AppLink href={`/block/${tx.height}`} className="text-white ml-2 hover:text-lumera-green">{tx.height}</AppLink>
                     </div>
                     <div className="col-span-2">
-                      <AppLink href={`/tx/${tx.txhash}`} className="text-white whitespace-nowrap">
+                      <AppLink href={`/tx/${tx.txhash}`} className="text-white whitespace-nowrap hover:text-lumera-green">
                           {formatAddress(tx.txhash, 10, -4)}
                       </AppLink>
                     </div>
