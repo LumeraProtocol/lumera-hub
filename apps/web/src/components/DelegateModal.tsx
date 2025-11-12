@@ -12,10 +12,12 @@ import {
 } from 'tamagui';
 import { CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons';
 
-import { formatNumber } from '@/utils/format';
+import { formatTokenDisplay } from '@/utils/format';
 import Loading from '@/components/Loading';
 import { IValidator } from '@/types/validator';
 import AppLink from '@/components/AppLink';
+import { DENOM } from '@/contants/network';
+import { RATE_VALUE } from '@/contants';
 
 interface IVoteModal {
   isOpen: boolean;
@@ -210,17 +212,25 @@ export default function DelegateModal({
             <div className='mt-1'>
               <div className='flex items-center justify-between'>
                   <Label htmlFor="amount" className='text-base'>Amount</Label>
-                  <span className='text-sm text-gray-600'>{formatNumber(availableAmount, { decimalsLength: 6})} lume</span>
+                  <span className='text-sm text-gray-600'>
+                    {formatTokenDisplay({
+                      amount: `${availableAmount * RATE_VALUE}`,
+                      denom: DENOM,
+                    })} lume
+                  </span>
               </div>
               <div className='input-wrapper'>
-                  <Input
-                      id="amount"
-                      placeholder={`Available: ${formatNumber(availableAmount, { decimalsLength: 6})} lume`}
-                      className='input has-symbol'
-                      value={optionsAdvanced.amount}
-                      onChangeText={(newValue) => onInputChange('amount', newValue)}
-                  />
-                  <span className='input-symbol'>lume</span>
+                <Input
+                    id="amount"
+                    placeholder={`Available: ${formatTokenDisplay({
+                      amount: `${availableAmount * RATE_VALUE}`,
+                      denom: DENOM,
+                    })} lume`}
+                    className='input has-symbol'
+                    value={optionsAdvanced.amount}
+                    onChangeText={(newValue) => onInputChange('amount', newValue)}
+                />
+                <span className='input-symbol'>lume</span>
               </div>
             </div>
 

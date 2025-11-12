@@ -17,6 +17,7 @@
   --color-lumera-label: #9da3ae;
   --color-lumera-green-light: #68d1bf;
   --color-lumera-blue-light: #838df1;
+  --breakpoint-2lg: 71.875rem;
 }
 
 @theme inline {

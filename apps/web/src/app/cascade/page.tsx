@@ -3,9 +3,10 @@
 
 import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import dynamic from 'next/dynamic'
+import dynamic from 'next/dynamic';
 
-import { CascadeScreen } from '@lumera-hub/ui/src/screens/CascadeScreen'
+import useCascade from '@/hooks/useCascade';
+import { CascadeScreen } from '@lumera-hub/ui/src/screens/CascadeScreen';
 
 const JVectorMapWithNoSSR = dynamic(
   () => import('@react-jvectormap/core').then((mod) => mod.VectorMap),
@@ -15,6 +16,13 @@ const JVectorMapWithNoSSR = dynamic(
 );
 
 export default function Page() {
+  const {
+    handleUploadCascade,
+    isUploading,
+    error,
+    uploadResult,
+  } = useCascade();
+
   useEffect(() => {
     document.title = 'Cascade';
   }, []);
@@ -25,7 +33,13 @@ export default function Page() {
         <title>Cascade</title>
       </Helmet>
       <div className="cascade-content">
-        <CascadeScreen JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
+        <CascadeScreen
+          JVectorMapWithNoSSR={JVectorMapWithNoSSR}
+          onFileChange={handleUploadCascade}
+          isUploading={isUploading}
+          error={error}
+          uploadResult={uploadResult}
+        />
       </div>
     </>
   )

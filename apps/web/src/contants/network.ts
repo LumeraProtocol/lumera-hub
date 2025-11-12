@@ -9,3 +9,4 @@ export const WALLET_CONNECT_NAME = process.env.NEXT_PUBLIC_WALLET_CONNECT_NAME |
 export const WALLET_CONNECT_DESCRIPTION = process.env.NEXT_PUBLIC_WALLET_CONNECT_DESCRIPTION || 'Lumera Hub';
 export const WALLET_CONNECT_URL = process.env.NEXT_PUBLIC_WALLET_CONNECT_URL || 'https://hub.testnet.lumera.io/';
 export const WALLET_CONNECT_ICON = process.env.NEXT_PUBLIC_WALLET_CONNECT_ICON || 'https://portal.testnet.lumera.io/assets/logo-5cb73fc7.png';
+export const SNAPI_URL = process.env.NEXT_PUBLIC_SNAPI_URL || 'http://localhost:3100';
