@@ -22,10 +22,6 @@ import { setActiveView, setCurrentPath, setViewTitle } from '@/redux/app.slice';
 
 import { ViewId } from '@/types';
 
-// Minimal application shell with a left sidebar and a top panel
-// Inspired by docs/preliminary-ui-design.html but simplified and dependency-free (no icon libs)
-// TailwindCSS v4 classes are used (configured via globals.css)
-
 type TNaxItems = {
   id: ViewId;
   label: string;
@@ -71,7 +67,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         activeView: navItem?.id || "dashboard",
       }));
     }
-  }, [window?.location?.pathname])
+  }, [])
 
   const onNavClick = (id: ViewId) => {
     dispatch(setActiveView({
@@ -95,6 +91,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     dispatch(setCurrentPath({
       currentPath: item.url,
     }));
+     dispatch(setActiveView({
+      activeView: item.id,
+    }));
   }
 
   return (
@@ -116,7 +115,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <AppLink
                 key={item.id}
                 href={item?.url || '#'}
-                className="text-base font-medium">
+                className="text-lumera-teal hover:text-lumera-green text-base font-medium">
                 <span
                   onClick={() => handleMenuItemClick(item)}
                   className={`flex items-center gap-3 px-4 py-3 transition-colors duration-200 rounded-lg w-full ${
@@ -163,7 +162,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <AppLink
                     key={item.id}
                     href={item?.url || '#'}
-                    className="text-base font-medium">
+                    className="text-lumera-teal hover:text-lumera-green text-base font-medium">
                     <span
                       onClick={() => handleMenuItemClick(item)}
                       className={`flex items-center gap-3 px-4 py-3  transition-colors duration-200 rounded-lg w-full ${

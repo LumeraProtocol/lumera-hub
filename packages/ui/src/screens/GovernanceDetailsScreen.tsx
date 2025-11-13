@@ -455,7 +455,7 @@ export const GovernanceDetailsScreen = ({
     return (
         <YStack flex={1}>
             <div className='text-left'>
-                <AppLink href='/governance' className="flex items-start gap-2 text-gray-400 hover:text-white transition-colors mb-4"><ChevronLeft className="w-5 h-5"/>Back to Proposals</AppLink>
+                <AppLink href='/governance' className="text-lumera-teal hover:text-lumera-green flex items-start gap-2 text-gray-400 hover:text-white transition-colors mb-4"><ChevronLeft className="w-5 h-5"/>Back to Proposals</AppLink>
             </div>
             <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
                 <H2 className='!font-bold text-white text-[32px] leading-none'>{governance?.title}</H2>

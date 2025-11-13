@@ -448,7 +448,8 @@
 .inactive {
   cursor: default;
 }
-.btn-primary.full .is_Button {
+.btn-primary.full .is_Button,
+.btn-secondary.full .is_Button {
   width: 100%;
 }
 @media screen and (min-width: 1025px) and (max-width: 1290px) {

@@ -30,13 +30,15 @@ import {
   Star,
   ClockPlus,
   Layers,
+  Check as CheckCircle,
 } from 'lucide-react';
 
 import Loading from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import Skeleton from '@/components/Skeleton';
-import { AccountInfoData } from '@/hooks/useAccountInfo';
+import { AccountInfoData, getTotalRewards } from '@/hooks/useAccountInfo';
+import useAppRouter from '@/hooks/useAppRouter';
 import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity';
 import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/useProposals';
 import { formatToken } from '@/utils/format';
@@ -74,6 +76,7 @@ interface IHomeScreen {
     fees: string;
     gas: string;
     memo: string;
+    totalRewards: string;
   };
   errorClaim: string | null;
   handleClaimChange: (name: string, value: string) => void;
@@ -128,6 +131,11 @@ interface IClaimableRewardsModal {
   transactionHash?: string;
   onCloseCongratulationsModal?: () => void;
   congratulationsMessage?: string;
+  message?: {
+    amount: string;
+    from: string;
+  };
+  backButtonText?: string;
 }
 
 const getOption = (data: IPortfolioOverviewChart) => {
@@ -169,8 +177,6 @@ const getPortfolioData = (accountInfo: AccountInfoData | null) => {
     liquid,
   }
 }
-
-const governanceNav = NAV_ITEMS.find((item) => item.id === 'governance');
 
 const formatMessage = (msgs: TMessage[]) => {
   if (msgs) {
@@ -271,7 +277,7 @@ export const VoteModal = ({
                 <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! vote completed successfully.</H3>
               </div>
               <div className='mt-3'>
-                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</AppLink>
+                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-teal hover:text-lumera-green text-sm'>View Transaction</AppLink>
               </div>
             </div>
           </Dialog.Content>
@@ -462,22 +468,19 @@ export const VoteModal = ({
 
 export const ClaimableRewardsModal = ({
   isOpen,
-  setOpen,
   sender,
-  onSendClick,
   isVoteLoading,
   error,
-  voteAdvanced,
-  handleVoteAdvancedChange,
   transactionHash,
+  message,
+  setOpen,
+  onSendClick,
   onCloseCongratulationsModal,
-  congratulationsMessage,
+  backButtonText = 'Back to Staking',
 }: IClaimableRewardsModal) => {
   if (!isOpen) {
     return null;
   }
-
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   if (transactionHash) {
     return (
@@ -522,28 +525,39 @@ export const ClaimableRewardsModal = ({
             </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
               <div className='flex justify-between items-center'>
-                <div>&nbsp;</div>
+                <H3 className='text-lumera-label text-[32px]'>Claim Rewards</H3>
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
               </div>
-              <div className='mt-4'>
-                <H3 className='!text-green-500 text-[32px] !leading-0'>
-                  {congratulationsMessage || 'Congratulations! claim all rewards completed successfully.'}
-                </H3>
-              </div>
-              <div className='mt-3'>
-                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>
-                  View Transaction
-                </AppLink>
+              <div className='mt-2 text-center'>
+                <div className='flex justify-center'>
+                  <CheckCircle className='w-12 h-12 text-lumera-green border border-lumera-green rounded-full p-3' />
+                </div>
+                <div className='mt-5 text-2xl'>Claim Rewards Successfully</div>
+                {message?.amount ?
+                  <div className='mt-1'>You have claim {message?.amount} Lume</div> : null
+                }
+                <div className='mt-5'>
+                  <AppLink
+                    href={`/tx/${transactionHash}`}
+                    className='text-lumera-teal hover:text-lumera-green text-sm'
+                  >
+                    View Transaction
+                  </AppLink>
+                </div>
+                <div className='mt-2 pb-3'>
+                  <button
+                    className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
+                    onClick={onCloseCongratulationsModal}
+                  >
+                    {backButtonText}
+                  </button>
+                </div>
               </div>
             </div>
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog>
     )
-  }
-
-  const handleAdvancedCheckedChange = (checked: boolean) => {
-    setShowAdvanced(checked);
   }
 
   return (
@@ -586,87 +600,33 @@ export const ClaimableRewardsModal = ({
             <VisuallyHidden>
               <Dialog.Title></Dialog.Title>
             </VisuallyHidden>
-            <div className='withdraw-main-content relative'>
+            <div className='withdraw-main-content relative max-w-[450px]'>
               <Loading isLoading={isVoteLoading} />
               <div className='flex justify-between items-center'>
                 <H3 className='text-lumera-label text-[32px]'>Withdraw</H3>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
               </div>
-              <div className='mt-1'>
+              <div className='mt-1 hidden'>
                 <Label htmlFor="sender" className='text-base'>Sender</Label>
                 <div className='input-wrapper'>
                   <Input id="sender" placeholder="Sender" className='input' defaultValue={sender} readOnly />
                 </div>
               </div>
+              <div className='mt-5 text-lg'>
+                Claim <strong>{message?.amount} LUME</strong> available rewards from <strong>{message?.from}</strong> Delegation Now!
+              </div>
 
-              {showAdvanced ?
-                <div className='mt-1'>
-                  <div>
-                    <Label htmlFor="fees" className='text-base'>Fees</Label>
-                    <div className='input-wrapper'>
-                      <Input
-                        id="fees"
-                        placeholder="Fees"
-                        className='input has-symbol'
-                        value={voteAdvanced.fees}
-                        onChangeText={(newValue) => handleVoteAdvancedChange('fees', newValue)}
-                      />
-                      <span className='input-symbol'>ulume</span>
-                    </div>
-                  </div>
-                  <div className='mt-1'>
-                    <Label htmlFor="gas" className='text-base'>Gas</Label>
-                    <div className='input-wrapper'>
-                      <Input
-                        id="gas"
-                        placeholder="Gas"
-                        className='input'
-                        value={voteAdvanced.gas}
-                        onChangeText={(newValue) => handleVoteAdvancedChange('gas', newValue)}
-                      />
-                    </div>
-                  </div>
-                  <div className='mt-1'>
-                    <Label htmlFor="memo" className='text-base'>Memo</Label>
-                    <div className='input-wrapper'>
-                      <Input
-                        id="memo"
-                        placeholder="Memo"
-                        className='input'
-                        value={voteAdvanced.memo}
-                        onChangeText={(newValue) => handleVoteAdvancedChange('memo', newValue)}
-                      />
-                    </div>
-                  </div>
-                </div>: null
-              }
-
-              <YStack space="$2" marginTop="$3">
-                <div className='flex justify-between items-center'>
-                  <div className='flex gap-3 items-center'>
-                    <Checkbox
-                      id="advanced"
-                      size="$4"
-                      checked={showAdvanced}
-                      onCheckedChange={handleAdvancedCheckedChange}
-                    >
-                      <Checkbox.Indicator>
-                        <CheckIcon />
-                      </Checkbox.Indicator>
-                    </Checkbox>
-
-                    <Label size="$4" htmlFor="advanced">
-                      Advanced
-                    </Label>
-                  </div>
-                  <div className='btn-primary flex justify-end mt-3'>
-                    <Button onPress={onSendClick} disabled={isVoteLoading}>Send</Button>
-                  </div>
+              <div className='mt-5'>
+                {error && !isVoteLoading ?
+                  <div className='text-lumera-red-light'>{error}</div> : null
+                }
+                <div className='btn-primary full mt-3'>
+                  <Button onPress={onSendClick} disabled={isVoteLoading}>
+                    <span className='font-bold'>Claim</span>
+                  </Button>
                 </div>
-              </YStack>
-              {error && !isVoteLoading ?
-                <div className='text-lumera-red-light mt-3'>{error}</div> : null
-              }
+              </div>
+
             </div>
           </Dialog.Content>
         </Dialog.Portal>
@@ -704,6 +664,7 @@ export const HomeScreen = ({
   setSelectedItem,
 }: IHomeScreen) => {
   const { stacked, liquid } = getPortfolioData(accountInfo);
+  const { redirect } = useAppRouter();
   const [isVoteOpen, setVoteOpen] = React.useState(false);
 
   const getActivity = (item: IRecentActivity) => {
@@ -847,18 +808,8 @@ export const HomeScreen = ({
     setSelectedItem(item);
   }
 
-  const getTotalRewards = () => {
-    let total = 0;
-    if (accountInfo?.rewards?.length) {
-      for (const item of accountInfo?.rewards) {
-        for (const reward of item.reward) {
-          if (reward.denom === DENOM) {
-            total += Number(reward.amount);
-          }
-        }
-      }
-    }
-    return total;
+  const handleViewAllProposalsClick = () => {
+    redirect(NAV_ITEMS[3].url);
   }
 
   return (
@@ -904,7 +855,7 @@ export const HomeScreen = ({
                           <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[0] }}></span>
                           <SizableText className='text-lumera-label !font-bold'>Staked</SizableText>
                         </div>
-                        <div className='text-2xl font-bold'>
+                        <div className='text-2xl font-bold truncate'>
                           {loading ?
                            <Skeleton /> : <>
                               {formatToken({
@@ -920,7 +871,7 @@ export const HomeScreen = ({
                           <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[1] }}></span>
                           <SizableText className='text-lumera-label !font-bold'>Liquid</SizableText>
                         </div>
-                        <div className='text-2xl font-bold'>
+                        <div className='text-2xl font-bold truncate'>
                           {loading ?
                             <Skeleton /> :
                             <>
@@ -944,7 +895,7 @@ export const HomeScreen = ({
                       {loading ?
                         <Skeleton /> :
                         <>
-                          <span className='text-3xl font-bold text-white break-words'>
+                          <span className='text-3xl font-bold text-white break-words truncate'>
                             {formatToken({
                               amount: `${stacked + liquid}`,
                               denom: DENOM,
@@ -959,11 +910,11 @@ export const HomeScreen = ({
                   <Card.Header padded>
                     <H3 className='text-lumera-label'>Claimable Rewards</H3>
                     <div>
-                      <H4 className='!text-lumera-green !font-bold !text-3xl'>
+                      <H4 className='!text-lumera-green !font-bold !text-3xl truncate'>
                         {loading ? <Skeleton /> :
                           <>
                           {formatToken({
-                            amount: `${getTotalRewards()}`,
+                            amount: `${getTotalRewards(accountInfo)}`,
                             denom: DENOM,
                           }, false, '0,0.[0000]')}<span className='text-xl ml-1'>LUME</span>
                           </>
@@ -983,7 +934,12 @@ export const HomeScreen = ({
                   <Card.Header padded>
                     <div className='flex justify-between items-center'>
                       <H3 className='proposals-title'>Active Governance Proposals</H3>
-                      <AppLink href={governanceNav?.url || '#'} className='text-link text-sm whitespace-nowrap'>View All</AppLink>
+                      <span
+                        onClick={handleViewAllProposalsClick}
+                        className='text-link text-sm whitespace-nowrap cursor-pointer'
+                      >
+                        View All
+                      </span>
                     </div>
                     <div className='mt-5'>
                       {isProposalLoading ?
@@ -1058,6 +1014,14 @@ export const HomeScreen = ({
             handleVoteAdvancedChange={handleClaimChange}
             transactionHash={transactionHash}
             onCloseCongratulationsModal={onCloseCongratulationsModal}
+            message={{
+              amount: formatToken({
+                amount: `${claimInfo.totalRewards}`,
+                denom: DENOM,
+              }, false, '0,0.[0000]'),
+              from: 'All',
+            }}
+            backButtonText="Back to Dashboard"
           />
         </>
       }

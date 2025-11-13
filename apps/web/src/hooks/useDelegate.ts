@@ -14,6 +14,7 @@ import {
 interface UseDepositOptions {
   callback?: () => void;
   customMemo?: string;
+  availableAmount?: string;
 }
 
 const useDelegate = (options: UseDepositOptions = {}) => {
@@ -98,25 +99,30 @@ const useDelegate = (options: UseDepositOptions = {}) => {
 
   const handleSendClick = async () => {
     setError('');
-    if (!optionsAdvanced.amount) {
-        setError('Please enter amount.');
-        return
+    setTransactionHash('');
+    if (!optionsAdvanced?.amount || Number(optionsAdvanced.amount) <= 0) {
+      setError('Please enter amount.');
+      return
+    }
+    if (options?.availableAmount && Number(optionsAdvanced.amount) > Number(options.availableAmount)) {
+      setError('Amount cannot exceed the available balance.');
+      return
     }
     if (!optionsAdvanced.validator) {
-        setError('Please enter validator.');
-        return
+      setError('Please enter validator.');
+      return
     }
     if (!optionsAdvanced.senderAddress) {
-        setError('Please enter sender.');
-        return
+      setError('Please enter sender.');
+      return
     }
     if (!optionsAdvanced.fees) {
-        setError('Please enter fee.');
-        return
+      setError('Please enter fee.');
+      return
     }
     if (!optionsAdvanced.gas) {
-        setError('Please enter gas.');
-        return
+      setError('Please enter gas.');
+      return
     }
     setLoading(true);
     try {
@@ -172,6 +178,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
 
   const handleCloseModal = () => {
     setOpenModal(false);
+    setTransactionHash('');
   }
 
   const handleCloseCongratulationsModal = () => {
@@ -180,6 +187,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   }
 
   const handleStakingButtonClick = (amount: string) => {
+    setError('');
     setSelectedModal('validator');
     setOptionsAdvanced({
       ...optionsAdvanced,
@@ -188,6 +196,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   }
 
   const handleSelectValidator = (validator: string) => {
+    setError('');
     setSelectedModal('stake');
     setOptionsAdvanced({
       ...optionsAdvanced,
@@ -198,6 +207,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const handleCloseContinueToStakingModal = () => {
     setSelectedModal('');
     resetData();
+    setTransactionHash('');
   }
 
   const handleStakingAmountChange = (amount: string) => {

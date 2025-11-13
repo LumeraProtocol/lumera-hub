@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
-import { StakingScreen } from '@lumera-hub/ui/src/screens/StakingScreen'
+import { StakingScreen, getTotalBalances } from '@lumera-hub/ui/src/screens/StakingScreen'
 import useWalletConnect from '@/hooks/useWalletConnect';
 import useDelegate from '@/hooks/useDelegate';
 import useStaking from '@/hooks/useStaking';
@@ -12,12 +12,9 @@ import useUnbond from '@/hooks/useUnbond';
 import useRedelegate from '@/hooks/useRedelegate';
 
 export default function Page() {
- const { address } = useWalletConnect();
- const delegate = useDelegate();
- const staking = useStaking(address);
- const unbond = useUnbond();
- const redelegate = useRedelegate();
- const {
+  const { address } = useWalletConnect();
+  const staking = useStaking(address);
+  const {
     loading,
     accountInfo,
     isClaimLoading,
@@ -26,28 +23,33 @@ export default function Page() {
     isClaimModalOpen,
     transactionHash,
     selectedClaim,
+    fetchData,
     handleToggleClaimItemModal,
     handleClaimButtonClick,
     handleClaimChange,
     handleToggleClaimModal,
     handleCloseCongratulationsModal,
   } = useAccountInfo();
+  const delegate = useDelegate({
+    availableAmount: `${getTotalBalances(accountInfo)}`,
+    callback: fetchData,
+  });
+  const unbond = useUnbond({
+    callback: () => {
+      staking.fetchUnbondingDelegations();
+      fetchData();
+    },
+  });
+  const redelegate = useRedelegate({
+    callback: () => {
+      staking.fetchUnbondingDelegations();
+      fetchData();
+    },
+  });
 
   useEffect(() => {
     document.title = 'Staking';
   }, []);
-
-  const handleRedelegate = () => {
-    const { amount, customMemo, validator } = staking.selectedData;
-    staking.handleCloseModal();
-    redelegate.handleOpenModal(validator, amount, customMemo);
-  }
-
-  const handleUnbond = () => {
-    const { amount, customMemo, validator } = staking.selectedData;
-    staking.handleCloseModal();
-    unbond.handleOpenModal(validator, amount, customMemo);
-  }
 
   return (
     <>
@@ -59,6 +61,7 @@ export default function Page() {
           address={address}
           accountInfo={accountInfo}
           isAccountInfoLoading={loading}
+          onRefreshBalance={fetchData}
           delegateOptions={{
             isVoteLoading: delegate.isLoading,
             error: delegate.error,
@@ -137,7 +140,7 @@ export default function Page() {
             transactionHash: unbond.transactionHash,
             onCloseCongratulationsModal: unbond.handleCloseCongratulationsModal,
             onCloseDailogChange: unbond.handleCloseModal,
-            onOpenModal: handleUnbond,
+            onOpenModal: unbond.handleOpenModal,
             onSendClick: unbond.handleSendClick,
             onInputChange: unbond.handleInputChange,
             onAdvancedCheckedChange: unbond.handleShowAdvancedChange,
@@ -153,7 +156,7 @@ export default function Page() {
             transactionHash: redelegate.transactionHash,
             onCloseCongratulationsModal: redelegate.handleCloseCongratulationsModal,
             onCloseDailogChange: redelegate.handleCloseModal,
-            onOpenModal: handleRedelegate,
+            onOpenModal: redelegate.handleOpenModal,
             onSendClick: redelegate.handleSendClick,
             onInputChange: redelegate.handleInputChange,
             onAdvancedCheckedChange: redelegate.handleShowAdvancedChange,

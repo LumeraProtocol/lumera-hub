@@ -1,17 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import dayjs from 'dayjs';
 
 import * as instance from '@/utils/api';
 import { DENOM } from '@/contants/network';
+import { useSelector, useDispatch } from '@/redux/hooks';
+import { isNumber } from '@/utils/helpers';
+import { setCurrentTab, setValidatorTab, setSubTab } from '@/redux/app.slice';
 import { IValidator } from '@/types/validator';
 import { TUnbondingDelegation } from '@/types';
 
 const useStaking = (address = '') => {
+  const dispatch = useDispatch();
+  const { currentTab, validatorTab, subTab } = useSelector((state) => state.app);
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [validators, setValidators] = useState<IValidator[]>([]);
   const [totalValidators, setTotalValidators] = useState('0');
-  const [currentTab, setCurrentTab] = useState('active');
   const [params, setParams] = useState({
       bond_denom: "ulume",
       historical_entries: 0,
@@ -28,9 +32,7 @@ const useStaking = (address = '') => {
       slash_fraction_downtime: "0"
   });
   const [signingInfos, setSigningInfos] = useState([]);
-  const [validatorTab, setValidatorTab] = useState('all');
   const [rewards, setRewards] = useState([]);
-  const [subTab, setSubTab] = useState('delegations');
   const [isActivitiesLoading, setActivitiesLoading] = useState(false);
   const [activities, setActivities] = useState([]);
   const [activitiesError, setActivitiesError] = useState('');
@@ -160,13 +162,27 @@ const useStaking = (address = '') => {
       const bondedTokens = Number(resPool.data.pool.bonded_tokens);
       const bondedRatio =  bondedTokens / totalSupply;
       const aprVal = inflation / bondedRatio * (1 - communityTax);
-      setAPR(aprVal * 100);
+      setAPR(isNumber(aprVal) ? aprVal * 100 : 0);
       setBondedTokens(bondedTokens);
     } catch (error) {
-      console.error(error);
+      console.error('fetchDataForAPR', error);
     }
     setAPRLoading(false);
   }
+
+
+  const handleFetchDataForSubTab = useCallback((_subTab: string) => {
+    switch (_subTab) {
+      case 'activities':
+        fetchActivities();
+        break;
+      case 'unstake':
+        fetchUnbondingDelegations();
+        break;
+      default:
+        break;
+    }
+  }, [fetchActivities, fetchUnbondingDelegations]);
 
   useEffect(() => {
     if (validatorTab === 'all') {
@@ -174,40 +190,34 @@ const useStaking = (address = '') => {
       fetchParams();
       fetchDataForAPR();
     }
-  }, []);
+  }, [validatorTab]);
 
   useEffect(() => {
     if (address) {
       if (validatorTab === 'my') {
-        if (subTab === 'activities') {
-          fetchActivities();
-        }
-        if (subTab === 'unstake') {
-          fetchUnbondingDelegations();
-        }
+        handleFetchDataForSubTab(subTab);
       }
-      if (validatorTab === 'all') {
-        fetchRewards();
-      }
+      fetchRewards();
     }
-  }, [address]);
+  }, [address, validatorTab, subTab]);
 
   const handleTabChange = (tab: string) => {
-    setCurrentTab(tab);
+    dispatch(setCurrentTab({
+      currentTab: tab,
+    }));
   }
 
   const handleValidatorTabChange = (tab: string) => {
-    setValidatorTab(tab);
+    dispatch(setValidatorTab({
+      validatorTab: tab,
+    }));
   }
 
   const handleSubTabChange = (tab: string) => {
-    setSubTab(tab);
-    if (tab === 'activities') {
-      fetchActivities();
-    }
-    if (tab === 'unstake') {
-      fetchUnbondingDelegations();
-    }
+    dispatch(setSubTab({
+      subTab: tab,
+    }));
+    handleFetchDataForSubTab(tab);
   }
 
   const handleOpenModal = (name: string) => {
@@ -263,6 +273,7 @@ const useStaking = (address = '') => {
     bondedTokens,
     selectedModal,
     selectedData,
+    fetchUnbondingDelegations,
     handleShowConfirmModal,
     handleOpenModal,
     handleCloseModal,

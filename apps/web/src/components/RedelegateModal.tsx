@@ -1,18 +1,19 @@
 import {
-  YStack,
   H3,
   Button,
   Dialog,
   Label,
   Input,
-  Checkbox,
   Select,
   XStack,
   VisuallyHidden,
 } from 'tamagui';
 import { CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons';
+import numeral from 'numeral';
+import {
+  Check as CheckCircle,
+} from 'lucide-react';
 
-import { formatNumber } from '@/utils/format';
 import Loading from '@/components/Loading';
 import { IValidator } from '@/types/validator';
 import AppLink from '@/components/AppLink';
@@ -29,6 +30,7 @@ interface IRedelegateModal {
     amount: string;
     destinationValidator: string;
     sourceValidator: string;
+    validatorName: string;
   };
   availableAmount: number;
   showAdvanced: boolean;
@@ -46,17 +48,15 @@ export default function RedelegateModal({
     isRedelegateLoading,
     error,
     optionsAdvanced,
-    showAdvanced,
     availableAmount,
     validators,
     transactionHash = '',
     onCloseDailogChange,
     onSendClick,
     onInputChange,
-    onAdvancedCheckedChange,
     onCloseCongratulationsModal,
 }: IRedelegateModal) {
-  if (transactionHash) {
+  if (transactionHash && isOpen) {
     return (
       <Dialog
         open
@@ -99,14 +99,33 @@ export default function RedelegateModal({
             </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
               <div className='flex justify-between items-center'>
-                <div>&nbsp;</div>
+                <H3 className='text-lumera-label text-[32px]'>Redelegate from Validator</H3>
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
               </div>
-              <div className='mt-4'>
-                <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! redelegate completed successfully.</H3>
-              </div>
-              <div className='mt-3'>
-                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</AppLink>
+              <div className='mt-2 text-center'>
+                <div className='flex justify-center'>
+                  <CheckCircle className='w-12 h-12 text-lumera-green border border-lumera-green rounded-full p-3' />
+                </div>
+                <div className='mt-5 text-2xl'>Redelegate Successfully</div>
+                {optionsAdvanced?.amount ?
+                  <div className='mt-1'>You have restaked {optionsAdvanced?.amount} Lume</div> : null
+                }
+                <div className='mt-5'>
+                  <AppLink
+                    href={`/tx/${transactionHash}`}
+                    className='text-lumera-teal hover:text-lumera-green text-sm'
+                  >
+                    View Transaction
+                  </AppLink>
+                </div>
+                <div className='mt-2 pb-3'>
+                  <button
+                    className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
+                    onClick={onCloseCongratulationsModal}
+                  >
+                    Back to Staking
+                  </button>
+                </div>
               </div>
             </div>
           </Dialog.Content>
@@ -158,10 +177,10 @@ export default function RedelegateModal({
           <div className='withdraw-main-content relative'>
             <Loading isLoading={isRedelegateLoading} />
             <div className='flex justify-between items-center'>
-              <H3 className='text-lumera-label text-[32px]'>Redelegate</H3>
+              <H3 className='text-lumera-label text-[32px]'>Redelegate from Validator</H3>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseDailogChange}><CircleX /></button>
             </div>
-            <div className='mt-1'>
+            <div className='mt-1 hidden'>
               <Label htmlFor="sender" className='text-base'>Sender</Label>
               <div className='input-wrapper'>
                 <Input
@@ -179,9 +198,10 @@ export default function RedelegateModal({
                 <Input
                   id="sourceValidator"
                   placeholder="Source Validator"
-                  className='input'
+                  className='input !opacity-30'
                   value={optionsAdvanced.sourceValidator}
                   onChangeText={(newValue) => onInputChange('sourceValidator', newValue)}
+                  readOnly
                 />
               </div>
             </div>
@@ -222,86 +242,29 @@ export default function RedelegateModal({
             </div>
             <div className='mt-1'>
               <div className='flex items-center justify-between'>
-                  <Label htmlFor="amount" className='text-base'>Amount</Label>
-                  <span className='text-sm text-gray-600'>{formatNumber(availableAmount, { decimalsLength: 2})} lume</span>
+                <Label htmlFor="amount" className='text-base'>Amount</Label>
+                <div className='text-sm font-normal flex gap-2 items-center text-gray-600'>
+                  <span>Available: {numeral(availableAmount).format('0.[000000]')}</span>
+                  <button type='button' className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer' onClick={() => onInputChange('amount', `${availableAmount}`)}>MAX</button>
+                </div>
               </div>
               <div className='input-wrapper'>
-                  <Input
-                      id="amount"
-                      placeholder={`Available: ${formatNumber(availableAmount, { decimalsLength: 2})} lume`}
-                      className='input has-symbol'
-                      value={optionsAdvanced.amount}
-                      onChangeText={(newValue) => onInputChange('amount', newValue)}
-                  />
-                  <span className='input-symbol'>lume</span>
+                <Input
+                  id="amount"
+                  placeholder={`Available: ${numeral(availableAmount).format('0.[000000]')} lume`}
+                  className='input has-symbol'
+                  value={optionsAdvanced.amount}
+                  onChangeText={(newValue) => onInputChange('amount', newValue)}
+                />
+                <span className='input-symbol'>lume</span>
               </div>
             </div>
 
-            {showAdvanced ?
-              <div className='mt-1'>
-                <div>
-                  <Label htmlFor="fees" className='text-base'>Fees</Label>
-                  <div className='input-wrapper'>
-                    <Input
-                      id="fees"
-                      placeholder="Fees"
-                      className='input has-symbol'
-                      value={optionsAdvanced.fees}
-                      onChangeText={(newValue) => onInputChange('fees', newValue)}
-                    />
-                    <span className='input-symbol'>ulume</span>
-                  </div>
-                </div>
-                <div className='mt-1'>
-                  <Label htmlFor="gas" className='text-base'>Gas</Label>
-                  <div className='input-wrapper'>
-                    <Input
-                      id="gas"
-                      placeholder="Gas"
-                      className='input'
-                      value={optionsAdvanced.gas}
-                      onChangeText={(newValue) => onInputChange('gas', newValue)}
-                    />
-                  </div>
-                </div>
-                <div className='mt-1'>
-                  <Label htmlFor="memo" className='text-base'>Memo</Label>
-                  <div className='input-wrapper'>
-                    <Input
-                      id="memo"
-                      placeholder="Memo"
-                      className='input'
-                      value={optionsAdvanced.memo}
-                      onChangeText={(newValue) => onInputChange('memo', newValue)}
-                    />
-                  </div>
-                </div>
-              </div>: null
-            }
-
-            <YStack space="$2" marginTop="$3">
-              <div className='flex justify-between items-center'>
-                <div className='flex gap-3 items-center'>
-                  <Checkbox
-                    id="advanced"
-                    size="$4"
-                    checked={showAdvanced}
-                    onCheckedChange={onAdvancedCheckedChange}
-                  >
-                    <Checkbox.Indicator>
-                      <CheckIcon />
-                    </Checkbox.Indicator>
-                  </Checkbox>
-
-                  <Label size="$4" htmlFor="advanced">
-                    Advanced
-                  </Label>
-                </div>
-                <div className='btn-primary flex justify-end mt-3'>
-                  <Button onPress={onSendClick} disabled={isRedelegateLoading}>Send</Button>
-                </div>
-              </div>
-            </YStack>
+            <div className='mt-5 btn-primary full'>
+              <Button onPress={onSendClick} disabled={isRedelegateLoading}>
+                <strong>Restake</strong>
+              </Button>
+            </div>
             {error && !isRedelegateLoading ?
               <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
             }

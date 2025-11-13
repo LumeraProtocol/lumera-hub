@@ -65,11 +65,11 @@ const useDeposit = (options: UseDepositOptions = {}) => {
         setModalOpen(false);
         setLoading(false);
         setDepositAdvanced({
-            senderAddress: address,
-            fees: FEE_VALUE,
-            gas: GAS_LIMIT,
-            memo: options?.customMemo || 'Lumera Hub',
-            depositAmount: '',
+          senderAddress: address,
+          fees: FEE_VALUE,
+          gas: GAS_LIMIT,
+          memo: options?.customMemo || 'Lumera Hub',
+          depositAmount: '',
         });
     }
 
@@ -92,6 +92,7 @@ const useDeposit = (options: UseDepositOptions = {}) => {
 
     const handleSendClick = async () => {
       setError('');
+      setTransactionHash('');
       if (!depositAdvanced.depositAmount) {
           setError('Please enter amount.');
           return

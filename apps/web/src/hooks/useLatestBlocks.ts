@@ -1,11 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
+import axios from 'axios';
 
 import * as instance from '@/utils/api';
 import { IBlock } from '@/types';
 import { IValidator } from '@/types/validator';
+import { RPC_ENDPOINT } from '@/contants/network';
+
+type TBlock = {
+  block: IBlock
+}
+
+function mergeArraysById(currentBlock: IBlock[], newBlock: IBlock[]) {
+  const map = new Map(newBlock.map(item => [item.header.height, item]));
+
+  currentBlock.forEach(item => {
+    if (!map.has(item.header.height)) {
+      map.set(item.header.height, item);
+    }
+  });
+
+  return Array.from(map.values());
+}
 
 const useLatestBlocks = () => {
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const params = useParams();
   const [isFetchValidatorLoading, setFetchValidatorLoading] = useState(false);
   const [validators, setValidators] = useState<IValidator[]>([]);
@@ -14,24 +33,14 @@ const useLatestBlocks = () => {
   const [error, setError] = useState('');
 
   const fetchLatestBlock = async () => {
-    if (!params?.validator) {
-      return;
-    }
-    setFetchBlockLoading(true);
     try {
       const { data } = await instance.get('/cosmos/base/tendermint/v1beta1/blocks/latest');
       if (data?.block) {
-        const newBlocks = blocks;
-        const item = newBlocks.find((block) => block.header.height === data.block.header.height)
-        if (!item) {
-          newBlocks.push(data.block);
-          setBlocks([...newBlocks.sort((a, b) => Number(b.header.height) - Number(a.header.height))].slice(0, 100));
-        }
+        setBlocks(prev => [...mergeArraysById(prev, [data?.block]).sort((a, b) => Number(b.header.height) - Number(a.header.height))].slice(0, 100));
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unknown error occurred.');
     }
-    setFetchBlockLoading(false);
   }
 
   const fetchValidators = async () => {
@@ -45,17 +54,30 @@ const useLatestBlocks = () => {
     setFetchValidatorLoading(false);
   }
 
+  const fetchBlocks = async () => {
+    setFetchBlockLoading(true);
+    try {
+      const { data: { result } } = await axios.get(`${RPC_ENDPOINT}/block_search?query="block.height > 0"&page=1&per_page=100&order_by="desc"`);
+      setBlocks(result.blocks.map((item: TBlock) => item.block))
+
+      intervalRef.current = setInterval(() => fetchLatestBlock(), 6000);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+    }
+    setFetchBlockLoading(false);
+  }
+
   useEffect(() => {
-    fetchLatestBlock();
+    if (intervalRef?.current) {
+      clearInterval(intervalRef.current)
+    }
     if (params?.validator) {
       fetchValidators();
-
+      fetchBlocks();
     }
-    // Auto-refresh every 6 seconds
-    const interval = setInterval(fetchLatestBlock, 6000);
     return () => {
-      if (interval) {
-        clearInterval(interval)
+      if (intervalRef?.current) {
+        clearInterval(intervalRef.current)
       }
     };
   }, [params?.validator]);
