@@ -20,7 +20,7 @@
     "@interchain-kit/react": "^0.3.43",
     "@interchain-ui/react": "^1.26.3",
     "@lumera-hub/ui": "workspace:^",
-    "@lumera/sdk-js": "git+https://github.com/LumeraProtocol/sdk-js.git",
+    "@lumera-protocol/sdk-js": "^0.2.2",
     "@react-jvectormap/core": "^1.0.4",
     "@reduxjs/toolkit": "^2.9.0",
     "@tamagui/config": "^1.132.16",
