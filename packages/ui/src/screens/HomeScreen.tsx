@@ -44,8 +44,6 @@ import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/usePropos
 import { formatToken, formatTokenDisplay } from '@/utils/format';
 import { NAV_ITEMS } from '@/components/layout/AppShell';
 import { DENOM } from '@/contants/network';
-import { useDispatch } from '@/redux/hooks';
-import { setActiveView, setCurrentPath } from '@/redux/app.slice';
 
 dayjs.extend(relativeTime);
 
@@ -180,8 +178,6 @@ const getPortfolioData = (accountInfo: AccountInfoData | null) => {
   }
 }
 
-const governanceNav = NAV_ITEMS.find((item) => item.id === 'governance');
-
 const formatMessage = (msgs: TMessage[]) => {
   if (msgs) {
     const sum: Record<string, number> = msgs
@@ -281,7 +277,7 @@ export const VoteModal = ({
                 <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! vote completed successfully.</H3>
               </div>
               <div className='mt-3'>
-                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-label text-sm'>View Transaction</AppLink>
+                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-teal hover:text-lumera-green text-sm'>View Transaction</AppLink>
               </div>
             </div>
           </Dialog.Content>
@@ -667,7 +663,6 @@ export const HomeScreen = ({
   selectedItem,
   setSelectedItem,
 }: IHomeScreen) => {
-  const dispatch = useDispatch();
   const { stacked, liquid } = getPortfolioData(accountInfo);
   const { redirect } = useAppRouter();
   const [isVoteOpen, setVoteOpen] = React.useState(false);
@@ -814,16 +809,7 @@ export const HomeScreen = ({
   }
 
   const handleViewAllProposalsClick = () => {
-    if (!governanceNav?.url) {
-      return
-    }
-    dispatch(setCurrentPath({
-      currentPath: NAV_ITEMS[3].url,
-    }));
-    dispatch(setActiveView({
-      activeView: NAV_ITEMS[3].id,
-    }));
-    redirect(governanceNav.url);
+    redirect(NAV_ITEMS[3].url);
   }
 
   return (

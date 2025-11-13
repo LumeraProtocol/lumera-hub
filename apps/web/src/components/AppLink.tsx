@@ -16,7 +16,7 @@ interface DynamicProps {
 export default function AppLink({
   href,
   children,
-  className = '',
+  className = 'text-lumera-teal hover:text-lumera-green',
   target = '',
   rel = '',
 }: IAppLink) {
@@ -28,7 +28,7 @@ export default function AppLink({
     props.rel = rel;
   }
   return (
-    <Link href={href} className={`text-lumera-teal hover:text-lumera-green ${className}`} target={target}>
+    <Link href={href} className={className} target={target}>
       {children}
     </Link>
   );

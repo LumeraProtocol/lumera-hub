@@ -56,10 +56,6 @@ export default function UnbondModal({
 }: IUnbondModal) {
   const [isYes, setYes] = useState(false);
 
-  const handleAdvancedCheckedChange = (checked: boolean) => {
-    setYes(checked);
-  }
-
   if (transactionHash && isOpen) {
     return (
       <Dialog
@@ -213,7 +209,7 @@ export default function UnbondModal({
                 id="termOfUse"
                 size="$4"
                 checked={isYes}
-                onCheckedChange={handleAdvancedCheckedChange}
+                onCheckedChange={(checked: boolean) => setYes(checked)}
               >
                 <Checkbox.Indicator>
                   <CheckCircle />

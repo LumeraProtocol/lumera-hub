@@ -245,8 +245,8 @@ export const StakingDetailsScreen = ({
       return ({
         ...convertUint8ArrayToJson(message.value),
       })
-    })
-    return Array.from(new Set(newMessages.map(x => x.delegatorAddress)))
+    }).filter(x => x && typeof x.delegatorAddress === 'string' && x.delegatorAddress.length > 0);
+    return Array.from(new Set(newMessages.map(x => x.delegatorAddress)));
   }
 
   const mapEvents = (events: {type: string, attributes: {key: string, value: string}[]}[], withDenom = true, fmt = '0,0.[0]') => {

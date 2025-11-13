@@ -596,7 +596,7 @@ export const ValidatorModal = ({
                         onClick={() => onSelectValidator(validator.operator_address)}
                       >
                         <td data-label="Validator: ">
-                          {validator.description.moniker}
+                          {validator.description.moniker || formatAddress(validator.delegation.validator_address, 10, -5)}
                         </td>
                         <td data-label="Staked Amount: " align='right'>
                           {formatToken({
@@ -659,15 +659,15 @@ const RewardsCalculator = ({
     setError('');
     if (!Number(amount)) {
       setError('Please enter amount.');
-      return
+      return;
     }
     if (Number(amount) <= 0) {
       setError('Amount must not be less than 0.');
-      return
+      return;
     }
-    if (Number(amount) > Number(availableAmount)) {
+    if (availableAmount && Number(amount) > Number(availableAmount)) {
       setError('Amount cannot exceed the available balance.');
-      return
+      return;
     }
     onStakingButtonClick(`${amount}`);
   }
@@ -774,7 +774,6 @@ const AllValidators = ({
     setSortBy('uptime');
     setSort('DESC');
   }, [staking?.currentTab]);
-
 
   const sortFunc = (a: IValidator, b: IValidator) => {
     switch (sortBy) {
@@ -1037,7 +1036,6 @@ export const StakingScreen = ({
   redelegateOptions,
   onRefreshBalance,
 }: IStakingScreen) => {
-
   const getValidators = () => {
     const validators = staking?.currentTab === 'active' ? delegateOptions.validators : staking.validators;
     return validators
@@ -1103,7 +1101,7 @@ export const StakingScreen = ({
       return '';
      }
 
-     return `Congratulations! Rewards have been claimed from ${validator.description.moniker} successfully.`
+     return `Congratulations! Rewards have been claimed from ${validator.description.moniker || formatAddress(validator.delegation.validator_address, 10, -5)} successfully.`
   }
 
   const getValidatorName = (delegation: TUnbondingDelegation, validator: IValidator | undefined) => {
@@ -1137,12 +1135,12 @@ export const StakingScreen = ({
       const reward = accountInfo?.rewards.find(v => v.validator_address === claim.selectedClaim?.delegation.validator_address);
 
       amount = formatTokens(reward?.reward, false, '0,0.[000000]');
-      name = validator?.description?.moniker || '';
+      name = validator?.description?.moniker || formatAddress(validator.delegation.validator_address, 10, -5) || '';
     }
 
     if (unbondOptions?.optionsAdvanced?.validator) {
       const validator = getAllValidators().find((item) => item.operator_address === unbondOptions?.optionsAdvanced?.validator);
-      validatorName = validator?.description?.moniker || '';
+      validatorName = validator?.description?.moniker || formatAddress(validator.delegation.validator_address, 10, -5) || '';
     }
 
     return {
@@ -1418,7 +1416,7 @@ export const StakingScreen = ({
                                 return (
                                   <div key={`${delegation.type}-${delegation.delegator_address}-${delegation.validator_address}-${delegation.validator_src_address}-${delegation.validator_dst_address}`} className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg">
                                     <div className="col-span-2 text-white hover:text-lumera-teal cursor-pointer">
-                                      <AppLink href={`/staking/${delegation.validator_address}`} className="hover:text-lumera-teal">
+                                      <AppLink href={`/staking/${delegation.validator_address}`} className="text-lumera-teal hover:text-lumera-green">
                                         {getValidatorName(delegation, validator)}
                                       </AppLink>
                                     </div>
@@ -1472,7 +1470,7 @@ export const StakingScreen = ({
                                         <div className="col-span-1 text-gray-300">
                                           <AppLink
                                             href={`/block/${tx.height}`}
-                                            className="hover:text-lumera-teal truncate flex items-center gap-1.5"
+                                            className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
                                           >
                                             {tx.height}<ArrowUpRight className="w-3 h-3"/>
                                           </AppLink>
@@ -1480,7 +1478,7 @@ export const StakingScreen = ({
                                         <div className="col-span-3">
                                           <AppLink
                                             href={`/tx/${tx.txhash}`}
-                                            className="hover:text-lumera-teal truncate flex items-center gap-1.5"
+                                            className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
                                           >
                                             {formatAddress(tx.txhash, 12, -6)}<ArrowUpRight className="w-3 h-3"/>
                                           </AppLink>

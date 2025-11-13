@@ -8,12 +8,22 @@ import useGovernances from '@/hooks/useGovernances';
 import useProposals, { IProposal } from '@/hooks/useProposals';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import useDeposit from '@/hooks/useDeposit';
+import { useDispatch } from '@/redux/hooks';
+import { setActiveView, setCurrentPath } from '@/redux/app.slice';
+import { NAV_ITEMS } from '@/components/layout/AppShell';
 
 export default function Page() {
+  const dispatch = useDispatch();
   const [selectedItem, setSelectedItem] = useState<IProposal | null>(null);
 
   useEffect(() => {
     document.title = 'Governance';
+    dispatch(setCurrentPath({
+      currentPath: NAV_ITEMS[3].url,
+    }));
+    dispatch(setActiveView({
+      activeView: NAV_ITEMS[3].id,
+    }));
   }, []);
 
   const {
