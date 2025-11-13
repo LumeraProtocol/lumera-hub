@@ -28,12 +28,10 @@ import store, { persistor } from '@/store';
 export function WebWalletProviders({ children }: { children: React.ReactNode }) {
   const { chains, assetLists } = getChains();
   const isBrowser = typeof window !== 'undefined';
-
   // Resolve chain & assets only in the browser to avoid throwing during Next.js prerender/export
   // Use loose typing to avoid importing chain-registry types; runtime values come from the registry data.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [chainData, setChainData] = React.useState<{ chain: any; assets: any } | null>(null);
-
   React.useEffect(() => {
     if (!isBrowser) return;
     const foundChain = chains.find(({ chainName }) => chainName === CHAIN_NAME);
@@ -48,7 +46,7 @@ export function WebWalletProviders({ children }: { children: React.ReactNode }) 
       return;
     }
     setChainData({ chain: foundChain, assets: foundAssets });
-  }, [isBrowser, chains, assetLists]);
+  }, [isBrowser]);
 
   // Setup WalletConnect with custom metadata
   const walletConnect = React.useMemo(() => new WCWallet(undefined, {

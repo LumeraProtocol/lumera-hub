@@ -83,6 +83,92 @@ export const mapAmount = (events:{type: string, attributes: {key: string, value:
 }
 
 export const getChains = () => {
+  if (process.env.NEXT_PUBLIC_NODE_ENV === 'devnet') {
+    const lumeraChain = {
+      chainName: 'lumera-testnet',
+      status: 'live',
+      networkType: 'testnet',
+      chainId: 'lumera-devnet-1',
+      chainType: "cosmos",
+      prettyName: 'Lumera Devnet',
+      chainSymbol: 'lumera-testnet',
+      bech32Prefix: 'lumera',
+      daemonName: 'lumerad',
+      nodeHome: '$HOME/.lumera',
+      keyAlgos: ['secp256k1'],
+      slip44: 118,
+      fees: {
+        feeTokens: [
+          {
+            denom: 'ulume',
+            fixedMinGasPrice: '0.025',
+            lowGasPrice: '0.025',
+            averageGasPrice: '0.025',
+            highGasPrice: '0.025',
+          },
+        ],
+      },
+      codebase: {
+        github: 'https://github.com/LumeraProtocol/',
+      },
+      apis: {
+        rpc: [
+          {
+            address: 'https://rpc.pastel.network',
+            provider: 'lumera',
+          },
+        ],
+        rest: [
+          {
+            address: 'https://lcd.pastel.network',
+            provider: 'lumera',
+          },
+        ],
+        grpc: [],
+      },
+      explorers: [],
+      images: [
+        {
+          png: 'https://raw.githubusercontent.com/chainapsis/keplr-chain-registry/main/images/lumera-testnet/chain.png',
+        },
+      ],
+      features: ['cosmwasm'],
+    };
+    const lumeraAssets = {
+      chainName: 'lumera-testnet',
+      assets: [
+        {
+          description: 'Lumera native token on Lumera Devnet',
+          denomUnits: [
+            {
+              denom: 'ulume',
+              exponent: 0,
+              aliases: ['microlume'],
+            },
+            {
+              denom: 'lume',
+              exponent: 6,
+              aliases: [],
+            },
+          ],
+          base: 'ulume',
+          name: 'Lumera',
+          display: 'lume',
+          symbol: 'LUME',
+          logoURIs: {
+            png: 'https://raw.githubusercontent.com/chainapsis/keplr-chain-registry/main/images/lumera-testnet/chain.png',
+            svg: 'https://raw.githubusercontent.com/chainapsis/keplr-chain-registry/main/images/lumera-testnet/chain.svg',
+          },
+          coingeckoId: '',
+          keywords: ['lumera', 'testnet'],
+        },
+      ],
+    };
+    return {
+      assetLists: [lumeraAssets],
+      chains: [lumeraChain],
+    }
+  }
   if (process.env.NEXT_PUBLIC_NODE_ENV === 'dev') {
     return {
       assetLists: chainTestnet.assetLists,
