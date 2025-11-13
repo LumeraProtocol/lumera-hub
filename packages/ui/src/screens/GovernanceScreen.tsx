@@ -124,6 +124,7 @@ interface IGovernanceScreen {
       type: string;
       message: string;
     };
+    transactionHash: string;
     onOpenCreateProposalModalClick: () => void;
     onCloseCreateProposalModalClick: () => void;
     onNextStepsClick: () => void;
@@ -518,6 +519,7 @@ export const GovernanceScreen = ({
           proposal={createProposal.proposal}
           isLoading={createProposal.isLoading}
           msg={createProposal.msg}
+          transactionHash={createProposal.transactionHash}
           onNextClick={createProposal.onNextStepsClick}
           onCloseModal={createProposal.onCloseCreateProposalModalClick}
           onInputChange={createProposal.onInputChange}

@@ -13,8 +13,10 @@ import {
   ChevronDown,
   Check as CheckIcon,
 } from '@tamagui/lucide-icons';
+import { Check as CheckCircle } from 'lucide-react';
 
 import AppButton from '@/components/AppButton';
+import AppLink from '@/components/AppLink';
 import Loading from '@/components/Loading';
 import { STEPS, proposalTypes, GOVERNANCE_STATS } from '@/hooks/useGovernances';
 
@@ -46,6 +48,7 @@ interface ICreateProposalModal {
     type: string;
     message: string;
   };
+  transactionHash: string;
   onNextClick: () => void;
   onBackClick: () => void;
   onCloseModal: () => void;
@@ -60,6 +63,7 @@ export default function CreateProposalModal({
   proposal,
   isLoading,
   msg,
+  transactionHash,
   onNextClick,
   onBackClick,
   onCloseModal,
@@ -69,6 +73,81 @@ export default function CreateProposalModal({
   // Define different deposit amounts
   const EXPEDITED_DEPOSIT_REQUIRED = GOVERNANCE_STATS.depositRequired * 2;
   const requiredDeposit = proposal.isExpedited ? EXPEDITED_DEPOSIT_REQUIRED : GOVERNANCE_STATS.depositRequired;
+
+  if (transactionHash && isOpen) {
+    return (
+      <Dialog
+        open
+        onOpenChange={onCloseModal}
+        modal
+      >
+        <Dialog.Trigger asChild>
+        </Dialog.Trigger>
+
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+
+          <Dialog.Content
+            bordered
+            elevate
+            key="content"
+            animation={[
+              'quick',
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            x={0}
+            scale={1}
+            opacity={1}
+            y={0}
+          >
+            <VisuallyHidden>
+              <Dialog.Title></Dialog.Title>
+            </VisuallyHidden>
+            <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
+              <div className='flex justify-between items-center'>
+                <H3 className='text-lumera-label text-[32px]'>Create Proposal</H3>
+                <button className='btn-close-modal cursor-pointer' onClick={onCloseModal}><CircleX /></button>
+              </div>
+              <div className='mt-2 text-center'>
+                <div className='flex justify-center'>
+                  <CheckCircle className='w-12 h-12 text-lumera-green border border-lumera-green rounded-full p-3' />
+                </div>
+                <div className='mt-5 text-2xl'>Create Proposal Successfully</div>
+                <div className='mt-5'>
+                  <AppLink
+                    href={`/tx/${transactionHash}`}
+                    className='text-lumera-teal hover:text-lumera-green text-sm'
+                  >
+                    View Transaction
+                  </AppLink>
+                </div>
+                <div className='mt-2 pb-3'>
+                  <button
+                    className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
+                    onClick={onCloseModal}
+                  >
+                    Back to Governance
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
+    )
+  }
 
   const renderStep3 = () => {
     switch(proposal.type) {
@@ -140,81 +219,81 @@ export default function CreateProposalModal({
             />
           </div>
         );
-      case proposalTypes[4].value: // Cascade Policy Update Proposal
-        return (
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">New Policy CID</label>
-            <Input
-              id="policyCID"
-              className='input has-symbol'
-              value={proposal.policyCID}
-              onChangeText={(newValue) => onInputChange('policyCID', newValue)}
-            />
-          </div>
-      );
-      case proposalTypes[5].value: // Model Access Proposal
-        return (
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Model Name</label>
-            <Input
-              id="modelName"
-              className='input has-symbol'
-              value={proposal.modelName}
-              onChangeText={(newValue) => onInputChange('modelName', newValue)}
-            />
-          </div>
-        );
-      case proposalTypes[6].value: // Reward Weight Adjustment Proposal
-        return (
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">New Weight (0-1)</label>
-            <Input
-              keyboardType="numeric"
-              id="newWeight"
-              className='input has-symbol'
-              value={proposal.newWeight}
-              onChangeText={(newValue) => onInputChange('newWeight', newValue)}
-            />
-          </div>
-        );
-      case proposalTypes[7].value: // SuperNode Eligibility Proposal
-        return (
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Node Address</label>
-            <Input
-              id="nodeAddress"
-              className='input has-symbol'
-              value={proposal.nodeAddress}
-              onChangeText={(newValue) => onInputChange('nodeAddress', newValue)}
-            />
-          </div>
-        );
-      case proposalTypes[8].value: // Validator Commission Cap Proposal
-        return (
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">New Commission Cap (%)</label>
-            <Input
-              keyboardType="numeric"
-              id="newCommission"
-              className='input has-symbol'
-              value={proposal.newCommission}
-              onChangeText={(newValue) => onInputChange('newCommission', newValue)}
-            />
-          </div>
-        );
-      case proposalTypes[9].value: // Foundation Delegation Policy Proposal
-        return (
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Delegation Address</label>
-            <Input
-              keyboardType="numeric"
-              id="delegationAddress"
-              className='input has-symbol'
-              value={proposal.delegationAddress}
-              onChangeText={(newValue) => onInputChange('delegationAddress', newValue)}
-            />
-          </div>
-        );
+      // case proposalTypes[4].value: // Cascade Policy Update Proposal
+      //   return (
+      //     <div>
+      //       <label className="block text-sm font-medium text-gray-300 mb-1">New Policy CID</label>
+      //       <Input
+      //         id="policyCID"
+      //         className='input has-symbol'
+      //         value={proposal.policyCID}
+      //         onChangeText={(newValue) => onInputChange('policyCID', newValue)}
+      //       />
+      //     </div>
+      // );
+      // case proposalTypes[5].value: // Model Access Proposal
+      //   return (
+      //     <div>
+      //       <label className="block text-sm font-medium text-gray-300 mb-1">Model Name</label>
+      //       <Input
+      //         id="modelName"
+      //         className='input has-symbol'
+      //         value={proposal.modelName}
+      //         onChangeText={(newValue) => onInputChange('modelName', newValue)}
+      //       />
+      //     </div>
+      //   );
+      // case proposalTypes[6].value: // Reward Weight Adjustment Proposal
+      //   return (
+      //     <div>
+      //       <label className="block text-sm font-medium text-gray-300 mb-1">New Weight (0-1)</label>
+      //       <Input
+      //         keyboardType="numeric"
+      //         id="newWeight"
+      //         className='input has-symbol'
+      //         value={proposal.newWeight}
+      //         onChangeText={(newValue) => onInputChange('newWeight', newValue)}
+      //       />
+      //     </div>
+      //   );
+      // case proposalTypes[7].value: // SuperNode Eligibility Proposal
+      //   return (
+      //     <div>
+      //       <label className="block text-sm font-medium text-gray-300 mb-1">Node Address</label>
+      //       <Input
+      //         id="nodeAddress"
+      //         className='input has-symbol'
+      //         value={proposal.nodeAddress}
+      //         onChangeText={(newValue) => onInputChange('nodeAddress', newValue)}
+      //       />
+      //     </div>
+      //   );
+      // case proposalTypes[8].value: // Validator Commission Cap Proposal
+      //   return (
+      //     <div>
+      //       <label className="block text-sm font-medium text-gray-300 mb-1">New Commission Cap (%)</label>
+      //       <Input
+      //         keyboardType="numeric"
+      //         id="newCommission"
+      //         className='input has-symbol'
+      //         value={proposal.newCommission}
+      //         onChangeText={(newValue) => onInputChange('newCommission', newValue)}
+      //       />
+      //     </div>
+      //   );
+      // case proposalTypes[9].value: // Foundation Delegation Policy Proposal
+      //   return (
+      //     <div>
+      //       <label className="block text-sm font-medium text-gray-300 mb-1">Delegation Address</label>
+      //       <Input
+      //         keyboardType="numeric"
+      //         id="delegationAddress"
+      //         className='input has-symbol'
+      //         value={proposal.delegationAddress}
+      //         onChangeText={(newValue) => onInputChange('delegationAddress', newValue)}
+      //       />
+      //     </div>
+      //   );
       default:
         return <p className="text-gray-400">No specific parameters required for this proposal type.</p>;
     }
