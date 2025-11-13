@@ -428,9 +428,9 @@ const useGovernances = () => {
       const memo = 'Create Proposal';
       const gasEstimate = await client.simulate(address, [msg], memo);
       const gasLimit = `${Math.round(gasEstimate * 1.3)}`;
-      console.log(1111, 'gasLimit', gasLimit)
+      const fixedFeeAmount = `${Math.ceil(Number(gasLimit) * 0.028)}`;// 0.028 ulume/gas
       const fee = {
-        amount: coins('5000', 'ulume'), // Gas fee estimate
+        amount: coins(fixedFeeAmount.toString(), 'ulume'), // Gas fee estimate
         gas: gasLimit,
       };
 
