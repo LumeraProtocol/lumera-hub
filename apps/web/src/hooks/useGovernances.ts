@@ -31,30 +31,30 @@ export const proposalTypes = [
     value: 'software',
     label: 'Software Upgrade Proposal',
   },
-  {
-    value: 'cascade',
-    label: 'Cascade Policy Update Proposal',
-  },
-  {
-    value: 'model',
-    label: 'Model Access Proposal',
-  },
-  {
-    value: 'reward',
-    label: 'Reward Weight Adjustment Proposal',
-  },
-  {
-    value: 'supernode',
-    label: 'SuperNode Eligibility Proposal',
-  },
-  {
-    value: 'commission',
-    label: 'Validator Commission Cap Proposal',
-  },
-  {
-    value: 'foundation',
-    label: 'Foundation Delegation Policy Proposal',
-  },
+  // {
+  //   value: 'cascade',
+  //   label: 'Cascade Policy Update Proposal',
+  // },
+  // {
+  //   value: 'model',
+  //   label: 'Model Access Proposal',
+  // },
+  // {
+  //   value: 'reward',
+  //   label: 'Reward Weight Adjustment Proposal',
+  // },
+  // {
+  //   value: 'supernode',
+  //   label: 'SuperNode Eligibility Proposal',
+  // },
+  // {
+  //   value: 'commission',
+  //   label: 'Validator Commission Cap Proposal',
+  // },
+  // {
+  //   value: 'foundation',
+  //   label: 'Foundation Delegation Policy Proposal',
+  // },
 ];
 
 export const GOVERNANCE_STATS = {
@@ -109,6 +109,7 @@ const useGovernances = () => {
     initialDeposit: '0',
   });
   const [isCreateProposalLoading, setCreateProposalLoading] = useState(false);
+  const [transactionHash, setTransactionHash] = useState('');
 
   const fetchSumary = async () => {
     setMsg({
@@ -243,7 +244,8 @@ const useGovernances = () => {
       newCommission: '',
       delegationAddress: '',
       initialDeposit: '0',
-    })
+    });
+    setTransactionHash('');
   }
 
   const handleCloseCreateProposalModal = () => {
@@ -396,20 +398,20 @@ const useGovernances = () => {
           };
           break;
         case proposalTypes[4].value: // Cascade Policy Update Proposal
-        case proposalTypes[5].value: // Model Access Proposal
-        case proposalTypes[6].value: // Reward Weight Adjustment Proposal
-        case proposalTypes[7].value: // SuperNode Eligibility Proposal
-        case proposalTypes[8].value: // Validator Commission Cap Proposal
-        case proposalTypes[9].value: // Foundation Delegation Policy Proposal
-          encodedValue = TextProposal.encode(TextProposal.fromPartial({
-            title: proposal.title,
-            description: proposal.description  + ` [Custom Type: ${proposal.type}]`,
-          })).finish();
-          content = {
-            typeUrl: '/cosmos.gov.v1beta1.TextProposal',
-            value: encodedValue,
-          };
-          break;
+        // case proposalTypes[5].value: // Model Access Proposal
+        // case proposalTypes[6].value: // Reward Weight Adjustment Proposal
+        // case proposalTypes[7].value: // SuperNode Eligibility Proposal
+        // case proposalTypes[8].value: // Validator Commission Cap Proposal
+        // case proposalTypes[9].value: // Foundation Delegation Policy Proposal
+        //   encodedValue = TextProposal.encode(TextProposal.fromPartial({
+        //     title: proposal.title,
+        //     description: proposal.description  + ` [Custom Type: ${proposal.type}]`,
+        //   })).finish();
+        //   content = {
+        //     typeUrl: '/cosmos.gov.v1beta1.TextProposal',
+        //     value: encodedValue,
+        //   };
+        //   break;
       }
       const client = await getClient();
       const msg = {
@@ -438,6 +440,7 @@ const useGovernances = () => {
           type: 'success',
           message: 'Create Proposal Successfully',
         });
+        setTransactionHash(result?.transactionHash);
       } else {
         setMsg({
           type: 'error',
@@ -467,6 +470,7 @@ const useGovernances = () => {
     selectedModal,
     proposal,
     isCreateProposalLoading,
+    transactionHash,
     handleCreateProposalClick,
     handleBackClick,
     handleInputChange,
