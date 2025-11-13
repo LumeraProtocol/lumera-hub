@@ -15,6 +15,7 @@ import {
 } from '@tamagui/lucide-icons';
 
 import AppButton from '@/components/AppButton';
+import Loading from '@/components/Loading';
 import { STEPS, proposalTypes, GOVERNANCE_STATS } from '@/hooks/useGovernances';
 
 interface ICreateProposalModal {
@@ -40,6 +41,11 @@ interface ICreateProposalModal {
     delegationAddress: string;
     initialDeposit: string;
   };
+  isLoading: boolean;
+  msg: {
+    type: string;
+    message: string;
+  };
   onNextClick: () => void;
   onBackClick: () => void;
   onCloseModal: () => void;
@@ -52,6 +58,8 @@ export default function CreateProposalModal({
   step,
   className = 'w-full md:w-[680px] max-w-[96vw]',
   proposal,
+  isLoading,
+  msg,
   onNextClick,
   onBackClick,
   onCloseModal,
@@ -64,31 +72,7 @@ export default function CreateProposalModal({
 
   const renderStep3 = () => {
     switch(proposal.type) {
-      case proposalTypes[2].value:
-        return (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor='recipient'>Recipient Address</label>
-              <Input
-                id="recipient"
-                className='input has-symbol'
-                value={proposal.recipient}
-                onChangeText={(newValue) => onInputChange('recipient', newValue)}
-              />
-            </div>
-            <div className='mt-3'>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Amount (LUME)</label>
-              <Input
-                keyboardType="numeric"
-                id="amount"
-                className='input has-symbol'
-                value={proposal.amount}
-                onChangeText={(newValue) => onInputChange('amount', newValue)}
-              />
-            </div>
-          </>
-        );
-      case proposalTypes[1].value:
+      case proposalTypes[1].value: // Parameter Change Proposal
         return (
           <>
             <div>
@@ -120,7 +104,31 @@ export default function CreateProposalModal({
             </div>
           </>
         );
-      case proposalTypes[3].value:
+      case proposalTypes[2].value: // Community Spend Proposal
+        return (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor='recipient'>Recipient Address</label>
+              <Input
+                id="recipient"
+                className='input has-symbol'
+                value={proposal.recipient}
+                onChangeText={(newValue) => onInputChange('recipient', newValue)}
+              />
+            </div>
+            <div className='mt-3'>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Amount (LUME)</label>
+              <Input
+                keyboardType="numeric"
+                id="amount"
+                className='input has-symbol'
+                value={proposal.amount}
+                onChangeText={(newValue) => onInputChange('amount', newValue)}
+              />
+            </div>
+          </>
+        );
+      case proposalTypes[3].value: // Software Upgrade Proposal
         return (
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Upgrade Version</label>
@@ -132,7 +140,7 @@ export default function CreateProposalModal({
             />
           </div>
         );
-      case proposalTypes[4].value:
+      case proposalTypes[4].value: // Cascade Policy Update Proposal
         return (
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">New Policy CID</label>
@@ -144,7 +152,7 @@ export default function CreateProposalModal({
             />
           </div>
       );
-      case proposalTypes[5].value:
+      case proposalTypes[5].value: // Model Access Proposal
         return (
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Model Name</label>
@@ -156,7 +164,7 @@ export default function CreateProposalModal({
             />
           </div>
         );
-      case proposalTypes[6].value:
+      case proposalTypes[6].value: // Reward Weight Adjustment Proposal
         return (
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">New Weight (0-1)</label>
@@ -169,7 +177,7 @@ export default function CreateProposalModal({
             />
           </div>
         );
-      case proposalTypes[7].value:
+      case proposalTypes[7].value: // SuperNode Eligibility Proposal
         return (
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Node Address</label>
@@ -181,7 +189,7 @@ export default function CreateProposalModal({
             />
           </div>
         );
-      case proposalTypes[8].value:
+      case proposalTypes[8].value: // Validator Commission Cap Proposal
         return (
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">New Commission Cap (%)</label>
@@ -194,7 +202,7 @@ export default function CreateProposalModal({
             />
           </div>
         );
-      case proposalTypes[9].value:
+      case proposalTypes[9].value: // Foundation Delegation Policy Proposal
         return (
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Delegation Address</label>
@@ -259,7 +267,8 @@ export default function CreateProposalModal({
                 <CircleX />
               </button>
             </div>
-            <div className='mt-5'>
+            <div className='mt-5 relative'>
+              <Loading isLoading={isLoading} />
               <div className="mb-6">
                 <div className="flex justify-between mb-1">
                   {STEPS.map((s, i) => (
@@ -282,7 +291,7 @@ export default function CreateProposalModal({
                     onValueChange={(newValue) => onInputChange('type', newValue)}
                   >
                     <Select.Trigger width={'100%'} iconAfter={<ChevronDown size="$1" />}>
-                        <Select.Value placeholder="Select a validator" />
+                      <Select.Value placeholder="Select a type" />
                     </Select.Trigger>
                     <Select.Content zIndex={200000}>
                         <Select.Viewport minWidth={200}>
@@ -294,7 +303,7 @@ export default function CreateProposalModal({
                                   index={index}
                                   value={item.value}
                               >
-                                  <Select.ItemText>{item.value}</Select.ItemText>
+                                  <Select.ItemText>{item.label}</Select.ItemText>
                                   <XStack flex={1} />
                                   <Select.ItemIndicator marginLeft="auto">
                                     <CheckIcon size={16} />
@@ -374,9 +383,7 @@ export default function CreateProposalModal({
               {step === 5 && (
                 <div className="space-y-4 text-sm">
                   <h3 className="font-medium text-white">Review Proposal</h3>
-                  <p className='mb-2'>
-                    <strong className="text-gray-400">Type:</strong> {proposal.type}
-                  </p>
+                  <p><strong className="text-gray-400">Type:</strong> {proposal.type}</p>
                   <p><strong className="text-gray-400">Title:</strong> {proposal.title}</p>
                   <p><strong className="text-gray-400">Description:</strong> {proposal.description}</p>
                   <p><strong className="text-gray-400">Expedited:</strong> {proposal.isExpedited ? 'Yes' : 'No'}</p>
@@ -394,6 +401,16 @@ export default function CreateProposalModal({
                 {step < 5 && <AppButton onClick={onNextClick}>Next</AppButton>}
                 {step === 5 && <AppButton onClick={onCreateProposalClick}>Submit Proposal</AppButton>}
               </div>
+              {msg?.type === 'error' ?
+                <div className='text-lumera-red-light mt-5'>
+                  {msg.message}
+                </div> : null
+              }
+              {msg?.type === 'success' ?
+                <div className='text-lumera-green mt-5'>
+                  {msg.message}
+                </div> : null
+              }
             </div>
           </div>
         </Dialog.Content>

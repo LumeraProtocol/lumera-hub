@@ -119,6 +119,11 @@ interface IGovernanceScreen {
       delegationAddress: string;
       initialDeposit: string;
     };
+    isLoading: boolean;
+    msg: {
+      type: string;
+      message: string;
+    };
     onOpenCreateProposalModalClick: () => void;
     onCloseCreateProposalModalClick: () => void;
     onNextStepsClick: () => void;
@@ -511,6 +516,8 @@ export const GovernanceScreen = ({
           isOpen={createProposal.selectedModal === 'create'}
           step={createProposal.step}
           proposal={createProposal.proposal}
+          isLoading={createProposal.isLoading}
+          msg={createProposal.msg}
           onNextClick={createProposal.onNextStepsClick}
           onCloseModal={createProposal.onCloseCreateProposalModalClick}
           onInputChange={createProposal.onInputChange}
