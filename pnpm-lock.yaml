@@ -132,9 +132,9 @@ importers:
       '@lumera-hub/ui':
         specifier: workspace:^
         version: link:../../packages/ui
-      '@lumera/sdk-js':
-        specifier: git+https://github.com/LumeraProtocol/sdk-js.git
-        version: git+https://github.com/LumeraProtocol/sdk-js.git#7470be54c7f2c362ab6546c3ac309947d6459cbb(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      '@lumera-protocol/sdk-js':
+        specifier: ^0.2.2
+        version: 0.2.2(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@react-jvectormap/core':
         specifier: ^1.0.4
         version: 1.0.4(jquery@3.7.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -857,8 +857,8 @@ packages:
     resolution: {integrity: sha512-ruv7Ae4J5dUYULmeXw1gmb7rYRz57OWCPM57pHojnLq/3Z1CK2lNSLTCVjxVk1F/TZHwOZZrOWi0ur95BbLxNQ==}
     engines: {node: '>=6.9.0'}
 
-  '@bufbuild/protobuf@2.10.0':
-    resolution: {integrity: sha512-fdRs9PSrBF7QUntpZpq6BTw58fhgGJojgg39m9oFOJGZT+nip9b0so5cYY1oWl5pvemDLr0cPPsH46vwThEbpQ==}
+  '@bufbuild/protobuf@2.10.1':
+    resolution: {integrity: sha512-ckS3+vyJb5qGpEYv/s1OebUHDi/xSNtfgw1wqKZo7MR9F2z+qXr0q5XagafAG/9O0QPVIUfST0smluYSTpYFkg==}
 
   '@chain-registry/keplr@2.0.42':
     resolution: {integrity: sha512-C4Puo6rZSm4sMdutlLYQ5SbvbuHydSRocui5Ds+tKmIit+MYWXSfGczNrwLceue9tlYfE+tYO6qjlwekSTfjJA==}
@@ -1699,9 +1699,8 @@ packages:
   '@ledgerhq/logs@6.13.0':
     resolution: {integrity: sha512-4+qRW2Pc8V+btL0QEmdB2X+uyx0kOWMWE1/LWsq5sZy3Q5tpi4eItJS6mB0XL3wGW59RQ+8bchNQQ1OW/va8Og==}
 
-  '@lumera/sdk-js@git+https://github.com/LumeraProtocol/sdk-js.git#7470be54c7f2c362ab6546c3ac309947d6459cbb':
-    resolution: {commit: 7470be54c7f2c362ab6546c3ac309947d6459cbb, repo: https://github.com/LumeraProtocol/sdk-js.git, type: git}
-    version: 0.1.0-beta
+  '@lumera-protocol/sdk-js@0.2.2':
+    resolution: {integrity: sha512-8/FfK4EahpLPgm7MXmU1xdihcZDFwKnvoiiFMUrGL1wTvSRwUdEnDivclnN7MmsG32Dhp5DLOrmlf9RXi3fQRg==}
     engines: {node: '>=18'}
 
   '@mongodb-js/zstd@2.0.1':
@@ -9110,7 +9109,7 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
 
-  '@bufbuild/protobuf@2.10.0': {}
+  '@bufbuild/protobuf@2.10.1': {}
 
   '@chain-registry/keplr@2.0.42':
     dependencies:
@@ -10811,9 +10810,9 @@ snapshots:
 
   '@ledgerhq/logs@6.13.0': {}
 
-  '@lumera/sdk-js@git+https://github.com/LumeraProtocol/sdk-js.git#7470be54c7f2c362ab6546c3ac309947d6459cbb(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@lumera-protocol/sdk-js@0.2.2(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
-      '@bufbuild/protobuf': 2.10.0
+      '@bufbuild/protobuf': 2.10.1
       '@cosmjs/amino': 0.36.1
       '@cosmjs/crypto': 0.36.1
       '@cosmjs/encoding': 0.36.1

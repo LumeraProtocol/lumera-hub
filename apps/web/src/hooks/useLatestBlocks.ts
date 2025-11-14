@@ -24,7 +24,7 @@ function mergeArraysById(currentBlock: IBlock[], newBlock: IBlock[]) {
 }
 
 const useLatestBlocks = () => {
-  const intervalRef = useRef<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const params = useParams();
   const [isFetchValidatorLoading, setFetchValidatorLoading] = useState(false);
   const [validators, setValidators] = useState<IValidator[]>([]);
@@ -68,6 +68,9 @@ const useLatestBlocks = () => {
   }
 
   useEffect(() => {
+    if (intervalRef?.current) {
+      clearInterval(intervalRef.current)
+    }
     if (params?.validator) {
       fetchValidators();
       fetchBlocks();

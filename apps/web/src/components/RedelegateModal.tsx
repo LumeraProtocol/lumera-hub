@@ -106,7 +106,7 @@ export default function RedelegateModal({
                 <div className='flex justify-center'>
                   <CheckCircle className='w-12 h-12 text-lumera-green border border-lumera-green rounded-full p-3' />
                 </div>
-                <div className='mt-5 text-2xl'>Unbond Successfully</div>
+                <div className='mt-5 text-2xl'>Redelegate Successfully</div>
                 {optionsAdvanced?.amount ?
                   <div className='mt-1'>You have restaked {optionsAdvanced?.amount} Lume</div> : null
                 }
