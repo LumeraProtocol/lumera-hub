@@ -596,7 +596,7 @@ export const ValidatorModal = ({
                         onClick={() => onSelectValidator(validator.operator_address)}
                       >
                         <td data-label="Validator: ">
-                          {validator.description.moniker || formatAddress(validator.delegation.validator_address, 10, -5)}
+                          {validator.description.moniker || formatAddress(validator.operator_address, 10, -5)}
                         </td>
                         <td data-label="Staked Amount: " align='right'>
                           {formatToken({
@@ -1101,7 +1101,7 @@ export const StakingScreen = ({
       return '';
      }
 
-     return `Congratulations! Rewards have been claimed from ${validator.description.moniker || formatAddress(validator.delegation.validator_address, 10, -5)} successfully.`
+     return `Congratulations! Rewards have been claimed from ${validator.description.moniker || formatAddress(validator?.operator_address || '', 10, -5)} successfully.`
   }
 
   const getValidatorName = (delegation: TUnbondingDelegation, validator: IValidator | undefined) => {
@@ -1135,12 +1135,12 @@ export const StakingScreen = ({
       const reward = accountInfo?.rewards.find(v => v.validator_address === claim.selectedClaim?.delegation.validator_address);
 
       amount = formatTokens(reward?.reward, false, '0,0.[000000]');
-      name = validator?.description?.moniker || formatAddress(validator.delegation.validator_address, 10, -5) || '';
+      name = validator?.description?.moniker || formatAddress(validator?.operator_address || '', 10, -5) || '';
     }
 
     if (unbondOptions?.optionsAdvanced?.validator) {
       const validator = getAllValidators().find((item) => item.operator_address === unbondOptions?.optionsAdvanced?.validator);
-      validatorName = validator?.description?.moniker || formatAddress(validator.delegation.validator_address, 10, -5) || '';
+      validatorName = validator?.description?.moniker || formatAddress(validator?.operator_address || '', 10, -5) || '';
     }
 
     return {
