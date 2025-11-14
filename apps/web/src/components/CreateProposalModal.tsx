@@ -49,6 +49,7 @@ interface ICreateProposalModal {
     message: string;
   };
   transactionHash: string;
+  requiredDeposit: number;
   onNextClick: () => void;
   onBackClick: () => void;
   onCloseModal: () => void;
@@ -64,15 +65,13 @@ export default function CreateProposalModal({
   isLoading,
   msg,
   transactionHash,
+  requiredDeposit,
   onNextClick,
   onBackClick,
   onCloseModal,
   onInputChange,
   onCreateProposalClick,
 }: ICreateProposalModal) {
-  // Define different deposit amounts
-  const EXPEDITED_DEPOSIT_REQUIRED = GOVERNANCE_STATS.depositRequired * 2;
-  const requiredDeposit = proposal.isExpedited ? EXPEDITED_DEPOSIT_REQUIRED : GOVERNANCE_STATS.depositRequired;
 
   if (transactionHash && isOpen) {
     return (
@@ -162,6 +161,11 @@ export default function CreateProposalModal({
                 value={proposal.module}
                 onChangeText={(newValue) => onInputChange('module', newValue)}
               />
+              {msg?.type === 'module' ?
+                <div className='text-lumera-red-light mt-5'>
+                  {msg.message}
+                </div> : null
+              }
             </div>
             <div className='mt-3'>
               <label className="block text-sm font-medium text-gray-300 mb-1">Key</label>
@@ -171,6 +175,11 @@ export default function CreateProposalModal({
                 value={proposal.key}
                 onChangeText={(newValue) => onInputChange('key', newValue)}
               />
+              {msg?.type === 'key' ?
+                <div className='text-lumera-red-light mt-5'>
+                  {msg.message}
+                </div> : null
+              }
             </div>
             <div className='mt-3'>
               <label className="block text-sm font-medium text-gray-300 mb-1">New Value</label>
@@ -180,6 +189,11 @@ export default function CreateProposalModal({
                 value={proposal.newValue}
                 onChangeText={(newValue) => onInputChange('newValue', newValue)}
               />
+              {msg?.type === 'newValue' ?
+                <div className='text-lumera-red-light mt-5'>
+                  {msg.message}
+                </div> : null
+              }
             </div>
           </>
         );
@@ -194,6 +208,11 @@ export default function CreateProposalModal({
                 value={proposal.recipient}
                 onChangeText={(newValue) => onInputChange('recipient', newValue)}
               />
+              {msg?.type === 'recipient' ?
+                <div className='text-lumera-red-light mt-5'>
+                  {msg.message}
+                </div> : null
+              }
             </div>
             <div className='mt-3'>
               <label className="block text-sm font-medium text-gray-300 mb-1">Amount (LUME)</label>
@@ -204,6 +223,11 @@ export default function CreateProposalModal({
                 value={proposal.amount}
                 onChangeText={(newValue) => onInputChange('amount', newValue)}
               />
+              {msg?.type === 'amount' ?
+                <div className='text-lumera-red-light mt-5'>
+                  {msg.message}
+                </div> : null
+              }
             </div>
           </>
         );
@@ -217,83 +241,41 @@ export default function CreateProposalModal({
               value={proposal.upgradeVersion}
               onChangeText={(newValue) => onInputChange('upgradeVersion', newValue)}
             />
+            {msg?.type === 'upgradeVersion' ?
+              <div className='text-lumera-red-light mt-5'>
+                {msg.message}
+              </div> : null
+            }
           </div>
         );
-      // case proposalTypes[4].value: // Cascade Policy Update Proposal
-      //   return (
-      //     <div>
-      //       <label className="block text-sm font-medium text-gray-300 mb-1">New Policy CID</label>
-      //       <Input
-      //         id="policyCID"
-      //         className='input has-symbol'
-      //         value={proposal.policyCID}
-      //         onChangeText={(newValue) => onInputChange('policyCID', newValue)}
-      //       />
-      //     </div>
-      // );
-      // case proposalTypes[5].value: // Model Access Proposal
-      //   return (
-      //     <div>
-      //       <label className="block text-sm font-medium text-gray-300 mb-1">Model Name</label>
-      //       <Input
-      //         id="modelName"
-      //         className='input has-symbol'
-      //         value={proposal.modelName}
-      //         onChangeText={(newValue) => onInputChange('modelName', newValue)}
-      //       />
-      //     </div>
-      //   );
-      // case proposalTypes[6].value: // Reward Weight Adjustment Proposal
-      //   return (
-      //     <div>
-      //       <label className="block text-sm font-medium text-gray-300 mb-1">New Weight (0-1)</label>
-      //       <Input
-      //         keyboardType="numeric"
-      //         id="newWeight"
-      //         className='input has-symbol'
-      //         value={proposal.newWeight}
-      //         onChangeText={(newValue) => onInputChange('newWeight', newValue)}
-      //       />
-      //     </div>
-      //   );
-      // case proposalTypes[7].value: // SuperNode Eligibility Proposal
-      //   return (
-      //     <div>
-      //       <label className="block text-sm font-medium text-gray-300 mb-1">Node Address</label>
-      //       <Input
-      //         id="nodeAddress"
-      //         className='input has-symbol'
-      //         value={proposal.nodeAddress}
-      //         onChangeText={(newValue) => onInputChange('nodeAddress', newValue)}
-      //       />
-      //     </div>
-      //   );
-      // case proposalTypes[8].value: // Validator Commission Cap Proposal
-      //   return (
-      //     <div>
-      //       <label className="block text-sm font-medium text-gray-300 mb-1">New Commission Cap (%)</label>
-      //       <Input
-      //         keyboardType="numeric"
-      //         id="newCommission"
-      //         className='input has-symbol'
-      //         value={proposal.newCommission}
-      //         onChangeText={(newValue) => onInputChange('newCommission', newValue)}
-      //       />
-      //     </div>
-      //   );
-      // case proposalTypes[9].value: // Foundation Delegation Policy Proposal
-      //   return (
-      //     <div>
-      //       <label className="block text-sm font-medium text-gray-300 mb-1">Delegation Address</label>
-      //       <Input
-      //         keyboardType="numeric"
-      //         id="delegationAddress"
-      //         className='input has-symbol'
-      //         value={proposal.delegationAddress}
-      //         onChangeText={(newValue) => onInputChange('delegationAddress', newValue)}
-      //       />
-      //     </div>
-      //   );
+      default:
+        return <p className="text-gray-400">No specific parameters required for this proposal type.</p>;
+    }
+  };
+
+  const renderStep5 = () => {
+    switch(proposal.type) {
+      case proposalTypes[1].value: // Parameter Change Proposal
+        return (
+          <>
+            <p className='mb-4'><strong className="text-gray-400">Module:</strong> {proposal.module}</p>
+            <p className='mb-4'><strong className="text-gray-400">Key:</strong> {proposal.key}</p>
+            <p className='mb-4'><strong className="text-gray-400">New Value:</strong> {proposal.newValue}</p>
+          </>
+        );
+      case proposalTypes[2].value: // Community Spend Proposal
+        return (
+          <>
+            <p className='mb-4'><strong className="text-gray-400">Recipient Address:</strong> {proposal.recipient}</p>
+            <p className='mb-4'><strong className="text-gray-400">Amount (LUME):</strong> {proposal.amount}</p>
+          </>
+        );
+      case proposalTypes[3].value: // Software Upgrade Proposal
+        return (
+          <>
+            <p><strong className="text-gray-400">Upgrade Version:</strong> {proposal.upgradeVersion}</p>
+          </>
+        );
       default:
         return <p className="text-gray-400">No specific parameters required for this proposal type.</p>;
     }
@@ -408,6 +390,11 @@ export default function CreateProposalModal({
                       value={proposal.title}
                       onChangeText={(newValue) => onInputChange('title', newValue)}
                     />
+                    {msg?.type === 'title' ?
+                      <div className='text-lumera-red-light mt-5'>
+                        {msg.message}
+                      </div> : null
+                    }
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
@@ -418,6 +405,11 @@ export default function CreateProposalModal({
                       rows={5}
                       className="w-full bg-gray-900/50 border-gray-600 rounded-lg"
                     />
+                    {msg?.type === 'description' ?
+                      <div className='text-lumera-red-light mt-5'>
+                        {msg.message}
+                      </div> : null
+                    }
                   </div>
                   <div className="flex items-center">
                      <Checkbox
@@ -455,6 +447,11 @@ export default function CreateProposalModal({
                       value={proposal.initialDeposit}
                       onChangeText={(newValue) => onInputChange('initialDeposit', newValue)}
                     />
+                    {msg?.type === 'initialDeposit' ?
+                      <div className='text-lumera-red-light mt-5'>
+                        {msg.message}
+                      </div> : null
+                    }
                   </div>
                 </div>
               )}
@@ -462,12 +459,12 @@ export default function CreateProposalModal({
               {step === 5 && (
                 <div className="space-y-4 text-sm">
                   <h3 className="font-medium text-white">Review Proposal</h3>
-                  <p><strong className="text-gray-400">Type:</strong> {proposal.type}</p>
-                  <p><strong className="text-gray-400">Title:</strong> {proposal.title}</p>
-                  <p><strong className="text-gray-400">Description:</strong> {proposal.description}</p>
-                  <p><strong className="text-gray-400">Expedited:</strong> {proposal.isExpedited ? 'Yes' : 'No'}</p>
-                  <div className="pt-2 border-t border-gray-700/20">
-                    {renderStep3()}
+                  <p className='mb-4'><strong className="text-gray-400">Type:</strong> {proposal.type}</p>
+                  <p className='mb-4'><strong className="text-gray-400">Title:</strong> {proposal.title}</p>
+                  <p className='mb-4'><strong className="text-gray-400">Description:</strong> {proposal.description}</p>
+                  <p className='mb-4'><strong className="text-gray-400">Expedited:</strong> {proposal.isExpedited ? 'Yes' : 'No'}</p>
+                  <div className="pt-4 border-t border-gray-700/20">
+                    {renderStep5()}
                   </div>
                   <p className="pt-4 border-t border-gray-700/50">
                     <strong className="text-gray-400">Initial Deposit:</strong> {proposal.initialDeposit} LUME

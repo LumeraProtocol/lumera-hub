@@ -9,8 +9,6 @@ import {
 } from 'tamagui';
 import {
   Logs,
-  BadgeCheck,
-  Beaker,
   Search,
   Activity,
   Coins,
@@ -18,6 +16,7 @@ import {
   CheckCircle,
 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
+import { LandmarkIcon, Hourglass, BadgeCheck, List } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
 import Loading from '@/components/Loading';
@@ -125,6 +124,7 @@ interface IGovernanceScreen {
       message: string;
     };
     transactionHash: string;
+    requiredDeposit: number;
     onOpenCreateProposalModalClick: () => void;
     onCloseCreateProposalModalClick: () => void;
     onNextStepsClick: () => void;
@@ -274,12 +274,12 @@ export const GovernanceScreen = ({
             <Card.Header padded>
               <div className='flex items-center gap-3'>
                 <div className='governance-proposals-icon'>
-                  <Logs size="$3" />
+                  <List className="w-8 h-8 text-indigo-400"/>
                 </div>
                 <div>
-                  <H3 className='text-base text-lumera-label leading-none'>Total Proposals</H3>
-                  <div className='leading-none mt-3'>
-                    <span className='text-[32px] font-bold text-white'>
+                  <H3 className='text-sm text-lumera-label !leading-none'>Total Proposals</H3>
+                  <div className='leading-none mt-1'>
+                    <span className='text-3xl font-bold text-white'>
                       {isSumaryLoading ?
                         <Skeleton /> : <>
                           {formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })}
@@ -295,12 +295,12 @@ export const GovernanceScreen = ({
             <Card.Header padded>
               <div className='flex items-center gap-3'>
                 <div className='governance-passed-icon'>
-                  <BadgeCheck size="$3" />
+                  <BadgeCheck className="w-8 h-8 text-green-400"/>
                 </div>
                 <div>
-                  <H3 className='text-base text-lumera-label leading-none'>Passed</H3>
-                  <div className='leading-none mt-3'>
-                    <span className='text-[32px] font-bold text-white'>
+                  <H3 className='text-sm text-lumera-label !leading-none'>Passed</H3>
+                  <div className='leading-none mt-1'>
+                    <span className='text-3xl font-bold text-white'>
                       {isSumaryLoading ?
                         <Skeleton /> : <>
                           {formatNumber(sumary?.passed || 0, { decimalsLength: 0 })}
@@ -316,12 +316,12 @@ export const GovernanceScreen = ({
             <Card.Header padded>
               <div className='flex items-center gap-3'>
                 <div className='governance-voting-period-icon'>
-                  <Beaker size="$3" />
+                  <Hourglass className="w-8 h-8 text-amber-400"/>
                 </div>
                 <div>
-                  <H3 className='text-base text-lumera-label leading-none'>Voting Period</H3>
-                  <div className='leading-none mt-3'>
-                    <span className='text-[32px] font-bold text-white'>
+                  <H3 className='text-sm text-lumera-label !leading-none'>Voting Period</H3>
+                  <div className='leading-none mt-1'>
+                    <span className='text-3xl font-bold text-white'>
                       {isSumaryLoading ?
                         <Skeleton /> : <>
                           {formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days
@@ -337,14 +337,14 @@ export const GovernanceScreen = ({
             <Card.Header padded>
               <div className='flex items-center gap-3'>
                 <div className='governance-deposit-icon'>
-                  <Beaker size="$3" />
+                  <LandmarkIcon className="w-8 h-8 text-sky-400"/>
                 </div>
                 <div>
-                  <H3 className='text-base text-lumera-label leading-none !whitespace-nowrap'>Deposit Required</H3>
-                  <div className='leading-none mt-3'>
+                  <H3 className='text-sm text-lumera-label !leading-none !whitespace-nowrap'>Deposit Required</H3>
+                  <div className='leading-none mt-1'>
                     {isSumaryLoading ?
                       <Skeleton /> : <>
-                        <span className='text-[32px] font-bold text-white'>
+                        <span className='text-3xl font-bold text-white'>
                           {formatToken({
                             amount: sumary.depositRequiredParam.amount,
                             denom: sumary.depositRequiredParam.denom,
@@ -369,14 +369,6 @@ export const GovernanceScreen = ({
                   onClick={() => onTabChange('')}
                 >
                   All ({formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })})
-                </button>
-              </li>
-              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_UNSPECIFIED' ? 'active' : ''}`}>
-                <button
-                  className='tab-button whitespace-nowrap'
-                  onClick={() => onTabChange('PROPOSAL_STATUS_UNSPECIFIED')}
-                >
-                  Unspecified ({formatNumber(sumary?.unspecified || 0, { decimalsLength: 0 })})
                 </button>
               </li>
               <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? 'active' : ''}`}>
@@ -520,6 +512,7 @@ export const GovernanceScreen = ({
           isLoading={createProposal.isLoading}
           msg={createProposal.msg}
           transactionHash={createProposal.transactionHash}
+          requiredDeposit={createProposal.requiredDeposit}
           onNextClick={createProposal.onNextStepsClick}
           onCloseModal={createProposal.onCloseCreateProposalModalClick}
           onInputChange={createProposal.onInputChange}
