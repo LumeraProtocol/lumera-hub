@@ -58,8 +58,10 @@ export const proposalTypes = [
 ];
 
 export const GOVERNANCE_STATS = {
-  depositRequired: 500,
+  depositRequired: 1000,
 };
+
+const EXPEDITED_DEPOSIT_REQUIRED = GOVERNANCE_STATS.depositRequired * 5;
 
 const useGovernances = () => {
   const { address, getClient } = useWalletConnect();
@@ -110,6 +112,7 @@ const useGovernances = () => {
   });
   const [isCreateProposalLoading, setCreateProposalLoading] = useState(false);
   const [transactionHash, setTransactionHash] = useState('');
+  const [requiredDeposit, setRequiredDeposit] = useState(GOVERNANCE_STATS.depositRequired);
 
   const fetchSumary = async () => {
     setMsg({
@@ -124,7 +127,6 @@ const useGovernances = () => {
         resVotingPeriod,
         resTotalProposals,
         resRejected,
-        // resUnspecified,
         resFailed,
         resParams,
       ] = await Promise.all([
@@ -133,7 +135,6 @@ const useGovernances = () => {
         instance.get(`/cosmos/gov/v1/proposals?pagination.limit=1&pagination.count_total=true&proposal_status=PROPOSAL_STATUS_VOTING_PERIOD`),
         instance.get(`/cosmos/gov/v1/proposals?pagination.limit=1&pagination.count_total=true`),
         instance.get(`/cosmos/gov/v1/proposals?pagination.limit=1&pagination.count_total=true&proposal_status=PROPOSAL_STATUS_REJECTED`),
-        // instance.get(`/cosmos/gov/v1/proposals?pagination.limit=1&pagination.count_total=true&proposal_status=PROPOSAL_STATUS_UNSPECIFIED`),
         instance.get(`/cosmos/gov/v1/proposals?pagination.limit=1&pagination.count_total=true&proposal_status=PROPOSAL_STATUS_FAILED`),
         instance.get(`/cosmos/gov/v1/params/voting`),
       ]);
@@ -145,11 +146,10 @@ const useGovernances = () => {
         depositRequired: Number(resDepositRequired.data.pagination.total || 0),
         rejected: Number(resRejected.data.pagination.total || 0),
         unspecified: Number(resTotalProposals.data.pagination.total || 0),
-        // unspecified: Number(resUnspecified.data.pagination.total || 0),
         failed: Number(resFailed.data.pagination.total || 0),
         depositRequiredParam: {
-            denom: resParams.data.params.min_deposit[0].denom,
-            amount: resParams.data.params.min_deposit[0].amount,
+          denom: resParams.data.params.min_deposit[0].denom,
+          amount: resParams.data.params.min_deposit[0].amount,
         },
         votingPeriodParam: resParams.data.params.voting_period,
       });
@@ -204,11 +204,19 @@ const useGovernances = () => {
     setLoading(false);
   }
 
-  useEffect(() => {
-    setGovernances([]);
+  const fetchData = () => {
     fetchGovernances();
     fetchSumary();
+  }
+
+  useEffect(() => {
+    setGovernances([]);
+    fetchData();
   }, []);
+
+  useEffect(() => {
+    setRequiredDeposit(proposal.isExpedited ? EXPEDITED_DEPOSIT_REQUIRED : GOVERNANCE_STATS.depositRequired);
+  }, [proposal.isExpedited])
 
   const handleTabChange = (status: string) => {
     setGovernances([]);
@@ -220,12 +228,11 @@ const useGovernances = () => {
     fetchGovernances(currentTab, nextKey);
   }
 
-  const handleOpenCreateProposalModal = () => {
+  const resetData = () => {
     setMsg({
       type: '',
       message: '',
     });
-    setSelectedModal('create');
     setProposal({
       type: proposalTypes[0].value,
       title: '',
@@ -246,15 +253,122 @@ const useGovernances = () => {
       initialDeposit: '0',
     });
     setTransactionHash('');
+    setStep(1);
+    setCurrentTab('');
+  }
+
+  const handleOpenCreateProposalModal = () => {
+    resetData();
+    setSelectedModal('create');
+
   }
 
   const handleCloseCreateProposalModal = () => {
+    fetchData();
+    resetData();
     setSelectedModal('');
-    fetchGovernances();
-    fetchSumary();
   }
 
   const handleNextSteps = () => {
+    setMsg({
+      type: '',
+      message: '',
+    });
+    const currentStep = step;
+    let isValid = true;
+    if (currentStep === 2) {
+      if (!proposal.title) {
+        setMsg({
+          type: 'title',
+          message: 'Please enter title.',
+        });
+        return;
+      }
+      if (!proposal.description) {
+        setMsg({
+          type: 'description',
+          message: 'Please enter title.',
+        });
+        return;
+      }
+    }
+    if (currentStep === 3) {
+      switch (proposal.type) {
+        case proposalTypes[1].value: // Parameter Change Proposal
+          if (!proposal.module) {
+            setMsg({
+              type: 'module',
+              message: 'Please enter module.',
+            });
+            isValid = false;
+            return;
+          }
+          if (!proposal.key) {
+            setMsg({
+              type: 'key',
+              message: 'Please enter key.',
+            });
+            isValid = false;
+            return;
+          }
+          if (!proposal.newValue) {
+            setMsg({
+              type: 'newValue',
+              message: 'Please enter new value.',
+            });
+            isValid = false;
+            return;
+          }
+          break;
+        case proposalTypes[2].value: // Community Spend Proposal
+          if (!proposal.recipient) {
+            setMsg({
+              type: 'recipient',
+              message: 'Please enter recipient.',
+            });
+            isValid = false;
+            return;
+          }
+          if (!proposal.amount) {
+            setMsg({
+              type: 'amount',
+              message: 'Please enter amount.',
+            });
+            isValid = false;
+            return;
+          }
+          break;
+        case proposalTypes[3].value: // Software Upgrade Proposal
+          if (!proposal.upgradeVersion) {
+            setMsg({
+              type: 'upgradeVersion',
+              message: 'Please enter upgrade version.',
+            });
+            isValid = false;
+            return;
+          }
+          break;
+      }
+    }
+    if (currentStep === 4) {
+      if (Number(proposal.initialDeposit) <= 0) {
+        setMsg({
+          type: 'initialDeposit',
+          message: 'Please enter deposit amount.',
+        });
+        return;
+      }
+      if (Number(proposal.initialDeposit) < Number(requiredDeposit)) {
+        setMsg({
+          type: 'initialDeposit',
+          message: `The deposit amount must not be less than ${requiredDeposit}.`,
+        });
+        return;
+      }
+    }
+    if (!isValid) {
+      return
+    }
     setStep(s => s + 1);
   }
 
@@ -397,7 +511,7 @@ const useGovernances = () => {
             value: encodedValue,
           };
           break;
-        case proposalTypes[4].value: // Cascade Policy Update Proposal
+        // case proposalTypes[4].value: // Cascade Policy Update Proposal
         // case proposalTypes[5].value: // Model Access Proposal
         // case proposalTypes[6].value: // Reward Weight Adjustment Proposal
         // case proposalTypes[7].value: // SuperNode Eligibility Proposal
@@ -435,12 +549,13 @@ const useGovernances = () => {
       };
 
       const result = await client.signAndBroadcast(address, [msg], fee, memo);
-      if (result?.transactionHash && result.code === 0) {
+      if (result?.transactionHash) {
         setMsg({
           type: 'success',
           message: 'Create Proposal Successfully',
         });
         setTransactionHash(result?.transactionHash);
+        fetchData();
       } else {
         setMsg({
           type: 'error',
@@ -471,6 +586,8 @@ const useGovernances = () => {
     proposal,
     isCreateProposalLoading,
     transactionHash,
+    requiredDeposit,
+    fetchData,
     handleCreateProposalClick,
     handleBackClick,
     handleInputChange,

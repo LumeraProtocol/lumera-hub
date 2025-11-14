@@ -72,6 +72,7 @@ export interface IProposal {
 
 interface UseDepositOptions {
   customMemo?: string;
+  callback?: () => void;
 }
 
 const useProposals = (options: UseDepositOptions = {}) => {
@@ -175,6 +176,9 @@ const useProposals = (options: UseDepositOptions = {}) => {
             setTransactionHash(result?.transactionHash);
             // setVoteOpen(false);
             fetchData();
+            if (options?.callback) {
+              options.callback();
+            }
           }
         } catch (error) {
             setErrorVote(error instanceof Error ? error?.message : 'An unknown error occurred.')

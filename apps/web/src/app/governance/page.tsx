@@ -40,6 +40,8 @@ export default function Page() {
     proposal,
     isCreateProposalLoading,
     transactionHash,
+    requiredDeposit,
+    fetchData,
     handleCreateProposalClick,
     handleBackClick,
     handleInputChange,
@@ -48,14 +50,14 @@ export default function Page() {
     handleNextSteps,
     handlePageClick,
     handleTabChange,
-    fetchGovernances,
   } = useGovernances();
   const proposals = useProposals({
     customMemo: selectedItem ? `Vote for the ${selectedItem.title}` : '',
+    callback: fetchData,
   });
   const { address } = useWalletConnect();
   const deposit = useDeposit({
-    callback: fetchGovernances,
+    callback: fetchData,
     customMemo: selectedItem ? `Deposit for the ${selectedItem.title}` : '',
   });
 
@@ -114,6 +116,7 @@ export default function Page() {
             isLoading: isCreateProposalLoading,
             msg,
             transactionHash,
+            requiredDeposit,
             onOpenCreateProposalModalClick: handleOpenCreateProposalModal,
             onCloseCreateProposalModalClick: handleCloseCreateProposalModal,
             onNextStepsClick: handleNextSteps,

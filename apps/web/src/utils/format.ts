@@ -127,6 +127,16 @@ export const formatTokenDisplay = (
       amount: token.amount,
       denom: token.denom,
     }, withDenom, '0,0.[000]');
+  } else if (value > 1000) {
+    result = formatToken({
+      amount: token.amount,
+      denom: token.denom,
+    }, withDenom, '0,0.[0000]');
+  } else if (value > 100) {
+    result = formatToken({
+      amount: token.amount,
+      denom: token.denom,
+    }, withDenom, '0,0.[00000]');
   }
 
   return result;
