@@ -13,11 +13,13 @@ import {
   ChevronDown,
   Check as CheckIcon,
 } from '@tamagui/lucide-icons';
-import { Check as CheckCircle } from 'lucide-react';
+import { Check as CheckCircle, Info } from 'lucide-react';
 
 import AppButton from '@/components/AppButton';
+import Tooltip from '@/components/Tooltip';
 import AppLink from '@/components/AppLink';
 import Loading from '@/components/Loading';
+import { formatNumber } from '@/utils/format';
 import { STEPS, proposalTypes, GOVERNANCE_STATS } from '@/hooks/useGovernances';
 
 interface ICreateProposalModal {
@@ -253,6 +255,14 @@ export default function CreateProposalModal({
     }
   };
 
+  const getExpeditedProposalTooltip = () => {
+    return (
+      <div className='max-w-80 text-white'>
+        If you choose the Expedited Proposal option, the minimum deposit is {formatNumber(GOVERNANCE_STATS.expeditedDepositRequired, { decimalsLength: 0 })} LUME.
+      </div>
+    )
+  }
+
   const renderStep5 = () => {
     switch(proposal.type) {
       case proposalTypes[1].value: // Parameter Change Proposal
@@ -422,7 +432,9 @@ export default function CreateProposalModal({
                         <CheckIcon />
                       </Checkbox.Indicator>
                     </Checkbox>
-                    <label htmlFor="isExpedited" className="ml-2 block text-sm text-gray-300">Expedited Proposal (requires higher deposit)</label>
+                    <label htmlFor="isExpedited" className="ml-2 flex items-center gap-2 text-sm text-gray-300">
+                      Expedited Proposal (requires higher deposit) <Tooltip icon={<Info />} content={getExpeditedProposalTooltip()} />
+                    </label>
                   </div>
                 </div>
               )}
@@ -440,7 +452,7 @@ export default function CreateProposalModal({
                   <p className="text-sm text-gray-400">An initial deposit is required to submit a proposal. This amount is returned if the proposal passes or is rejected, but is burned if it fails to meet the deposit threshold.</p>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Deposit Amount (min. {requiredDeposit} LUME)</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Deposit Amount (min. {formatNumber(requiredDeposit, { decimalsLength: 0 })} LUME)</label>
                     <Input
                       id="initialDeposit"
                       className='input has-symbol'
@@ -467,7 +479,7 @@ export default function CreateProposalModal({
                     {renderStep5()}
                   </div>
                   <p className="pt-4 border-t border-gray-700/50">
-                    <strong className="text-gray-400">Initial Deposit:</strong> {proposal.initialDeposit} LUME
+                    <strong className="text-gray-400">Initial Deposit:</strong> {formatNumber(proposal.initialDeposit, { decimalsLength: 0 })} LUME
                   </p>
                 </div>
               )}

@@ -197,7 +197,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_REJECTED':
         return (
-          <div className='btn-black'>
+          <div className='btn-red'>
             <Button>
               <Activity /> <span>Rejected</span>
             </Button>

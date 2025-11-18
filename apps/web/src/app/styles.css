@@ -452,6 +452,11 @@
 .btn-secondary.full .is_Button {
   width: 100%;
 }
+.is_Tooltip {
+  background-color: #1a212e!important;
+  border: 1px solid #2a323f!important;
+  border-radius: 9px !important;
+}
 @media screen and (min-width: 1025px) and (max-width: 1290px) {
   .governance-card-header {
     flex-direction: column;
