@@ -3,7 +3,7 @@ import { TextProposal } from "cosmjs-types/cosmos/gov/v1beta1/gov";
 import { ParameterChangeProposal } from "cosmjs-types/cosmos/params/v1beta1/params";
 import { CommunityPoolSpendProposal } from "cosmjs-types/cosmos/distribution/v1beta1/distribution";
 import { SoftwareUpgradeProposal } from "cosmjs-types/cosmos/upgrade/v1beta1/upgrade";
-import { coins, GasPrice } from "@cosmjs/stargate";
+import { coins } from "@cosmjs/stargate";
 
 import * as instance from '@/utils/api';
 import { DENOM } from '@/contants/network';
@@ -59,9 +59,10 @@ export const proposalTypes = [
 
 export const GOVERNANCE_STATS = {
   depositRequired: 1000,
+  expeditedDepositRequired: 5000,
 };
 
-const EXPEDITED_DEPOSIT_REQUIRED = GOVERNANCE_STATS.depositRequired * 5;
+const EXPEDITED_DEPOSIT_REQUIRED = GOVERNANCE_STATS.expeditedDepositRequired;
 
 const useGovernances = () => {
   const { address, getClient } = useWalletConnect();
