@@ -256,6 +256,7 @@ const useGovernances = () => {
     setTransactionHash('');
     setStep(1);
     setCurrentTab('');
+    setRequiredDeposit(GOVERNANCE_STATS.depositRequired);
   }
 
   const handleOpenCreateProposalModal = () => {

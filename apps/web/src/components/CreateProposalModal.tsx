@@ -432,9 +432,12 @@ export default function CreateProposalModal({
                         <CheckIcon />
                       </Checkbox.Indicator>
                     </Checkbox>
-                    <label htmlFor="isExpedited" className="ml-2 flex items-center gap-2 text-sm text-gray-300">
-                      Expedited Proposal (requires higher deposit) <Tooltip icon={<Info />} content={getExpeditedProposalTooltip()} />
-                    </label>
+                    <div className='flex items-center gap-2'>
+                      <label htmlFor="isExpedited" className="ml-2 text-sm text-gray-300">
+                        Expedited Proposal (requires higher deposit)
+                      </label>
+                      <Tooltip icon={<Info />} content={getExpeditedProposalTooltip()} />
+                    </div>
                   </div>
                 </div>
               )}
