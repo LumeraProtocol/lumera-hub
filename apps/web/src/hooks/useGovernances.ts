@@ -7,7 +7,7 @@ import { coins } from "@cosmjs/stargate";
 
 import * as instance from '@/utils/api';
 import { DENOM } from '@/contants/network';
-import { RATE_VALUE } from '@/contants';
+import { RATE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 import { IProposal } from '@/hooks/useProposals';
 import useWalletConnect from '@/hooks/useWalletConnect';
 
@@ -303,7 +303,6 @@ const useGovernances = () => {
               message: 'Please enter module.',
             });
             isValid = false;
-            return;
           }
           if (!proposal.key) {
             setMsg({
@@ -311,7 +310,6 @@ const useGovernances = () => {
               message: 'Please enter key.',
             });
             isValid = false;
-            return;
           }
           if (!proposal.newValue) {
             setMsg({
@@ -319,7 +317,6 @@ const useGovernances = () => {
               message: 'Please enter new value.',
             });
             isValid = false;
-            return;
           }
           break;
         case proposalTypes[2].value: // Community Spend Proposal
@@ -329,7 +326,6 @@ const useGovernances = () => {
               message: 'Please enter recipient.',
             });
             isValid = false;
-            return;
           }
           if (!proposal.amount) {
             setMsg({
@@ -337,7 +333,6 @@ const useGovernances = () => {
               message: 'Please enter amount.',
             });
             isValid = false;
-            return;
           }
           break;
         case proposalTypes[3].value: // Software Upgrade Proposal
@@ -347,7 +342,6 @@ const useGovernances = () => {
               message: 'Please enter upgrade version.',
             });
             isValid = false;
-            return;
           }
           break;
       }
@@ -480,7 +474,7 @@ const useGovernances = () => {
           encodedValue = CommunityPoolSpendProposal.encode(CommunityPoolSpendProposal.fromPartial({
             title: proposal.title,
             description: proposal.description,
-            amount: coins(proposal.amount, DENOM),
+            amount: coins(`${Number(proposal.amount) * RATE_VALUE}`, DENOM),
             recipient: proposal.recipient,
           })).finish();
           content = {
@@ -496,7 +490,16 @@ const useGovernances = () => {
             });
             return;
           }
-          const blockHeight = await getBlock();
+          let blockHeight;
+          try {
+            blockHeight = await getBlock();
+          } catch (error) {
+            setMsg({
+              type: 'error',
+              message: `Failed to retrieve block height for software upgrade proposal: ${error instanceof Error ? error.message : String(error)}`,
+            });
+            return;
+          }
           encodedValue = SoftwareUpgradeProposal.encode(SoftwareUpgradeProposal.fromPartial({
             title: proposal.title,
             description: proposal.description,
@@ -513,21 +516,6 @@ const useGovernances = () => {
             value: encodedValue,
           };
           break;
-        // case proposalTypes[4].value: // Cascade Policy Update Proposal
-        // case proposalTypes[5].value: // Model Access Proposal
-        // case proposalTypes[6].value: // Reward Weight Adjustment Proposal
-        // case proposalTypes[7].value: // SuperNode Eligibility Proposal
-        // case proposalTypes[8].value: // Validator Commission Cap Proposal
-        // case proposalTypes[9].value: // Foundation Delegation Policy Proposal
-        //   encodedValue = TextProposal.encode(TextProposal.fromPartial({
-        //     title: proposal.title,
-        //     description: proposal.description  + ` [Custom Type: ${proposal.type}]`,
-        //   })).finish();
-        //   content = {
-        //     typeUrl: '/cosmos.gov.v1beta1.TextProposal',
-        //     value: encodedValue,
-        //   };
-        //   break;
       }
       const client = await getClient();
       const msg = {
@@ -536,15 +524,15 @@ const useGovernances = () => {
           content,
           initialDeposit: [{
             denom: DENOM,
-            amount:`${ Number(proposal.initialDeposit) * RATE_VALUE}`,
+            amount:`${Number(proposal.initialDeposit) * RATE_VALUE}`,
           }],
           proposer: address,
         },
       };
       const memo = 'Create Proposal';
       const gasEstimate = await client.simulate(address, [msg], memo);
-      const gasLimit = `${Math.round(gasEstimate * 1.3)}`;
-      const fixedFeeAmount = `${Math.ceil(Number(gasLimit) * 0.028)}`;// 0.028 ulume/gas
+      const gasLimit = `${Math.ceil(gasEstimate * GAS_RATIO)}`;
+      const fixedFeeAmount = `${Math.ceil(Number(gasLimit) * FEE_RATIO)}`;// 0.028 ulume/gas
       const fee = {
         amount: coins(fixedFeeAmount.toString(), 'ulume'), // Gas fee estimate
         gas: gasLimit,
@@ -569,7 +557,7 @@ const useGovernances = () => {
         type: 'error',
         message: error instanceof Error ? error.message : 'An unknown error occurred.',
       });
-      console.error('error', error)
+      console.error('error', error);
     }
     setCreateProposalLoading(false);
   }

@@ -443,7 +443,7 @@ export const WalletScreen = ({
                   </div>
                 ))}
                 {!transactions?.length ?
-                  <div className="block">
+                  <div className="grid grid-cols-12 gap-4 items-center">
                     <H3>No Transactions</H3>
                   </div> : null
                 }
