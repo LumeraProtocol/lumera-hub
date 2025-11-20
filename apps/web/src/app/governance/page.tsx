@@ -35,16 +35,29 @@ export default function Page() {
     isSumaryLoading,
     totalVotes,
     nextKey,
+    step,
+    selectedModal,
+    proposal,
+    isCreateProposalLoading,
+    transactionHash,
+    requiredDeposit,
+    fetchData,
+    handleCreateProposalClick,
+    handleBackClick,
+    handleInputChange,
+    handleOpenCreateProposalModal,
+    handleCloseCreateProposalModal,
+    handleNextSteps,
     handlePageClick,
     handleTabChange,
-    fetchGovernances,
   } = useGovernances();
   const proposals = useProposals({
     customMemo: selectedItem ? `Vote for the ${selectedItem.title}` : '',
+    callback: fetchData,
   });
   const { address } = useWalletConnect();
   const deposit = useDeposit({
-    callback: fetchGovernances,
+    callback: fetchData,
     customMemo: selectedItem ? `Deposit for the ${selectedItem.title}` : '',
   });
 
@@ -95,6 +108,21 @@ export default function Page() {
             handleVoteAdvancedChange: deposit.handleDepositChange,
             handleAdvancedCheckedChange: deposit.handleShowAdvancedChange,
             handleCloseCongratulationsModal: deposit.handleCloseCongratulationsModal,
+          }}
+          createProposal={{
+            step,
+            selectedModal,
+            proposal,
+            isLoading: isCreateProposalLoading,
+            msg,
+            transactionHash,
+            requiredDeposit,
+            onOpenCreateProposalModalClick: handleOpenCreateProposalModal,
+            onCloseCreateProposalModalClick: handleCloseCreateProposalModal,
+            onNextStepsClick: handleNextSteps,
+            onInputChange: handleInputChange,
+            onBackClick: handleBackClick,
+            onCreateProposalClick: handleCreateProposalClick,
           }}
         />
       </div>

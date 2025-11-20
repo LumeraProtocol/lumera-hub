@@ -41,7 +41,7 @@ import { AccountInfoData, getTotalRewards } from '@/hooks/useAccountInfo';
 import useAppRouter from '@/hooks/useAppRouter';
 import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity';
 import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/useProposals';
-import { formatToken } from '@/utils/format';
+import { formatToken, formatTokenDisplay } from '@/utils/format';
 import { NAV_ITEMS } from '@/components/layout/AppShell';
 import { DENOM } from '@/contants/network';
 
@@ -839,11 +839,11 @@ export const HomeScreen = ({
                     <div className='w-1/2 relative'>
                       <Loading isLoading={loading} />
                       <ReactECharts option={getOption({
-                        stacked: Number(formatToken({
+                        stacked: Number(formatTokenDisplay({
                                 amount: `${stacked}`,
                                 denom: DENOM,
                               }, false, '0,0.[000000]')),
-                        liquid: Number(formatToken({
+                        liquid: Number(formatTokenDisplay({
                                 amount: `${liquid}`,
                                 denom: DENOM,
                               }, false, '0,0.[000000]'))
@@ -855,13 +855,13 @@ export const HomeScreen = ({
                           <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[0] }}></span>
                           <SizableText className='text-lumera-label !font-bold'>Staked</SizableText>
                         </div>
-                        <div className='text-2xl font-bold truncate'>
+                        <div className='text-2xl font-bold'>
                           {loading ?
                            <Skeleton /> : <>
-                              {formatToken({
+                              {formatTokenDisplay({
                                 amount: `${stacked}`,
                                 denom: DENOM,
-                              }, false, '0,0.[000000]')}<span className='text-lg ml-1'>LUME</span>
+                              }, false, '0,0.[000000]')} <span className='text-lg whitespace-nowrap'>LUME</span>
                             </>
                           }
                           </div>
@@ -871,14 +871,14 @@ export const HomeScreen = ({
                           <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[1] }}></span>
                           <SizableText className='text-lumera-label !font-bold'>Liquid</SizableText>
                         </div>
-                        <div className='text-2xl font-bold truncate'>
+                        <div className='text-2xl font-bold'>
                           {loading ?
                             <Skeleton /> :
                             <>
-                              {formatToken({
+                              {formatTokenDisplay({
                                 amount: `${liquid}`,
                                 denom: DENOM,
-                              }, false, '0,0.[000000]')}<span className='text-lg ml-1'>LUME</span>
+                              }, false, '0,0.[000000]')} <span className='text-lg whitespace-nowrap'>LUME</span>
                             </>
                           }
                         </div>
@@ -892,17 +892,17 @@ export const HomeScreen = ({
                   <Card.Header padded>
                     <H3 className='text-lumera-label'>Total Balance</H3>
                     <div>
-                      {loading ?
-                        <Skeleton /> :
-                        <>
-                          <span className='text-3xl font-bold text-white break-words truncate'>
-                            {formatToken({
+                      <H4 className='!text-white !font-bold !text-3xl'>
+                        {loading ?
+                          <Skeleton /> :
+                          <>
+                            {formatTokenDisplay({
                               amount: `${stacked + liquid}`,
                               denom: DENOM,
-                            }, false, '0,0.[000000]')}<span className='text-xl ml-1'>LUME</span>
-                          </span>
-                        </>
-                      }
+                            })} <span className='text-xl whitespace-nowrap'>LUME</span>
+                          </>
+                        }
+                      </H4>
                     </div>
                   </Card.Header>
                 </Card>
@@ -910,13 +910,13 @@ export const HomeScreen = ({
                   <Card.Header padded>
                     <H3 className='text-lumera-label'>Claimable Rewards</H3>
                     <div>
-                      <H4 className='!text-lumera-green !font-bold !text-3xl truncate'>
+                      <H4 className='!text-lumera-green !font-bold !text-3xl'>
                         {loading ? <Skeleton /> :
                           <>
-                          {formatToken({
+                          {formatTokenDisplay({
                             amount: `${getTotalRewards(accountInfo)}`,
                             denom: DENOM,
-                          }, false, '0,0.[0000]')}<span className='text-xl ml-1'>LUME</span>
+                          }, false, '0,0.[0000]')} <span className='text-xl whitespace-nowrap'>LUME</span>
                           </>
                         }
                       </H4>

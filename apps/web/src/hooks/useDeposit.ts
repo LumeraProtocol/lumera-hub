@@ -6,7 +6,7 @@ import {
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
-import { RATE_VALUE, GAS_LIMIT, FEE_VALUE } from '@/contants';
+import { RATE_VALUE, GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -119,18 +119,18 @@ const useDeposit = (options: UseDepositOptions = {}) => {
             depositor: address,
             amount: [{
               denom: DENOM,
-              amount: `${Number(depositAdvanced.depositAmount) * 1000000}`,
+              amount: `${Number(depositAdvanced.depositAmount) * RATE_VALUE}`,
             }],
           }),
         };
         let gasLimit = depositAdvanced.gas
         if (depositAdvanced.gas === GAS_LIMIT) {
           const gasEstimate = await client.simulate(depositAdvanced.senderAddress, [msg], depositAdvanced.memo);
-          gasLimit = `${Math.round(gasEstimate * 1.3)}`;
+          gasLimit = `${Math.ceil(gasEstimate * GAS_RATIO)}`;
         }
         let estimatedFee = depositAdvanced.fees;
         if (depositAdvanced.fees === FEE_VALUE) {
-          estimatedFee = `${Math.ceil(Number(gasLimit) * 0.028)}`;// 0.028 ulume/gas
+          estimatedFee = `${Math.ceil(Number(gasLimit) * FEE_RATIO)}`;// 0.028 ulume/gas
         }
         const fee = {
             amount: [{ denom: DENOM, amount: estimatedFee }], // Fee gas

@@ -9,8 +9,6 @@ import {
 } from 'tamagui';
 import {
   Logs,
-  BadgeCheck,
-  Beaker,
   Search,
   Activity,
   Coins,
@@ -18,10 +16,12 @@ import {
   CheckCircle,
 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
+import { LandmarkIcon, Hourglass, BadgeCheck, List } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
 import Loading from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
+import CreateProposalModal from '@/components/CreateProposalModal';
 import Skeleton from '@/components/Skeleton';
 import { IProposal } from '@/hooks/useProposals';
 import { formatNumber, formatToken } from '@/utils/format';
@@ -96,12 +96,47 @@ interface IGovernanceScreen {
   };
   voteTransactionHash?: string;
   onCloseVoteCongratulationsModal?: () => void;
+  createProposal: {
+    step: number;
+    selectedModal: string;
+    proposal: {
+      type: string;
+      title: string;
+      description: string;
+      isExpedited: boolean;
+      recipient: string;
+      amount: string;
+      module: string;
+      key: string;
+      newValue: string;
+      upgradeVersion: string;
+      policyCID: string;
+      modelName: string;
+      newWeight: string;
+      nodeAddress: string;
+      newCommission: string;
+      delegationAddress: string;
+      initialDeposit: string;
+    };
+    isLoading: boolean;
+    msg: {
+      type: string;
+      message: string;
+    };
+    transactionHash: string;
+    requiredDeposit: number;
+    onOpenCreateProposalModalClick: () => void;
+    onCloseCreateProposalModalClick: () => void;
+    onNextStepsClick: () => void;
+    onBackClick: () => void;
+    onCreateProposalClick: () => void;
+    onInputChange: (name: string, value: string, type?: string, checked?: boolean) => void;
+  };
 }
 
 export const GovernanceScreen = ({
   isLoading,
   governances,
-  msg,
   sumary,
   currentTab,
   address,
@@ -111,10 +146,10 @@ export const GovernanceScreen = ({
   isVoteOpen,
   deposit,
   isSumaryLoading,
-  totalVotes,
   nextKey,
   voteTransactionHash,
   selectedItem,
+  createProposal,
   setSelectedItem,
   onCloseVoteCongratulationsModal,
   handlePageClick,
@@ -162,7 +197,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_REJECTED':
         return (
-          <div className='btn-black'>
+          <div className='btn-red'>
             <Button>
               <Activity /> <span>Rejected</span>
             </Button>
@@ -228,7 +263,7 @@ export const GovernanceScreen = ({
       <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
         <H2 className='!font-bold text-white text-[32px] leading-none'>Governance</H2>
         <div className='btn-primary'>
-          <Button>
+          <Button onPress={createProposal.onOpenCreateProposalModalClick}>
             <span className='font-bold whitespace-nowrap'>Create Proposal</span>
           </Button>
         </div>
@@ -239,12 +274,12 @@ export const GovernanceScreen = ({
             <Card.Header padded>
               <div className='flex items-center gap-3'>
                 <div className='governance-proposals-icon'>
-                  <Logs size="$3" />
+                  <List className="w-8 h-8 text-indigo-400"/>
                 </div>
                 <div>
-                  <H3 className='text-base text-lumera-label leading-none'>Total Proposals</H3>
-                  <div className='leading-none mt-3'>
-                    <span className='text-[32px] font-bold text-white'>
+                  <H3 className='text-sm text-lumera-label !leading-none'>Total Proposals</H3>
+                  <div className='leading-none mt-1'>
+                    <span className='text-3xl font-bold text-white'>
                       {isSumaryLoading ?
                         <Skeleton /> : <>
                           {formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })}
@@ -260,12 +295,12 @@ export const GovernanceScreen = ({
             <Card.Header padded>
               <div className='flex items-center gap-3'>
                 <div className='governance-passed-icon'>
-                  <BadgeCheck size="$3" />
+                  <BadgeCheck className="w-8 h-8 text-green-400"/>
                 </div>
                 <div>
-                  <H3 className='text-base text-lumera-label leading-none'>Passed</H3>
-                  <div className='leading-none mt-3'>
-                    <span className='text-[32px] font-bold text-white'>
+                  <H3 className='text-sm text-lumera-label !leading-none'>Passed</H3>
+                  <div className='leading-none mt-1'>
+                    <span className='text-3xl font-bold text-white'>
                       {isSumaryLoading ?
                         <Skeleton /> : <>
                           {formatNumber(sumary?.passed || 0, { decimalsLength: 0 })}
@@ -281,12 +316,12 @@ export const GovernanceScreen = ({
             <Card.Header padded>
               <div className='flex items-center gap-3'>
                 <div className='governance-voting-period-icon'>
-                  <Beaker size="$3" />
+                  <Hourglass className="w-8 h-8 text-amber-400"/>
                 </div>
                 <div>
-                  <H3 className='text-base text-lumera-label leading-none'>Voting Period</H3>
-                  <div className='leading-none mt-3'>
-                    <span className='text-[32px] font-bold text-white'>
+                  <H3 className='text-sm text-lumera-label !leading-none'>Voting Period</H3>
+                  <div className='leading-none mt-1'>
+                    <span className='text-3xl font-bold text-white'>
                       {isSumaryLoading ?
                         <Skeleton /> : <>
                           {formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days
@@ -302,14 +337,14 @@ export const GovernanceScreen = ({
             <Card.Header padded>
               <div className='flex items-center gap-3'>
                 <div className='governance-deposit-icon'>
-                  <Beaker size="$3" />
+                  <LandmarkIcon className="w-8 h-8 text-sky-400"/>
                 </div>
                 <div>
-                  <H3 className='text-base text-lumera-label leading-none'>Deposit Required</H3>
-                  <div className='leading-none mt-3'>
+                  <H3 className='text-sm text-lumera-label !leading-none !whitespace-nowrap'>Deposit Required</H3>
+                  <div className='leading-none mt-1'>
                     {isSumaryLoading ?
                       <Skeleton /> : <>
-                        <span className='text-[32px] font-bold text-white'>
+                        <span className='text-3xl font-bold text-white'>
                           {formatToken({
                             amount: sumary.depositRequiredParam.amount,
                             denom: sumary.depositRequiredParam.denom,
@@ -334,14 +369,6 @@ export const GovernanceScreen = ({
                   onClick={() => onTabChange('')}
                 >
                   All ({formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })})
-                </button>
-              </li>
-              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_UNSPECIFIED' ? 'active' : ''}`}>
-                <button
-                  className='tab-button whitespace-nowrap'
-                  onClick={() => onTabChange('PROPOSAL_STATUS_UNSPECIFIED')}
-                >
-                  Unspecified ({formatNumber(sumary?.unspecified || 0, { decimalsLength: 0 })})
                 </button>
               </li>
               <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? 'active' : ''}`}>
@@ -477,6 +504,20 @@ export const GovernanceScreen = ({
           handleVoteAdvancedChange={deposit.handleVoteAdvancedChange}
           handleAdvancedCheckedChange={deposit.handleAdvancedCheckedChange}
           onCloseCongratulationsModal={deposit.handleCloseCongratulationsModal}
+        />
+        <CreateProposalModal
+          isOpen={createProposal.selectedModal === 'create'}
+          step={createProposal.step}
+          proposal={createProposal.proposal}
+          isLoading={createProposal.isLoading}
+          msg={createProposal.msg}
+          transactionHash={createProposal.transactionHash}
+          requiredDeposit={createProposal.requiredDeposit}
+          onNextClick={createProposal.onNextStepsClick}
+          onCloseModal={createProposal.onCloseCreateProposalModalClick}
+          onInputChange={createProposal.onInputChange}
+          onBackClick={createProposal.onBackClick}
+          onCreateProposalClick={createProposal.onCreateProposalClick}
         />
       </div>
     </YStack>

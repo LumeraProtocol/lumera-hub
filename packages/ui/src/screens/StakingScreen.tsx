@@ -56,6 +56,7 @@ import {
   percent,
   formatTokens,
   formatNumber,
+  formatTokenDisplay,
 } from '@/utils/format';
 import {
   calculateTotalPower,
@@ -461,7 +462,10 @@ export const StakeModal = ({
                         <button type="button" onClick={onRefreshBalance} className='cursor-pointer'>
                           <RefreshCcw className='w-4 h-4' />
                         </button>
-                        <span>Available: {formatNumber(availableAmount, { decimalsLength: 6})}</span>
+                        <span>Available: {formatTokenDisplay({
+                          amount: `${availableAmount * RATE_VALUE}`,
+                          denom: DENOM,
+                        })}</span>
                         <button
                           type='button'
                           className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer'
@@ -592,7 +596,7 @@ export const ValidatorModal = ({
                         onClick={() => onSelectValidator(validator.operator_address)}
                       >
                         <td data-label="Validator: ">
-                          {validator.description.moniker || formatAddress(validator.delegation.validator_address, 10, -5)}
+                          {validator.description.moniker || formatAddress(validator.operator_address, 10, -5)}
                         </td>
                         <td data-label="Staked Amount: " align='right'>
                           {formatToken({
@@ -688,7 +692,10 @@ const RewardsCalculator = ({
                         <button type="button" onClick={onRefreshBalance} className='cursor-pointer'>
                           <RefreshCcw className='w-4 h-4' />
                         </button>
-                        <span>Available: {formatNumber(availableAmount, { decimalsLength: 6})}</span>
+                        <span>Available: {formatTokenDisplay({
+                          amount: `${availableAmount * RATE_VALUE}`,
+                          denom: DENOM,
+                        })}</span>
                         <button
                           type='button'
                           className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer'
@@ -881,130 +888,132 @@ const AllValidators = ({
                     <button className='tab-button cursor-pointer px-3' onClick={() => staking.onTabChange('inactive')}>Inactive ({calcTotalValidatorByTab('inactive')})</button>
                   </li>
                 </ul>
-                <table className='w-full table mt-5 staking-table'>
-                  <thead>
-                    <tr>
-                      <th align='left' className='text-lumera-label validator'>
-                        <button
-                          type="button"
-                          onClick={() => handleSort('name')}
-                          className='cursor-pointer flex items-center gap-1'
-                        >
-                          Validator
-                          {renderSortIcon('name')}
-                        </button>
-                      </th>
-                      <th align='right' className='text-lumera-label staked-amount'>
-                        <button
-                          type="button"
-                          onClick={() => handleSort('amount')}
-                          className='cursor-pointer flex items-center gap-1'
-                        >
-                          Staked Amount
-                          {renderSortIcon('amount')}
-                        </button>
-                      </th>
-                      <th align='right' className='text-lumera-label commission'>
-                        <button
-                          type="button"
-                          onClick={() => handleSort('commission')}
-                          className='cursor-pointer flex items-center gap-1'
-                        >
-                          Commission
-                          {renderSortIcon('commission')}
-                        </button>
-                      </th>
-                      <th align='right' className='text-lumera-label voting-power'>
-                        <button
-                          type="button"
-                          onClick={() => handleSort('power')}
-                          className='cursor-pointer flex items-center gap-1'
-                        >
-                          Voting Power
-                          {renderSortIcon('power')}
-                        </button>
-                      </th>
-                      <th align='left' className='text-lumera-label uptime'>
-                        <button
-                          type="button"
-                          onClick={() => handleSort('uptime')}
-                          className='cursor-pointer flex items-center gap-2 ml-7'
-                        >
-                          Uptime
-                          {renderSortIcon('uptime')}
-                        </button>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getValidators()?.map((validator, index) => {
-                      const uptime = getUptime(validator);
-                      const uptimePercent = percent(uptime);
-                      return (
-                        <tr key={validator.operator_address} className={index % 2 === 0 ? '!bg-gray-900' : ''}>
-                          <td
-                            data-label="Validator: "
-                            onClick={() => handleValidatorClick(validator.operator_address)}
-                            className='cursor-pointer'
+                <div className='overflow-x-auto'>
+                  <table className='w-full table mt-5'>
+                    <thead>
+                      <tr>
+                        <th align='left' className='text-lumera-label validator'>
+                          <button
+                            type="button"
+                            onClick={() => handleSort('name')}
+                            className='cursor-pointer flex items-center gap-1 whitespace-nowrap'
                           >
-                            <AppLink href={`/staking/${validator.operator_address}`} className="text-lumera-teal hover:text-lumera-green">
-                              {validator.description.moniker || formatAddress(validator.delegation.validator_address, 10, -5)}
-                            </AppLink>
-                          </td>
-                          <td
-                            data-label="Staked Amount: "
-                            align='right'
-                            onClick={() => handleValidatorClick(validator.operator_address)}
-                            className='cursor-pointer'
+                            Validator
+                            {renderSortIcon('name')}
+                          </button>
+                        </th>
+                        <th align='right' className='text-lumera-label staked-amount'>
+                          <button
+                            type="button"
+                            onClick={() => handleSort('amount')}
+                            className='cursor-pointer flex items-center gap-1 whitespace-nowrap'
                           >
-                            {formatToken({
-                              amount: validator.tokens,
-                              denom: staking.params.bond_denom,
-                            }, true, '0,0')}
-                          </td>
-                          <td
-                            data-label="Commission: "
-                            align='right'
-                            onClick={() => handleValidatorClick(validator.operator_address)}
-                            className='cursor-pointer'
+                            Staked Amount
+                            {renderSortIcon('amount')}
+                          </button>
+                        </th>
+                        <th align='right' className='text-lumera-label commission'>
+                          <button
+                            type="button"
+                            onClick={() => handleSort('commission')}
+                            className='cursor-pointer flex items-center gap-1 whitespace-nowrap'
                           >
-                            <Text>{formatCommissionRate(validator.commission?.commission_rates?.rate)}</Text>
-                          </td>
-                          <td
-                            data-label="Voting Power: "
-                            align='right'
-                            onClick={() => handleValidatorClick(validator.operator_address)}
-                            className='cursor-pointer'
+                            Commission
+                            {renderSortIcon('commission')}
+                          </button>
+                        </th>
+                        <th align='right' className='text-lumera-label voting-power'>
+                          <button
+                            type="button"
+                            onClick={() => handleSort('power')}
+                            className='cursor-pointer flex items-center gap-1 whitespace-nowrap'
                           >
-                            <Text>{calculatePercent(validator.delegator_shares, totalPower)}</Text>
-                          </td>
-                          <td data-label="Uptime: ">
-                            <div className='flex w-full justify-between items-center gap-3 action-col pl-7'>
-                              <div className='flex items-center gap-3 cursor-pointer' onClick={() => handleValidatorClick(validator.operator_address)}>
-                                <div className='custom-progress'>
-                                  <Progress size="$4" value={Number(uptimePercent.replace('%', ''))}>
-                                    <Progress.Indicator animation="bouncy" />
-                                  </Progress>
+                            Voting Power
+                            {renderSortIcon('power')}
+                          </button>
+                        </th>
+                        <th align='left' className='text-lumera-label uptime'>
+                          <button
+                            type="button"
+                            onClick={() => handleSort('uptime')}
+                            className='cursor-pointer flex items-center gap-2 ml-7 whitespace-nowrap'
+                          >
+                            Uptime
+                            {renderSortIcon('uptime')}
+                          </button>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getValidators()?.map((validator, index) => {
+                        const uptime = getUptime(validator);
+                        const uptimePercent = percent(uptime);
+                        return (
+                          <tr key={validator.operator_address} className={index % 2 === 0 ? '!bg-gray-900' : ''}>
+                            <td
+                              data-label="Validator: "
+                              onClick={() => handleValidatorClick(validator.operator_address)}
+                              className='cursor-pointer'
+                            >
+                              <AppLink href={`/staking/${validator.operator_address}`} className="hover:text-lumera-teal">
+                                {validator.description.moniker}
+                              </AppLink>
+                            </td>
+                            <td
+                              data-label="Staked Amount: "
+                              align='right'
+                              onClick={() => handleValidatorClick(validator.operator_address)}
+                              className='cursor-pointer'
+                            >
+                              {formatToken({
+                                amount: validator.tokens,
+                                denom: staking.params.bond_denom,
+                              }, true, '0,0')}
+                            </td>
+                            <td
+                              data-label="Commission: "
+                              align='right'
+                              onClick={() => handleValidatorClick(validator.operator_address)}
+                              className='cursor-pointer'
+                            >
+                              <Text>{formatCommissionRate(validator.commission?.commission_rates?.rate)}</Text>
+                            </td>
+                            <td
+                              data-label="Voting Power: "
+                              align='right'
+                              onClick={() => handleValidatorClick(validator.operator_address)}
+                              className='cursor-pointer'
+                            >
+                              <Text>{calculatePercent(validator.delegator_shares, totalPower)}</Text>
+                            </td>
+                            <td data-label="Uptime: ">
+                              <div className='flex w-full justify-between items-center gap-3 action-col pl-7'>
+                                <div className='flex items-center gap-3 cursor-pointer' onClick={() => handleValidatorClick(validator.operator_address)}>
+                                  <div className='custom-progress'>
+                                    <Progress size="$4" value={Number(uptimePercent.replace('%', ''))}>
+                                      <Progress.Indicator animation="bouncy" />
+                                    </Progress>
+                                  </div>
+                                  <Text className={uptime && uptime > 0.95 ? 'text-green-500' : 'text-red-500'}>{uptimePercent}</Text>
                                 </div>
-                                <Text className={uptime && uptime > 0.95 ? 'text-green-500' : 'text-red-500'}>{uptimePercent}</Text>
+                                {validator.jailed ?
+                                  <div className='btn-jailed'>Jailed</div> :
+                                  <div className='btn-primary'>
+                                    <Button
+                                      onPress={() => delegateOptions.onSelectValidator(validator.operator_address)}
+                                    >
+                                      Delegate
+                                    </Button>
+                                  </div>
+                                }
                               </div>
-                              {validator.jailed ?
-                                <div className='btn-jailed'>Jailed</div> :
-                                <div className='btn-primary'>
-                                  <Button
-                                    onPress={() => delegateOptions.onSelectValidator(validator.operator_address)}
-                                  >
-                                    Delegate
-                                  </Button>
-                                </div>
-                              }
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </>
             )
           }
@@ -1092,7 +1101,7 @@ export const StakingScreen = ({
       return '';
      }
 
-     return `Congratulations! Rewards have been claimed from ${validator.description.moniker || formatAddress(validator.delegation.validator_address, 10, -5)} successfully.`
+     return `Congratulations! Rewards have been claimed from ${validator.description.moniker || formatAddress(validator?.operator_address || '', 10, -5)} successfully.`
   }
 
   const getValidatorName = (delegation: TUnbondingDelegation, validator: IValidator | undefined) => {
@@ -1126,12 +1135,12 @@ export const StakingScreen = ({
       const reward = accountInfo?.rewards.find(v => v.validator_address === claim.selectedClaim?.delegation.validator_address);
 
       amount = formatTokens(reward?.reward, false, '0,0.[000000]');
-      name = validator?.description?.moniker || formatAddress(validator.delegation.validator_address, 10, -5) || '';
+      name = validator?.description?.moniker || formatAddress(validator?.operator_address || '', 10, -5) || '';
     }
 
     if (unbondOptions?.optionsAdvanced?.validator) {
       const validator = getAllValidators().find((item) => item.operator_address === unbondOptions?.optionsAdvanced?.validator);
-      validatorName = validator?.description?.moniker || formatAddress(validator.delegation.validator_address, 10, -5) || '';
+      validatorName = validator?.description?.moniker || formatAddress(validator?.operator_address || '', 10, -5) || '';
     }
 
     return {
@@ -1259,19 +1268,19 @@ export const StakingScreen = ({
                       <div className="flex border-b border-gray-700">
                         <button
                           onClick={() => staking.onSubTabChange('delegations')}
-                          className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'delegations' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+                          className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'delegations' ? 'text-white border-b-2 border-lumera-teal' : 'text-gray-400 hover:text-white'}`}
                         >
                           Staking
                         </button>
                         <button
                           onClick={() => staking.onSubTabChange('unstake')}
-                          className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'unstake' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+                          className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'unstake' ? 'text-white border-b-2 border-lumera-teal' : 'text-gray-400 hover:text-white'}`}
                         >
                           Unstake/Restake
                         </button>
                         <button
                           onClick={() => staking.onSubTabChange('activities')}
-                          className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'activities' ? 'text-white border-b-2 border-indigo-500' : 'text-gray-400 hover:text-white'}`}
+                          className={`px-4 py-2 font-medium cursor-pointer ${staking.subTab === 'activities' ? 'text-white border-b-2 border-lumera-teal' : 'text-gray-400 hover:text-white'}`}
                         >
                           Activities
                         </button>
@@ -1282,7 +1291,7 @@ export const StakingScreen = ({
                         <div className='relative'>
                           <Loading isLoading={isAccountInfoLoading} />
                           <div className="overflow-x-auto">
-                            <div className="min-w-[700px] space-y-2">
+                            <div className="min-w-[950px] space-y-2">
                               <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase">
                                 <div className="col-span-2">Delegations</div>
                                 <div className="col-span-2 text-right">Staked</div>
@@ -1386,7 +1395,7 @@ export const StakingScreen = ({
                         <div className='relative'>
                           <Loading isLoading={unbonding.isLoading} />
                           <div className="overflow-x-auto">
-                            <div className="min-w-[700px] space-y-2">
+                            <div className="min-w-[950px] space-y-2">
                               <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase">
                                 <div className="col-span-2">Validator</div>
                                 <div className="col-span-2 text-right">Initial balance</div>
