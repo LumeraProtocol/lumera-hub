@@ -33,7 +33,7 @@ export function WebWalletProviders({ children }: { children: React.ReactNode }) 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [chainData, setChainData] = React.useState<{ chain: any; assets: any } | null>(null);
   React.useEffect(() => {
-    if (!isBrowser) return;
+    if (!isBrowser || chainData) return;
     const foundChain = chains.find(({ chainName }) => chainName === CHAIN_NAME);
     const foundAssets = assetLists.find(({ chainName }) => chainName === CHAIN_NAME);
 
@@ -46,8 +46,7 @@ export function WebWalletProviders({ children }: { children: React.ReactNode }) 
       return;
     }
     setChainData({ chain: foundChain, assets: foundAssets });
-  }, [isBrowser]);
-
+  }, [isBrowser, chains, assetLists]);
   // Setup WalletConnect with custom metadata
   const walletConnect = React.useMemo(() => new WCWallet(undefined, {
     projectId: WALLET_CONNECT_PROJECTID,

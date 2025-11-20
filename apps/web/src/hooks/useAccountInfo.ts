@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
-import { GAS_LIMIT, FEE_VALUE } from '@/contants';
+import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 
 export interface Coin {
   denom: string;
@@ -170,12 +170,12 @@ const useAccountInfo = () => {
       let gasLimit = claimInfo.gas
       if (claimInfo.gas === GAS_LIMIT) {
         const gasEstimate = await client.simulate(claimInfo.senderAddress, msgWithdraw, claimInfo.memo);
-        gasLimit = `${Math.round(gasEstimate * 1.3)}`;
+        gasLimit = `${Math.ceil(gasEstimate * GAS_RATIO)}`;
       }
 
       let estimatedFee = claimInfo.fees;
       if (claimInfo.fees === FEE_VALUE) {
-        estimatedFee = `${Math.ceil(Number(gasLimit) * 0.028)}`;// 0.028 ulume/gas
+        estimatedFee = `${Math.ceil(Number(gasLimit) * FEE_RATIO)}`;// 0.028 ulume/gas
       }
       const fee = {
         amount: [{ denom: DENOM, amount: estimatedFee }],

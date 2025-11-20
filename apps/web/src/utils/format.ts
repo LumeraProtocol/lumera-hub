@@ -91,6 +91,19 @@ export const formatTokens = (
   return tokens.map((x) => formatToken(x, withDenom, fmt)).join(', ');
 }
 
+/**
+ * Formats a token value for display purposes in the UI.
+ * Unlike the base `formatToken` function, which uses a fixed format,
+ * this function adaptively adjusts decimal precision based on the token value magnitude
+ * for better readability (e.g., fewer decimals for large values like 1,000,000 TOKEN → "1M TOKEN",
+ * more for small values like 0.000001 TOKEN → "0.000001 TOKEN").
+ * It supports optional denom display and custom format strings (e.g., via numeral.js).
+ *
+ * @param token - The token object with denom and amount. If omitted, returns empty string.
+ * @param withDenom - Whether to include the denom in the output (default: false).
+ * @param fmt - The format string for number formatting (default: '0,0.[000000]' for up to 6 decimals).
+ * @returns The formatted string for display, e.g., "1,234.56" or "1,234.56 ust".
+ */
 export const formatTokenDisplay = (
   token?: { denom: string; amount: string },
   withDenom = false,
