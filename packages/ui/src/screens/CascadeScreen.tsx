@@ -1,18 +1,37 @@
+'use client'
+
 import React from 'react';
-import { YStack, Card, H3, Button } from 'tamagui';
+import {
+  YStack,
+  Card,
+  H3,
+  Paragraph,
+  Input,
+  Checkbox,
+} from 'tamagui';
 import Dropzone from 'react-dropzone';
 import { CloudUpload } from '@tamagui/lucide-icons';
 import { worldMill } from "@react-jvectormap/world";
+import {
+  Search,
+  Download,
+  ArrowUpRight,
+  ImageIcon,
+  Video,
+  FileText,
+  FileArchive,
+  FileIcon,
+  Check as CheckIcon
+} from 'lucide-react';
 
 import Loading from '@/components/Loading';
-import { ITask } from '@/hooks/useCascade';
-
-interface Marker {
-  latLng: [number, number]; // [latitude, longitude]
-  name: string;
-  value: number;
-  style?: { fill: string };
-}
+import Skeleton from '@/components/Skeleton';
+import AppButton from '@/components/AppButton';
+import AppLink from '@/components/AppLink';
+import { ConnectWalletButton } from '@/components/ConnectWallet';
+import { ITask, FILES_TYPE, IMyFile, TFileTypeKey, IMarker } from '@/hooks/useCascade';
+import { formatAddress } from '@/utils/format';
+import { getSimplifiedType, formatBytes } from '@/utils/helpers';
 
 interface ICascadeScreen {
   JVectorMapWithNoSSR: any;
@@ -20,6 +39,41 @@ interface ICascadeScreen {
   isUploading: boolean;
   error: string;
   uploadResult: ITask | null;
+  isFetchSumaryLoading: boolean;
+  sumary: {
+    totalSupernode: number;
+    networkStorage: string;
+    myUsage: string;
+    myUploaded: number;
+  };
+  fileCounts: {
+    all: number;
+    image: number;
+    pdf: number;
+    video: number;
+    archive: number;
+    other: number;
+  };
+  address: string;
+  fileTypeFilter: string;
+  onFileTypeFilterChange: (type: string) => void;
+  fileSearch: string;
+  onFileSearchChange: (keyword: string) => void;
+  selectedFiles: string[];
+  filteredFiles: IMyFile[];
+  onSelectAll: (checked: boolean) => void;
+  onSelectFile: (file: IMyFile) => void;
+  onDonwloadClick: (file: IMyFile) => void;
+  onDonwloadAllFile: () => void;
+  markers: IMarker[];
+  isDownloading: boolean;
+  isMyFilesLoading: boolean;
+  isMarkerLoading: boolean;
+}
+
+interface ISuperNodeMap {
+  JVectorMapWithNoSSR: any;
+  markers: IMarker[];
 }
 
 const countryNames: { [key: string]: string } = {
@@ -60,32 +114,9 @@ const countryNames: { [key: string]: string } = {
   // US: "United States",
   UZ: "Uzbekistan",
   VN: "Vietnam",
-}
+};
 
-const markers: Marker[] = [
-  { latLng: [48.8566, 2.3522], name: "Paris", value: 10, style: { fill: "#66586d" } }, // France
-  { latLng: [40.7128, -74.006], name: "New York", value: 20, style: { fill: "#66586d" } }, // USA
-  { latLng: [35.6895, 139.6917], name: "Tokyo", value: 15, style: { fill: "#66586d" } }, // Japan
-  { latLng: [-33.8688, 151.2093], name: "Sydney", value: 8, style: { fill: "#868991" } }, // Australia
-  { latLng: [55.7558, 37.6173], name: "Moscow", value: 12, style: { fill: "#66586d" } }, // Russia
-  { latLng: [51.5074, -0.1278], name: "London", value: 14, style: { fill: "#66586d" } }, // UK
-  { latLng: [-23.5505, -46.6333], name: "São Paulo", value: 9, style: { fill: "#868991" } }, // Brazil
-  { latLng: [39.9042, 116.4074], name: "Beijing", value: 18, style: { fill: "#66586d" } }, // China
-  { latLng: [28.6139, 77.209], name: "New Delhi", value: 7, style: { fill: "#868991" } }, // India
-  { latLng: [-26.2041, 28.0473], name: "Johannesburg", value: 11, style: { fill: "#66586d" } }, // South Africa
-  { latLng: [25.2769, 55.2962], name: "Dubai", value: 13, style: { fill: "#66586d" } }, // UAE
-  { latLng: [43.6532, -79.3832], name: "Toronto", value: 6, style: { fill: "#868991" } }, // Canada
-  { latLng: [1.3521, 103.8198], name: "Singapore", value: 16, style: { fill: "#66586d" } }, // Singapore
-  { latLng: [37.7749, -122.4194], name: "San Francisco", value: 17, style: { fill: "#66586d" } }, // USA
-  { latLng: [19.4326, -99.1332], name: "Mexico City", value: 8, style: { fill: "#868991" } }, // Mexico
-  { latLng: [41.9028, 12.4964], name: "Rome", value: 10, style: { fill: "#66586d" } }, // Italy
-  { latLng: [-34.6037, -58.3816], name: "Buenos Aires", value: 5, style: { fill: "#868991" } }, // Argentina
-  { latLng: [30.0444, 31.2357], name: "Cairo", value: 12, style: { fill: "#66586d" } }, // Egypt
-  { latLng: [13.7563, 100.5018], name: "Bangkok", value: 9, style: { fill: "#868991" } }, // Thailand
-  { latLng: [59.9139, 10.7522], name: "Oslo", value: 11, style: { fill: "#66586d" } }, // Norway
-];
-
-const SuperNodeMap = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: any }) => {
+const SuperNodeMap = ({ JVectorMapWithNoSSR, markers }: ISuperNodeMap) => {
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
@@ -126,7 +157,7 @@ const SuperNodeMap = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: any }) => 
           regions: {
             render: (code: string) => countryNames[code] || '',
             // @ts-ignore
-            offsets: (code) => {
+            offsets: (code: string) => {
               return [0, 0];
             },
           },
@@ -152,20 +183,53 @@ const SuperNodeMap = ({ JVectorMapWithNoSSR }: { JVectorMapWithNoSSR: any }) => 
   );
 };
 
+const getFileIcon = (type: string) => {
+  const simpleType = getSimplifiedType(type);
+  switch (simpleType) {
+    case 'Image': return <ImageIcon className="w-6 h-6 text-blue-400" />;
+    case 'Video': return <Video className="w-6 h-6 text-purple-400" />;
+    case 'PDF': return <FileText className="w-6 h-6 text-red-400" />;
+    case 'Archive': return <FileArchive className="w-6 h-6 text-yellow-400" />;
+    default: return <FileIcon className="w-6 h-6 text-gray-400" />;
+  }
+};
+
 export const CascadeScreen = ({
   JVectorMapWithNoSSR,
   isUploading,
   error,
+  isFetchSumaryLoading,
+  sumary,
+  address,
+  fileCounts,
+  fileTypeFilter,
+  fileSearch,
+  selectedFiles,
+  filteredFiles,
+  markers,
+  isDownloading,
+  isMyFilesLoading,
+  isMarkerLoading,
+  onSelectAll,
+  onFileSearchChange,
+  onFileTypeFilterChange,
   onFileChange,
+  onSelectFile,
+  onDonwloadClick,
+  onDonwloadAllFile,
 }: ICascadeScreen) => {
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
-      <div className="flex justify-between gap-6 w-full cascade-overview">
+      <div className="flex justify-between gap-6 w-full cascade-overview relative">
         <Card elevate size="$4" bordered className='cascade-top-left'>
           <Card.Header padded>
             <H3 className='text-white'>Network Storage</H3>
             <div className='text-[40px] font-bold text-lumera-blue-light'>
-              25 TB <span className='text-xl'>(50 Active Supernodes)</span>
+              {
+                isFetchSumaryLoading ? <Skeleton /> : <>
+                  {sumary.networkStorage} <span className='text-xl'>({sumary.totalSupernode} Active Supernodes)</span>
+                </>
+              }
             </div>
             <div className='text-lumera-label'>Total data stored across all supernodes.</div>
           </Card.Header>
@@ -173,16 +237,30 @@ export const CascadeScreen = ({
         <Card elevate size="$4" bordered className='cascade-top-right'>
           <Card.Header padded>
             <H3 className='text-white'>Your Usage</H3>
-            <div className='text-[40px] font-bold text-white'>
-              50 MB <span className='text-xl'>(10 Files Uploaded)</span>
-            </div>
-            <div className='text-lumera-label'>Your contribution to the network.</div>
+            {address ?
+              <>
+                {
+                  isFetchSumaryLoading ? <Skeleton /> : <>
+                    <div className='text-[40px] font-bold text-white'>
+                      {sumary.myUsage} <span className='text-xl'>({sumary.myUploaded} Files Uploaded)</span>
+                    </div>
+                  </>
+                }
+                <div className='text-lumera-label'>Your contribution to the network.</div>
+              </> : <>
+                <Paragraph className='text-base text-lumera-gray'>Please connect your wallet to view this section.</Paragraph>
+                <div className='mt-3'>
+                  <ConnectWalletButton />
+                </div>
+              </>
+            }
           </Card.Header>
         </Card>
       </div>
       <div className='mt-6 w-full'>
-        <Card elevate size="$4" bordered className='w-full'>
-          <SuperNodeMap JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
+        <Card elevate size="$4" bordered className='w-full relative'>
+          <Loading isLoading={isMarkerLoading} />
+          <SuperNodeMap JVectorMapWithNoSSR={JVectorMapWithNoSSR} markers={markers} />
         </Card>
       </div>
       <div className='mt-6 w-full relative'>
@@ -198,7 +276,7 @@ export const CascadeScreen = ({
                 <div className='mt-2'>Drag & drop files here</div>
                 <div className='text-sm text-lumera-label mt-3'>or</div>
                 <div className='mt-2 flex justify-center btn-blue'>
-                  <Button className='font-bold'>Browse Files</Button>
+                  <AppButton className='font-bold'>Browse Files</AppButton>
                 </div>
                 {error ?
                   <div className='mt-5 text-red-600'>{error}</div> : null
@@ -208,6 +286,137 @@ export const CascadeScreen = ({
           )}
         </Dropzone>
       </div>
+      <div className='mt-6 w-full relative'>
+        <Loading isLoading={isMyFilesLoading} />
+        <Card elevate size="$4" bordered className='w-full !p-[18px]'>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <h2 className="text-xl font-semibold text-white">My Files</h2>
+            <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                <div className="flex items-center border border-gray-700 rounded-lg p-1 bg-gray-900/50 gap-1">
+                  {FILES_TYPE.map(type => (
+                    <button
+                      key={type.value}
+                      onClick={() => onFileTypeFilterChange(type.value)}
+                      className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer ${fileTypeFilter === type.value ? 'bg-lumera-teal text-white' :
+                        'text-gray-300 hover:bg-lumera-teal'}`}
+                    >
+                      {type.label} ({fileCounts[type.value as TFileTypeKey]})
+                    </button>
+                  ))}
+                </div>
+                <div className="relative w-full md:w-auto">
+                  <div className='input-wrapper'>
+                    <Input
+                      id="keyword"
+                      placeholder="Search my files..."
+                      className='input  has-symbol'
+                      value={fileSearch}
+                      onChangeText={onFileSearchChange}
+                    />
+                    <span className='input-symbol'>
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    </span>
+                  </div>
+                </div>
+            </div>
+          </div>
+
+          {selectedFiles.length > 0 &&
+            <div className="bg-gray-700/50 p-3 rounded-lg flex justify-between items-center mb-4">
+              <span className="text-sm font-semibold text-white">{selectedFiles.length} file(s) selected</span>
+              <AppButton variant="secondary" className="!py-1.5 !px-4" onClick={onDonwloadAllFile}>
+                <Download className="w-4 h-4" /> Download as .zip
+              </AppButton>
+            </div>
+          }
+
+          <div className="space-y-2">
+            <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase items-center">
+              <div className="col-span-5">
+                <div className='flex items-start'>
+                  <div className='w-10'>
+                    <Checkbox
+                      id="checkAll"
+                      size="$4"
+                      checked={selectedFiles.length === filteredFiles.length && filteredFiles.length > 0}
+                      onCheckedChange={onSelectAll}
+                    >
+                      <Checkbox.Indicator>
+                        <CheckIcon />
+                      </Checkbox.Indicator>
+                    </Checkbox>
+                  </div>
+                  <span>Name</span>
+                </div>
+
+              </div>
+              <div className="col-span-2">Last Modified</div>
+              <div className="col-span-2">TX ID</div>
+              <div className="col-span-1 text-right">Size</div>
+              <div className="col-span-2 text-right">Action</div>
+          </div>
+          {filteredFiles.map((file, index) => (
+            <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
+              <div className="col-span-full md:col-span-5 flex items-center gap-4">
+                <div className='flex items-start'>
+                  <div className='w-10'>
+                    <Checkbox
+                      id="checkAll"
+                      size="$4"
+                      checked={selectedFiles.includes(file.name)}
+                      onCheckedChange={() => onSelectFile(file)}
+                    >
+                      <Checkbox.Indicator>
+                        <CheckIcon />
+                      </Checkbox.Indicator>
+                    </Checkbox>
+                  </div>
+                  <div className='flex items-start flex-wrap gap-2'>
+                    {getFileIcon(getSimplifiedType(file.type))}
+                    <span className="font-medium text-white truncate">{file.name}</span>
+                  </div>
+                </div>
+              </div>
+                <div className="col-span-full md:col-span-2 text-sm text-gray-400">
+                  <span className="md:hidden font-semibold text-gray-500 mr-2">Modified: </span>
+                  {new Date(file.lastModified).toLocaleDateString()}
+                </div>
+                <div className="col-span-full md:col-span-2 text-sm">
+                  <AppLink
+                    href={`/tx/${file.txId}`}
+                    className="font-mono text-indigo-400 hover:underline truncate flex items-center gap-1.5"
+                  >
+                    {formatAddress(file.txId, 6, -6)}<ArrowUpRight className="w-3 h-3"/>
+                  </AppLink>
+                </div>
+                <div className="col-span-full md:col-span-1 text-sm text-gray-300 md:text-right">
+                  <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
+                  {formatBytes(file.size)}
+                </div>
+                <div className="col-span-full md:col-span-2 flex justify-end">
+                  <AppButton
+                    variant="secondary"
+                    className="!py-1.5 !px-4 text-sm w-full md:w-auto"
+                    onClick={() => onDonwloadClick(file)}
+                  >
+                    <Download className="w-4 h-4"/> Download
+                  </AppButton>
+                </div>
+            </div>
+          ))}
+          </div>
+        </Card>
+      </div>
+
+      {isDownloading ?
+        <div className='fixed right-2 bottom-2 z-50'>
+          <Card elevate bordered className='w-full !overflow-hidden'>
+            <div className='px-5 py-3 flex items-center gap-2'>
+              <Loading isLoading className='relative !top-0 !left-0 !transform-none' /> Downloading ....
+            </div>
+          </Card>
+        </div> : null
+      }
     </YStack>
   )
 }
