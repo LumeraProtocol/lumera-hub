@@ -16,7 +16,11 @@ module.exports = withTamagui({
     '@tamagui',
     'react-native',
     'react-native-web',
-    '@lumera-hub/ui'
+    '@lumera-hub/ui',
+    '@lumera-protocol/sdk-js',
+    '@cosmjs/proto-signing',
+    '@cosmjs/stargate',
+    'react-lumera-sdk'
   ],
   ...(isDesktopExport ? { output: 'export' } : {}),
   webpack: (config, { dev }) => {
@@ -26,6 +30,18 @@ module.exports = withTamagui({
       'pino-pretty': false,
     }
 
+    if (config.module.generator?.asset) {
+      config.module.generator['asset/resource'] = { ...config.module.generator.asset };
+      config.module.generator['asset/source'] = { ...config.module.generator.asset };
+      delete config.module.generator.asset;
+    }
+
+    config.module.rules.unshift({
+      test: /\.js$/,
+      include: /node_modules\/react-lumera-sdk/,
+      type: 'javascript/auto',
+    });
+
     // Turn off source maps in development to suppress missing .css.map requests
     if (dev) {
       config.devtool = false
@@ -34,4 +50,3 @@ module.exports = withTamagui({
     return config
   },
 })
-

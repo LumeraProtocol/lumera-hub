@@ -171,7 +171,6 @@ const useProposals = (options: UseDepositOptions = {}) => {
         amount: [{ denom: DENOM, amount: estimatedFee } as Coin],
         gas: gasLimit,
       };
-      console.log(1111, 'fee', fee)
       const result = await client.signAndBroadcast(address, [msg], fee, voteAdvanced.memo);
       if (result?.transactionHash) {
         setTransactionHash(result?.transactionHash);
