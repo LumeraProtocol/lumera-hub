@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React from 'react';
 import {
@@ -29,46 +29,18 @@ import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
-import { ITask, FILES_TYPE, IMyFile, TFileTypeKey, IMarker } from '@/hooks/useCascade';
+import useCascade, { ITask, FILES_TYPE, IMyFile, TFileTypeKey, IMarker } from '@/hooks/useCascade';
 import { formatAddress } from '@/utils/format';
 import { getSimplifiedType, formatBytes } from '@/utils/helpers';
+import { useLumeraClientWrapper } from '@/hooks/useLumeraClientWrapper';
 
 interface ICascadeScreen {
   JVectorMapWithNoSSR: any;
-  onFileChange: (files: File[]) => void;
-  isUploading: boolean;
-  error: string;
-  uploadResult: ITask | null;
-  isFetchSumaryLoading: boolean;
-  sumary: {
-    totalSupernode: number;
-    networkStorage: string;
-    myUsage: string;
-    myUploaded: number;
-  };
-  fileCounts: {
-    all: number;
-    image: number;
-    pdf: number;
-    video: number;
-    archive: number;
-    other: number;
-  };
-  address: string;
-  fileTypeFilter: string;
-  onFileTypeFilterChange: (type: string) => void;
-  fileSearch: string;
-  onFileSearchChange: (keyword: string) => void;
-  selectedFiles: string[];
-  filteredFiles: IMyFile[];
-  onSelectAll: (checked: boolean) => void;
-  onSelectFile: (file: IMyFile) => void;
-  onDonwloadClick: (file: IMyFile) => void;
-  onDonwloadAllFile: () => void;
-  markers: IMarker[];
-  isDownloading: boolean;
-  isMyFilesLoading: boolean;
-  isMarkerLoading: boolean;
+}
+
+interface ICascadeContent {
+  JVectorMapWithNoSSR: any;
+  module: any;
 }
 
 interface ISuperNodeMap {
@@ -196,28 +168,61 @@ const getFileIcon = (type: string) => {
 
 export const CascadeScreen = ({
   JVectorMapWithNoSSR,
-  isUploading,
-  error,
-  isFetchSumaryLoading,
-  sumary,
-  address,
-  fileCounts,
-  fileTypeFilter,
-  fileSearch,
-  selectedFiles,
-  filteredFiles,
-  markers,
-  isDownloading,
-  isMyFilesLoading,
-  isMarkerLoading,
-  onSelectAll,
-  onFileSearchChange,
-  onFileTypeFilterChange,
-  onFileChange,
-  onSelectFile,
-  onDonwloadClick,
-  onDonwloadAllFile,
 }: ICascadeScreen) => {
+  const { module, isLoaded, error } = useLumeraClientWrapper();
+
+  if (!isLoaded || error) {
+    return (
+      <div className='w-full h-full relative flex items-center justify-center min-h-[82vh]'>
+        <div className='inline-flex items-center gap-3 w-auto'>
+          <div>
+            <Loading isLoading className='relative !top-0 !left-0 !transform-none' />
+          </div>
+          <span>Loading ...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <CascadeContent module={module} JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
+  );
+};
+
+export const CascadeContent = React.memo(({
+  JVectorMapWithNoSSR,
+  module,
+}: ICascadeContent) => {
+  const client = module.useLumeraClient();
+  const memoizedClient = React.useMemo(() => client, [client]);
+
+  const {
+    isUploading,
+    error,
+    uploadResult,
+    isFetchSumaryLoading,
+    sumary,
+    address,
+    fileCounts,
+    fileTypeFilter,
+    fileSearch,
+    selectedFiles,
+    filteredFiles,
+    markers,
+    isDownloading,
+    isMyFilesLoading,
+    isMarkerLoading,
+    handleDonwloadAllFile: onDonwloadAllFile,
+    handleDonwloadFile: onDonwloadClick,
+    handleSelectFile:onSelectFile,
+    handleSelectAll: onSelectAll,
+    handleFileSearchChange: onFileSearchChange,
+    handleFileTypeFilterChange: onFileTypeFilterChange,
+    handleUploadCascade: onFileChange,
+  } = useCascade({ lumeraSdk: memoizedClient });
+
+  console.log(new Date(), sumary)
+
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className="flex justify-between gap-6 w-full cascade-overview relative">
@@ -419,4 +424,4 @@ export const CascadeScreen = ({
       }
     </YStack>
   )
-}
+})
