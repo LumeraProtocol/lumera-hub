@@ -6,6 +6,7 @@ import {
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
+import { extractValidNumber } from '@/utils/helpers';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contants';
 import {
   IValidator,
@@ -89,7 +90,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
     }
     setOptionsAdvanced({
       ...newOptionsAdvanced,
-      [name]: value,
+      [name]: name === 'amount' ? extractValidNumber(value) : value,
     });
   }
 
@@ -213,7 +214,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const handleStakingAmountChange = (amount: string) => {
     setOptionsAdvanced({
       ...optionsAdvanced,
-      amount,
+      amount: extractValidNumber(amount),
     });
   }
 

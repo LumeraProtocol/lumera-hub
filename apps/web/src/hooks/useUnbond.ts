@@ -5,6 +5,7 @@ import {
 
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
+import { extractValidNumber } from '@/utils/helpers';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contants';
 
 interface UseDepositOptions {
@@ -56,7 +57,7 @@ const useUnbond = (options: UseDepositOptions = {}) => {
     const handleInputChange = (name: string, value: string) => {
       setOptionsAdvanced({
         ...optionsAdvanced,
-        [name]: value,
+        [name]: name === 'amount' ? extractValidNumber(value) : value,
       });
     }
 

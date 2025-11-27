@@ -6,6 +6,7 @@ import {
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
+import { extractValidNumber } from '@/utils/helpers';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contants';
 import {
   IValidator,
@@ -96,9 +97,10 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
           memo: `${newOptionsAdvanced.memo} to ${item?.description?.moniker}`,
         }
     }
+
     setOptionsAdvanced({
         ...newOptionsAdvanced,
-        [name]: value,
+        [name]: name === 'amount' ? extractValidNumber(value) : value,
     });
   }
 
