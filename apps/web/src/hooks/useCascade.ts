@@ -180,9 +180,9 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         });
         setSumary({
           totalSupernode: items?.length || 0,
-          networkStorage: '25 TB',
-          myUsage: '50 MB',
-          myUploaded: 10,
+          networkStorage: '25 TB', // TBD
+          myUsage: '50 MB', // TBD
+          myUploaded: 10, // TBD
         });
       }
     } catch {
@@ -197,7 +197,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const fetchChartMarker = async () => {
     setMarkerLoading(true);
     try {
-     setMarkers(fakeMarkers);
+     setMarkers(fakeMarkers); // TBD
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
         position: "bottom-center",
@@ -210,7 +210,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const fetchMyFiles = async () => {
     setMyFilesLoading(true);
     try {
-      setMyFiles(fakeData);
+      setMyFiles(fakeData);  // TBD
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
         position: "bottom-center",
