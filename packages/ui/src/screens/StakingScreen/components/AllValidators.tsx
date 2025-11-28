@@ -154,9 +154,15 @@ export default function AllValidators({
             <H3 className='leading-none'>All Validators</H3>
             <SizableText className='text-lumera-label'>Delegate your stake to a validator to earn rewards.</SizableText>
           </div>
-          <div className='w-80'>
+          <div className='w-full sm:w-80'>
             <div className='input-wrapper'>
-              <Input id="amount" placeholder="Search validator" className='input has-symbol' value={keyword} onChangeText={handleInputChange} />
+              <Input
+                id="amount"
+                placeholder="Search validator"
+                className='input has-symbol'
+                value={keyword}
+                onChangeText={handleInputChange}
+              />
               <span className='input-symbol'>
                 <Search />
               </span>
@@ -181,7 +187,7 @@ export default function AllValidators({
                 <div className='overflow-x-auto'>
                   <table className='w-full table mt-5'>
                     <thead>
-                      <tr>
+                      <tr className='text-sm'>
                         <th align='left' className='text-lumera-label validator'>
                           <button
                             type="button"
@@ -239,9 +245,8 @@ export default function AllValidators({
                         const uptime = getUptime(validator);
                         const uptimePercent = percent(uptime);
                         return (
-                          <tr key={validator.operator_address} className={index % 2 === 0 ? '!bg-gray-900' : ''}>
+                          <tr key={validator.operator_address} className={`${index % 2 === 0 ? '!bg-gray-900' : ''}`}>
                             <td
-                              data-label="Validator: "
                               onClick={() => handleValidatorClick(validator.operator_address)}
                               className='cursor-pointer'
                             >
@@ -250,34 +255,30 @@ export default function AllValidators({
                               </AppLink>
                             </td>
                             <td
-                              data-label="Staked Amount: "
-                              align='right'
                               onClick={() => handleValidatorClick(validator.operator_address)}
-                              className='cursor-pointer'
+                              className='cursor-pointer text-right'
                             >
-                              {formatToken({
-                                amount: validator.tokens,
-                                denom: staking.params.bond_denom,
-                              }, true, '0,0')}
+                              <span className='whitespace-nowrap'>
+                                {formatToken({
+                                  amount: validator.tokens,
+                                  denom: staking.params.bond_denom,
+                                }, true, '0,0')}
+                              </span>
                             </td>
                             <td
-                              data-label="Commission: "
-                              align='right'
                               onClick={() => handleValidatorClick(validator.operator_address)}
-                              className='cursor-pointer'
+                              className='cursor-pointer text-right'
                             >
                               <Text>{formatCommissionRate(validator.commission?.commission_rates?.rate)}</Text>
                             </td>
                             <td
-                              data-label="Voting Power: "
-                              align='right'
                               onClick={() => handleValidatorClick(validator.operator_address)}
-                              className='cursor-pointer'
+                              className='cursor-pointer text-right'
                             >
                               <Text>{calculatePercent(validator.delegator_shares, totalPower)}</Text>
                             </td>
-                            <td data-label="Uptime: ">
-                              <div className='flex w-full justify-between items-center gap-3 action-col pl-7'>
+                            <td>
+                              <div className='flex flex-col md:flex-row w-full md:justify-between items-start md:items-center gap-3 action-col pl-7'>
                                 <div className='flex items-center gap-3 cursor-pointer' onClick={() => handleValidatorClick(validator.operator_address)}>
                                   <div className='custom-progress'>
                                     <Progress size="$4" value={Number(uptimePercent.replace('%', ''))}>

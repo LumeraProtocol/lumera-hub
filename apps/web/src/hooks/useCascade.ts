@@ -281,7 +281,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setFileSearch(keyword);
   }
 
-  const handleDonwloadFile = async (file: IMyFile) => {
+  const handleDownloadFile = async (file: IMyFile) => {
     setDownloading(true);
     try {
       if (lumeraSdk) {
@@ -351,7 +351,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setDownloading(false);
   }
 
-  const handleDonwloadAllFile = async () => {
+  const handleDownloadAllFile = async () => {
     setDownloading(true);
     try {
       if (lumeraSdk) {
@@ -359,71 +359,63 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         const zipFileName = 'downloaded_files.zip';
         const offlineSigner = await getOfflineSigner();
         const zip = new JSZip();
-        const downloadPromises: Promise<void>[] = [];
-
         for (const file of files) {
-          const downloadPromise = (async () => {
-            try {
-              const stream =  await lumeraSdk.downloadCascade({
-                lastActionId: file.lastActionId,
-              }, {
-                chainId: CHAIN_ID,
-                rpcUrl: RPC_ENDPOINT,
-                lcdUrl: REST_AI_URL,
-                snapiUrl: SNAPI_URL,
-                signer: offlineSigner,
-                address,
-                gasPrice: GAS_PRICE,
+          try {
+            const stream =  await lumeraSdk.downloadCascade({
+              lastActionId: file.lastActionId,
+            }, {
+              chainId: CHAIN_ID,
+              rpcUrl: RPC_ENDPOINT,
+              lcdUrl: REST_AI_URL,
+              snapiUrl: SNAPI_URL,
+              signer: offlineSigner,
+              address,
+              gasPrice: GAS_PRICE,
+            });
+
+            if (!stream) {
+              toast.error('Error when downloading the file. Please try again.', {
+                position: "bottom-center",
+                theme: "dark",
               });
-
-              if (!stream) {
-                toast.error('Error when downloading the file. Please try again.', {
-                  position: "bottom-center",
-                  theme: "dark",
-                });
-                return;
-              }
-              // Read the stream
-              const reader = stream.getReader();
-              const chunks: Uint8Array[] = [];
-
-              while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) break;
-                  chunks.push(value);
-              }
-
-              // Combine chunks
-              const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-              const downloadedBytes = new Uint8Array(totalLength);
-              let offset = 0;
-              for (const chunk of chunks) {
-                  downloadedBytes.set(chunk, offset);
-                  offset += chunk.length;
-              }
-
-              if (!downloadedBytes) {
-                toast.error('Error when downloading the file. Please try again.', {
-                  position: "bottom-center",
-                  theme: "dark",
-                });
-                return;
-              }
-
-              if (downloadedBytes) {
-                zip.file(file.name, downloadedBytes);
-              }
-            } catch (error) {
-              console.error(error);
+              return;
             }
-          })();
-          downloadPromises.push(downloadPromise);
+            // Read the stream
+            const reader = stream.getReader();
+            const chunks: Uint8Array[] = [];
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              chunks.push(value);
+            }
+
+            // Combine chunks
+            const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+            const downloadedBytes: Uint8Array<ArrayBuffer> = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const chunk of chunks) {
+              downloadedBytes.set(chunk, offset);
+              offset += chunk.length;
+            }
+
+            if (!downloadedBytes) {
+              toast.error('Error when downloading the file. Please try again.', {
+                position: "bottom-center",
+                theme: "dark",
+              });
+              return;
+            }
+
+            zip.file(file.name, downloadedBytes);
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Error when downloading the file. Please try again.', {
+              position: "bottom-center",
+              theme: "dark",
+            });
+          }
         }
-
-        await Promise.all(downloadPromises);
-
         const content = await zip.generateAsync({ type: 'blob' });
-
         const url = URL.createObjectURL(content);
         const a = document.createElement('a');
         a.href = url;
@@ -458,8 +450,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     isDownloading,
     isMyFilesLoading,
     isMarkerLoading,
-    handleDonwloadAllFile,
-    handleDonwloadFile,
+    handleDownloadAllFile,
+    handleDownloadFile,
     handleSelectAll,
     handleSelectFile,
     handleFileSearchChange,

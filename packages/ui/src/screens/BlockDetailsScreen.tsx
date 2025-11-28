@@ -10,6 +10,7 @@ import AppLink from '@/components/AppLink';
 import { IFullBlock } from '@/types';
 import { IValidator } from '@/types/validator';
 import { consensusPubkeyToHexAddress, hashTx, getMessages } from '@/utils/helpers';
+import { formatAddress } from '@/utils/format';
 
 interface IBlockDetailsScreen {
   isLoading: boolean;
@@ -207,13 +208,13 @@ export const BlockDetailsScreen = ({
           <H3 className='text-lumera-label'>#{block?.block?.header?.height}</H3>
           <div className='mt-3'>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Hash</div>
+              <div className='w-full md:w-52 text-gray-500'>Hash</div>
               <div className='w-full'>
                 <HexOutput hash={block?.block_id?.hash || ''} />
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row py-3 px-4'>
-              <div className='w-full md:w-52'>Part Set Header</div>
+              <div className='w-full md:w-52 text-gray-500'>Part Set Header</div>
               <div className="w-full truncate">
                 <PartSetHeader
                   hash={block?.block_id?.part_set_header?.hash || ''}
@@ -230,7 +231,7 @@ export const BlockDetailsScreen = ({
           <H3 className='text-lumera-label'>Block Header</H3>
           <div className='mt-3'>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Version</div>
+              <div className='w-full md:w-52 text-gray-500'>Version</div>
               <div className="w-full truncate">
                 <Version
                   app={block?.block?.header?.version?.app || ''}
@@ -239,25 +240,25 @@ export const BlockDetailsScreen = ({
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Chain Id</div>
+              <div className='w-full md:w-52 text-gray-500'>Chain Id</div>
               <div className="w-full truncate">
                 {block?.block?.header?.chain_id|| ''}
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Height</div>
+              <div className='w-full md:w-52 text-gray-500'>Height</div>
               <div className="w-full truncate">
                 {block?.block?.header?.height|| ''}
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Time</div>
+              <div className='w-full md:w-52 text-gray-500'>Time</div>
               <div className="w-full truncate">
                 {dayjs(block?.block?.header?.time).format('MMMM DD, YYYY')} at {dayjs(block?.block?.header?.time).format('hh:mm:ss A')}
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Last Block Id</div>
+              <div className='w-full md:w-52 text-gray-500'>Last Block Id</div>
               <div className="w-full truncate">
                 <LastBlockID
                   hash={block?.block?.header?.last_block_id?.hash || ''}
@@ -266,55 +267,55 @@ export const BlockDetailsScreen = ({
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Last Commit Hash</div>
+              <div className='w-full md:w-52 text-gray-500'>Last Commit Hash</div>
               <div className="w-full truncate">
                 <HexOutput hash={block?.block?.header?.last_commit_hash || ''} />
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Data Hash</div>
+              <div className='w-full md:w-52 text-gray-500'>Data Hash</div>
               <div className="w-full truncate">
                 <HexOutput hash={block?.block?.header?.data_hash || ''} />
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Validators Hash</div>
+              <div className='w-full md:w-52 text-gray-500'>Validators Hash</div>
               <div className="w-full truncate">
                 <HexOutput hash={block?.block?.header?.validators_hash || ''} />
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Next Validators Hash</div>
+              <div className='w-full md:w-52 text-gray-500'>Next Validators Hash</div>
               <div className="w-full truncate">
                 <HexOutput hash={block?.block?.header?.next_validators_hash || ''} />
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Consensus Hash</div>
+              <div className='w-full md:w-52 text-gray-500'>Consensus Hash</div>
               <div className="w-full truncate">
                 <HexOutput hash={block?.block?.header?.consensus_hash || ''} />
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>App Hash</div>
+              <div className='w-full md:w-52 text-gray-500'>App Hash</div>
               <div className="w-full truncate">
                 <HexOutput hash={block?.block?.header?.app_hash || ''} />
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Last Results Hash</div>
+              <div className='w-full md:w-52 text-gray-500'>Last Results Hash</div>
               <div className="w-full truncate">
                 <HexOutput hash={block?.block?.header?.last_results_hash || ''} />
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Evidence Hash</div>
+              <div className='w-full md:w-52 text-gray-500'>Evidence Hash</div>
               <div className="w-full truncate">
                 <HexOutput hash={block?.block?.header?.evidence_hash || ''} />
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Proposer Address</div>
+              <div className='w-full md:w-52 text-gray-500'>Proposer Address</div>
               <div className="w-full truncate">
                 {getValidatorName(block?.block?.header?.proposer_address || '')}
               </div>
@@ -329,12 +330,12 @@ export const BlockDetailsScreen = ({
           <div className='mt-3'>
             <div className="overflow-x-auto">
               {block?.block?.data?.txs?.length ?
-                <table className="table w-full">
-                  <thead>
+                <table className="table w-full md:min-w-[550px]">
+                  <thead className='hidden md:table-header-group'>
                     <tr className='text-sm'>
-                      <th align='left'>Hash</th>
-                      <th align='left'>Msgs</th>
-                      <th align='left'>Memo</th>
+                      <th align='left' className='w-1/2'>Hash</th>
+                      <th align='left' className='w-1/4'>Msgs</th>
+                      <th align='left' className='w-1/4'>Memo</th>
                     </tr>
                   </thead>
                   <tbody className="text-sm">
@@ -342,14 +343,19 @@ export const BlockDetailsScreen = ({
                       const hash = hashTx(fromBase64(t));
                       const tx = decodeTxRaw(fromBase64(t));
                       return (
-                        <tr key={hash}>
+                        <tr key={hash} className='flex flex-col gap-1 md:table-row'>
                           <td>
-                            <AppLink href={`/tx/${hash}`}>{hash}</AppLink>
+                            <div className="md:hidden font-semibold text-gray-500 mr-2">Hash: </div>
+                            <AppLink href={`/tx/${hash}`}>{formatAddress(hash, 15, -6)}</AppLink>
+                          </td>
+                          <td className='!py-0'>
+                            <div className="md:hidden font-semibold text-gray-500 mr-2">Msgs: </div>
+                            <span>{getMessages(tx.body.messages)}</span>
                           </td>
                           <td>
-                            {getMessages(tx.body.messages)}
+                            <div className="md:hidden font-semibold text-gray-500 mr-2">Memo: </div>
+                            <span>{tx.body.memo}</span>
                           </td>
-                          <td>{tx.body.memo}</td>
                         </tr>
                       )
                     })}
@@ -367,19 +373,19 @@ export const BlockDetailsScreen = ({
           <H3 className='text-lumera-label'>Last Commit</H3>
           <div className='mt-3'>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Height</div>
+              <div className='w-full md:w-52 text-gray-500'>Height</div>
               <div className="w-full truncate">
                 {block?.block?.last_commit?.height}
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Round</div>
+              <div className='w-full md:w-52 text-gray-500'>Round</div>
               <div className="w-full truncate">
                 {block?.block?.last_commit?.round}
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52'>Block Id</div>
+              <div className='w-full md:w-52 text-gray-500'>Block Id</div>
               <div className="w-full truncate">
                 <LastBlockID
                   hash={block?.block?.last_commit?.block_id?.hash || ''}
@@ -388,7 +394,7 @@ export const BlockDetailsScreen = ({
               </div>
             </div>
             <div className='flex items-center flex-col md:flex-row py-3 px-4'>
-              <div className='w-full md:w-52'>Signatures</div>
+              <div className='w-full md:w-52 text-gray-500'>Signatures</div>
               <div className="overflow-auto max-h-[380px] max-w-full">
                 <table className="table w-full">
                   <thead>
