@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from 'react-toastify';
 import JSZip from 'jszip';
-// import { useLumeraClient } from 'react-lumera-sdk';
 
 import { useSelector } from '@/redux/hooks';
 import useWalletConnect from '@/hooks/useWalletConnect';
@@ -105,13 +104,14 @@ const GAS_PRICE = '0.025ulume';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { getOfflineSigner } = useWalletConnect();
   const { address } = useSelector((state) => state.wallet);
   const [isUploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [uploadResult, setUploadResult] = useState<ITask | null>(null);
-  const [isFetchSumaryLoading, setFetchSumaryLoading] = useState(false);
-  const [sumary, setSumary] = useState({
+  const [isFetchSummaryLoading, setFetchSummaryLoading] = useState(false);
+  const [summary, setSummary] = useState({
     totalSupernode: 0,
     networkStorage: '0',
     myUsage: '0',
@@ -164,8 +164,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     }
   };
 
-  const fetchSumary = async (counter = 1) => {
-    setFetchSumaryLoading(true);
+  const fetchSummary = useCallback(async (counter = 1) => {
+    setFetchSummaryLoading(true);
     try {
       if (lumeraSdk) {
         const offlineSigner = await getOfflineSigner();
@@ -178,7 +178,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           address,
           gasPrice: GAS_PRICE,
         });
-        setSumary({
+        setSummary({
           totalSupernode: items?.length || 0,
           networkStorage: '25 TB', // TBD
           myUsage: '50 MB', // TBD
@@ -187,14 +187,14 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       }
     } catch {
       if (counter <= 2) {
-       setTimeout(() => fetchSumary(counter + 1), 30000)
+       timeoutRef.current = setTimeout(() => fetchSummary(counter + 1), 30000)
         return;
       }
     }
-    setFetchSumaryLoading(false);
-  }
+    setFetchSummaryLoading(false);
+  }, [lumeraSdk, address]);
 
-  const fetchChartMarker = async () => {
+  const fetchChartMarker = useCallback(async () => {
     setMarkerLoading(true);
     try {
      setMarkers(fakeMarkers); // TBD
@@ -205,9 +205,9 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       });
     }
     setMarkerLoading(false);
-  }
+  }, []);
 
-  const fetchMyFiles = async () => {
+  const fetchMyFiles = useCallback(async () => {
     setMyFilesLoading(true);
     try {
       setMyFiles(fakeData);  // TBD
@@ -218,15 +218,23 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       });
     }
     setMyFilesLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
     if (address) {
-      fetchSumary();
       fetchMyFiles();
       fetchChartMarker();
+      fetchSummary();
     }
   }, [address]);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleUploadCascade = async (files: File[]) => {
     setUploading(true);
@@ -349,9 +357,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       if (lumeraSdk) {
         const files: FileToDownload[] = [];
         const zipFileName = 'downloaded_files.zip';
-
         const offlineSigner = await getOfflineSigner();
-
         const zip = new JSZip();
         const downloadPromises: Promise<void>[] = [];
 
@@ -440,9 +446,9 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     isUploading,
     error,
     uploadResult,
-    isFetchSumaryLoading,
+    isFetchSummaryLoading,
     address,
-    sumary,
+    summary,
     fileCounts,
     fileTypeFilter,
     fileSearch,

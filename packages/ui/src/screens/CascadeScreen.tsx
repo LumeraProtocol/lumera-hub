@@ -147,8 +147,8 @@ const SuperNodeMap = ({ JVectorMapWithNoSSR, markers }: ISuperNodeMap) => {
           ],
         }}
         markers={markers}
-        onMarkerClick={(event: Event, code: string) => {
-          console.log("onMarkerClick:", code);
+        onMarkerClick={() => {
+          // TBD - (event: Event, code: string)
         }}
       />
     </div>
@@ -199,9 +199,8 @@ export const CascadeContent = React.memo(({
   const {
     isUploading,
     error,
-    uploadResult,
-    isFetchSumaryLoading,
-    sumary,
+    isFetchSummaryLoading,
+    summary,
     address,
     fileCounts,
     fileTypeFilter,
@@ -221,8 +220,6 @@ export const CascadeContent = React.memo(({
     handleUploadCascade: onFileChange,
   } = useCascade({ lumeraSdk: memoizedClient });
 
-  console.log(new Date(), sumary)
-
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className="flex justify-between gap-6 w-full cascade-overview relative">
@@ -231,8 +228,8 @@ export const CascadeContent = React.memo(({
             <H3 className='text-white'>Network Storage</H3>
             <div className='text-[40px] font-bold text-lumera-blue-light'>
               {
-                isFetchSumaryLoading ? <Skeleton /> : <>
-                  {sumary.networkStorage} <span className='text-xl'>({sumary.totalSupernode} Active Supernodes)</span>
+                isFetchSummaryLoading ? <Skeleton /> : <>
+                  {summary.networkStorage} <span className='text-xl'>({summary.totalSupernode} Active Supernodes)</span>
                 </>
               }
             </div>
@@ -245,9 +242,9 @@ export const CascadeContent = React.memo(({
             {address ?
               <>
                 {
-                  isFetchSumaryLoading ? <Skeleton /> : <>
+                  isFetchSummaryLoading ? <Skeleton /> : <>
                     <div className='text-[40px] font-bold text-white'>
-                      {sumary.myUsage} <span className='text-xl'>({sumary.myUploaded} Files Uploaded)</span>
+                      {summary.myUsage} <span className='text-xl'>({summary.myUploaded} Files Uploaded)</span>
                     </div>
                   </>
                 }
