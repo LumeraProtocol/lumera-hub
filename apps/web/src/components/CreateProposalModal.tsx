@@ -62,7 +62,7 @@ interface ICreateProposalModal {
 export default function CreateProposalModal({
   isOpen,
   step,
-  className = 'w-full md:w-[680px] max-w-[96vw]',
+  className = 'w-full md:w-[680px] md:max-w-[96vw]',
   proposal,
   isLoading,
   msg,
@@ -331,7 +331,7 @@ export default function CreateProposalModal({
           <VisuallyHidden>
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
-          <div className={`relative p-3 ${className}`}>
+          <div className={`withdraw-main-content relative p-3 ${className}`}>
             <div className='flex justify-between items-center'>
               <H3 className='text-lumera-label text-[32px]'>Create Proposal</H3>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseModal}>
@@ -340,168 +340,171 @@ export default function CreateProposalModal({
             </div>
             <div className='mt-5 relative'>
               <Loading isLoading={isLoading} />
-              <div className="mb-6">
-                <div className="flex justify-between mb-1">
-                  {STEPS.map((s, i) => (
-                    <div key={s} className={`w-full text-center text-sm font-medium ${step > i + 1 ? 'text-lumera-teal' : step === i + 1 ? 'text-white' : 'text-gray-500'}`}>{s}</div>
-                  ))}
-                </div>
-                <div className="flex">
-                  {STEPS.map((_, i) => (
-                    <div key={i} className={`w-full h-1 rounded-full ${step > i ? 'bg-lumera-teal' : 'bg-gray-700'}`}></div>
-                  ))}
+              <div className="mb-6 overflow-x-auto w-full max-w-[87vw] sm:max-w-full">
+                <div className='min-w-[420px]'>
+                  <div className="flex justify-between mb-1">
+                    {STEPS.map((s, i) => (
+                      <div key={s} className={`w-full text-center text-sm font-medium ${step > i + 1 ? 'text-lumera-teal' : step === i + 1 ? 'text-white' : 'text-gray-500'}`}>{s}</div>
+                    ))}
+                  </div>
+                  <div className="flex">
+                    {STEPS.map((_, i) => (
+                      <div key={i} className={`w-full h-1 rounded-full ${step > i ? 'bg-lumera-teal' : 'bg-gray-700'}`}></div>
+                    ))}
+                  </div>
                 </div>
               </div>
-
-              {step === 1 && (
-                <div className="space-y-4">
-                  <h3 className="font-medium text-white">Select Proposal Type</h3>
-                  <Select
-                    id="type"
-                    value={proposal.type}
-                    onValueChange={(newValue) => onInputChange('type', newValue)}
-                  >
-                    <Select.Trigger width={'100%'} iconAfter={<ChevronDown size="$1" />}>
-                      <Select.Value placeholder="Select a type" />
-                    </Select.Trigger>
-                    <Select.Content zIndex={200000}>
-                        <Select.Viewport minWidth={200}>
-                        <Select.Group>
-                          {proposalTypes?.map((item, index) => {
-                            return (
-                              <Select.Item
-                                  key={item.value}
-                                  index={index}
-                                  value={item.value}
-                              >
-                                  <Select.ItemText>{item.label}</Select.ItemText>
-                                  <XStack flex={1} />
-                                  <Select.ItemIndicator marginLeft="auto">
-                                    <CheckIcon size={16} />
-                                  </Select.ItemIndicator>
-                              </Select.Item>
-                            )
-                          })}
-                        </Select.Group>
-                        </Select.Viewport>
-                    </Select.Content>
-                  </Select>
-                </div>
-              )}
-
-              {step === 2 && (
-                <div className="space-y-4">
-                  <h3 className="font-medium text-white">Proposal Details</h3>
-                  <div>
-                    <label htmlFor='title' className="block text-sm font-medium text-gray-300 mb-1">Title</label>
-                    <Input
-                      id="title"
-                      className='input has-symbol'
-                      value={proposal.title}
-                      onChangeText={(newValue) => onInputChange('title', newValue)}
-                    />
-                    {msg?.type === 'title' ?
-                      <div className='text-lumera-red-light mt-5'>
-                        {msg.message}
-                      </div> : null
-                    }
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
-                    <TextArea
-                      id="description"
-                      value={proposal.description}
-                      onChangeText={(newValue) => onInputChange('description', newValue)}
-                      rows={5}
-                      className="w-full bg-gray-900/50 border-gray-600 rounded-lg"
-                    />
-                    {msg?.type === 'description' ?
-                      <div className='text-lumera-red-light mt-5'>
-                        {msg.message}
-                      </div> : null
-                    }
-                  </div>
-                  <div className="flex items-center">
-                     <Checkbox
-                      id="isExpedited"
-                      size="$4"
-                      checked={proposal.isExpedited}
-                      onCheckedChange={(checked) => onInputChange('isExpedited', '', 'checkbox', checked as boolean)}
+              <div className='overflow-y-auto max-h-[72vh] pb-2'>
+                {step === 1 && (
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-white">Select Proposal Type</h3>
+                    <Select
+                      id="type"
+                      value={proposal.type}
+                      onValueChange={(newValue) => onInputChange('type', newValue)}
                     >
-                      <Checkbox.Indicator>
-                        <CheckIcon />
-                      </Checkbox.Indicator>
-                    </Checkbox>
-                    <div className='flex items-center gap-2'>
-                      <label htmlFor="isExpedited" className="ml-2 text-sm text-gray-300">
-                        Expedited Proposal (requires higher deposit)
-                      </label>
-                      <Tooltip icon={<Info />} content={getExpeditedProposalTooltip()} />
+                      <Select.Trigger width={'100%'} iconAfter={<ChevronDown size="$1" />}>
+                        <Select.Value placeholder="Select a type" />
+                      </Select.Trigger>
+                      <Select.Content zIndex={200000}>
+                          <Select.Viewport minWidth={200}>
+                          <Select.Group>
+                            {proposalTypes?.map((item, index) => {
+                              return (
+                                <Select.Item
+                                    key={item.value}
+                                    index={index}
+                                    value={item.value}
+                                >
+                                    <Select.ItemText>{item.label}</Select.ItemText>
+                                    <XStack flex={1} />
+                                    <Select.ItemIndicator marginLeft="auto">
+                                      <CheckIcon size={16} />
+                                    </Select.ItemIndicator>
+                                </Select.Item>
+                              )
+                            })}
+                          </Select.Group>
+                          </Select.Viewport>
+                      </Select.Content>
+                    </Select>
+                  </div>
+                )}
+
+                {step === 2 && (
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-white">Proposal Details</h3>
+                    <div>
+                      <label htmlFor='title' className="block text-sm font-medium text-gray-300 mb-1">Title</label>
+                      <Input
+                        id="title"
+                        className='input has-symbol'
+                        value={proposal.title}
+                        onChangeText={(newValue) => onInputChange('title', newValue)}
+                      />
+                      {msg?.type === 'title' ?
+                        <div className='text-lumera-red-light mt-5'>
+                          {msg.message}
+                        </div> : null
+                      }
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                      <TextArea
+                        id="description"
+                        value={proposal.description}
+                        onChangeText={(newValue) => onInputChange('description', newValue)}
+                        rows={5}
+                        className="w-full bg-gray-900/50 border-gray-600 rounded-lg"
+                      />
+                      {msg?.type === 'description' ?
+                        <div className='text-lumera-red-light mt-5'>
+                          {msg.message}
+                        </div> : null
+                      }
+                    </div>
+                    <div className="flex items-center">
+                      <Checkbox
+                        id="isExpedited"
+                        size="$4"
+                        checked={proposal.isExpedited}
+                        onCheckedChange={(checked) => onInputChange('isExpedited', '', 'checkbox', checked as boolean)}
+                      >
+                        <Checkbox.Indicator>
+                          <CheckIcon />
+                        </Checkbox.Indicator>
+                      </Checkbox>
+                      <div className='flex items-center gap-2'>
+                        <label htmlFor="isExpedited" className="ml-2 text-sm text-gray-300">
+                          Expedited Proposal (requires higher deposit)
+                        </label>
+                        <Tooltip icon={<Info />} content={getExpeditedProposalTooltip()} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {step === 3 && (
-                <div className="space-y-4">
-                  <h3 className="font-medium text-white">Specific Parameters</h3>
-                  {renderStep3()}
-                </div>
-              )}
-
-              {step === 4 && (
-                <div className="space-y-4">
-                  <h3 className="font-medium text-white">Initial Deposit</h3>
-                  <p className="text-sm text-gray-400">An initial deposit is required to submit a proposal. This amount is returned if the proposal passes or is rejected, but is burned if it fails to meet the deposit threshold.</p>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Deposit Amount (min. {formatNumber(requiredDeposit, { decimalsLength: 0 })} LUME)</label>
-                    <Input
-                      id="initialDeposit"
-                      className='input has-symbol'
-                      value={proposal.initialDeposit}
-                      onChangeText={(newValue) => onInputChange('initialDeposit', newValue)}
-                    />
-                    {msg?.type === 'initialDeposit' ?
-                      <div className='text-lumera-red-light mt-5'>
-                        {msg.message}
-                      </div> : null
-                    }
+                {step === 3 && (
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-white">Specific Parameters</h3>
+                    {renderStep3()}
                   </div>
-                </div>
-              )}
+                )}
 
-              {step === 5 && (
-                <div className="space-y-4 text-sm">
-                  <h3 className="font-medium text-white">Review Proposal</h3>
-                  <p className='mb-4'><strong className="text-gray-400">Type:</strong> {proposal.type}</p>
-                  <p className='mb-4'><strong className="text-gray-400">Title:</strong> {proposal.title}</p>
-                  <p className='mb-4'><strong className="text-gray-400">Description:</strong> {proposal.description}</p>
-                  <p className='mb-4'><strong className="text-gray-400">Expedited:</strong> {proposal.isExpedited ? 'Yes' : 'No'}</p>
-                  <div className="pt-4 border-t border-gray-700/20">
-                    {renderStep5()}
+                {step === 4 && (
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-white">Initial Deposit</h3>
+                    <p className="text-sm text-gray-400">An initial deposit is required to submit a proposal. This amount is returned if the proposal passes or is rejected, but is burned if it fails to meet the deposit threshold.</p>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Deposit Amount (min. {formatNumber(requiredDeposit, { decimalsLength: 0 })} LUME)</label>
+                      <Input
+                        id="initialDeposit"
+                        className='input has-symbol'
+                        value={proposal.initialDeposit}
+                        onChangeText={(newValue) => onInputChange('initialDeposit', newValue)}
+                      />
+                      {msg?.type === 'initialDeposit' ?
+                        <div className='text-lumera-red-light mt-5'>
+                          {msg.message}
+                        </div> : null
+                      }
+                    </div>
                   </div>
-                  <p className="pt-4 border-t border-gray-700/50">
-                    <strong className="text-gray-400">Initial Deposit:</strong> {formatNumber(proposal.initialDeposit, { decimalsLength: 0 })} LUME
-                  </p>
-                </div>
-              )}
+                )}
 
-              <div className="mt-8 flex justify-between">
-                <AppButton onClick={onBackClick} variant="secondary" disabled={step === 1}>Back</AppButton>
-                {step < 5 && <AppButton onClick={onNextClick}>Next</AppButton>}
-                {step === 5 && <AppButton onClick={onCreateProposalClick}>Submit Proposal</AppButton>}
+                {step === 5 && (
+                  <div className="space-y-4 text-sm">
+                    <h3 className="font-medium text-white">Review Proposal</h3>
+                    <p className='mb-4'><strong className="text-gray-400">Type:</strong> {proposal.type}</p>
+                    <p className='mb-4'><strong className="text-gray-400">Title:</strong> {proposal.title}</p>
+                    <p className='mb-4'><strong className="text-gray-400">Description:</strong> {proposal.description}</p>
+                    <p className='mb-4'><strong className="text-gray-400">Expedited:</strong> {proposal.isExpedited ? 'Yes' : 'No'}</p>
+                    <div className="pt-4 border-t border-gray-700/20">
+                      {renderStep5()}
+                    </div>
+                    <p className="pt-4 border-t border-gray-700/50">
+                      <strong className="text-gray-400">Initial Deposit:</strong> {formatNumber(proposal.initialDeposit, { decimalsLength: 0 })} LUME
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-8 flex justify-between">
+                  <AppButton onClick={onBackClick} variant="secondary" disabled={step === 1}>Back</AppButton>
+                  {step < 5 && <AppButton onClick={onNextClick}>Next</AppButton>}
+                  {step === 5 && <AppButton onClick={onCreateProposalClick}>Submit Proposal</AppButton>}
+                </div>
+                {msg?.type === 'error' ?
+                  <div className='text-lumera-red-light mt-5'>
+                    {msg.message}
+                  </div> : null
+                }
+                {msg?.type === 'success' ?
+                  <div className='text-lumera-green mt-5'>
+                    {msg.message}
+                  </div> : null
+                }
               </div>
-              {msg?.type === 'error' ?
-                <div className='text-lumera-red-light mt-5'>
-                  {msg.message}
-                </div> : null
-              }
-              {msg?.type === 'success' ?
-                <div className='text-lumera-green mt-5'>
-                  {msg.message}
-                </div> : null
-              }
             </div>
           </div>
         </Dialog.Content>

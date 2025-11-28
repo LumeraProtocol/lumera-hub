@@ -36,11 +36,11 @@ export const TransactionDetailsScreen = ({
         <div className='p-5 pt-0 text-lumera-label'>
           <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
             <div className='w-full md:w-32'>Tx Hash</div>
-            <div className='w-full truncate'>{transaction?.tx_response?.txhash}</div>
+            <div className='w-full truncate text-white'>{transaction?.tx_response?.txhash}</div>
           </div>
           <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
             <div className='w-full md:w-32'>Height</div>
-            <div className='w-ful'>
+            <div className='w-full'>
               <AppLink href={`/block/${transaction?.tx_response?.height}`} className='text-lumera-teal hover:text-lumera-green'>
                 {transaction?.tx_response?.height}
               </AppLink>
@@ -48,7 +48,7 @@ export const TransactionDetailsScreen = ({
           </div>
           <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
             <div className='w-full md:w-32'>Status</div>
-            <div className='w-full'>
+            <div className='w-full text-white mt-1 md:mt-0'>
               {!isLoading && transaction ?
               <>
                 <span className={`text-xs truncate relative py-2 px-4 w-fit mr-2 rounded text-white ${transaction?.tx_response?.code === 0 ? 'bg-lumera-teal' : 'bg-red-800'}`}>
@@ -63,7 +63,7 @@ export const TransactionDetailsScreen = ({
           </div>
           <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
             <div className='w-full md:w-32'>Time</div>
-            <div className='w-full'>
+            <div className='w-full text-white'>
               {transaction?.tx_response?.timestamp ?
               <>
                 {dayjs(transaction.tx_response.timestamp).format('MMMM DD, YYYY')} at {dayjs(transaction.tx_response.timestamp).format('HH:mm:ss')}({dayjs(transaction.tx_response.timestamp).fromNow()})
@@ -72,13 +72,13 @@ export const TransactionDetailsScreen = ({
           </div>
           <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
             <div className='w-full md:w-32'>Gas</div>
-            <div className='w-full'>
+            <div className='w-full text-white'>
                {formatNumber(transaction?.tx_response?.gas_used || '', { decimalsLength: 0 })} / {formatNumber(transaction?.tx_response?.gas_wanted || '', { decimalsLength: 0 })}
             </div>
           </div>
           <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
             <div className='w-full md:w-32'>Fee</div>
-            <div className='w-full'>
+            <div className='w-full text-white'>
               {
                 transaction ? formatTokens(
                   transaction.tx?.auth_info?.fee?.amount,
@@ -90,7 +90,7 @@ export const TransactionDetailsScreen = ({
           </div>
           <div className='flex items-center flex-col md:flex-row pt-3 px-4'>
             <div className='w-full md:w-32'>Memo</div>
-            <div className='w-full'>{transaction?.tx?.body?.memo}</div>
+            <div className='w-full text-white'>{transaction?.tx?.body?.memo}</div>
           </div>
         </div>
       </Card>
@@ -106,13 +106,13 @@ export const TransactionDetailsScreen = ({
                 <div className="border border-slate-800 rounded-md text-lumera-label" key={index}>
                   <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
                     <div className='w-full md:w-48'>@type</div>
-                    <div className='w-full truncate'>
+                    <div className='w-full truncate text-white'>
                       {msg['@type']}
                     </div>
                   </div>
                   <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
                     <div className='w-full md:w-48'>Delegator Address</div>
-                    <div className='w-full truncate'>
+                    <div className='w-full truncate text-white'>
                       {msg.delegator_address}
                     </div>
                   </div>
@@ -120,20 +120,20 @@ export const TransactionDetailsScreen = ({
                     <>
                       <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
                         <div className='w-full md:w-48'>Source Validator</div>
-                        <div className='w-full truncate'>
+                        <div className='w-full truncate text-white'>
                           {msg.validator_src_address}
                         </div>
                       </div>
                       <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
                         <div className='w-full md:w-48'>Destination Validator</div>
-                        <div className='w-full truncate'>
+                        <div className='w-full truncate text-white'>
                           {msg.validator_dst_address}
                         </div>
                       </div>
                     </> :
                     <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
                       <div className='w-full md:w-48'>Validator Address</div>
-                      <div className='w-full truncate'>
+                      <div className='w-full truncate text-white'>
                         {msg.validator_address}
                       </div>
                     </div>
@@ -141,7 +141,7 @@ export const TransactionDetailsScreen = ({
                   {msg?.amount?.amount ?
                     <div className='flex items-center flex-col md:flex-row py-3 px-4'>
                       <div className='w-full md:w-48'>Amount</div>
-                      <div className='w-full'>
+                      <div className='w-full text-white'>
                         {formatNumber(msg.amount.amount, { decimalsLength: 0 })} {msg.amount.denom}
                       </div>
                     </div> : null

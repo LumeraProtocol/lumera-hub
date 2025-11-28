@@ -261,7 +261,7 @@ export const GovernanceScreen = ({
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
-        <H2 className='!font-bold text-white text-[32px] leading-none'>Governance</H2>
+        <H2 className='!font-bold text-white !text-[32px] leading-none'>Governance</H2>
         <div className='btn-primary'>
           <Button onPress={createProposal.onOpenCreateProposalModalClick}>
             <span className='font-bold whitespace-nowrap'>Create Proposal</span>
@@ -362,56 +362,58 @@ export const GovernanceScreen = ({
         <Card elevate size="$4" bordered className='w-full p-5 mt-4'>
           <div className='flex justify-between items-center governance-control relative'>
             <Loading isLoading={isSumaryLoading} />
-            <ul className='tabs-secondary flex-wrap'>
-              <li className={`tab-item ${!currentTab ? 'active' : ''}`}>
-                <button
-                  className='tab-button whitespace-nowrap'
-                  onClick={() => onTabChange('')}
-                >
-                  All ({formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })})
-                </button>
-              </li>
-              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? 'active' : ''}`}>
-                <button
-                  className='tab-button whitespace-nowrap'
-                  onClick={() => onTabChange('PROPOSAL_STATUS_DEPOSIT_PERIOD')}
-                >
-                  Deposit ({formatNumber(sumary?.depositRequired || 0, { decimalsLength: 0 })})
-                </button>
-              </li>
-              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_VOTING_PERIOD' ? 'active' : ''}`}>
-                <button
-                  className='tab-button whitespace-nowrap'
-                  onClick={() => onTabChange('PROPOSAL_STATUS_VOTING_PERIOD')}
-                >
-                  Voting ({formatNumber(sumary?.votingPeriod || 0, { decimalsLength: 0 })})
-                </button>
-              </li>
-              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_PASSED' ? 'active' : ''}`}>
-                <button
-                  className='tab-button whitespace-nowrap'
-                  onClick={() => onTabChange('PROPOSAL_STATUS_PASSED')}
-                >
-                  Passed ({formatNumber(sumary?.passed || 0, { decimalsLength: 0 })})
-                </button>
-              </li>
-              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_REJECTED' ? 'active' : ''}`}>
-                <button
-                  className='tab-button whitespace-nowrap'
-                  onClick={() => onTabChange('PROPOSAL_STATUS_REJECTED')}
-                >
-                  Rejected ({formatNumber(sumary?.rejected || 0, { decimalsLength: 0 })})
-                </button>
-              </li>
-              <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_FAILED' ? 'active' : ''}`}>
-                <button
-                  className='tab-button whitespace-nowrap'
-                  onClick={() => onTabChange('PROPOSAL_STATUS_FAILED')}
-                >
-                  Failed ({formatNumber(sumary?.failed || 0, { decimalsLength: 0 })})
-                </button>
-              </li>
-            </ul>
+            <div className='overflow-x-auto w-full'>
+              <ul className='tabs-secondary flex-nowrap min-w-[670px]'>
+                <li className={`tab-item ${!currentTab ? 'active' : ''}`}>
+                  <button
+                    className='tab-button whitespace-nowrap'
+                    onClick={() => onTabChange('')}
+                  >
+                    All ({formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })})
+                  </button>
+                </li>
+                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? 'active' : ''}`}>
+                  <button
+                    className='tab-button whitespace-nowrap'
+                    onClick={() => onTabChange('PROPOSAL_STATUS_DEPOSIT_PERIOD')}
+                  >
+                    Deposit ({formatNumber(sumary?.depositRequired || 0, { decimalsLength: 0 })})
+                  </button>
+                </li>
+                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_VOTING_PERIOD' ? 'active' : ''}`}>
+                  <button
+                    className='tab-button whitespace-nowrap'
+                    onClick={() => onTabChange('PROPOSAL_STATUS_VOTING_PERIOD')}
+                  >
+                    Voting ({formatNumber(sumary?.votingPeriod || 0, { decimalsLength: 0 })})
+                  </button>
+                </li>
+                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_PASSED' ? 'active' : ''}`}>
+                  <button
+                    className='tab-button whitespace-nowrap'
+                    onClick={() => onTabChange('PROPOSAL_STATUS_PASSED')}
+                  >
+                    Passed ({formatNumber(sumary?.passed || 0, { decimalsLength: 0 })})
+                  </button>
+                </li>
+                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_REJECTED' ? 'active' : ''}`}>
+                  <button
+                    className='tab-button whitespace-nowrap'
+                    onClick={() => onTabChange('PROPOSAL_STATUS_REJECTED')}
+                  >
+                    Rejected ({formatNumber(sumary?.rejected || 0, { decimalsLength: 0 })})
+                  </button>
+                </li>
+                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_FAILED' ? 'active' : ''}`}>
+                  <button
+                    className='tab-button whitespace-nowrap'
+                    onClick={() => onTabChange('PROPOSAL_STATUS_FAILED')}
+                  >
+                    Failed ({formatNumber(sumary?.failed || 0, { decimalsLength: 0 })})
+                  </button>
+                </li>
+              </ul>
+            </div>
             <div className='input-wrapper hidden'>
               <Input id="amount" placeholder="Search validator" className='input has-symbol' />
               <span className='input-symbol'>

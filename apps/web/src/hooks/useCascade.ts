@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from 'react-toastify';
 import JSZip from 'jszip';
-// import { useLumeraClient } from 'react-lumera-sdk';
 
 import { useSelector } from '@/redux/hooks';
 import useWalletConnect from '@/hooks/useWalletConnect';
@@ -105,13 +104,14 @@ const GAS_PRICE = '0.025ulume';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { getOfflineSigner } = useWalletConnect();
   const { address } = useSelector((state) => state.wallet);
   const [isUploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [uploadResult, setUploadResult] = useState<ITask | null>(null);
-  const [isFetchSumaryLoading, setFetchSumaryLoading] = useState(false);
-  const [sumary, setSumary] = useState({
+  const [isFetchSummaryLoading, setFetchSummaryLoading] = useState(false);
+  const [summary, setSummary] = useState({
     totalSupernode: 0,
     networkStorage: '0',
     myUsage: '0',
@@ -164,8 +164,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     }
   };
 
-  const fetchSumary = async (counter = 1) => {
-    setFetchSumaryLoading(true);
+  const fetchSummary = useCallback(async (counter = 1) => {
+    setFetchSummaryLoading(true);
     try {
       if (lumeraSdk) {
         const offlineSigner = await getOfflineSigner();
@@ -178,26 +178,26 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           address,
           gasPrice: GAS_PRICE,
         });
-        setSumary({
+        setSummary({
           totalSupernode: items?.length || 0,
-          networkStorage: '25 TB',
-          myUsage: '50 MB',
-          myUploaded: 10,
+          networkStorage: '25 TB', // TBD
+          myUsage: '50 MB', // TBD
+          myUploaded: 10, // TBD
         });
       }
     } catch {
       if (counter <= 2) {
-       setTimeout(() => fetchSumary(counter + 1), 30000)
+       timeoutRef.current = setTimeout(() => fetchSummary(counter + 1), 30000)
         return;
       }
     }
-    setFetchSumaryLoading(false);
-  }
+    setFetchSummaryLoading(false);
+  }, [lumeraSdk, address]);
 
-  const fetchChartMarker = async () => {
+  const fetchChartMarker = useCallback(async () => {
     setMarkerLoading(true);
     try {
-     setMarkers(fakeMarkers);
+     setMarkers(fakeMarkers); // TBD
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
         position: "bottom-center",
@@ -205,12 +205,12 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       });
     }
     setMarkerLoading(false);
-  }
+  }, []);
 
-  const fetchMyFiles = async () => {
+  const fetchMyFiles = useCallback(async () => {
     setMyFilesLoading(true);
     try {
-      setMyFiles(fakeData);
+      setMyFiles(fakeData);  // TBD
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
         position: "bottom-center",
@@ -218,15 +218,23 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       });
     }
     setMyFilesLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
     if (address) {
-      fetchSumary();
       fetchMyFiles();
       fetchChartMarker();
+      fetchSummary();
     }
   }, [address]);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleUploadCascade = async (files: File[]) => {
     setUploading(true);
@@ -273,7 +281,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setFileSearch(keyword);
   }
 
-  const handleDonwloadFile = async (file: IMyFile) => {
+  const handleDownloadFile = async (file: IMyFile) => {
     setDownloading(true);
     try {
       if (lumeraSdk) {
@@ -343,81 +351,71 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setDownloading(false);
   }
 
-  const handleDonwloadAllFile = async () => {
+  const handleDownloadAllFile = async () => {
     setDownloading(true);
     try {
       if (lumeraSdk) {
         const files: FileToDownload[] = [];
         const zipFileName = 'downloaded_files.zip';
-
         const offlineSigner = await getOfflineSigner();
-
         const zip = new JSZip();
-        const downloadPromises: Promise<void>[] = [];
-
         for (const file of files) {
-          const downloadPromise = (async () => {
-            try {
-              const stream =  await lumeraSdk.downloadCascade({
-                lastActionId: file.lastActionId,
-              }, {
-                chainId: CHAIN_ID,
-                rpcUrl: RPC_ENDPOINT,
-                lcdUrl: REST_AI_URL,
-                snapiUrl: SNAPI_URL,
-                signer: offlineSigner,
-                address,
-                gasPrice: GAS_PRICE,
+          try {
+            const stream =  await lumeraSdk.downloadCascade({
+              lastActionId: file.lastActionId,
+            }, {
+              chainId: CHAIN_ID,
+              rpcUrl: RPC_ENDPOINT,
+              lcdUrl: REST_AI_URL,
+              snapiUrl: SNAPI_URL,
+              signer: offlineSigner,
+              address,
+              gasPrice: GAS_PRICE,
+            });
+
+            if (!stream) {
+              toast.error('Error when downloading the file. Please try again.', {
+                position: "bottom-center",
+                theme: "dark",
               });
-
-              if (!stream) {
-                toast.error('Error when downloading the file. Please try again.', {
-                  position: "bottom-center",
-                  theme: "dark",
-                });
-                return;
-              }
-              // Read the stream
-              const reader = stream.getReader();
-              const chunks: Uint8Array[] = [];
-
-              while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) break;
-                  chunks.push(value);
-              }
-
-              // Combine chunks
-              const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-              const downloadedBytes = new Uint8Array(totalLength);
-              let offset = 0;
-              for (const chunk of chunks) {
-                  downloadedBytes.set(chunk, offset);
-                  offset += chunk.length;
-              }
-
-              if (!downloadedBytes) {
-                toast.error('Error when downloading the file. Please try again.', {
-                  position: "bottom-center",
-                  theme: "dark",
-                });
-                return;
-              }
-
-              if (downloadedBytes) {
-                zip.file(file.name, downloadedBytes);
-              }
-            } catch (error) {
-              console.error(error);
+              return;
             }
-          })();
-          downloadPromises.push(downloadPromise);
+            // Read the stream
+            const reader = stream.getReader();
+            const chunks: Uint8Array[] = [];
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              chunks.push(value);
+            }
+
+            // Combine chunks
+            const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+            const downloadedBytes: Uint8Array<ArrayBuffer> = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const chunk of chunks) {
+              downloadedBytes.set(chunk, offset);
+              offset += chunk.length;
+            }
+
+            if (!downloadedBytes) {
+              toast.error('Error when downloading the file. Please try again.', {
+                position: "bottom-center",
+                theme: "dark",
+              });
+              return;
+            }
+
+            zip.file(file.name, downloadedBytes);
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Error when downloading the file. Please try again.', {
+              position: "bottom-center",
+              theme: "dark",
+            });
+          }
         }
-
-        await Promise.all(downloadPromises);
-
         const content = await zip.generateAsync({ type: 'blob' });
-
         const url = URL.createObjectURL(content);
         const a = document.createElement('a');
         a.href = url;
@@ -440,9 +438,9 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     isUploading,
     error,
     uploadResult,
-    isFetchSumaryLoading,
+    isFetchSummaryLoading,
     address,
-    sumary,
+    summary,
     fileCounts,
     fileTypeFilter,
     fileSearch,
@@ -452,8 +450,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     isDownloading,
     isMyFilesLoading,
     isMarkerLoading,
-    handleDonwloadAllFile,
-    handleDonwloadFile,
+    handleDownloadAllFile,
+    handleDownloadFile,
     handleSelectAll,
     handleSelectFile,
     handleFileSearchChange,
