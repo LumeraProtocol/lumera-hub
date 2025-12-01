@@ -248,7 +248,7 @@ export default function AllValidators({
                           <tr key={validator.operator_address} className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col md:table-row`}>
                             <td
                               onClick={() => handleValidatorClick(validator.operator_address)}
-                              className='cursor-pointer text-left md:text-right !pb-1'
+                              className='cursor-pointer text-left !pb-1'
                             >
                               <div className="md:hidden font-semibold text-gray-500 mr-2">Validator: </div>
                               <AppLink href={`/staking/${validator.operator_address}`} className="hover:text-lumera-teal">
