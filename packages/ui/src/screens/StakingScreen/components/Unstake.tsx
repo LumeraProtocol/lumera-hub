@@ -149,8 +149,8 @@ export default function Unstake({
     <div className='relative'>
       <Loading isLoading={unbonding.isLoading} />
       <div className="overflow-x-auto">
-        <div className="min-w-[950px] space-y-2">
-          <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-400 uppercase">
+        <div className="md:min-w-[950px] space-y-2">
+          <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-400 uppercase">
             <div className="col-span-2">
               <button
                 type="button"
@@ -213,29 +213,37 @@ export default function Unstake({
             const validator = allValidators.find(v => v.operator_address === delegation.validator_address);
 
             return (
-              <div key={`${delegation.type}-${delegation.delegator_address}-${delegation.validator_address}-${delegation.validator_src_address}-${delegation.validator_dst_address}`} className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg">
-                <div className="col-span-2 text-white hover:text-lumera-teal cursor-pointer">
+              <div
+                key={`${delegation.type}-${delegation.delegator_address}-${delegation.validator_address}-${delegation.validator_src_address}-${delegation.validator_dst_address}`}
+                className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg"
+              >
+                <div className="col-span-12 md:col-span-2 text-white hover:text-lumera-teal cursor-pointer">
+                  <div className="md:hidden text-gray-500 mr-2">Validator: </div>
                   <AppLink href={`/staking/${delegation.validator_address}`} className="text-lumera-teal hover:text-lumera-green">
                     {getValidatorName(delegation, validator)}
                   </AppLink>
                 </div>
-                <div className="col-span-2 text-right font-mono text-white">
+                <div className="col-span-12 md:col-span-2 md:text-right font-mono text-white">
+                  <div className="md:hidden text-gray-500 mr-2">Initial balance: </div>
                   {formatToken({
                     amount: delegation.entries[0].initial_balance,
                     denom: staking.params.bond_denom,
                   }, true, '0,0.[00]')}
                 </div>
-                <div className="col-span-2 text-right font-mono text-white">
+                <div className="col-span-12 md:col-span-2 md:text-right font-mono text-white">
+                  <div className="md:hidden text-gray-500 mr-2">Balance: </div>
                   {formatToken({
                     amount: delegation.entries[0].balance,
                     denom: staking.params.bond_denom,
                   }, true, '0,0.[00]')}
                 </div>
-                <div className="col-span-2 text-right font-mono text-white">
+                <div className="col-span-12 md:col-span-2 md:text-right font-mono text-white">
+                  <div className="md:hidden text-gray-500 mr-2">Action: </div>
                   {delegation.type === 'redelegations' ? 'Redelegate' : 'Unstaking'}
                 </div>
-                <div className="col-span-4 text-right font-mono text-gray-300">
-                  <CountDown targetDate={new Date(delegation.entries[0].completion_time)} className="whitespace-nowrap" />
+                <div className="col-span-12 md:col-span-4 md:text-right font-mono text-gray-300">
+                  <div className="md:hidden text-gray-500 mr-2">Completion Time: </div>
+                  <CountDown targetDate={new Date(delegation.entries[0].completion_time)} className="md:whitespace-nowrap" />
                 </div>
               </div>
             );
