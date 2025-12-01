@@ -186,7 +186,7 @@ export default function AllValidators({
                 </ul>
                 <div className='overflow-x-auto'>
                   <table className='w-full table mt-5'>
-                    <thead>
+                    <thead className='hidden md:table-header-group'>
                       <tr className='text-sm'>
                         <th align='left' className='text-lumera-label validator'>
                           <button
@@ -245,19 +245,21 @@ export default function AllValidators({
                         const uptime = getUptime(validator);
                         const uptimePercent = percent(uptime);
                         return (
-                          <tr key={validator.operator_address} className={`${index % 2 === 0 ? '!bg-gray-900' : ''}`}>
+                          <tr key={validator.operator_address} className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col md:table-row`}>
                             <td
                               onClick={() => handleValidatorClick(validator.operator_address)}
-                              className='cursor-pointer'
+                              className='cursor-pointer text-left md:text-right !pb-1'
                             >
+                              <div className="md:hidden font-semibold text-gray-500 mr-2">Validator: </div>
                               <AppLink href={`/staking/${validator.operator_address}`} className="hover:text-lumera-teal">
                                 {validator.description.moniker}
                               </AppLink>
                             </td>
                             <td
                               onClick={() => handleValidatorClick(validator.operator_address)}
-                              className='cursor-pointer text-right'
+                              className='cursor-pointer text-left md:text-right !py-1'
                             >
+                              <div className="md:hidden font-semibold text-gray-500 mr-2">Staked Amount: </div>
                               <span className='whitespace-nowrap'>
                                 {formatToken({
                                   amount: validator.tokens,
@@ -267,18 +269,21 @@ export default function AllValidators({
                             </td>
                             <td
                               onClick={() => handleValidatorClick(validator.operator_address)}
-                              className='cursor-pointer text-right'
+                              className='cursor-pointer text-left md:text-right !py-1'
                             >
+                              <div className="md:hidden font-semibold text-gray-500 mr-2">Commission: </div>
                               <Text>{formatCommissionRate(validator.commission?.commission_rates?.rate)}</Text>
                             </td>
                             <td
                               onClick={() => handleValidatorClick(validator.operator_address)}
-                              className='cursor-pointer text-right'
+                              className='cursor-pointertext-left md:text-right !py-1'
                             >
+                              <div className="md:hidden font-semibold text-gray-500 mr-2">Voting Power: </div>
                               <Text>{calculatePercent(validator.delegator_shares, totalPower)}</Text>
                             </td>
-                            <td>
-                              <div className='flex flex-col md:flex-row w-full md:justify-between items-start md:items-center gap-3 action-col pl-7'>
+                            <td className='!pt-1'>
+                              <div className="md:hidden font-semibold text-gray-500 mr-2">Uptime: </div>
+                              <div className='flex flex-col md:flex-row w-full md:justify-between items-start md:items-center gap-3 action-col md:pl-7'>
                                 <div className='flex items-center gap-3 cursor-pointer' onClick={() => handleValidatorClick(validator.operator_address)}>
                                   <div className='custom-progress'>
                                     <Progress size="$4" value={Number(uptimePercent.replace('%', ''))}>

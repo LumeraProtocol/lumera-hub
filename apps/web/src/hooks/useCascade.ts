@@ -281,11 +281,46 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setFileSearch(keyword);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getDownloadedBytes = async (stream: any) => {
+    // Read the stream
+    const reader = stream.getReader();
+    const chunks: Uint8Array[] = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+
+    // Combine chunks
+    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+    const downloadedBytes = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      downloadedBytes.set(chunk, offset);
+      offset += chunk.length;
+    }
+
+    return downloadedBytes;
+  }
+
+  const downloadFilee = (content: Blob, fileName: string) => {
+    const url = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   const handleDownloadFile = async (file: IMyFile) => {
     setDownloading(true);
     try {
       if (lumeraSdk) {
-        const lastActionId = '';
+        const lastActionId = ''; // TBD
         const offlineSigner = await getOfflineSigner();
         const stream =  await lumeraSdk.downloadCascade({
           lastActionId,
@@ -305,42 +340,10 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           });
           return;
         }
-        // Read the stream
-        const reader = stream.getReader();
-        const chunks: Uint8Array[] = [];
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            chunks.push(value);
-        }
-
-        // Combine chunks
-        const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-        const downloadedBytes = new Uint8Array(totalLength);
-        let offset = 0;
-        for (const chunk of chunks) {
-            downloadedBytes.set(chunk, offset);
-            offset += chunk.length;
-        }
-
-        if (!downloadedBytes) {
-          toast.error('Error when downloading the file. Please try again.', {
-            position: "bottom-center",
-            theme: "dark",
-          });
-          return;
-        }
+        const downloadedBytes = await getDownloadedBytes(stream);
         // Create a blob and download it
         const blob = new Blob([downloadedBytes]);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = file.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        downloadFilee(blob, file.name);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
@@ -355,75 +358,35 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setDownloading(true);
     try {
       if (lumeraSdk) {
-        const files: FileToDownload[] = [];
+        const files: FileToDownload[] = []; // TBD
         const zipFileName = 'downloaded_files.zip';
         const offlineSigner = await getOfflineSigner();
         const zip = new JSZip();
         for (const file of files) {
-          try {
-            const stream =  await lumeraSdk.downloadCascade({
-              lastActionId: file.lastActionId,
-            }, {
-              chainId: CHAIN_ID,
-              rpcUrl: RPC_ENDPOINT,
-              lcdUrl: REST_AI_URL,
-              snapiUrl: SNAPI_URL,
-              signer: offlineSigner,
-              address,
-              gasPrice: GAS_PRICE,
-            });
+          const stream =  await lumeraSdk.downloadCascade({
+            lastActionId: file.lastActionId,
+          }, {
+            chainId: CHAIN_ID,
+            rpcUrl: RPC_ENDPOINT,
+            lcdUrl: REST_AI_URL,
+            snapiUrl: SNAPI_URL,
+            signer: offlineSigner,
+            address,
+            gasPrice: GAS_PRICE,
+          });
 
-            if (!stream) {
-              toast.error('Error when downloading the file. Please try again.', {
-                position: "bottom-center",
-                theme: "dark",
-              });
-              return;
-            }
-            // Read the stream
-            const reader = stream.getReader();
-            const chunks: Uint8Array[] = [];
-
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              chunks.push(value);
-            }
-
-            // Combine chunks
-            const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-            const downloadedBytes: Uint8Array<ArrayBuffer> = new Uint8Array(totalLength);
-            let offset = 0;
-            for (const chunk of chunks) {
-              downloadedBytes.set(chunk, offset);
-              offset += chunk.length;
-            }
-
-            if (!downloadedBytes) {
-              toast.error('Error when downloading the file. Please try again.', {
-                position: "bottom-center",
-                theme: "dark",
-              });
-              return;
-            }
-
-            zip.file(file.name, downloadedBytes);
-          } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Error when downloading the file. Please try again.', {
+          if (!stream) {
+            toast.error('Error when downloading the file. Please try again.', {
               position: "bottom-center",
               theme: "dark",
             });
+            return;
           }
+          const downloadedBytes = await getDownloadedBytes(stream);
+          zip.file(file.name, downloadedBytes);
         }
         const content = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(content);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = zipFileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        downloadFilee(content, zipFileName);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {

@@ -195,8 +195,8 @@ export default function Staking({
     <div className='relative'>
       <Loading isLoading={isAccountInfoLoading} />
       <div className="overflow-x-auto">
-        <div className="min-w-[950px] space-y-2">
-          <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-400 uppercase">
+        <div className="md:min-w-[950px] space-y-2">
+          <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-400 uppercase">
             <div className="col-span-2">
               <button
                 type="button"
@@ -253,11 +253,12 @@ export default function Staking({
             return (
               <div
                 key={delegation.delegation.validator_address}
-                className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg"
+                className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg"
               >
                 <div
-                  className="col-span-2"
+                  className="col-span-12 md:col-span-2"
                 >
+                  <div className="md:hidden font-semibold text-gray-500 mr-2">Delegations: </div>
                   <AppLink
                     href={`/staking/${delegation.delegation.validator_address}`}
                     className="font-semibold text-white hover:text-lumera-teal cursor-pointer"
@@ -265,63 +266,66 @@ export default function Staking({
                     {validator?.description?.moniker || formatAddress(delegation.delegation.validator_address, 10, -5)}
                   </AppLink>
                 </div>
-                <div className="col-span-2 text-right font-mono text-white">
+                <div className="col-span-12 md:col-span-2 md:text-right font-mono text-white">
+                  <div className="md:hidden font-semibold text-gray-500 mr-2">Staked: </div>
                   {formatToken({
                     amount: delegation.balance.amount,
                     denom: delegation.balance.denom,
                   }, true, '0,0.[000000]')}
                 </div>
-                <div className='col-span-1 text-right'>
+                <div className='col-span-12 md:col-span-1 md:text-right'>
+                  <div className="md:hidden font-semibold text-gray-500 mr-2">Commission: </div>
                   {formatCommissionRate(validator?.commission?.commission_rates?.rate)}
                 </div>
-                <div className="col-span-2 text-right font-mono text-teal-400">
+                <div className="col-span-12 md:col-span-2 md:text-right font-mono text-teal-400">
+                  <div className="md:hidden font-semibold text-gray-500 mr-2">Claimable: </div>
                   {validator?.jailed ?
                     <span className='text-red-600'>Jailed</span> : <>
                       {formatTokens(reward?.reward)}
                     </>
                   }
                 </div>
-                <div className="col-span-5 flex justify-end gap-1">
-                    <AppButton
-                      className="!py-1.5 !px-4 !text-sm"
-                      onClick={() => delegateOptions.onSelectValidator(delegation.delegation.validator_address)}
-                    >
-                      Stake
-                    </AppButton>
-                    <AppButton
-                      className={`!py-1.5 !px-4 !text-sm ${validator?.jailed || !reward || getReward(reward) <= 0 ? 'opacity-50 !cursor-not-allowed' : ''}`}
-                      variant='secondary'
-                      onClick={() => claim.handleToggleClaimItemModal(true, delegation)}
-                      disabled={validator?.jailed || !reward || getReward(reward) <= 0}
-                    >
-                      Claim
-                    </AppButton>
-                    <AppButton
-                      className="!py-1.5 !px-4 !text-sm"
-                      onClick={() => redelegateOptions.onOpenModal(
-                        delegation.delegation.validator_address,
-                        formatToken({
-                          amount: delegation.balance.amount,
-                          denom: delegation.balance.denom,
-                        }, false, '0,0.[000000]'),
-                        validator?.description?.moniker ? `${validator?.description?.moniker}` : '',
-                      )}
-                    >
-                      Restake
-                    </AppButton>
-                    <AppButton
-                      className="!py-1.5 !px-4 !text-sm"
-                      onClick={() => unbondOptions.onOpenModal(
-                        delegation.delegation.validator_address,
-                        formatToken({
-                          amount: delegation.balance.amount,
-                          denom: delegation.balance.denom,
-                        }, false, '0,0.[000000]'),
-                        validator?.description?.moniker ? `${validator?.description?.moniker}` : '',
-                      )}
-                    >
-                      Unbond
-                    </AppButton>
+                <div className="col-span-12 md:col-span-5 flex justify-start md:justify-end gap-1 mt-2 md:mt-0">
+                  <AppButton
+                    className="!py-1.5 !px-4 !text-sm"
+                    onClick={() => delegateOptions.onSelectValidator(delegation.delegation.validator_address)}
+                  >
+                    Stake
+                  </AppButton>
+                  <AppButton
+                    className={`!py-1.5 !px-4 !text-sm ${validator?.jailed || !reward || getReward(reward) <= 0 ? 'opacity-50 !cursor-not-allowed' : ''}`}
+                    variant='secondary'
+                    onClick={() => claim.handleToggleClaimItemModal(true, delegation)}
+                    disabled={validator?.jailed || !reward || getReward(reward) <= 0}
+                  >
+                    Claim
+                  </AppButton>
+                  <AppButton
+                    className="!py-1.5 !px-4 !text-sm"
+                    onClick={() => redelegateOptions.onOpenModal(
+                      delegation.delegation.validator_address,
+                      formatToken({
+                        amount: delegation.balance.amount,
+                        denom: delegation.balance.denom,
+                      }, false, '0,0.[000000]'),
+                      validator?.description?.moniker ? `${validator?.description?.moniker}` : '',
+                    )}
+                  >
+                    Restake
+                  </AppButton>
+                  <AppButton
+                    className="!py-1.5 !px-4 !text-sm"
+                    onClick={() => unbondOptions.onOpenModal(
+                      delegation.delegation.validator_address,
+                      formatToken({
+                        amount: delegation.balance.amount,
+                        denom: delegation.balance.denom,
+                      }, false, '0,0.[000000]'),
+                      validator?.description?.moniker ? `${validator?.description?.moniker}` : '',
+                    )}
+                  >
+                    Unbond
+                  </AppButton>
                 </div>
               </div>
             )
