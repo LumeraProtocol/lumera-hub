@@ -147,6 +147,9 @@ const SuperNodeMap = ({ JVectorMapWithNoSSR, markers }: ISuperNodeMap) => {
           ],
         }}
         markers={markers}
+        onMarkerClick={(event: Event, code: string) => {
+          // TODO: Implement marker click handler
+        }}
       />
     </div>
   );

@@ -164,7 +164,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     }
   };
 
-  const fetchSummary = useCallback(async (counter = 1) => {
+  const fetchSummary = useCallback(async () => {
     setFetchSummaryLoading(true);
     try {
       if (lumeraSdk) {
@@ -186,10 +186,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         });
       }
     } catch {
-      if (counter <= 2) {
-       timeoutRef.current = setTimeout(() => fetchSummary(counter + 1), 30000)
-        return;
-      }
+      // noop
     }
     setFetchSummaryLoading(false);
   }, [lumeraSdk, address]);
@@ -383,7 +380,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
             return;
           }
           const downloadedBytes = await getDownloadedBytes(stream);
-          zip.file(file.name, downloadedBytes);
+          const blob = new Blob([downloadedBytes]);
+          zip.file(file.name, blob);
         }
         const content = await zip.generateAsync({ type: 'blob' });
         downloadFilee(content, zipFileName);
