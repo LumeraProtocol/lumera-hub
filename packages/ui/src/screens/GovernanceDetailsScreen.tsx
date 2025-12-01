@@ -621,7 +621,7 @@ export const GovernanceDetailsScreen = ({
 
               <div className='w-full relative'>
                 <Loading isLoading={isVoteLoading} />
-                <div className="space-y-2 h-96 overflow-y-auto pr-2">
+                <div className="space-y-2 lg:h-96 overflow-y-auto pr-2">
                   {votes.map((voter, index) => (
                     <div key={`${index}-${voter.proposal_id}-${voter.voter}`} className="flex justify-between items-center p-3 bg-gray-900/50 rounded-md">
                       <span className="font-mono text-sm text-gray-300 truncate">{formatAddress(voter.voter, 10, -10)}</span>
