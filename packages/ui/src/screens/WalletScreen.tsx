@@ -458,8 +458,8 @@ export const WalletScreen = ({
                     </div>
                   </div>
                 ))}
-                {!transactions?.length ?
-                  <div className="grid grid-cols-12 gap-4 items-center">
+                {!transactions?.length && !isLoading ?
+                  <div className="block items-center">
                     <H3>No Transactions</H3>
                   </div> : null
                 }

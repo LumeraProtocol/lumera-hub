@@ -32,8 +32,16 @@ export interface IMyFile {
 export interface IMarker {
   latLng: [number, number];
   name: string;
-  value?: number;
-  style?: { fill: string };
+  supernodeAccount: string;
+  validatorAddress: string;
+  address: string;
+  height: string;
+  p2pPort: string;
+  continent:string;
+  country: string;
+  country_code: string;
+  subdivision: string;
+  city: string;
 }
 
 export type TFileTypeKey = 'all' | 'image' | 'pdf' | 'video' | 'archive' | 'other';
@@ -170,6 +178,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         subdivision: result?.subdivision || null,
         city: result?.city || null,
         country: result?.country || null,
+        continent: result?.continent || null,
+        country_code: result?.country_code || null,
       };
     } catch (error) {
       throw new Error(error instanceof Error ? error?.message : 'An unknown error occurred.')
@@ -185,6 +195,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         subdivision: data?.capital || null,
         city: data?.city || null,
         country: data?.country || null,
+        continent: data?.continent || null,
+        country_code: data?.country_code || null,
       };
     } catch (error) {
       throw new Error(error instanceof Error ? error?.message : 'An unknown error occurred.')
@@ -200,6 +212,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         subdivision: data?.location?.region || null,
         city: data?.location?.city || null,
         country: data?.location?.country || null,
+        continent: data?.location?.continent || null,
+        country_code: data?.location?.country_code || null,
       };
     } catch (error) {
       throw new Error(error instanceof Error ? error?.message : 'An unknown error occurred.')
@@ -209,7 +223,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const fetchLocationForIP = async (ip: string) => {
     let data = null;
     try {
-      const result = await fetchLocationFromIpLocate(ip);
+      const result = await fetchLocationFromIpWho(ip);
       if (result) {
         data = result;
       }
@@ -218,7 +232,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     }
     if (!data) {
       try {
-        const result = await fetchLocationFromIpWho(ip);
+        const result = await fetchLocationFromIpLocate(ip);
         if (result) {
           data = result;
         }
@@ -243,7 +257,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     if (markers?.length || items?.length === markers.length) {
       return;
     }
-    setMarkerLoading(true);
     try {
       const results:IMarker[] = [];
       for (const item of items) {
@@ -252,7 +265,17 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         if (data?.latitude && data?.longitude) {
           results.push({
             latLng: [data.latitude, data.longitude],
-            name: data?.city || data?.subdivision || '',
+            name: data?.city || '',
+            continent: data?.continent || '',
+            country: data?.country || '',
+            country_code: data?.country_code || '',
+            subdivision: data?.subdivision || '',
+            city: data?.city || '',
+            supernodeAccount: item.supernodeAccount,
+            validatorAddress: item.validatorAddress,
+            address: item.prevIpAddresses[0].address,
+            height: item.prevIpAddresses[0].height,
+            p2pPort: item.p2pPort,
           })
         }
       }
@@ -268,6 +291,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
 
   const fetchSummary = useCallback(async () => {
     setFetchSummaryLoading(true);
+    setMarkerLoading(true);
     try {
       if (lumeraSdk) {
         const offlineSigner = await getOfflineSigner();
@@ -290,7 +314,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         fetchChartMarker(items);
       }
     } catch {
-      // noop
+      setMarkerLoading(false);
     }
     setFetchSummaryLoading(false);
   }, [lumeraSdk, address]);

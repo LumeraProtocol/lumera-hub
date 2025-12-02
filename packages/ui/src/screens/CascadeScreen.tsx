@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   YStack,
   Card,
@@ -21,7 +21,8 @@ import {
   FileText,
   FileArchive,
   FileIcon,
-  Check as CheckIcon
+  Check as CheckIcon,
+  CircleX,
 } from 'lucide-react';
 
 import Loading from '@/components/Loading';
@@ -29,7 +30,7 @@ import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
-import useCascade, { ITask, FILES_TYPE, IMyFile, TFileTypeKey, IMarker } from '@/hooks/useCascade';
+import useCascade, { FILES_TYPE, TFileTypeKey, IMarker } from '@/hooks/useCascade';
 import { formatAddress } from '@/utils/format';
 import { getSimplifiedType, formatBytes } from '@/utils/helpers';
 import { useLumeraClientWrapper } from '@/hooks/useLumeraClientWrapper';
@@ -89,6 +90,8 @@ const countryNames: { [key: string]: string } = {
 };
 
 const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap) => {
+  const [selectedMarker, seSelectedMarker] = useState<IMarker | null>(null);
+
   if (!JVectorMapWithNoSSR || !markers?.length) {
     return (
       <div className='min-h-80'></div>
@@ -132,7 +135,7 @@ const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap
         markerStyle={{
           initial: {
             r: 5,
-            fill: "#394150",
+            fill: "#078A8A",
             stroke: "#2a323f",
             "stroke-width": 1,
           },
@@ -143,9 +146,82 @@ const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap
         }}
         markers={markers}
         onMarkerClick={(event: Event, code: string) => {
-          // TODO: Implement marker click handler
+          const index = parseInt(code);
+          const selectedMarker = markers[index];
+          seSelectedMarker(selectedMarker);
         }}
       />
+      {selectedMarker ? (
+        <>
+          <div className='fixed top-0 right-0 z-[100] bottom-0 transform-3d transition-all duration-300'>
+            <Card elevate size="$4" bordered className='!h-full'>
+              <div className='relative'>
+                <div className='text-right my-2 pr-5'>
+                  <button className='cursor-pointer' onClick={() => seSelectedMarker(null)}>
+                    <CircleX />
+                  </button>
+                </div>
+                <div className='h-full p-5 overflow-y-auto max-h-[90vh]'>
+                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+                    <div className='w-full md:w-60 text-gray-500 whitespace-nowrap'>Supernode Account:</div>
+                    <div className="w-full truncate">
+                      {formatAddress(selectedMarker.supernodeAccount, 15, -6)}
+                    </div>
+                  </div>
+                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+                    <div className='w-full md:w-60 text-gray-500'>Validator Address:</div>
+                    <div className="w-full truncate">
+                      <AppLink href={`/staking/${selectedMarker.validatorAddress}`}>
+                        {formatAddress(selectedMarker.validatorAddress, 15, -6)}
+                      </AppLink>
+                    </div>
+                  </div>
+                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+                    <div className='w-full md:w-60 text-gray-500'>IP:</div>
+                    <div className="w-full truncate">
+                      {selectedMarker.address}
+                    </div>
+                  </div>
+                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+                    <div className='w-full md:w-60 text-gray-500'>P2pPort:</div>
+                    <div className="w-full truncate">
+                      {selectedMarker.p2pPort}
+                    </div>
+                  </div>
+                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+                    <div className='w-full md:w-60 text-gray-500'>Height:</div>
+                    <div className="w-full truncate">
+                      <AppLink href={`/block/${selectedMarker.height}`}>
+                        {selectedMarker.height}
+                      </AppLink>
+                    </div>
+                  </div>
+                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+                    <div className='w-full md:w-60 text-gray-500'>City:</div>
+                    <div className="w-full truncate">
+                      {selectedMarker.city}
+                    </div>
+                  </div>
+                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+                    <div className='w-full md:w-60 text-gray-500'>Country:</div>
+                    <div className="w-full truncate">
+                      {selectedMarker.country}
+                    </div>
+                  </div>
+                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+                    <div className='w-full md:w-60 text-gray-500'>Continent:</div>
+                    <div className="w-full truncate">
+                      {selectedMarker.continent}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+          <div className='fixed inset-0 z-50 bg-black/10' onClick={() => seSelectedMarker(null)}></div>
+        </>
+      ): null
+      }
     </div>
   );
 });
