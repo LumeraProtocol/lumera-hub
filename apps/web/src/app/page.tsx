@@ -14,7 +14,7 @@ export default function Page() {
   const [selectedItem, setSelectedItem] = useState<IProposal | null>(null);
 
   useEffect(() => {
-    document.title = 'Lumera';
+    document.title = 'Dashboard - Lumera Hub';
   }, []);
 
   const { address } = useWalletConnect();

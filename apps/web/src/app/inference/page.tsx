@@ -7,7 +7,7 @@ import { InferenceScreen } from '@lumera-hub/ui/src/screens/InferenceScreen';
 
 export default function Page() {
   useEffect(() => {
-    document.title = 'Inference';
+    document.title = 'Inference - Lumera Hub';
   }, []);
 
   return (

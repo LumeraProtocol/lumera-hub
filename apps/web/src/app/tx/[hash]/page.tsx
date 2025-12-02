@@ -13,7 +13,7 @@ export default function Page() {
   const { isLoading, transaction } = useTransactionDetails();
 
   useEffect(() => {
-    document.title = 'Transaction';
+    document.title = 'Transaction - Lumera Hub';
     dispatch(setCurrentPath({
       currentPath: '/tx',
     }));

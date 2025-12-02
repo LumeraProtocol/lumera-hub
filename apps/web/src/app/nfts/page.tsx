@@ -7,9 +7,9 @@ import { NFTsScreen } from '@lumera-hub/ui/src/screens/NFTsScreen';
 
 export default function Page() {
   useEffect(() => {
-    document.title = 'NFTs';
+    document.title = 'NFTs - Lumera Hub';
   }, []);
-  
+
   return (
     <>
       <Helmet>

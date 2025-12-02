@@ -437,13 +437,16 @@
 .current-staking-apr {
   width: calc(33.3% - 24px);
 }
-.btn-jailed {
-  padding: 2px 14px;
-  border-color: transparent;
+.btn-jailed .is_Button {
+  min-width: 52px !important;
+  background-color: #f87272 !important;
+  color: #fff;
+  cursor: default !important;
+  border: 0 !important;
+}
+.btn-jailed .is_Button:hover {
   background-color: #f87272;
   color: #fff;
-  border-radius: 9px;
-  font-size: 16px;
 }
 .inactive {
   cursor: default;

@@ -31,7 +31,7 @@ export default function Page() {
   });
   const delegate = useDelegate();
   useEffect(() => {
-    document.title = 'Wallet';
+    document.title = 'Wallet - Lumera Hub';
   }, []);
 
   return (

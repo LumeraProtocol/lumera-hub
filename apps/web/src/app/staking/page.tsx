@@ -48,7 +48,7 @@ export default function Page() {
   });
 
   useEffect(() => {
-    document.title = 'Staking';
+    document.title = 'Staking - Lumera Hub';
   }, []);
 
   return (

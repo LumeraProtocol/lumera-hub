@@ -21,7 +21,7 @@ const CascadeScreen = dynamic(
 
 export default function Page() {
   useEffect(() => {
-    document.title = 'Cascade';
+    document.title = 'Cascade - Lumera Hub';
   }, []);
 
   return (

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Landmark,
   XCircle,
   ArrowUpRight,
   Copy,
@@ -10,6 +9,10 @@ import {
   ArrowLeftRight,
   ArrowDownLeft,
   Check,
+  Layers,
+  ClockPlus,
+  Unlink,
+  Star,
 } from 'lucide-react';
 import { YStack, H2, Paragraph, Card as TamaguiCard, H3 } from 'tamagui';
 import ReactPaginate from 'react-paginate';
@@ -104,41 +107,47 @@ export const WalletScreen = ({
     onOpenModal,
     onCloseModal,
 }: IWalletScreen) => {
-    const [isCopied, setCopied] = useState(false);
+  const [isCopied, setCopied] = useState(false);
 
-    const getTxIcon = (type: string) => {
-      switch(type) {
-        case 'Send':
-          return <ArrowUpRight className="w-5 h-5 text-red-400" />;
-        case 'Received':
-          return <ArrowDownLeft className="w-5 h-5 text-green-400" />;
-        case 'BeginRedelegate':
-        case 'Delegate':
-          return <Landmark className="w-5 h-5 text-indigo-400" />;
-        case 'WithdrawDelegatorReward×2':
-          return <Coins className="w-5 h-5 text-amber-400" />;
-        case 'Failed':
-          return <XCircle className="w-5 h-5 text-gray-500" />;
-        default:
-          return <ArrowLeftRight className="w-5 h-5 text-gray-400" />;
-      }
-    };
-
-    const getColor = (type: string) => {
-        switch(type) {
-            case 'Send':
-            case 'Failed':
-                return 'bg-red-500/20';
-            case 'Delegate':
-            case 'BeginRedelegate':
-                return 'bg-green-400/20';
-            case 'WithdrawDelegatorReward×2':
-            case 'Received':
-                return 'bg-green-500/20';
-            default:
-                return 'bg-red-500/20';
+  const getTxIcon = (type: string) => {
+    switch(type) {
+      case 'Send':
+        return <ArrowUpRight className="w-5 h-5 text-red-400" />;
+      case 'Received':
+        return <ArrowDownLeft className="w-5 h-5 text-green-400" />;
+      case 'BeginRedelegate':
+        return <ClockPlus className="w-5 h-5 text-indigo-400" />;
+      case 'Delegate':
+        return <Layers className="w-5 h-5 text-indigo-400" />;
+      case 'Failed':
+        return <XCircle className="w-5 h-5 text-gray-500" />;
+      case 'Undelegate':
+        return <Unlink className='w-5 h-5 text-red-600' />;
+      default:
+        if (type.indexOf('WithdrawDelegatorReward') !== -1) {
+          return <Star className='w-5 h-5 text-amber-400' />;
         }
+        return <ArrowLeftRight className="w-5 h-5 text-gray-400" />;
     }
+  };
+
+  const getColor = (type: string) => {
+    switch(type) {
+      case 'Send':
+      case 'Failed':
+        return 'bg-red-500/20';
+      case 'Delegate':
+      case 'BeginRedelegate':
+        return 'bg-green-400/20';
+      case 'Received':
+        return 'bg-green-500/20';
+      default:
+         if (type.indexOf('WithdrawDelegatorReward') !== -1) {
+          return 'recent-activity-icon';
+        }
+        return 'bg-red-500/20';
+    }
+  }
 
     const getTotalBalances = () => {
       let total = 0;
@@ -373,7 +382,7 @@ export const WalletScreen = ({
                   onClick={() => onOpenModal('stake')}
                   disabled={isLoading}
                 >
-                  <Landmark className="w-5 h-5"/> Stake
+                  <Layers className="w-5 h-5"/> Stake
                 </AppButton>
             </div>
           </Card>

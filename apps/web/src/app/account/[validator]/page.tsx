@@ -7,7 +7,7 @@ import { AccountScreen } from '@lumera-hub/ui/src/screens/AccountScreen';
 
 export default function Page() {
   useEffect(() => {
-    document.title = 'Account';
+    document.title = 'Account - Lumera Hub';
   }, []);
 
   return (

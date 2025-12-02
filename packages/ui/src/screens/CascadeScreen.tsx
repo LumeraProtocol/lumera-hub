@@ -88,15 +88,11 @@ const countryNames: { [key: string]: string } = {
   VN: "Vietnam",
 };
 
-const SuperNodeMap = ({ JVectorMapWithNoSSR, markers }: ISuperNodeMap) => {
-  const [isClient, setIsClient] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
-    return null;
+const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap) => {
+  if (!JVectorMapWithNoSSR || !markers?.length) {
+    return (
+      <div className='min-h-80'></div>
+    );
   }
 
   return (
@@ -128,23 +124,22 @@ const SuperNodeMap = ({ JVectorMapWithNoSSR, markers }: ISuperNodeMap) => {
         labels={{
           regions: {
             render: (code: string) => countryNames[code] || '',
-            // @ts-ignore
             offsets: (code: string) => {
               return [0, 0];
             },
           },
         }}
-        series={{
-          markers: [
-            {
-              attribute: "r",
-              scale: [5, 20],
-              values: markers.reduce((acc, marker) => {
-                acc[marker.name] = marker.value;
-                return acc;
-              }, {} as { [key: string]: number }),
-            },
-          ],
+        markerStyle={{
+          initial: {
+            r: 5,
+            fill: "#394150",
+            stroke: "#2a323f",
+            "stroke-width": 1,
+          },
+          hover: {
+            r: 6,
+            stroke: "#2a323f",
+          },
         }}
         markers={markers}
         onMarkerClick={(event: Event, code: string) => {
@@ -153,7 +148,7 @@ const SuperNodeMap = ({ JVectorMapWithNoSSR, markers }: ISuperNodeMap) => {
       />
     </div>
   );
-};
+});
 
 const getFileIcon = (type: string) => {
   const simpleType = getSimplifiedType(type);
@@ -260,7 +255,7 @@ export const CascadeContent = React.memo(({
         </Card>
       </div>
       <div className='mt-6 w-full'>
-        <Card elevate size="$4" bordered className='w-full relative'>
+        <Card elevate size="$4" bordered className='w-full relative overflow-hidden'>
           <Loading isLoading={isMarkerLoading} />
           <SuperNodeMap JVectorMapWithNoSSR={JVectorMapWithNoSSR} markers={markers} />
         </Card>

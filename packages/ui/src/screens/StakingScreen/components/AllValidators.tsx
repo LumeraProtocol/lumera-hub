@@ -290,10 +290,14 @@ export default function AllValidators({
                                       <Progress.Indicator animation="bouncy" />
                                     </Progress>
                                   </div>
-                                  <Text className={uptime && uptime > 0.95 ? 'text-green-500' : 'text-red-500'}>{uptimePercent}</Text>
+                                  <Text className={uptime && uptime > 0.95 ? 'text-green-500' : 'text-red-500'}>
+                                    {uptimePercent}
+                                  </Text>
                                 </div>
                                 {validator.jailed ?
-                                  <div className='btn-jailed'>Jailed</div> :
+                                  <div className='btn-jailed'>
+                                    <Button>Jailed</Button>
+                                  </div> :
                                   <div className='btn-primary'>
                                     <Button
                                       onPress={() => delegateOptions.onSelectValidator(validator.operator_address)}
