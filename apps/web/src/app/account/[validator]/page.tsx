@@ -13,7 +13,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title>Account</title>
+        <title>Account - Lumera Hub</title>
       </Helmet>
       <div className="account-content">
         <AccountScreen />

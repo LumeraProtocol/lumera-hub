@@ -26,7 +26,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title>Block</title>
+        <title>Block - Lumera Hub</title>
       </Helmet>
       <div className="sense-content">
         <BlockDetailsScreen

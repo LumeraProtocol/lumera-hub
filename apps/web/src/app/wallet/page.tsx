@@ -37,7 +37,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title>Wallet</title>
+        <title>Wallet - Lumera Hub</title>
       </Helmet>
       <div className="governance-content">
         <WalletScreen

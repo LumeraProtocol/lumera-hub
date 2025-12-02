@@ -64,7 +64,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title>Governance</title>
+        <title>Governance - Lumera Hub</title>
       </Helmet>
       <div className="governance-content">
         <GovernanceScreen

@@ -43,7 +43,7 @@ export default function Page({ params }: Props) {
   return (
     <>
       <Helmet>
-        <title>{governance?.title || 'Governance Detail'}</title>
+        <title>{`${governance?.title || 'Governance Detail'} - Lumera Hub`}</title>
       </Helmet>
       <div className="governance-content-details">
         <GovernanceDetailsScreen

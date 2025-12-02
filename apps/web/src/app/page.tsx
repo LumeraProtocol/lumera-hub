@@ -37,7 +37,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-          <title>Lumera</title>
+          <title>Dashboard - Lumera Hub</title>
       </Helmet>
       <div className="home-content">
         <HomeScreen

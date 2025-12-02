@@ -13,7 +13,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title>Sense</title>
+        <title>Sense - Lumera Hub</title>
       </Helmet>
       <div className="sense-content">
         <SenseScreen />
