@@ -19,7 +19,7 @@ import {
   formatAddress,
   formatTokens,
 } from '@/utils/format';
-import { DelegationResponse, Coin } from '@/hooks/useAccountInfo';
+import { DelegationResponse } from '@/hooks/useAccountInfo';
 
 interface IStaking {
   isAccountInfoLoading: boolean;
