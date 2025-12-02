@@ -54,7 +54,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title>Staking</title>
+        <title>Staking - Lumera Hub</title>
       </Helmet>
       <div className="staking-content">
         <StakingScreen

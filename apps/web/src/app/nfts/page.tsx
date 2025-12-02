@@ -13,7 +13,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title>NFTs</title>
+        <title>NFTs - Lumera Hub</title>
       </Helmet>
       <div className="nfts-content">
         <NFTsScreen />

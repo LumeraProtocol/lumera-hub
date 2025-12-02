@@ -13,7 +13,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title>Inference</title>
+        <title>Inference - Lumera Hub</title>
       </Helmet>
       <div className="inference-content">
         <InferenceScreen />

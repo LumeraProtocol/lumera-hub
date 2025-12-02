@@ -35,7 +35,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title>Staking Details</title>
+        <title>{validator?.description?.moniker || 'Staking Details'} - Lumera Hub</title>
       </Helmet>
       <div className="staking-details-content">
         <StakingDetailsScreen

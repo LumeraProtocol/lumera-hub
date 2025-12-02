@@ -27,7 +27,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title>Cascade</title>
+        <title>Cascade - Lumera Hub</title>
       </Helmet>
       <div className="cascade-content">
         <CascadeScreen
