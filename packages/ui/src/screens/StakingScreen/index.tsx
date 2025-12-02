@@ -299,24 +299,6 @@ export const StakingScreen = ({
      return `Congratulations! Rewards have been claimed from ${validator.description.moniker || formatAddress(validator?.operator_address || '', 10, -5)} successfully.`
   }
 
-  const getValidatorName = (delegation: TUnbondingDelegation, validator: IValidator | undefined) => {
-    if (delegation.type !== 'redelegations') {
-      return validator?.description?.moniker || formatAddress(delegation.validator_address, 12, -6)
-    }
-    const sourceValidator = getAllValidators().find(v => v.operator_address === delegation.validator_src_address);
-    const destinationValidator = getAllValidators().find(v => v.operator_address === delegation.validator_dst_address);
-
-    if (!sourceValidator || !destinationValidator) {
-      return '--'
-    }
-
-    return (
-      <span className='flex flex-wrap items-center gap-1'>
-        <span>{sourceValidator?.description?.moniker?.slice(0, 5)}...</span> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right-icon lucide-arrow-right w-5 h-5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> <span>{destinationValidator?.description?.moniker}</span>
-      </span>
-    )
-  }
-
   const getValidatorInfo = () => {
     let amount = formatToken({
       amount: `${getTotalRewards()}`,

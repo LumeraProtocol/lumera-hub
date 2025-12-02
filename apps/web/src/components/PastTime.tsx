@@ -34,7 +34,7 @@ const PastTime: React.FC<PastTimeProps> = ({ pastDate, className = '' }) => {
             if (minutes > 0) {
               result = `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
             } else {
-              result = 'less than a minute ago';
+              result = 'a few seconds ago';
             }
           }
         }

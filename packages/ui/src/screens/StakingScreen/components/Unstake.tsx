@@ -1,4 +1,4 @@
-import { useState, ReactNode } from 'react';
+import { useState, memo } from 'react';
 import dayjs from 'dayjs';
 import { H3 } from 'tamagui';
 import {
@@ -73,7 +73,7 @@ interface IUnstake {
   allValidators: IValidator[];
 }
 
-export default function Unstake({
+export default memo(function Unstake({
   unbonding,
   staking,
   allValidators,
@@ -81,7 +81,7 @@ export default function Unstake({
   const [sortBy, setSortBy] = useState('time');
   const [sort, setSort] = useState('ASC');
 
-  const getValidatorName = (delegation: TUnbondingDelegation, validator: IValidator | undefined) => {
+  const getValidatorNameSort = (delegation: TUnbondingDelegation, validator: IValidator | undefined) => {
       if (delegation.type !== 'redelegations') {
         return validator?.description?.moniker || formatAddress(delegation.validator_address, 12, -6)
       }
@@ -101,9 +101,9 @@ export default function Unstake({
         const aValidator = allValidators.find(v => v.operator_address === a.validator_address);
         const bValidator = allValidators.find(v => v.operator_address === b.validator_address);
         if (sort === 'DESC') {
-          return getValidatorName(b, bValidator).toLowerCase().localeCompare(getValidatorName(a, aValidator).toLowerCase()) || 0;
+          return getValidatorNameSort(b, bValidator).toLowerCase().localeCompare(getValidatorNameSort(a, aValidator).toLowerCase()) || 0;
         }
-        return getValidatorName(a, aValidator).toLowerCase().localeCompare(getValidatorName(b, bValidator).toLowerCase()) || 0;
+        return getValidatorNameSort(a, aValidator).toLowerCase().localeCompare(getValidatorNameSort(b, bValidator).toLowerCase()) || 0;
       case 'initial':
         if (sort === 'DESC') {
           return Number(b.entries[0].initial_balance) - Number(a.entries[0].initial_balance);
@@ -143,6 +143,23 @@ export default function Unstake({
     }
 
     return <ArrowUp className='w-4 h-4' />
+  }
+
+  const getValidatorName = (delegation: TUnbondingDelegation, validator: IValidator | undefined) => {
+    if (delegation.type !== 'redelegations') {
+      return validator?.description?.moniker || formatAddress(delegation.validator_address, 12, -6)
+    }
+    const sourceValidator = allValidators.find(v => v.operator_address === delegation.validator_src_address);
+    const destinationValidator = allValidators.find(v => v.operator_address === delegation.validator_dst_address);
+    if (!sourceValidator || !destinationValidator) {
+      return '--'
+    }
+
+    return (
+      <span className='flex flex-wrap items-center gap-1'>
+        <span>{sourceValidator?.description?.moniker?.slice(0, 5)}...</span> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right-icon lucide-arrow-right w-5 h-5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> <span>{destinationValidator?.description?.moniker}</span>
+      </span>
+    )
   }
 
   return (
@@ -252,4 +269,4 @@ export default function Unstake({
       </div>
     </div>
   )
-}
+})

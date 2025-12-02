@@ -3,10 +3,11 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from 'react-toastify';
 import JSZip from 'jszip';
+import IPLocate from 'node-iplocate';
 
 import { useSelector } from '@/redux/hooks';
 import useWalletConnect from '@/hooks/useWalletConnect';
-
+import { getExternal } from '@/utils/api';
 import {
   RPC_ENDPOINT,
   CHAIN_ID,
@@ -31,7 +32,7 @@ export interface IMyFile {
 export interface IMarker {
   latLng: [number, number];
   name: string;
-  value: number;
+  value?: number;
   style?: { fill: string };
 }
 
@@ -45,6 +46,23 @@ interface FileTypeOption {
 interface FileToDownload {
   lastActionId: string;
   name: string;
+}
+
+type TIpAddresses = {
+  address: string;
+  height: string;
+}
+
+interface ISupernode {
+  metrics: {
+    height: string;
+    reportCount: string;
+  };
+  note: string;
+  p2pPort: string;
+  prevIpAddresses: TIpAddresses[];
+  supernodeAccount: string;
+  validatorAddress: string;
 }
 
 export const FILES_TYPE: FileTypeOption[] = [
@@ -77,30 +95,9 @@ const fakeData = [
   { name: 'meeting-notes-q2.docx', size: 34560, lastModified: '2025-07-07T18:00:00Z', type: 'docx', txId: `0x${[...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`},
 ];
 
-const fakeMarkers: IMarker[] = [
-  { latLng: [48.8566, 2.3522], name: "Paris", value: 10, style: { fill: "#66586d" } }, // France
-  { latLng: [40.7128, -74.006], name: "New York", value: 20, style: { fill: "#66586d" } }, // USA
-  { latLng: [35.6895, 139.6917], name: "Tokyo", value: 15, style: { fill: "#66586d" } }, // Japan
-  { latLng: [-33.8688, 151.2093], name: "Sydney", value: 8, style: { fill: "#868991" } }, // Australia
-  { latLng: [55.7558, 37.6173], name: "Moscow", value: 12, style: { fill: "#66586d" } }, // Russia
-  { latLng: [51.5074, -0.1278], name: "London", value: 14, style: { fill: "#66586d" } }, // UK
-  { latLng: [-23.5505, -46.6333], name: "São Paulo", value: 9, style: { fill: "#868991" } }, // Brazil
-  { latLng: [39.9042, 116.4074], name: "Beijing", value: 18, style: { fill: "#66586d" } }, // China
-  { latLng: [28.6139, 77.209], name: "New Delhi", value: 7, style: { fill: "#868991" } }, // India
-  { latLng: [-26.2041, 28.0473], name: "Johannesburg", value: 11, style: { fill: "#66586d" } }, // South Africa
-  { latLng: [25.2769, 55.2962], name: "Dubai", value: 13, style: { fill: "#66586d" } }, // UAE
-  { latLng: [43.6532, -79.3832], name: "Toronto", value: 6, style: { fill: "#868991" } }, // Canada
-  { latLng: [1.3521, 103.8198], name: "Singapore", value: 16, style: { fill: "#66586d" } }, // Singapore
-  { latLng: [37.7749, -122.4194], name: "San Francisco", value: 17, style: { fill: "#66586d" } }, // USA
-  { latLng: [19.4326, -99.1332], name: "Mexico City", value: 8, style: { fill: "#868991" } }, // Mexico
-  { latLng: [41.9028, 12.4964], name: "Rome", value: 10, style: { fill: "#66586d" } }, // Italy
-  { latLng: [-34.6037, -58.3816], name: "Buenos Aires", value: 5, style: { fill: "#868991" } }, // Argentina
-  { latLng: [30.0444, 31.2357], name: "Cairo", value: 12, style: { fill: "#66586d" } }, // Egypt
-  { latLng: [13.7563, 100.5018], name: "Bangkok", value: 9, style: { fill: "#868991" } }, // Thailand
-  { latLng: [59.9139, 10.7522], name: "Oslo", value: 11, style: { fill: "#66586d" } }, // Norway
-];
-
 const GAS_PRICE = '0.025ulume';
+
+const client = new IPLocate(process.env.NEXT_PUBLIC_IPAPI_KEY || '');
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
@@ -164,12 +161,117 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     }
   };
 
+  const fetchLocationFromIpLocate = async (ip: string) => {
+    try {
+      const result = await client.lookup(ip);
+      return {
+        latitude: result?.latitude || null,
+        longitude: result?.longitude || null,
+        subdivision: result?.subdivision || null,
+        city: result?.city || null,
+        country: result?.country || null,
+      };
+    } catch (error) {
+      throw new Error(error instanceof Error ? error?.message : 'An unknown error occurred.')
+    }
+  }
+
+  const fetchLocationFromIpWho = async (ip: string) => {
+    try {
+      const { data } = await getExternal(`https://ipwho.is/${ip}`);
+      return {
+        latitude: data?.latitude || null,
+        longitude: data?.longitude || null,
+        subdivision: data?.capital || null,
+        city: data?.city || null,
+        country: data?.country || null,
+      };
+    } catch (error) {
+      throw new Error(error instanceof Error ? error?.message : 'An unknown error occurred.')
+    }
+  }
+
+  const fetchLocationFromAbstractApi = async (ip: string) => {
+    try {
+      const { data } = await getExternal(`https://ip-intelligence.abstractapi.com/v1/?api_key=${process.env.NEXT_PUBLIC_ABSTRACTAPI_KEY || ''}&ip_address=${ip}`);
+      return {
+        latitude: data?.location?.latitude || null,
+        longitude: data?.location?.longitude || null,
+        subdivision: data?.location?.region || null,
+        city: data?.location?.city || null,
+        country: data?.location?.country || null,
+      };
+    } catch (error) {
+      throw new Error(error instanceof Error ? error?.message : 'An unknown error occurred.')
+    }
+  }
+
+  const fetchLocationForIP = async (ip: string) => {
+    let data = null;
+    try {
+      const result = await fetchLocationFromIpLocate(ip);
+      if (result) {
+        data = result;
+      }
+    } catch {
+      // noop
+    }
+    if (!data) {
+      try {
+        const result = await fetchLocationFromIpWho(ip);
+        if (result) {
+          data = result;
+        }
+      } catch {
+        // noop
+      }
+    }
+    if (!data) {
+      try {
+        const result = await fetchLocationFromAbstractApi(ip);
+        if (result) {
+          data = result;
+        }
+      } catch {
+        // noop
+      }
+    }
+    return data;
+  }
+
+  const fetchChartMarker = useCallback(async (items: ISupernode[]) => {
+    if (markers?.length || items?.length === markers.length) {
+      return;
+    }
+    setMarkerLoading(true);
+    try {
+      const results:IMarker[] = [];
+      for (const item of items) {
+        const ip = item.prevIpAddresses[0].address.split(':')[0];
+        const data = await fetchLocationForIP(ip);
+        if (data?.latitude && data?.longitude) {
+          results.push({
+            latLng: [data.latitude, data.longitude],
+            name: data?.city || data?.subdivision || '',
+          })
+        }
+      }
+      setMarkers(results);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
+        position: "bottom-center",
+        theme: "dark",
+      });
+    }
+    setMarkerLoading(false);
+  }, [markers]);
+
   const fetchSummary = useCallback(async () => {
     setFetchSummaryLoading(true);
     try {
       if (lumeraSdk) {
         const offlineSigner = await getOfflineSigner();
-        const items = await lumeraSdk.getSupernodes({
+        const items: ISupernode[] = await lumeraSdk.getSupernodes({
           chainId: CHAIN_ID,
           rpcUrl: RPC_ENDPOINT,
           lcdUrl: REST_AI_URL,
@@ -184,25 +286,14 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           myUsage: '50 MB', // TBD
           myUploaded: 10, // TBD
         });
+
+        fetchChartMarker(items);
       }
     } catch {
       // noop
     }
     setFetchSummaryLoading(false);
   }, [lumeraSdk, address]);
-
-  const fetchChartMarker = useCallback(async () => {
-    setMarkerLoading(true);
-    try {
-     setMarkers(fakeMarkers); // TBD
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
-        position: "bottom-center",
-        theme: "dark",
-      });
-    }
-    setMarkerLoading(false);
-  }, []);
 
   const fetchMyFiles = useCallback(async () => {
     setMyFilesLoading(true);
@@ -220,7 +311,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   useEffect(() => {
     if (address) {
       fetchMyFiles();
-      fetchChartMarker();
       fetchSummary();
     }
   }, [address]);

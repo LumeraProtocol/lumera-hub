@@ -29,7 +29,7 @@ export default function Page() {
    const { accountInfo } = useAccountInfo();
 
   useEffect(() => {
-    document.title = validator?.description?.moniker || 'Staking Details';
+    document.title = `${validator?.description?.moniker || 'Staking Details'} - Lumera Hub`;
   }, [validator]);
 
   return (

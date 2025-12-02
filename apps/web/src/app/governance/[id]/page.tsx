@@ -37,7 +37,7 @@ export default function Page({ params }: Props) {
   const { address } = useWalletConnect();
 
   useEffect(() => {
-    document.title = governance?.title || 'Governance Details';
+    document.title = `${governance?.title || 'Governance Details'} - Lumera Hub`;
   }, []);
 
   return (

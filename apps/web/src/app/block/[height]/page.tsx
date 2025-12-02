@@ -12,7 +12,7 @@ export default function Page() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    document.title = 'Block';
+    document.title = 'Block - Lumera Hub';
     dispatch(setCurrentPath({
       currentPath: '/block',
     }));

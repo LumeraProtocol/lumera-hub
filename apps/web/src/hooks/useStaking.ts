@@ -170,7 +170,6 @@ const useStaking = (address = '') => {
     setAPRLoading(false);
   }
 
-
   const handleFetchDataForSubTab = useCallback((_subTab: string) => {
     switch (_subTab) {
       case 'activities':
@@ -185,8 +184,8 @@ const useStaking = (address = '') => {
   }, [fetchActivities, fetchUnbondingDelegations]);
 
   useEffect(() => {
+    fetchValidator();
     if (validatorTab === 'all') {
-      fetchValidator();
       fetchParams();
       fetchDataForAPR();
     }

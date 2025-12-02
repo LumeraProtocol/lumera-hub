@@ -17,7 +17,7 @@ export default function Page() {
   const [selectedItem, setSelectedItem] = useState<IProposal | null>(null);
 
   useEffect(() => {
-    document.title = 'Governance';
+    document.title = 'Governance - Lumera Hub';
     dispatch(setCurrentPath({
       currentPath: NAV_ITEMS[3].url,
     }));
