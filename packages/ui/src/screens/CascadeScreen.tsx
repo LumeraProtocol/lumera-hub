@@ -290,6 +290,8 @@ export const CascadeContent = React.memo(({
     handleUploadCascade: onFileChange,
   } = useCascade({ lumeraSdk: memoizedClient });
 
+  const memoizedFilteredFiles = React.useMemo(() => filteredFiles, [filteredFiles, fileSearch, fileTypeFilter]);
+
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className="flex justify-between gap-6 w-full cascade-overview relative">
@@ -411,7 +413,7 @@ export const CascadeContent = React.memo(({
                         <Checkbox
                           id="checkAll"
                           size="$4"
-                          checked={selectedFiles.length === filteredFiles.length && filteredFiles.length > 0}
+                          checked={selectedFiles.length === memoizedFilteredFiles.length && memoizedFilteredFiles.length > 0}
                           onCheckedChange={onSelectAll}
                         >
                           <Checkbox.Indicator>
@@ -427,7 +429,7 @@ export const CascadeContent = React.memo(({
                   <div className="col-span-1 text-right">Size</div>
                   <div className="col-span-2 text-right">Action</div>
                 </div>
-                {filteredFiles.map((file, index) => (
+                {memoizedFilteredFiles.map((file, index) => (
                   <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
                     <div className="col-span-full md:col-span-5 flex items-center gap-4">
                       <div className='flex items-start'>

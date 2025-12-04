@@ -251,7 +251,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       return;
     }
     try {
-      const results:IMarker[] = [];
+      const results: IMarker[] = [];
       for (const item of items) {
         const ip = item.prevIpAddresses[0].address.split(':')[0];
         const data = await fetchLocationForIP(ip);
@@ -269,7 +269,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
             address: item.prevIpAddresses[0].address,
             height: item.prevIpAddresses[0].height,
             p2pPort: item.p2pPort,
-          })
+          });
         }
       }
       setMarkers(results);
@@ -279,7 +279,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         theme: "dark",
       });
     }
-    setMarkerLoading(false);
   }, [markers]);
 
   const fetchSummary = useCallback(async () => {
@@ -301,14 +300,15 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           myUsage: '50 MB', // TBD
           myUploaded: 10, // TBD
         });
-
-        fetchChartMarker(items);
+        setFetchSummaryLoading(false);
+        await fetchChartMarker(items);
       }
     } catch {
       setMarkerLoading(false);
     }
     setFetchSummaryLoading(false);
-  }, [lumeraSdk, address]);
+    setMarkerLoading(false);
+  }, [lumeraSdk, address, fetchChartMarker]);
 
   const fetchMyFiles = useCallback(async () => {
     setMyFilesLoading(true);
@@ -327,7 +327,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     if (address) {
       fetchMyFiles();
     }
-  }, [address]);
+  }, [address, fetchMyFiles]);
 
   useEffect(() => {
     fetchSummary();
@@ -463,7 +463,11 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setDownloading(true);
     try {
       if (lumeraSdk) {
-        const files: FileToDownload[] = []; // TBD
+        // TODO: Implement
+        const files: FileToDownload[] = selectedFiles.map((name) => ({
+          name,
+          lastActionId: '',
+        })); // TBD
         const zipFileName = 'downloaded_files.zip';
         const offlineSigner = await getOfflineSigner();
         const client = await lumeraSdk.getLumeraClient({
