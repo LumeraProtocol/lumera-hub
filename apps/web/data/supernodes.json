@@ -1,0 +1,852 @@
+[
+  {
+    "latLng": [
+      50.4750046,
+      12.3649754
+    ],
+    "name": "Falkenstein",
+    "continent": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "subdivision": "Berlin",
+    "city": "Falkenstein",
+    "supernodeAccount": "lumera1q2vr2027lmczswdtpu6lfwk43g7qagxqunx7p2",
+    "validatorAddress": "lumeravaloper1q2vr2027lmczswdtpu6lfwk43g7qagxqnf4z8f",
+    "address": "136.243.74.81:4444",
+    "height": "502229",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      52.2296756,
+      21.0122287
+    ],
+    "name": "Warsaw",
+    "continent": "Europe",
+    "country": "Poland",
+    "country_code": "PL",
+    "subdivision": "Warsaw",
+    "city": "Warsaw",
+    "supernodeAccount": "lumera1q498cczezvamq6qu72zd3dt6ng6c4p9p0nr903",
+    "validatorAddress": "lumeravaloper1q498cczezvamq6qu72zd3dt6ng6c4p9pqfsefj",
+    "address": "195.3.223.174:4444",
+    "height": "507277",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      39.9611755,
+      -82.9987942
+    ],
+    "name": "Columbus",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "Columbus",
+    "supernodeAccount": "lumera1ryrea8vdxqkh048965kyurexya784ptnesqpvz",
+    "validatorAddress": "lumeravaloper1p9zp9uuwywuh3r4gtt7tq7qskn2sql4cqrke96",
+    "address": "3.138.185.199:4444",
+    "height": "427688",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      48.974797,
+      8.176773
+    ],
+    "name": "Lauterbourg",
+    "continent": "Europe",
+    "country": "France",
+    "country_code": "FR",
+    "subdivision": "Paris",
+    "city": "Lauterbourg",
+    "supernodeAccount": "lumera1z9u85ca2ludfjcahvj6ydgxep3kyegs2qrx4ks",
+    "validatorAddress": "lumeravaloper1z9u85ca2ludfjcahvj6ydgxep3kyegs20e4fsn",
+    "address": "62.171.154.33:4444",
+    "height": "451774",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      38.4414327,
+      -90.3305516
+    ],
+    "name": "St. Louis",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "St. Louis",
+    "supernodeAccount": "lumera1zlv49wfr9wnszaq8aygwp33u9eevvnyztgutx9",
+    "validatorAddress": "lumeravaloper1zlv49wfr9wnszaq8aygwp33u9eevvnyzyj0hqx",
+    "address": "195.26.251.0:4444",
+    "height": "531258",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      49.0068901,
+      8.4036527
+    ],
+    "name": "Karlsruhe",
+    "continent": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "subdivision": "Berlin",
+    "city": "Karlsruhe",
+    "supernodeAccount": "lumera1gqq53a0z4u9c9x897cz28l92sl47mx8s7xykfn",
+    "validatorAddress": "lumeravaloper1rcyr8sal0hf50lhm70g93nte0u5w4aw5ymt8fq",
+    "address": "152.53.230.81:4444",
+    "height": "518420",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      48.974797,
+      8.176773
+    ],
+    "name": "Lauterbourg",
+    "continent": "Europe",
+    "country": "France",
+    "country_code": "FR",
+    "subdivision": "Paris",
+    "city": "Lauterbourg",
+    "supernodeAccount": "lumera1yuy3zyzzfhpjlzs890wy4js5kpnvs9kw5vl6l3",
+    "validatorAddress": "lumeravaloper1yuy3zyzzfhpjlzs890wy4js5kpnvs9kwmkvxej",
+    "address": "62.169.16.79:4444",
+    "height": "528821",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      50.4750046,
+      12.3649754
+    ],
+    "name": "Falkenstein",
+    "continent": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "subdivision": "Berlin",
+    "city": "Falkenstein",
+    "supernodeAccount": "lumera1yl39t9djgh4gnjw77h9k354eus305n7pnyup7m",
+    "validatorAddress": "lumeravaloper1yl39t9djgh4gnjw77h9k354eus305n7pu70acc",
+    "address": "195.201.61.205:4444",
+    "height": "508250",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      -7.0051453,
+      110.4381254
+    ],
+    "name": "Semarang",
+    "continent": "Asia",
+    "country": "Indonesia",
+    "country_code": "ID",
+    "subdivision": "Jakarta",
+    "city": "Semarang",
+    "supernodeAccount": "lumera19tl7p4qjlmn05e7hnxc699emujd2gn2hm3nuq5",
+    "validatorAddress": "lumeravaloper19tl7p4qjlmn05e7hnxc699emujd2gn2h5tqqxh",
+    "address": "182.253.38.115:4444",
+    "height": "1398760",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      38.7509488,
+      -77.4752667
+    ],
+    "name": "Manassas",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "Manassas",
+    "supernodeAccount": "lumera142cm0yqj59xq8peewzjlnmxyp7ercylsr8qusx",
+    "validatorAddress": "lumeravaloper1xn3pq8tk03t9cy3z6thfc2vdryq5p0ynqwvqac",
+    "address": "152.53.90.39:4444",
+    "height": "926891",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      40.0992294,
+      -83.1140771
+    ],
+    "name": "Dublin",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "Dublin",
+    "supernodeAccount": "lumera1s55nzsyqsuwxsl3es0v7rxux7rypsa7zpzlqg5",
+    "validatorAddress": "lumeravaloper1x7f7mhf9azwmpds2czcqkdv435uqudeg6xl4m0",
+    "address": "18.216.80.56:4444",
+    "height": "427818",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      60.1698557,
+      24.938379
+    ],
+    "name": "Helsinki",
+    "continent": "Europe",
+    "country": "Finland",
+    "country_code": "FI",
+    "subdivision": "Helsinki",
+    "city": "Helsinki",
+    "supernodeAccount": "lumera1ljg7cvxwshma9t0ll5hv372yzvq4em0ngl9mkr",
+    "validatorAddress": "lumeravaloper18r2hdxu3awwa0tzgtp60ufqs8srdr4lnpqrynq",
+    "address": "95.216.70.180:4444",
+    "height": "517726",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      49.0068901,
+      8.4036527
+    ],
+    "name": "Karlsruhe",
+    "continent": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "subdivision": "Berlin",
+    "city": "Karlsruhe",
+    "supernodeAccount": "lumera18vw3u7778zvrxsa672q9xyqlwxm8d3hyllw9zl",
+    "validatorAddress": "lumeravaloper18vw3u7778zvrxsa672q9xyqlwxm8d3hys9aeyu",
+    "address": "152.53.146.79:4444",
+    "height": "800857",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      42.4733688,
+      -83.2218731
+    ],
+    "name": "Southfield",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "Southfield",
+    "supernodeAccount": "lumera1muyprn7gvl4ylyuf2h4t8qtrd78wzksmsmlhgs",
+    "validatorAddress": "lumeravaloper18mghfm88q4hgnchvrhw3h65wspnquepr0lzvjx",
+    "address": "23.129.20.122:4444",
+    "height": "513696",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      38.6270025,
+      -90.1994042
+    ],
+    "name": "St. Louis",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "St. Louis",
+    "supernodeAccount": "lumera1gtwgx5d36mkkhchc447p8hs0y36cccjtmtgxs3",
+    "validatorAddress": "lumeravaloper1gtwgx5d36mkkhchc447p8hs0y36cccjt53m6kj",
+    "address": "207.244.245.246",
+    "height": "463238",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      60.1698557,
+      24.938379
+    ],
+    "name": "Helsinki",
+    "continent": "Europe",
+    "country": "Finland",
+    "country_code": "FI",
+    "subdivision": "Helsinki",
+    "city": "Helsinki",
+    "supernodeAccount": "lumera1jnhlpm02v6d7893m9yyl8dyn336t4sppwlvypr",
+    "validatorAddress": "lumeravaloper1gk69m27spndzwkjqhtqx2fr6npvae6kcdmu6w0",
+    "address": "157.180.8.121:4444",
+    "height": "615236",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      48.974797,
+      8.176773
+    ],
+    "name": "Lauterbourg",
+    "continent": "Europe",
+    "country": "France",
+    "country_code": "FR",
+    "subdivision": "Paris",
+    "city": "Lauterbourg",
+    "supernodeAccount": "lumera1ek4vulycd3ag0lvaa4qsr8w44dcc8090z57chf",
+    "validatorAddress": "lumeravaloper1gapqwfgz45mw2lrvy5nwks9ndfkdzn6pg0u69s",
+    "address": "62.169.16.57:4444",
+    "height": "412540",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      40.0992294,
+      -83.1140771
+    ],
+    "name": "Dublin",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "Dublin",
+    "supernodeAccount": "lumera160ykrfmz8y99zvcf4750mhye69upa38rl4ykqz",
+    "validatorAddress": "lumeravaloper1glr5cyvmn7a8av5u5mxt4mvs8ahgappglkpmcu",
+    "address": "3.128.152.132:4444",
+    "height": "427688",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      12.2387911,
+      109.1967488
+    ],
+    "name": "Nha Trang",
+    "continent": "Asia",
+    "country": "Vietnam",
+    "country_code": "VN",
+    "subdivision": "Hanoi",
+    "city": "Nha Trang",
+    "supernodeAccount": "lumera1nguz0ftsp6k9686pldmvunmjm584r7t2xlxzkv",
+    "validatorAddress": "lumeravaloper1fefmaqrd3f9vczv8q5hw8e6enqvmq4q4axcpqe",
+    "address": "113.189.62.44:4444",
+    "height": "833277",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      40.7895453,
+      -74.0565298
+    ],
+    "name": "Secaucus",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "Secaucus",
+    "supernodeAccount": "lumera1q5gr6llat98fh44pdhxv6zdde97fj9werycryt",
+    "validatorAddress": "lumeravaloper124jl0vlmh658z8agsalnutmjxdcdjg595vlaka",
+    "address": "208.73.202.78:4444",
+    "height": "525381",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      39.9611755,
+      -82.9987942
+    ],
+    "name": "Columbus",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "Columbus",
+    "supernodeAccount": "lumera19ptfc8h6r57vtkxzldlx9rrjqfn59agemmeumg",
+    "validatorAddress": "lumeravaloper1vwhx8lwhw9jrumlejpcnsrh9y7hslxrsk226sg",
+    "address": "18.223.157.107:4444",
+    "height": "427689",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      60.1698557,
+      24.938379
+    ],
+    "name": "Helsinki",
+    "continent": "Europe",
+    "country": "Finland",
+    "country_code": "FI",
+    "subdivision": "Helsinki",
+    "city": "Helsinki",
+    "supernodeAccount": "lumera1vm5lthf5tqege3erevlcuw3przyemrg3wdnrhz",
+    "validatorAddress": "lumeravaloper1vm5lthf5tqege3erevlcuw3przyemrg3phql3p",
+    "address": "135.181.139.249:4444",
+    "height": "503775",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      60.1698557,
+      24.938379
+    ],
+    "name": "Helsinki",
+    "continent": "Europe",
+    "country": "Finland",
+    "country_code": "FI",
+    "subdivision": "Helsinki",
+    "city": "Helsinki",
+    "supernodeAccount": "lumera1jfq05ev088sz7ngfpuaauk2znvnklv4k8xh0xu",
+    "validatorAddress": "lumeravaloper1dlu7aqxgmmepwuyey7q0f5c5fa7v88xge3casx",
+    "address": "157.180.52.245:4444",
+    "height": "545267",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      48.974797,
+      8.176773
+    ],
+    "name": "Lauterbourg",
+    "continent": "Europe",
+    "country": "France",
+    "country_code": "FR",
+    "subdivision": "Paris",
+    "city": "Lauterbourg",
+    "supernodeAccount": "lumera1s6nvkp5gre56h885qj36xhs77uhtfs7rwudu7c",
+    "validatorAddress": "lumeravaloper1s6nvkp5gre56h885qj36xhs77uhtfs7rpx7qcm",
+    "address": "213.136.83.231:4444",
+    "height": "413301",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      1.3553794,
+      103.8677444
+    ],
+    "name": "Singapore",
+    "continent": "Asia",
+    "country": "Singapore",
+    "country_code": "SG",
+    "subdivision": "Singapore",
+    "city": "Singapore",
+    "supernodeAccount": "lumera1slvg8tg356jkzxzxm35m8ahf0w6jf42ut2kmf2",
+    "validatorAddress": "lumeravaloper1slvg8tg356jkzxzxm35m8ahf0w6jf42uys980f",
+    "address": "156.67.216.175:4444",
+    "height": "460278",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      50.4501,
+      30.5234
+    ],
+    "name": "Kyiv",
+    "continent": "Europe",
+    "country": "Ukraine",
+    "country_code": "UA",
+    "subdivision": "Kyiv",
+    "city": "Kyiv",
+    "supernodeAccount": "lumera13nwzm5dfd26ue74jr6sc39gyn3qze0rjlmsehc",
+    "validatorAddress": "lumeravaloper13nwzm5dfd26ue74jr6sc39gyn3qze0rjspr93m",
+    "address": "37.17.244.207:4444",
+    "height": "477997",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      48.974797,
+      8.176773
+    ],
+    "name": "Lauterbourg",
+    "continent": "Europe",
+    "country": "France",
+    "country_code": "FR",
+    "subdivision": "Paris",
+    "city": "Lauterbourg",
+    "supernodeAccount": "lumera1rqpde8600qhuyqds4wlp5mau46y7tdwgj2yqpc",
+    "validatorAddress": "lumeravaloper1jyhgnwq426am46w9t3ps0x4uadyemly7e8d73n",
+    "address": "84.247.139.25:4444",
+    "height": "515783",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      45.3174277,
+      9.2023619
+    ],
+    "name": "Siziano",
+    "continent": "Europe",
+    "country": "Italy",
+    "country_code": "IT",
+    "subdivision": "Rome",
+    "city": "Siziano",
+    "supernodeAccount": "lumera1xltwvd85q0x37ncjth2smtcdyp22qdaha6ewgq",
+    "validatorAddress": "lumeravaloper1jg2s2jzat9vp909n25duuzlx76uj0h6cehscmm",
+    "address": "79.72.43.149:4444",
+    "height": "715412",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      52.2296756,
+      21.0122287
+    ],
+    "name": "Warsaw",
+    "continent": "Europe",
+    "country": "Poland",
+    "country_code": "PL",
+    "subdivision": "Warsaw",
+    "city": "Warsaw",
+    "supernodeAccount": "lumera1fkgj76q4w98hcseldveyrnlpklj0tp6khn7hag",
+    "validatorAddress": "lumeravaloper1jfl8rf4pmf9pwzfzckl6pv8jmz0fqp2t799nq0",
+    "address": "149.50.116.116:4444",
+    "height": "517677",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      60.1698557,
+      24.938379
+    ],
+    "name": "Helsinki",
+    "continent": "Europe",
+    "country": "Finland",
+    "country_code": "FI",
+    "subdivision": "Helsinki",
+    "city": "Helsinki",
+    "supernodeAccount": "lumera1ftyw89tutvqnxyu6608qcyjmcu4varv7x243gl",
+    "validatorAddress": "lumeravaloper1nla7jryc9aq2jhsat7g9xlyttzf4dwzzqth9ju",
+    "address": "157.180.3.36:4444",
+    "height": "614950",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      49.4254092,
+      11.0796553
+    ],
+    "name": "Nuremberg",
+    "continent": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "subdivision": "Berlin",
+    "city": "Nuremberg",
+    "supernodeAccount": "lumera1epyav8gvn9es0s3mfzj8pkle7hdjdhwald7rds",
+    "validatorAddress": "lumeravaloper15tltd8srxkxda6nyrg95tpc2dm4z328kg8e83w",
+    "address": "152.53.138.4:4444",
+    "height": "841829",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      38.6270025,
+      -90.1994042
+    ],
+    "name": "St. Louis",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "St. Louis",
+    "supernodeAccount": "lumera1563uuzljqvpanh79w2tvymqsly73v9nwygda73",
+    "validatorAddress": "lumeravaloper1563uuzljqvpanh79w2tvymqsly73v9nwtj7pcj",
+    "address": "207.244.245.246:444",
+    "height": "463452",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      48.974797,
+      8.176773
+    ],
+    "name": "Lauterbourg",
+    "continent": "Europe",
+    "country": "France",
+    "country_code": "FR",
+    "subdivision": "Paris",
+    "city": "Lauterbourg",
+    "supernodeAccount": "lumera1uq7lylrf0mrvrfq5s5uzk5my2f4562w2qxxftw",
+    "validatorAddress": "lumeravaloper1kqwk00kpez2fctrmj4l836f827fxs6yahrfdzy",
+    "address": "185.197.195.18:4444",
+    "height": "518398",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      38.4414327,
+      -90.3305516
+    ],
+    "name": "St. Louis",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "St. Louis",
+    "supernodeAccount": "lumera1kz366y86s32u8vkcmwy842c4xd8p7l3h29pamc",
+    "validatorAddress": "lumeravaloper1kz366y86s32u8vkcmwy842c4xd8p7l3h9ljpam",
+    "address": "209.126.12.240:4444",
+    "height": "531487",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      52.2296756,
+      21.0122287
+    ],
+    "name": "Warsaw",
+    "continent": "Europe",
+    "country": "Poland",
+    "country_code": "PL",
+    "subdivision": "Warsaw",
+    "city": "Warsaw",
+    "supernodeAccount": "lumera1kdgfc4zfq8tu0m76duchqs7zt9k0xc6pefka2f",
+    "validatorAddress": "lumeravaloper1k3gfg72e6mn7m8unp76paafrxf78pwe70ssje6",
+    "address": "149.86.227.209:4444",
+    "height": "514288",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      38.6270025,
+      -90.1994042
+    ],
+    "name": "St. Louis",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "St. Louis",
+    "supernodeAccount": "lumera1k3wuph3f695uugf7k46m6jzqmc308sy20m0k63",
+    "validatorAddress": "lumeravaloper1k3wuph3f695uugf7k46m6jzqmc308sy2qpu2uj",
+    "address": "207.244.233.242:4444",
+    "height": "524850",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      50.4750046,
+      12.3649754
+    ],
+    "name": "Falkenstein",
+    "continent": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "subdivision": "Berlin",
+    "city": "Falkenstein",
+    "supernodeAccount": "lumera1ycfffwmfc6wmukj9jenqvw4x7us7p6jkjklpav",
+    "validatorAddress": "lumeravaloper1kef8felrzdrn2ywz8z2nzwfec4pgww4jz3zlhp",
+    "address": "88.99.167.174:4444",
+    "height": "452950",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      39.9611755,
+      -82.9987942
+    ],
+    "name": "Columbus",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "Columbus",
+    "supernodeAccount": "lumera1ntcrs6m7ccxnq7pk7nmydt8902w2972wxzsel8",
+    "validatorAddress": "lumeravaloper1hv63d80cssswfxnyqw67d0chhhuctaflca2vre",
+    "address": "3.147.255.62:4444",
+    "height": "427687",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      52.2296756,
+      21.0122287
+    ],
+    "name": "Warsaw",
+    "continent": "Europe",
+    "country": "Poland",
+    "country_code": "PL",
+    "subdivision": "Warsaw",
+    "city": "Warsaw",
+    "supernodeAccount": "lumera1h0ljtgz7khx02lrv37pgwry5zk54uc3ztyacjq",
+    "validatorAddress": "lumeravaloper1h0ljtgz7khx02lrv37pgwry5zk54uc3zy7wy5r",
+    "address": "149.50.96.58:4444",
+    "height": "513262",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      48.974797,
+      8.176773
+    ],
+    "name": "Lauterbourg",
+    "continent": "Europe",
+    "country": "France",
+    "country_code": "FR",
+    "subdivision": "Paris",
+    "city": "Lauterbourg",
+    "supernodeAccount": "lumera1hk2d36d9jec4zlspsyz23gw26hzctrv5dmqske",
+    "validatorAddress": "lumeravaloper1hk2d36d9jec4zlspsyz23gw26hzctrv5zpnvs6",
+    "address": "62.84.181.238:4444",
+    "height": "525814",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      38.7509488,
+      -77.4752667
+    ],
+    "name": "Manassas",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "Manassas",
+    "supernodeAccount": "lumera1ha8y5j7ng9e8q3wuhte2pvygj8fltnv7h0xql4",
+    "validatorAddress": "lumeravaloper1eugasjyfpfjz7pgq0cad3374qwe7c5e95q2lg3",
+    "address": "152.53.88.231:4444",
+    "height": "520759",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      39.9611755,
+      -82.9987942
+    ],
+    "name": "Columbus",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "Columbus",
+    "supernodeAccount": "lumera1r7826eklrkyfhc6fm6cyme36pc8yz0jyyfsl38",
+    "validatorAddress": "lumeravaloper1ux9pyka7ztqlyy8s2t2pmnc2cnx24zc7aaak7e",
+    "address": "18.219.98.191:4444",
+    "height": "427144",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      60.1698557,
+      24.938379
+    ],
+    "name": "Helsinki",
+    "continent": "Europe",
+    "country": "Finland",
+    "country_code": "FI",
+    "subdivision": "Helsinki",
+    "city": "Helsinki",
+    "supernodeAccount": "lumera1cdd405legyskutquummxvmzwwcdvqjlgm8d70w",
+    "validatorAddress": "lumeravaloper1uxc2feaqyn2a2yn0sajx95aqyrav2m7dqwy6q2",
+    "address": "65.108.237.96:4444",
+    "height": "513727",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      49.1200802,
+      10.7318864
+    ],
+    "name": "Gunzenhausen",
+    "continent": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "subdivision": "Berlin",
+    "city": "Gunzenhausen",
+    "supernodeAccount": "lumera1wmq0wu60a63cnx5fhln0m0zv6u5rq6dw0dhvhn",
+    "validatorAddress": "lumeravaloper1uj98474n68v52ycwu25chs6ldj77svrtqyddca",
+    "address": "176.9.8.81:4444",
+    "height": "866353",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      60.1698557,
+      24.938379
+    ],
+    "name": "Helsinki",
+    "continent": "Europe",
+    "country": "Finland",
+    "country_code": "FI",
+    "subdivision": "Helsinki",
+    "city": "Helsinki",
+    "supernodeAccount": "lumera1n70hju0sew704tmzfxkhy64uer6prjsmp9j8fx",
+    "validatorAddress": "lumeravaloper1akpe9twlleurpfad6w9zmhxyf3mfnad2urqd6k",
+    "address": "65.108.231.223:4444",
+    "height": "873413",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      38.4414327,
+      -90.3305516
+    ],
+    "name": "St. Louis",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "St. Louis",
+    "supernodeAccount": "lumera17c4zrxmwswan97yrflepqfld47347nu9j4vyqu",
+    "validatorAddress": "lumeravaloper17c4zrxmwswan97yrflepqfld47347nu9a0lcxl",
+    "address": "209.126.12.85:4444",
+    "height": "530422",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      38.6270025,
+      -90.1994042
+    ],
+    "name": "St. Louis",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "St. Louis",
+    "supernodeAccount": "lumera17mku7r3ljspatx3c86kg2qw4mmlzrpnsg9jrel",
+    "validatorAddress": "lumeravaloper17mku7r3ljspatx3c86kg2qw4mmlzrpns8lpllu",
+    "address": "195.26.253.188",
+    "height": "461763",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      49.0068901,
+      8.4036527
+    ],
+    "name": "Karlsruhe",
+    "continent": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "subdivision": "Berlin",
+    "city": "Karlsruhe",
+    "supernodeAccount": "lumera13fz0rrd4us0w4yf6w6ujyzla7p9vueancfp5wu",
+    "validatorAddress": "lumeravaloper177z7qclpqs5mcwwj7g2j4k5s28hjrtgtgl6g7w",
+    "address": "89.147.102.206:4444",
+    "height": "822972",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      39.9611755,
+      -82.9987942
+    ],
+    "name": "Columbus",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "Columbus",
+    "supernodeAccount": "lumera1x6e45rudg37fxeaq58a9h883xcrxs4alzy3jq3",
+    "validatorAddress": "lumeravaloper1772e2pq56mzz972te69yhhnvew0eyc5d3vxrj8",
+    "address": "3.146.151.198:4444",
+    "height": "218322",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      38.4414327,
+      -90.3305516
+    ],
+    "name": "St. Louis",
+    "continent": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "subdivision": "Washington D.C.",
+    "city": "St. Louis",
+    "supernodeAccount": "lumera1ljtfqqw9kc8sueh4fel298u29f3rc2yh57gcxq",
+    "validatorAddress": "lumeravaloper1ljtfqqw9kc8sueh4fel298u29f3rc2yhmymyqr",
+    "address": "209.126.12.242:4444",
+    "height": "531067",
+    "p2pPort": "4445"
+  }
+]

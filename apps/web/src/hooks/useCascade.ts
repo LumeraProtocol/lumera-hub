@@ -3,11 +3,11 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from 'react-toastify';
 import JSZip from 'jszip';
-import IPLocate from 'node-iplocate';
 
 import { useSelector } from '@/redux/hooks';
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { getExternal } from '@/utils/api';
+import { getExternal, postExternal } from '@/utils/api';
+import { isValidIPv4 } from '@/utils/helpers';
 import {
   RPC_ENDPOINT,
   CHAIN_ID,
@@ -98,8 +98,6 @@ export const FILES_TYPE: FileTypeOption[] = [
 
 const GAS_PRICE = '0.025ulume';
 
-const client = new IPLocate(process.env.NEXT_PUBLIC_IPAPI_KEY || '');
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -162,23 +160,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     }
   };
 
-  const fetchLocationFromIpLocate = async (ip: string) => {
-    try {
-      const result = await client.lookup(ip);
-      return {
-        latitude: result?.latitude || null,
-        longitude: result?.longitude || null,
-        subdivision: result?.subdivision || null,
-        city: result?.city || null,
-        country: result?.country || null,
-        continent: result?.continent || null,
-        country_code: result?.country_code || null,
-      };
-    } catch (error) {
-      throw new Error(error instanceof Error ? error?.message : 'An unknown error occurred.')
-    }
-  }
-
   const fetchLocationFromIpWho = async (ip: string) => {
     try {
       const { data } = await getExternal(`https://ipwho.is/${ip}`);
@@ -196,23 +177,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     }
   }
 
-  const fetchLocationFromAbstractApi = async (ip: string) => {
-    try {
-      const { data } = await getExternal(`https://ip-intelligence.abstractapi.com/v1/?api_key=${process.env.NEXT_PUBLIC_ABSTRACTAPI_KEY || ''}&ip_address=${ip}`);
-      return {
-        latitude: data?.location?.latitude || null,
-        longitude: data?.location?.longitude || null,
-        subdivision: data?.location?.region || null,
-        city: data?.location?.city || null,
-        country: data?.location?.country || null,
-        continent: data?.location?.continent || null,
-        country_code: data?.location?.country_code || null,
-      };
-    } catch (error) {
-      throw new Error(error instanceof Error ? error?.message : 'An unknown error occurred.')
-    }
-  }
-
   const fetchLocationForIP = async (ip: string) => {
     let data = null;
     try {
@@ -223,27 +187,30 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     } catch {
       // noop
     }
-    if (!data) {
-      try {
-        const result = await fetchLocationFromIpLocate(ip);
-        if (result) {
-          data = result;
-        }
-      } catch {
-        // noop
-      }
-    }
-    if (!data) {
-      try {
-        const result = await fetchLocationFromAbstractApi(ip);
-        if (result) {
-          data = result;
-        }
-      } catch {
-        // noop
-      }
-    }
     return data;
+  }
+
+  const readSupernodeFile = async () => {
+    try {
+      const { data } = await postExternal('/api/supernode', {
+        action: 'read'
+      });
+      return data?.supernodes || [];
+    } catch {
+      return [];
+    }
+  }
+
+  const writeSupernodeFile = async (content: IMarker[]) => {
+    try {
+      const { data } = await postExternal('/api/supernode', {
+        action: 'write',
+        content
+      });
+      return data;
+    } catch {
+      return null;
+    }
   }
 
   const fetchChartMarker = useCallback(async (items: ISupernode[]) => {
@@ -252,27 +219,39 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     }
     try {
       const results: IMarker[] = [];
+      const supernodeData: IMarker[] = await readSupernodeFile();
       for (const item of items) {
-        const ip = item.prevIpAddresses[0].address.split(':')[0];
-        const data = await fetchLocationForIP(ip);
-        if (data?.latitude && data?.longitude) {
-          results.push({
-            latLng: [data.latitude, data.longitude],
-            name: data?.city || '',
-            continent: data?.continent || '',
-            country: data?.country || '',
-            country_code: data?.country_code || '',
-            subdivision: data?.subdivision || '',
-            city: data?.city || '',
-            supernodeAccount: item.supernodeAccount,
-            validatorAddress: item.validatorAddress,
-            address: item.prevIpAddresses[0].address,
-            height: item.prevIpAddresses[0].height,
-            p2pPort: item.p2pPort,
-          });
+        const address = item.prevIpAddresses[0].address;
+        const ip = address.split(':')[0];
+        if (isValidIPv4(ip)) {
+          const supernode = supernodeData.find((s) => s.address === address);
+          if (!supernode) {
+            const data = await fetchLocationForIP(ip);
+            if (data?.latitude && data?.longitude) {
+              results.push({
+                latLng: [data.latitude, data.longitude],
+                name: data?.city || '',
+                continent: data?.continent || '',
+                country: data?.country || '',
+                country_code: data?.country_code || '',
+                subdivision: data?.subdivision || '',
+                city: data?.city || '',
+                supernodeAccount: item.supernodeAccount,
+                validatorAddress: item.validatorAddress,
+                address,
+                height: item.prevIpAddresses[0].height,
+                p2pPort: item.p2pPort,
+              });
+            }
+          } else {
+            results.push(supernode);
+          }
         }
       }
       setMarkers(results);
+      if (results?.length) {
+        await writeSupernodeFile(results);
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
         position: "bottom-center",
