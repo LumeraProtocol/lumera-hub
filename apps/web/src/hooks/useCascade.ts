@@ -96,13 +96,6 @@ export const FILES_TYPE: FileTypeOption[] = [
   },
 ];
 
-const fakeData = [
-  { name: 'project-lumera-whitepaper.pdf', size: 5242880, lastModified: '2025-07-10T10:00:00Z', type: 'pdf', txId: `0x${[...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`},
-  { name: 'brand-assets.zip', size: 157286400, lastModified: '2025-07-09T15:30:00Z', type: 'zip', txId: `0x${[...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`},
-  { name: 'dashboard-preview.png', size: 1887436, lastModified: '2025-07-08T11:20:00Z', type: 'image', txId: `0x${[...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`},
-  { name: 'meeting-notes-q2.docx', size: 34560, lastModified: '2025-07-07T18:00:00Z', type: 'docx', txId: `0x${[...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`},
-];
-
 const GAS_PRICE = '0.025ulume';
 
 const client = new IPLocate(process.env.NEXT_PUBLIC_IPAPI_KEY || '');
@@ -258,7 +251,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       return;
     }
     try {
-      const results:IMarker[] = [];
+      const results: IMarker[] = [];
       for (const item of items) {
         const ip = item.prevIpAddresses[0].address.split(':')[0];
         const data = await fetchLocationForIP(ip);
@@ -276,7 +269,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
             address: item.prevIpAddresses[0].address,
             height: item.prevIpAddresses[0].height,
             p2pPort: item.p2pPort,
-          })
+          });
         }
       }
       setMarkers(results);
@@ -286,58 +279,59 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         theme: "dark",
       });
     }
-    setMarkerLoading(false);
   }, [markers]);
 
-  const fetchSummary = useCallback(async () => {
-    setFetchSummaryLoading(true);
-    setMarkerLoading(true);
-    try {
-      if (lumeraSdk) {
-        const offlineSigner = await getOfflineSigner();
-        const items: ISupernode[] = await lumeraSdk.getSupernodes({
-          chainId: CHAIN_ID,
-          rpcUrl: RPC_ENDPOINT,
-          lcdUrl: REST_AI_URL,
-          snapiUrl: SNAPI_URL,
-          signer: offlineSigner,
-          address,
-          gasPrice: GAS_PRICE,
-        });
-        setSummary({
-          totalSupernode: items?.length || 0,
-          networkStorage: '25 TB', // TBD
-          myUsage: '50 MB', // TBD
-          myUploaded: 10, // TBD
-        });
-
-        fetchChartMarker(items);
-      }
-    } catch {
-      setMarkerLoading(false);
-    }
-    setFetchSummaryLoading(false);
-  }, [lumeraSdk, address]);
-
-  const fetchMyFiles = useCallback(async () => {
-    setMyFilesLoading(true);
-    try {
-      setMyFiles(fakeData);  // TBD
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
-        position: "bottom-center",
-        theme: "dark",
+const fetchSummary = useCallback(async () => {
+  setFetchSummaryLoading(true);
+  setMarkerLoading(true);
+  try {
+    if (lumeraSdk) {
+      const offlineSigner = await getOfflineSigner();
+      const items: ISupernode[] = await lumeraSdk.getSupernodes({
+        chainId: CHAIN_ID,
+        rpcUrl: RPC_ENDPOINT,
+        lcdUrl: REST_AI_URL,
+        snapiUrl: SNAPI_URL,
+        signer: offlineSigner,
+        address,
+        gasPrice: GAS_PRICE,
       });
-    }
-    setMyFilesLoading(false);
-  }, []);
+      setSummary({
+        totalSupernode: items?.length || 0,
+        networkStorage: '25 TB', // TBD
+        myUsage: '50 MB', // TBD
+        myUploaded: 10, // TBD
+      });
 
-  useEffect(() => {
-    if (address) {
-      fetchMyFiles();
-      fetchSummary();
+      await fetchChartMarker(items);
     }
-  }, [address]);
+  } catch {
+    setMarkerLoading(false);
+  }
+  setFetchSummaryLoading(false);
+  setMarkerLoading(false);
+}, [lumeraSdk, address, fetchChartMarker]);
+
+const fetchMyFiles = useCallback(async () => {
+  setMyFilesLoading(true);
+  try {
+    // TODO: Implement
+    setMyFiles([]);  // TBD
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
+      position: "bottom-center",
+      theme: "dark",
+    });
+  }
+  setMyFilesLoading(false);
+}, []);
+
+useEffect(() => {
+  if (address) {
+    fetchMyFiles();
+    fetchSummary();
+  }
+}, [address, fetchMyFiles, fetchSummary]);
 
   useEffect(() => {
     return () => {
@@ -469,7 +463,11 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setDownloading(true);
     try {
       if (lumeraSdk) {
-        const files: FileToDownload[] = []; // TBD
+        // TODO: Implement
+        const files: FileToDownload[] = selectedFiles.map((name) => ({
+          name,
+          lastActionId: '',
+        })); // TBD
         const zipFileName = 'downloaded_files.zip';
         const offlineSigner = await getOfflineSigner();
         const zip = new JSZip();
