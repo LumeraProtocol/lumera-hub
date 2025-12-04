@@ -171,9 +171,6 @@ importers:
       next:
         specifier: 15.4.6
         version: 15.4.6(@babel/core@7.28.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      node-iplocate:
-        specifier: ^2.0.1
-        version: 2.0.1
       numeral:
         specifier: ^2.0.6
         version: 2.0.6
@@ -5765,9 +5762,6 @@ packages:
   invariant@2.2.4:
     resolution: {integrity: sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==}
 
-  ip-utils@2.4.0:
-    resolution: {integrity: sha512-WplHS3eFOjWenJNfuzmFpUv9p9A+VU7G0UIKD4bxUK9cduFkZA7TPxfsmLrpPX6KcCtrO11zpOhjSyy6hhrpzQ==}
-
   iron-webcrypto@1.2.1:
     resolution: {integrity: sha512-feOM6FaSr6rEABp/eDfVseKyTMDt+KGpeB35SkVn9Tyn0CqvVsY3EwI0v5i8nMHyJnzCIQf7nsy3p41TPkJZhg==}
 
@@ -6669,10 +6663,6 @@ packages:
 
   node-int64@0.4.0:
     resolution: {integrity: sha512-O5lz91xSOeoXP6DulyHfllpq+Eg00MWitZIbtPfoSEvqIHdl5gfcY6hYzDWnj0qD5tz52PI08u9qUvSVeUBeHw==}
-
-  node-iplocate@2.0.1:
-    resolution: {integrity: sha512-ogU7slQB8DZcdyrB54LeRrUfbrKPK0X7qnX5adc+NucwUHla/vsufXxiBK3313cG2UoYeIqnLytDE7KF9LCYug==}
-    engines: {node: '>=18.0.0'}
 
   node-mock-http@1.0.2:
     resolution: {integrity: sha512-zWaamgDUdo9SSLw47we78+zYw/bDr5gH8pH7oRRs8V3KmBtu8GLgGIbV2p/gRPd3LWpEOpjQj7X1FOU3VFMJ8g==}
@@ -18855,10 +18845,6 @@ snapshots:
     dependencies:
       loose-envify: 1.4.0
 
-  ip-utils@2.4.0:
-    dependencies:
-      tslib: 1.14.1
-
   iron-webcrypto@1.2.1: {}
 
   is-array-buffer@3.0.5:
@@ -19958,10 +19944,6 @@ snapshots:
     optional: true
 
   node-int64@0.4.0: {}
-
-  node-iplocate@2.0.1:
-    dependencies:
-      ip-utils: 2.4.0
 
   node-mock-http@1.0.2: {}
 
