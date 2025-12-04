@@ -190,8 +190,8 @@ importers:
         specifier: ^2.0.5
         version: 2.0.5(react@19.1.0)
       react-lumera-sdk:
-        specifier: ^0.0.6
-        version: 0.0.6(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        specifier: ^0.0.8
+        version: 0.0.8(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       react-native:
         specifier: 0.79.5
         version: 0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.1.0)(utf-8-validate@5.0.10)
@@ -7189,8 +7189,8 @@ packages:
   react-lifecycles-compat@3.0.4:
     resolution: {integrity: sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==}
 
-  react-lumera-sdk@0.0.6:
-    resolution: {integrity: sha512-l+DiA3QeT3nfeJmKx+Onui3svRaYllM4V9QY4SyLpsJ+K/UGlNAe/siKyZADKt5oyIZlUfbrrJTR8wNZYY7jaw==}
+  react-lumera-sdk@0.0.8:
+    resolution: {integrity: sha512-aZsoX1aCi3S2UDtRQAmM0mgEr6HPeL7JjTwvhmEffCQ2IrWC4RymZ4ba9v0MVWUzjKNDUiiVGA7o1BnE0RuksQ==}
 
   react-native-css-interop@0.1.22:
     resolution: {integrity: sha512-Mu01e+H9G+fxSWvwtgWlF5MJBJC4VszTCBXopIpeR171lbeBInHb8aHqoqRPxmJpi3xIHryzqKFOJYAdk7PBxg==}
@@ -20646,7 +20646,7 @@ snapshots:
 
   react-lifecycles-compat@3.0.4: {}
 
-  react-lumera-sdk@0.0.6(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10):
+  react-lumera-sdk@0.0.8(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10):
     dependencies:
       '@cosmjs/proto-signing': 0.37.0
       '@lumera-protocol/sdk-js': 0.2.3(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)

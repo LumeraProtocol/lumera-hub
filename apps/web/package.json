@@ -39,7 +39,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-helmet-async": "^2.0.5",
-    "react-lumera-sdk": "^0.0.6",
+    "react-lumera-sdk": "^0.0.8",
     "react-native": "0.79.5",
     "react-native-svg": "^15.12.1",
     "react-native-web": "^0.21.0",

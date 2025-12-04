@@ -1,6 +1,20 @@
-# Lumera Hub
+## Lumera Hub
 
-A monorepo for Lumera Hub applications: web (Next.js), desktop (Tauri), and mobile (Expo).
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/paxi-web3/paxi)](https://goreportcard.com/report/github.com/paxi-web3/paxi)
+[![Version](https://img.shields.io/badge/version-v1.0.6-blue?style=flat-square)](https://github.com/paxi-web3/paxi/releases/tag/v1.0.6)
+[![Cosmos SDK](https://img.shields.io/badge/Cosmos%20SDK-v0.53.0-blue?style=flat-square)](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.53.0)
+[![CosmWasm](https://img.shields.io/badge/CosmWasm-v0.55.0-blue?style=flat-square)](https://github.com/CosmWasm/wasmd/releases/tag/v0.55.0)
+
+
+
+<img src="docs/assets/banner.png" alt="Lumera Hub" width="100%"/>
+
+**Lumera Protocol** is a next-generation blockchain built for the age of decentralized AI, autonomous agents, and permanent data storage. Formerly known as **Pastel Network**, **Lumera** isn't just another Layer 1 — it's a purpose-built, high-performance foundation for the future of Web3 services.
+
+At its core, **Lumera** combines scalable infrastructure with programmable economic incentives, making it possible for developers, validators, and everyday users to participate in a self-sustaining ecosystem that powers AI-driven applications, censorship-resistant storage, and secure cross-chain interoperability.
+
+---
 
 ## Getting Started
 
@@ -82,10 +96,10 @@ pnpm --filter web start
 
 ## Deployment
 
-- **Web to Vercel** (recommended): `cd apps/web && npx vercel --prod`  
+- **Web to Vercel** (recommended): `cd apps/web && npx vercel --prod`
   This builds and deploys the Next.js app directly to Vercel. Vercel handles the server-side rendering, routing, and hosting—no manual steps required. Ensure you're logged in to Vercel CLI (`npx vercel login`) and have linked the project.
 
-- **Web to Other Cloud Hosts** (e.g., VPS with nginx):  
+- **Web to Other Cloud Hosts** (e.g., VPS with nginx):
   If deploying to a custom cloud host that expects static files (not full Next.js server features), build a static export first:
 
   ```bash
@@ -120,3 +134,12 @@ pnpm --filter web start
 
 - `pnpm lint`: Lint all code
 - `pnpm format`: Format code with Prettier
+
+## Official Website
+
+- 👉 [https://lumera.io/](https://lumera.io/)
+- 👉 [https://x.com/lumera](https://x.com/lumera)
+- 👉 [https://discord.com/invite/lumeraprotocol](https://discord.com/invite/lumeraprotocol)
+- 👉 [https://github.com/LumeraProtocol/](https://github.com/LumeraProtocol/)
+- 👉 [https://www.reddit.com/r/LumeraProtocol/?rdt=58979](https://www.reddit.com/r/LumeraProtocol/?rdt=58979)
+- 👉 [https://www.youtube.com/@lumeraprotocol](https://www.youtube.com/@lumeraprotocol)
