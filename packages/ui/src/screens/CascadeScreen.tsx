@@ -98,6 +98,12 @@ const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap
     );
   }
 
+  const handleMarkerClick = (code: string) => {
+    const index = parseInt(code);
+    const selectedMarker = markers[index];
+    seSelectedMarker(selectedMarker);
+  }
+
   return (
     <div style={{ width: "100%", height: "500px" }}>
       <JVectorMapWithNoSSR
@@ -145,11 +151,7 @@ const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap
           },
         }}
         markers={markers}
-        onMarkerClick={(event: Event, code: string) => {
-          const index = parseInt(code);
-          const selectedMarker = markers[index];
-          seSelectedMarker(selectedMarker);
-        }}
+        onMarkerClick={(event: Event, code: string) => handleMarkerClick(code)}
       />
       {selectedMarker ? (
         <>
@@ -237,7 +239,7 @@ const getFileIcon = (type: string) => {
   }
 };
 
-export const CascadeScreen = ({
+export const CascadeScreen = React.memo(({
   JVectorMapWithNoSSR,
 }: ICascadeScreen) => {
   const { module, isLoaded, error } = useLumeraClientWrapper();
@@ -258,14 +260,13 @@ export const CascadeScreen = ({
   return (
     <CascadeContent module={module} JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
   );
-};
+});
 
 export const CascadeContent = React.memo(({
   JVectorMapWithNoSSR,
   module,
 }: ICascadeContent) => {
-  const client = module.useLumeraClient();
-  const memoizedClient = React.useMemo(() => client, [client]);
+  const client = React.useMemo(() => module.useLumeraClient(), [module]);
 
   const {
     isUploading,
@@ -284,12 +285,14 @@ export const CascadeContent = React.memo(({
     isMarkerLoading,
     handleDownloadAllFile: onDownloadAllFile,
     handleDownloadFile: onDownloadClick,
-    handleSelectFile:onSelectFile,
+    handleSelectFile: onSelectFile,
     handleSelectAll: onSelectAll,
     handleFileSearchChange: onFileSearchChange,
     handleFileTypeFilterChange: onFileTypeFilterChange,
     handleUploadCascade: onFileChange,
-  } = useCascade({ lumeraSdk: memoizedClient });
+  } = useCascade({ lumeraSdk: client });
+
+  const memoizedFilteredFiles = React.useMemo(() => filteredFiles, [filteredFiles, fileSearch, fileTypeFilter]);
 
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
@@ -411,7 +414,7 @@ export const CascadeContent = React.memo(({
                       <Checkbox
                         id="checkAll"
                         size="$4"
-                        checked={selectedFiles.length === filteredFiles.length && filteredFiles.length > 0}
+                        checked={selectedFiles.length === memoizedFilteredFiles.length && memoizedFilteredFiles.length > 0}
                         onCheckedChange={onSelectAll}
                       >
                         <Checkbox.Indicator>
@@ -427,13 +430,13 @@ export const CascadeContent = React.memo(({
                 <div className="col-span-1 text-right">Size</div>
                 <div className="col-span-2 text-right">Action</div>
               </div>
-              {filteredFiles.map((file, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
+              {memoizedFilteredFiles.map((file, index) => (
+                <div key={file.name || index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
                   <div className="col-span-full md:col-span-5 flex items-center gap-4">
                     <div className='flex items-start'>
                       <div className='w-10'>
                         <Checkbox
-                          id="checkAll"
+                          id={`check-${index}`}
                           size="$4"
                           checked={selectedFiles.includes(file.name)}
                           onCheckedChange={() => onSelectFile(file)}
@@ -493,4 +496,4 @@ export const CascadeContent = React.memo(({
       }
     </YStack>
   )
-})
+});
