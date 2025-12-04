@@ -41,7 +41,7 @@ interface ICascadeScreen {
 
 interface ICascadeContent {
   JVectorMapWithNoSSR: any;
-  module: any;
+  client: any;
 }
 
 interface ISuperNodeMap {
@@ -256,15 +256,14 @@ export const CascadeScreen = ({
   }
 
   return (
-    <CascadeContent module={module} JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
+    <CascadeContent client={module} JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
   );
 };
 
 export const CascadeContent = React.memo(({
   JVectorMapWithNoSSR,
-  module,
+  client,
 }: ICascadeContent) => {
-  const client = module.useLumeraClient();
   const memoizedClient = React.useMemo(() => client, [client]);
 
   const {
@@ -359,128 +358,130 @@ export const CascadeContent = React.memo(({
           )}
         </Dropzone>
       </div>
-      <div className='mt-6 w-full relative'>
-        <Loading isLoading={isMyFilesLoading} />
-        <Card elevate size="$4" bordered className='w-full !p-[18px]'>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <h2 className="text-xl font-semibold text-white">My Files</h2>
-            <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-              <div className="flex items-center border border-gray-700 rounded-lg p-1 bg-gray-900/50 gap-1 overflow-x-auto">
-                {FILES_TYPE.map(type => (
-                  <button
-                    key={type.value}
-                    onClick={() => onFileTypeFilterChange(type.value)}
-                    className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap ${fileTypeFilter === type.value ? 'bg-lumera-teal text-white' :
-                      'text-gray-300 hover:bg-lumera-teal'}`}
-                  >
-                    {type.label} ({fileCounts[type.value as TFileTypeKey]})
-                  </button>
-                ))}
-              </div>
-              <div className="relative w-full md:w-auto">
-                <div className='input-wrapper'>
-                  <Input
-                    id="keyword"
-                    placeholder="Search my files..."
-                    className='input  has-symbol'
-                    value={fileSearch}
-                    onChangeText={onFileSearchChange}
-                  />
-                  <span className='input-symbol'>
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                  </span>
+      {filteredFiles?.length ?
+        <div className='mt-6 w-full relative'>
+          <Loading isLoading={isMyFilesLoading} />
+          <Card elevate size="$4" bordered className='w-full !p-[18px]'>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <h2 className="text-xl font-semibold text-white">My Files</h2>
+              <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                <div className="flex items-center border border-gray-700 rounded-lg p-1 bg-gray-900/50 gap-1 overflow-x-auto">
+                  {FILES_TYPE.map(type => (
+                    <button
+                      key={type.value}
+                      onClick={() => onFileTypeFilterChange(type.value)}
+                      className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap ${fileTypeFilter === type.value ? 'bg-lumera-teal text-white' :
+                        'text-gray-300 hover:bg-lumera-teal'}`}
+                    >
+                      {type.label} ({fileCounts[type.value as TFileTypeKey]})
+                    </button>
+                  ))}
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {selectedFiles.length > 0 &&
-            <div className="bg-gray-700/50 p-3 rounded-lg flex justify-between items-center mb-4">
-              <span className="text-sm font-semibold text-white">{selectedFiles.length} file(s) selected</span>
-              <AppButton variant="secondary" className="!py-1.5 !px-4" onClick={onDownloadAllFile}>
-                <Download className="w-4 h-4" /> Download as .zip
-              </AppButton>
-            </div>
-          }
-          <div className='md:overflow-x-auto '>
-            <div className="space-y-2 md:min-w-[1050px]">
-              <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase items-center">
-                <div className="col-span-5">
-                  <div className='flex items-start'>
-                    <div className='w-10'>
-                      <Checkbox
-                        id="checkAll"
-                        size="$4"
-                        checked={selectedFiles.length === filteredFiles.length && filteredFiles.length > 0}
-                        onCheckedChange={onSelectAll}
-                      >
-                        <Checkbox.Indicator>
-                          <CheckIcon />
-                        </Checkbox.Indicator>
-                      </Checkbox>
-                    </div>
-                    <span>Name</span>
+                <div className="relative w-full md:w-auto">
+                  <div className='input-wrapper'>
+                    <Input
+                      id="keyword"
+                      placeholder="Search my files..."
+                      className='input  has-symbol'
+                      value={fileSearch}
+                      onChangeText={onFileSearchChange}
+                    />
+                    <span className='input-symbol'>
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    </span>
                   </div>
                 </div>
-                <div className="col-span-2">Last Modified</div>
-                <div className="col-span-2">TX ID</div>
-                <div className="col-span-1 text-right">Size</div>
-                <div className="col-span-2 text-right">Action</div>
               </div>
-              {filteredFiles.map((file, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
-                  <div className="col-span-full md:col-span-5 flex items-center gap-4">
+            </div>
+
+            {selectedFiles.length > 0 &&
+              <div className="bg-gray-700/50 p-3 rounded-lg flex justify-between items-center mb-4">
+                <span className="text-sm font-semibold text-white">{selectedFiles.length} file(s) selected</span>
+                <AppButton variant="secondary" className="!py-1.5 !px-4" onClick={onDownloadAllFile}>
+                  <Download className="w-4 h-4" /> Download as .zip
+                </AppButton>
+              </div>
+            }
+            <div className='md:overflow-x-auto '>
+              <div className="space-y-2 md:min-w-[1050px]">
+                <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase items-center">
+                  <div className="col-span-5">
                     <div className='flex items-start'>
                       <div className='w-10'>
                         <Checkbox
                           id="checkAll"
                           size="$4"
-                          checked={selectedFiles.includes(file.name)}
-                          onCheckedChange={() => onSelectFile(file)}
+                          checked={selectedFiles.length === filteredFiles.length && filteredFiles.length > 0}
+                          onCheckedChange={onSelectAll}
                         >
                           <Checkbox.Indicator>
                             <CheckIcon />
                           </Checkbox.Indicator>
                         </Checkbox>
                       </div>
-                      <div className='flex items-start flex-wrap gap-2'>
-                        {getFileIcon(getSimplifiedType(file.type))}
-                        <span className="font-medium text-white truncate">{file.name}</span>
-                      </div>
+                      <span>Name</span>
                     </div>
                   </div>
-                  <div className="col-span-full md:col-span-2 text-sm text-gray-400">
-                    <span className="md:hidden font-semibold text-gray-500 mr-2">Last Modified: </span>
-                    {new Date(file.lastModified).toLocaleDateString()}
-                  </div>
-                  <div className="col-span-full md:col-span-2 text-sm">
-                    <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
-                    <AppLink
-                      href={`/tx/${file.txId}`}
-                      className="font-mono text-indigo-400 hover:underline truncate inline-flex items-center gap-1.5"
-                    >
-                      {formatAddress(file.txId, 6, -6)}<ArrowUpRight className="w-3 h-3"/>
-                    </AppLink>
-                  </div>
-                  <div className="col-span-full md:col-span-1 text-sm text-gray-300 md:text-right">
-                    <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                    {formatBytes(file.size)}
-                  </div>
-                  <div className="col-span-full md:col-span-2 flex justify-start md:justify-end">
-                    <AppButton
-                      variant="secondary"
-                      className="!py-1.5 !px-4 text-sm w-full md:w-auto max-w-40"
-                      onClick={() => onDownloadClick(file)}
-                    >
-                      <Download className="w-4 h-4"/> Download
-                    </AppButton>
-                  </div>
+                  <div className="col-span-2">Last Modified</div>
+                  <div className="col-span-2">TX ID</div>
+                  <div className="col-span-1 text-right">Size</div>
+                  <div className="col-span-2 text-right">Action</div>
                 </div>
-              ))}
+                {filteredFiles.map((file, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
+                    <div className="col-span-full md:col-span-5 flex items-center gap-4">
+                      <div className='flex items-start'>
+                        <div className='w-10'>
+                          <Checkbox
+                            id="checkAll"
+                            size="$4"
+                            checked={selectedFiles.includes(file.name)}
+                            onCheckedChange={() => onSelectFile(file)}
+                          >
+                            <Checkbox.Indicator>
+                              <CheckIcon />
+                            </Checkbox.Indicator>
+                          </Checkbox>
+                        </div>
+                        <div className='flex items-start flex-wrap gap-2'>
+                          {getFileIcon(getSimplifiedType(file.type))}
+                          <span className="font-medium text-white truncate">{file.name}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-span-full md:col-span-2 text-sm text-gray-400">
+                      <span className="md:hidden font-semibold text-gray-500 mr-2">Last Modified: </span>
+                      {new Date(file.lastModified).toLocaleDateString()}
+                    </div>
+                    <div className="col-span-full md:col-span-2 text-sm">
+                      <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
+                      <AppLink
+                        href={`/tx/${file.txId}`}
+                        className="font-mono text-indigo-400 hover:underline truncate inline-flex items-center gap-1.5"
+                      >
+                        {formatAddress(file.txId, 6, -6)}<ArrowUpRight className="w-3 h-3"/>
+                      </AppLink>
+                    </div>
+                    <div className="col-span-full md:col-span-1 text-sm text-gray-300 md:text-right">
+                      <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
+                      {formatBytes(file.size)}
+                    </div>
+                    <div className="col-span-full md:col-span-2 flex justify-start md:justify-end">
+                      <AppButton
+                        variant="secondary"
+                        className="!py-1.5 !px-4 text-sm w-full md:w-auto max-w-40"
+                        onClick={() => onDownloadClick(file)}
+                      >
+                        <Download className="w-4 h-4"/> Download
+                      </AppButton>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div> : null
+      }
 
       {isDownloading ?
         <div className='fixed right-2 bottom-2 z-50'>
