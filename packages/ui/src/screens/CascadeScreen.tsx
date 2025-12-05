@@ -8,6 +8,8 @@ import {
   Paragraph,
   Input,
   Checkbox,
+  Dialog,
+  VisuallyHidden,
 } from 'tamagui';
 import Dropzone from 'react-dropzone';
 import { CloudUpload } from '@tamagui/lucide-icons';
@@ -30,8 +32,8 @@ import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
-import useCascade, { FILES_TYPE, TFileTypeKey, IMarker } from '@/hooks/useCascade';
-import { formatAddress } from '@/utils/format';
+import useCascade, { FILES_TYPE, TFileTypeKey, IMarker, ISelectedFile, IMyFile } from '@/hooks/useCascade';
+import { formatAddress, formatFileSize } from '@/utils/format';
 import { getSimplifiedType, formatBytes } from '@/utils/helpers';
 import { useLumeraClientWrapper } from '@/hooks/useLumeraClientWrapper';
 
@@ -47,6 +49,16 @@ interface ICascadeContent {
 interface ISuperNodeMap {
   JVectorMapWithNoSSR: any;
   markers: IMarker[];
+}
+
+interface IActionFeeModal {
+  isOpen: boolean;
+  fileName: string;
+  fileZise: number;
+  uploadFee: string;
+  onCloseModal: () => void;
+  onCancelClick: () => void;
+  onOkClick: () => void;
 }
 
 const countryNames: { [key: string]: string } = {
@@ -237,6 +249,15 @@ const getFileIcon = (type: string) => {
   }
 };
 
+const checkSelectedFile = (selectedFiles: ISelectedFile[], file: IMyFile) => {
+  selectedFiles.includes(file)
+  const existFile = selectedFiles.find((f) => f.actionID === file.actionID);
+  if (existFile) {
+    return true;
+  }
+  return false;
+}
+
 export const CascadeScreen = ({
   JVectorMapWithNoSSR,
 }: ICascadeScreen) => {
@@ -260,6 +281,78 @@ export const CascadeScreen = ({
   );
 };
 
+const ActionFeeModal = ({
+  isOpen,
+  fileName,
+  fileZise,
+  uploadFee,
+  onCloseModal,
+  onCancelClick,
+  onOkClick,
+}: IActionFeeModal) => {
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={onCloseModal}
+      modal
+    >
+      <Dialog.Trigger asChild>
+      </Dialog.Trigger>
+
+      <Dialog.Portal>
+        <Dialog.Overlay
+          key="overlay"
+          animation="quick"
+          opacity={0.5}
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
+        />
+
+        <Dialog.Content
+          bordered
+          elevate
+          key="content"
+          animation={[
+            'quick',
+            {
+              opacity: {
+                overshootClamping: true,
+              },
+            },
+          ]}
+          enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+          exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+          x={0}
+          scale={1}
+          opacity={1}
+          y={0}
+        >
+          <VisuallyHidden>
+            <Dialog.Title></Dialog.Title>
+          </VisuallyHidden>
+          <div className="relative p-3">
+            <div className='mx-auto max-w-[550px] sm:min-w-[450px]'>
+              <p>You are uploading "<strong>{fileName}</strong>"</p>
+              <p>Size: <strong>{formatFileSize(fileZise)}</strong></p>
+              <p>Fee: <strong>{uploadFee}</strong></p>
+              <p className='mt-2'>Do you want to upload this file?</p>
+            </div>
+            <div className='flex justify-end mt-5 gap-3'>
+              <AppButton
+                variant="secondary"
+                onClick={onCancelClick}
+              >
+                Cancel
+              </AppButton>
+              <AppButton onClick={onOkClick} className='min-w-[100px]'>Continue</AppButton>
+            </div>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog>
+  );
+}
+
 export const CascadeContent = React.memo(({
   JVectorMapWithNoSSR,
   client,
@@ -270,7 +363,7 @@ export const CascadeContent = React.memo(({
     isUploading,
     error,
     isFetchSummaryLoading,
-    summary,
+    networkStorage,
     address,
     fileCounts,
     fileTypeFilter,
@@ -281,13 +374,18 @@ export const CascadeContent = React.memo(({
     isDownloading,
     isMyFilesLoading,
     isMarkerLoading,
-    handleDownloadAllFile: onDownloadAllFile,
-    handleDownloadFile: onDownloadClick,
-    handleSelectFile:onSelectFile,
-    handleSelectAll: onSelectAll,
-    handleFileSearchChange: onFileSearchChange,
-    handleFileTypeFilterChange: onFileTypeFilterChange,
-    handleUploadCascade: onFileChange,
+    selectedModal,
+    uploadCascadeInfo,
+    myUsage,
+    openActionFeeModal,
+    closeActionFeeModal,
+    handleDownloadAllFile,
+    handleDownloadFile,
+    handleSelectFile,
+    handleSelectAll,
+    handleFileSearchChange,
+    handleFileTypeFilterChange,
+    handleUploadCascade,
   } = useCascade({ lumeraSdk: memoizedClient });
 
   const memoizedFilteredFiles = React.useMemo(() => filteredFiles, [filteredFiles, fileSearch, fileTypeFilter]);
@@ -301,7 +399,7 @@ export const CascadeContent = React.memo(({
             <div className='font-bold text-lumera-blue-light leading-[1.1]'>
               {
                 isFetchSummaryLoading ? <Skeleton /> : <>
-                  <span className='text-[40px]'>{summary.networkStorage}</span> <span className='text-xl whitespace-nowrap'>({summary.totalSupernode} Active Supernodes)</span>
+                  <span className='text-[40px]'>{networkStorage.networkStorage}</span> <span className='text-xl whitespace-nowrap'>({networkStorage.totalSupernode} Active Supernodes)</span>
                 </>
               }
             </div>
@@ -314,9 +412,10 @@ export const CascadeContent = React.memo(({
             {address ?
               <>
                 {
-                  isFetchSummaryLoading ? <Skeleton /> : <>
+                  isMyFilesLoading ? <Skeleton /> : <>
                     <div className='font-bold text-white leading-[1.1]'>
-                      <span className='text-[40px]'>{summary.myUsage}</span> <span className='text-xl whitespace-nowrap'>({summary.myUploaded} Files Uploaded)</span>
+                      {/* <span className='text-[40px]'>{myUsage.size}</span> <span className='text-xl whitespace-nowrap'>({myUsage.uploaded} Files Uploaded)</span> */}
+                      <span className='text-[40px]'>TBD</span>
                     </div>
                   </>
                 }
@@ -339,7 +438,7 @@ export const CascadeContent = React.memo(({
       </div>
       <div className='mt-6 w-full relative'>
         <Loading isLoading={isUploading} />
-        <Dropzone onDrop={onFileChange} multiple={false}>
+        <Dropzone onDrop={openActionFeeModal} multiple={false}>
           {({getRootProps, getInputProps}) => (
             <div {...getRootProps()} className='dropzone-wrapper flex flex-col justify-center items-center'>
               <input {...getInputProps()} />
@@ -360,7 +459,7 @@ export const CascadeContent = React.memo(({
           )}
         </Dropzone>
       </div>
-      {filteredFiles?.length ?
+      {address ?
         <div className='mt-6 w-full relative'>
           <Loading isLoading={isMyFilesLoading} />
           <Card elevate size="$4" bordered className='w-full !p-[18px]'>
@@ -371,7 +470,7 @@ export const CascadeContent = React.memo(({
                   {FILES_TYPE.map(type => (
                     <button
                       key={type.value}
-                      onClick={() => onFileTypeFilterChange(type.value)}
+                      onClick={() => handleFileTypeFilterChange(type.value)}
                       className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap ${fileTypeFilter === type.value ? 'bg-lumera-teal text-white' :
                         'text-gray-300 hover:bg-lumera-teal'}`}
                     >
@@ -386,7 +485,7 @@ export const CascadeContent = React.memo(({
                       placeholder="Search my files..."
                       className='input  has-symbol'
                       value={fileSearch}
-                      onChangeText={onFileSearchChange}
+                      onChangeText={handleFileSearchChange}
                     />
                     <span className='input-symbol'>
                       <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
@@ -399,7 +498,7 @@ export const CascadeContent = React.memo(({
             {selectedFiles.length > 0 &&
               <div className="bg-gray-700/50 p-3 rounded-lg flex justify-between items-center mb-4">
                 <span className="text-sm font-semibold text-white">{selectedFiles.length} file(s) selected</span>
-                <AppButton variant="secondary" className="!py-1.5 !px-4" onClick={onDownloadAllFile}>
+                <AppButton variant="secondary" className="!py-1.5 !px-4" onClick={handleDownloadAllFile}>
                   <Download className="w-4 h-4" /> Download as .zip
                 </AppButton>
               </div>
@@ -414,7 +513,7 @@ export const CascadeContent = React.memo(({
                           id="checkAll"
                           size="$4"
                           checked={selectedFiles.length === memoizedFilteredFiles.length && memoizedFilteredFiles.length > 0}
-                          onCheckedChange={onSelectAll}
+                          onCheckedChange={handleSelectAll}
                         >
                           <Checkbox.Indicator>
                             <CheckIcon />
@@ -429,6 +528,11 @@ export const CascadeContent = React.memo(({
                   <div className="col-span-1 text-right">Size</div>
                   <div className="col-span-2 text-right">Action</div>
                 </div>
+                {!filteredFiles?.length && !isMyFilesLoading ? (
+                  <div className="w-full bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
+                    <H3 className='text-2xl'>No files</H3>
+                  </div>
+                ) : null }
                 {memoizedFilteredFiles.map((file, index) => (
                   <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
                     <div className="col-span-full md:col-span-5 flex items-center gap-4">
@@ -437,8 +541,8 @@ export const CascadeContent = React.memo(({
                           <Checkbox
                             id="checkAll"
                             size="$4"
-                            checked={selectedFiles.includes(file.name)}
-                            onCheckedChange={() => onSelectFile(file)}
+                            checked={checkSelectedFile(selectedFiles, file)}
+                            onCheckedChange={() => handleSelectFile(file)}
                           >
                             <Checkbox.Indicator>
                               <CheckIcon />
@@ -453,26 +557,31 @@ export const CascadeContent = React.memo(({
                     </div>
                     <div className="col-span-full md:col-span-2 text-sm text-gray-400">
                       <span className="md:hidden font-semibold text-gray-500 mr-2">Last Modified: </span>
-                      {new Date(file.lastModified).toLocaleDateString()}
+                      {/* {new Date(file.lastModified).toLocaleDateString()} */}
+                      TBD
                     </div>
                     <div className="col-span-full md:col-span-2 text-sm">
                       <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
-                      <AppLink
-                        href={`/tx/${file.txId}`}
-                        className="font-mono text-indigo-400 hover:underline truncate inline-flex items-center gap-1.5"
-                      >
-                        {formatAddress(file.txId, 6, -6)}<ArrowUpRight className="w-3 h-3"/>
-                      </AppLink>
+                      {/* {file.txId ?
+                        <AppLink
+                          href={`/tx/${file.txId}`}
+                          className="font-mono text-indigo-400 hover:underline truncate inline-flex items-center gap-1.5"
+                        >
+                          {formatAddress(file.txId, 6, -6)}<ArrowUpRight className="w-3 h-3"/>
+                        </AppLink> : '--'
+                      } */}
+                      TBD
                     </div>
                     <div className="col-span-full md:col-span-1 text-sm text-gray-300 md:text-right">
                       <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                      {formatBytes(file.size)}
+                      {/* {formatBytes(file.size)} */}
+                      TBD
                     </div>
                     <div className="col-span-full md:col-span-2 flex justify-start md:justify-end">
                       <AppButton
                         variant="secondary"
                         className="!py-1.5 !px-4 text-sm w-full md:w-auto max-w-40"
-                        onClick={() => onDownloadClick(file)}
+                        onClick={() => handleDownloadFile(file)}
                       >
                         <Download className="w-4 h-4"/> Download
                       </AppButton>
@@ -481,7 +590,7 @@ export const CascadeContent = React.memo(({
                 ))}
               </div>
             </div>
-          </Card>
+            </Card>
         </div> : null
       }
 
@@ -494,6 +603,15 @@ export const CascadeContent = React.memo(({
           </Card>
         </div> : null
       }
+      <ActionFeeModal
+        fileName={uploadCascadeInfo.fileName}
+        fileZise={uploadCascadeInfo.fileZise}
+        uploadFee={uploadCascadeInfo.uploadFee}
+        isOpen={selectedModal === 'upload-cascade'}
+        onCancelClick={closeActionFeeModal}
+        onCloseModal={closeActionFeeModal}
+        onOkClick={handleUploadCascade}
+      />
     </YStack>
   )
 })
