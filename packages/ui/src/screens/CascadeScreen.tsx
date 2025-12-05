@@ -414,7 +414,8 @@ export const CascadeContent = React.memo(({
                 {
                   isMyFilesLoading ? <Skeleton /> : <>
                     <div className='font-bold text-white leading-[1.1]'>
-                      <span className='text-[40px]'>{myUsage.size}</span> <span className='text-xl whitespace-nowrap'>({myUsage.uploaded} Files Uploaded)</span>
+                      {/* <span className='text-[40px]'>{myUsage.size}</span> <span className='text-xl whitespace-nowrap'>({myUsage.uploaded} Files Uploaded)</span> */}
+                      <span className='text-[40px]'>TBD</span>
                     </div>
                   </>
                 }
@@ -556,22 +557,25 @@ export const CascadeContent = React.memo(({
                     </div>
                     <div className="col-span-full md:col-span-2 text-sm text-gray-400">
                       <span className="md:hidden font-semibold text-gray-500 mr-2">Last Modified: </span>
-                      {new Date(file.lastModified).toLocaleDateString()}
+                      {/* {new Date(file.lastModified).toLocaleDateString()} */}
+                      TBD
                     </div>
                     <div className="col-span-full md:col-span-2 text-sm">
                       <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
-                      {file.txId ?
+                      {/* {file.txId ?
                         <AppLink
                           href={`/tx/${file.txId}`}
                           className="font-mono text-indigo-400 hover:underline truncate inline-flex items-center gap-1.5"
                         >
                           {formatAddress(file.txId, 6, -6)}<ArrowUpRight className="w-3 h-3"/>
                         </AppLink> : '--'
-                      }
+                      } */}
+                      TBD
                     </div>
                     <div className="col-span-full md:col-span-1 text-sm text-gray-300 md:text-right">
                       <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                      {formatBytes(file.size)}
+                      {/* {formatBytes(file.size)} */}
+                      TBD
                     </div>
                     <div className="col-span-full md:col-span-2 flex justify-start md:justify-end">
                       <AppButton
