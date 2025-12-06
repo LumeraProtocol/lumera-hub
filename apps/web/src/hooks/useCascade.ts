@@ -122,7 +122,9 @@ const getFileType = (filename: string) => {
 }
 
 const GAS_PRICE = '0.025ulume';
-
+const ITEM_PER_PAGE = 10;
+const PAGE_LIMIT = 500;
+const SDK_PRESET = process.env.NEXT_PUBLIC_SDK_PRESET || 'testnet';
 const protoTypes = loadProto();
 
 const parseMetaData = (metadata: string) => {
@@ -162,10 +164,12 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const [fileTypeFilter, setFileTypeFilter] = useState<string>(FILES_TYPE[0].value);
   const [fileSearch, setFileSearch] = useState('');
   const [myFiles, setMyFiles] = useState<IMyFile[]>([]);
+  const [myFilesOriginal, setMyFilesOriginal] = useState<IMyFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<ISelectedFile[]>([]);
   const [markers, setMarkers] = useState<IMarker[]>([]);
   const [isDownloading, setDownloading] = useState(false);
   const [isMyFilesLoading, setMyFilesLoading] = useState(false);
+  const [isMyFilesLoadMore, setMyFilesLoadMore] = useState(false);
   const [isMarkerLoading, setMarkerLoading] = useState(false);
   const [selectedUploadCascadeFiles, setSelectedUploadCascadeFiles] = useState<File[]>([]);
   const [selectedModal, setSelectedModal] = useState('');
@@ -173,7 +177,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     fileName: '',
     fileZise: 0,
     uploadFee: '',
-  })
+  });
+  const [totalPage, setTotalPage] = useState(0);
 
   const filteredFiles = useMemo(() => {
     return myFiles
@@ -199,7 +204,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     });
     return counts;
   }, [myFiles]);
-
 
   const handleSelectFile = (file: IMyFile) => {
     setSelectedFiles(prev => {
@@ -279,9 +283,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   }
 
   const getChartMarker = useCallback(async (items: ISupernode[]) => {
-    if (markers?.length || items?.length === markers.length) {
-      return;
-    }
     try {
       const results: IMarker[] = [];
       const supernodeData: IMarker[] = await readSupernodeFile();
@@ -331,11 +332,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     try {
       if (lumeraSdk) {
         const client = await lumeraSdk.getLumeraClientWithoutSigner({
-          chainId: CHAIN_ID,
-          rpcUrl: RPC_ENDPOINT,
-          lcdUrl: REST_AI_URL,
-          snapiUrl: SNAPI_URL,
-          gasPrice: GAS_PRICE,
+          preset: SDK_PRESET,
         });
         const items: ISupernode[] = await lumeraSdk.getSupernodes(client);
         setNetworkStorage({
@@ -352,40 +349,67 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setMarkerLoading(false);
   }, [lumeraSdk, address, getChartMarker]);
 
-  const fetchMyFiles = async (nextKey = '') => {
+  const fetchMyFiles = async (offset = 0) => {
     try {
-      const nextKeyParam = nextKey ? `&pagination.key=${nextKey}` : '';
-      const { data } = await instance.get(`/LumeraProtocol/lumera/action/v1/list_actions?actionType=ACTION_TYPE_UNSPECIFIED&actionState=ACTION_STATE_UNSPECIFIED${nextKeyParam}`);
-      const results: IMyFile[] = [];
-      for (const action of data.actions) {
-        if (action.creator === address) {
-          const metadata = parseMetaData(action.metadata);
-          results.push({
-            name: metadata?.fileName || '',
-            size: 0,
-            txId: '',
-            type: getFileType(metadata?.fileName),
-            actionID: action.actionID,
-            lastModified: `${new Date()}`,// TBD
-          });
-        }
-      }
-      if (data?.pagination?.next_key) {
-        return fetchMyFiles(data.pagination.next_key);
-      }
-      return results;
+      const { data } = await instance.get(`/LumeraProtocol/lumera/action/v1/list_actions?actionType=ACTION_TYPE_UNSPECIFIED&actionState=ACTION_STATE_UNSPECIFIED&pagination.limit=${PAGE_LIMIT}&pagination.offset=${offset}&pagination.reverse=true&pagination.count_total=true`);
+
+      return {
+        actions: data.actions,
+        nextKey: data.pagination.next_key,
+        total: data.pagination.total,
+      };
     } catch (e) {
       console.error('API Error:', e);
-      return [];
+      return {
+        actions: null,
+        nextKey: null,
+        total: 0,
+      };
     }
   };
 
   const getMyFiles = useCallback(async () => {
     setMyFilesLoading(true);
+    setMyFilesLoadMore(true);
     try {
-      const files = await fetchMyFiles();
-      setMyFiles(files);
+      let isContinue = true;
+      const files: IMyFile[] = [];
+      let counter = 1;
+      let isUpdateMyFIles = false;
+      do {
+        const offset = (counter - 1) * PAGE_LIMIT;
+        const results = await fetchMyFiles(offset);
+        if (results.actions) {
+          for (const action of results.actions) {
+            if (action.creator === address) {
+              const metadata = parseMetaData(action.metadata);
+              files.push({
+                name: metadata?.fileName || '',
+                size: 0,// TBD
+                txId: '',// TBD
+                type: getFileType(metadata?.fileName),
+                actionID: action.actionID,
+                lastModified: `${new Date()}`,// TBD
+              });
+            }
+          }
+        }
+        if (files.length >= ITEM_PER_PAGE && !myFiles?.length) {
+          setMyFiles(files.slice(0, ITEM_PER_PAGE));
+          setMyFilesLoading(false);
+          isUpdateMyFIles = true;
+        }
+        if (PAGE_LIMIT * counter >= Number(results.total)) {
+          isContinue = false;
+        }
+        counter++;
+      } while (isContinue);
+      if (!isUpdateMyFIles) {
+        setMyFiles(files);
+      }
+      setMyFilesOriginal(files);
       const totalSize = files.reduce((total, item) => total + item.size, 0);
+      setTotalPage(Math.ceil(files?.length / ITEM_PER_PAGE));
       setMyUsage({
         size: formatBytes(totalSize),
         uploaded: files?.length || 0,
@@ -397,6 +421,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       });
     }
     setMyFilesLoading(false);
+    setMyFilesLoadMore(false);
   }, []);
 
   useEffect(() => {
@@ -431,13 +456,9 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           const signaturePrompter = lumeraSdk.createBatchedSignaturePrompter();
           const txPrompter = lumeraSdk.createDefaultTxPrompter() || undefined;
           const client = await lumeraSdk.getLumeraClient({
-            chainId: CHAIN_ID,
-            rpcUrl: RPC_ENDPOINT,
-            lcdUrl: REST_AI_URL,
-            snapiUrl: SNAPI_URL,
             signer: offlineSigner,
             address,
-            gasPrice: GAS_PRICE,
+            preset: SDK_PRESET,
           });
           const result = await lumeraSdk.uploadCascade({
             fileBytes,
@@ -463,11 +484,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     try {
       const selectedFile = files[0];
       const client = await lumeraSdk.getLumeraClientWithoutSigner({
-        chainId: CHAIN_ID,
-        rpcUrl: RPC_ENDPOINT,
-        lcdUrl: REST_AI_URL,
-        snapiUrl: SNAPI_URL,
-        gasPrice: GAS_PRICE,
+        preset: SDK_PRESET,
       });
       const result = await lumeraSdk.getActionFee(client, selectedFile.size);
       setSploadCascadeInfo({
@@ -519,7 +536,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     return downloadedBytes;
   }
 
-  const downloadFilee = (content: Blob, fileName: string) => {
+  const downloadFile = (content: Blob, fileName: string) => {
     const url = URL.createObjectURL(content);
     const a = document.createElement('a');
     a.href = url;
@@ -537,13 +554,9 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         const lastActionId = file.actionID;
         const offlineSigner = await getOfflineSigner();
         const client = await lumeraSdk.getLumeraClient({
-          chainId: CHAIN_ID,
-          rpcUrl: RPC_ENDPOINT,
-          lcdUrl: REST_AI_URL,
-          snapiUrl: SNAPI_URL,
           signer: offlineSigner,
           address,
-          gasPrice: GAS_PRICE,
+          preset: SDK_PRESET,
         });
         const stream =  await lumeraSdk.downloadCascade({
           lastActionId,
@@ -558,7 +571,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         const downloadedBytes = await getDownloadedBytes(stream);
         // Create a blob and download it
         const blob = new Blob([downloadedBytes]);
-        downloadFilee(blob, file.name);
+        downloadFile(blob, file.name);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
@@ -573,18 +586,13 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setDownloading(true);
     try {
       if (lumeraSdk) {
-        // TODO: Implement
         const files: FileToDownload[] = selectedFiles;
         const zipFileName = 'downloaded_files.zip';
         const offlineSigner = await getOfflineSigner();
         const client = await lumeraSdk.getLumeraClient({
-          chainId: CHAIN_ID,
-          rpcUrl: RPC_ENDPOINT,
-          lcdUrl: REST_AI_URL,
-          snapiUrl: SNAPI_URL,
           signer: offlineSigner,
           address,
-          gasPrice: GAS_PRICE,
+          preset: SDK_PRESET,
         });
         const zip = new JSZip();
         for (const file of files) {
@@ -604,7 +612,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           zip.file(file.name, blob);
         }
         const content = await zip.generateAsync({ type: 'blob' });
-        downloadFilee(content, zipFileName);
+        downloadFile(content, zipFileName);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
@@ -613,6 +621,11 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       });
     }
     setDownloading(false);
+  }
+
+  const handlePageClick = ({ selected }: { selected: number }) => {
+    const offset = selected * ITEM_PER_PAGE;
+    setMyFiles(myFilesOriginal.slice(offset, offset + ITEM_PER_PAGE));
   }
 
   return {
@@ -634,6 +647,9 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     selectedModal,
     uploadCascadeInfo,
     myUsage,
+    totalPage,
+    isMyFilesLoadMore,
+    handlePageClick,
     closeActionFeeModal,
     openActionFeeModal,
     handleDownloadAllFile,

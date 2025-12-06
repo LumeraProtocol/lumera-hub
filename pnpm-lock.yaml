@@ -190,8 +190,8 @@ importers:
         specifier: ^2.0.5
         version: 2.0.5(react@19.1.0)
       react-lumera-sdk:
-        specifier: ^0.0.9
-        version: 0.0.9(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        specifier: ^0.0.10
+        version: 0.0.10(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       react-native:
         specifier: 0.79.5
         version: 0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.1.0)(utf-8-validate@5.0.10)
@@ -862,6 +862,9 @@ packages:
   '@babel/types@7.28.2':
     resolution: {integrity: sha512-ruv7Ae4J5dUYULmeXw1gmb7rYRz57OWCPM57pHojnLq/3Z1CK2lNSLTCVjxVk1F/TZHwOZZrOWi0ur95BbLxNQ==}
     engines: {node: '>=6.9.0'}
+
+  '@bokuweb/zstd-wasm@0.0.27':
+    resolution: {integrity: sha512-GDm2uOTK3ESjnYmSeLQifJnBsRCWajKLvN32D2ZcQaaCIJI/Hse9s74f7APXjHit95S10UImsRGkTsbwHmrtmg==}
 
   '@bufbuild/protobuf@2.10.1':
     resolution: {integrity: sha512-ckS3+vyJb5qGpEYv/s1OebUHDi/xSNtfgw1wqKZo7MR9F2z+qXr0q5XagafAG/9O0QPVIUfST0smluYSTpYFkg==}
@@ -1723,8 +1726,8 @@ packages:
   '@ledgerhq/logs@6.13.0':
     resolution: {integrity: sha512-4+qRW2Pc8V+btL0QEmdB2X+uyx0kOWMWE1/LWsq5sZy3Q5tpi4eItJS6mB0XL3wGW59RQ+8bchNQQ1OW/va8Og==}
 
-  '@lumera-protocol/sdk-js@0.2.3':
-    resolution: {integrity: sha512-+rlrq2X6zFi6SiL+EbanxupBcMJL/q/WtDdp9aSX4a9ylIBjrAfIrvlYcHA0QYWAoaW0+BRm6p3NhfazYJPLaA==}
+  '@lumera-protocol/sdk-js@0.2.4':
+    resolution: {integrity: sha512-qhN4ksCNCSzbRJQGz27zf3o8xq8MLlwh8+IOLf7awhIl1NkUSoNprOlDjy/u6nVChfxuBgkof44nIibUQrv2vA==}
     engines: {node: '>=18'}
 
   '@mongodb-js/zstd@2.0.1':
@@ -7186,8 +7189,8 @@ packages:
   react-lifecycles-compat@3.0.4:
     resolution: {integrity: sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==}
 
-  react-lumera-sdk@0.0.9:
-    resolution: {integrity: sha512-94+9nfcMFW/Aou6yrBno4FzvanT6khIyeSmlLG8ftg5f6JoAmCzJ3KXOPC7RAt0dleFdTXlkhCrhRM8HttoLJg==}
+  react-lumera-sdk@0.0.10:
+    resolution: {integrity: sha512-8hDoTTC/72+sAERoEdtkgzJGp4DhoV/+/RCDLPjK+Ziy0Vu+/xMimHFxVSTkacRc9bmqzMbEXvhgs+CJlcAQFA==}
 
   react-native-css-interop@0.1.22:
     resolution: {integrity: sha512-Mu01e+H9G+fxSWvwtgWlF5MJBJC4VszTCBXopIpeR171lbeBInHb8aHqoqRPxmJpi3xIHryzqKFOJYAdk7PBxg==}
@@ -9185,6 +9188,8 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
 
+  '@bokuweb/zstd-wasm@0.0.27': {}
+
   '@bufbuild/protobuf@2.10.1': {}
 
   '@chain-registry/keplr@2.0.42':
@@ -10943,8 +10948,9 @@ snapshots:
 
   '@ledgerhq/logs@6.13.0': {}
 
-  '@lumera-protocol/sdk-js@0.2.3(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@lumera-protocol/sdk-js@0.2.4(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
+      '@bokuweb/zstd-wasm': 0.0.27
       '@bufbuild/protobuf': 2.10.1
       '@cosmjs/amino': 0.36.1
       '@cosmjs/crypto': 0.36.1
@@ -20650,10 +20656,10 @@ snapshots:
 
   react-lifecycles-compat@3.0.4: {}
 
-  react-lumera-sdk@0.0.9(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10):
+  react-lumera-sdk@0.0.10(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10):
     dependencies:
       '@cosmjs/proto-signing': 0.37.0
-      '@lumera-protocol/sdk-js': 0.2.3(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      '@lumera-protocol/sdk-js': 0.2.4(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
       rq-library-wasm: 1.0.2
