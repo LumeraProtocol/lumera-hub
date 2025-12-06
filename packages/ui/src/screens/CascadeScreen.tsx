@@ -26,6 +26,7 @@ import {
   Check as CheckIcon,
   CircleX,
 } from 'lucide-react';
+import ReactPaginate from 'react-paginate';
 
 import Loading from '@/components/Loading';
 import Skeleton from '@/components/Skeleton';
@@ -36,6 +37,8 @@ import useCascade, { FILES_TYPE, TFileTypeKey, IMarker, ISelectedFile, IMyFile }
 import { formatAddress, formatFileSize } from '@/utils/format';
 import { getSimplifiedType, formatBytes } from '@/utils/helpers';
 import { useLumeraClientWrapper } from '@/hooks/useLumeraClientWrapper';
+
+import 'react-paginate/theme/basic/react-paginate.css';
 
 interface ICascadeScreen {
   JVectorMapWithNoSSR: any;
@@ -377,6 +380,8 @@ export const CascadeContent = React.memo(({
     selectedModal,
     uploadCascadeInfo,
     myUsage,
+    totalPage,
+    isMyFilesLoadMore,
     openActionFeeModal,
     closeActionFeeModal,
     handleDownloadAllFile,
@@ -386,6 +391,7 @@ export const CascadeContent = React.memo(({
     handleFileSearchChange,
     handleFileTypeFilterChange,
     handleUploadCascade,
+    handlePageClick,
   } = useCascade({ lumeraSdk: memoizedClient });
 
   const memoizedFilteredFiles = React.useMemo(() => filteredFiles, [filteredFiles, fileSearch, fileTypeFilter]);
@@ -432,7 +438,11 @@ export const CascadeContent = React.memo(({
       </div>
       <div className='mt-6 w-full'>
         <Card elevate size="$4" bordered className='w-full relative overflow-hidden'>
-          <Loading isLoading={isMarkerLoading} />
+          {isMarkerLoading ?
+            <div className='min-h-[500px]'>
+              <Skeleton className='min-h-[500px] !mb-0' />
+            </div> : null
+          }
           <SuperNodeMap JVectorMapWithNoSSR={JVectorMapWithNoSSR} markers={markers} />
         </Card>
       </div>
@@ -461,22 +471,28 @@ export const CascadeContent = React.memo(({
       </div>
       {address ?
         <div className='mt-6 w-full relative'>
-          <Loading isLoading={isMyFilesLoading} />
           <Card elevate size="$4" bordered className='w-full !p-[18px]'>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
               <h2 className="text-xl font-semibold text-white">My Files</h2>
               <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                 <div className="flex items-center border border-gray-700 rounded-lg p-1 bg-gray-900/50 gap-1 overflow-x-auto">
-                  {FILES_TYPE.map(type => (
-                    <button
-                      key={type.value}
-                      onClick={() => handleFileTypeFilterChange(type.value)}
-                      className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap ${fileTypeFilter === type.value ? 'bg-lumera-teal text-white' :
-                        'text-gray-300 hover:bg-lumera-teal'}`}
-                    >
-                      {type.label} ({fileCounts[type.value as TFileTypeKey]})
-                    </button>
-                  ))}
+                  {!isMyFilesLoading ?
+                    <>
+                      {FILES_TYPE.map(type => (
+                        <button
+                          key={type.value}
+                          onClick={() => handleFileTypeFilterChange(type.value)}
+                          className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap ${fileTypeFilter === type.value ? 'bg-lumera-teal text-white' :
+                            'text-gray-300 hover:bg-lumera-teal'}`}
+                        >
+                          {type.label} ({fileCounts[type.value as TFileTypeKey]})
+                        </button>
+                      ))}
+                    </> : null
+                  }
+                  {isMyFilesLoading ? (
+                    <Skeleton className='min-w-[426px] !mb-0 min-h-[22px]' />
+                  ) : null }
                 </div>
                 <div className="relative w-full md:w-auto">
                   <div className='input-wrapper'>
@@ -531,6 +547,11 @@ export const CascadeContent = React.memo(({
                 {!filteredFiles?.length && !isMyFilesLoading ? (
                   <div className="w-full bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
                     <H3 className='text-2xl'>No files</H3>
+                  </div>
+                ) : null }
+                {isMyFilesLoading ? (
+                  <div className="w-full rounded-lg">
+                    <Skeleton type='list' className='min-h-8' count={3} />
                   </div>
                 ) : null }
                 {memoizedFilteredFiles.map((file, index) => (
@@ -590,7 +611,24 @@ export const CascadeContent = React.memo(({
                 ))}
               </div>
             </div>
-            </Card>
+            {isMyFilesLoadMore && !isMyFilesLoading ?
+              <div className='my-3'>Searching for more data</div> : null
+            }
+            {totalPage > 1 ?
+              <div className="paginate-wrapper pt-3">
+                <ReactPaginate
+                  breakLabel="..."
+                  nextLabel=">"
+                  onPageChange={handlePageClick}
+                  pageRangeDisplayed={3}
+                  pageCount={totalPage}
+                  previousLabel="<"
+                  renderOnZeroPageCount={null}
+                  className='react-paginate'
+                />
+              </div> : null
+            }
+          </Card>
         </div> : null
       }
 
