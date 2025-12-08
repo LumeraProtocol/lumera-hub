@@ -113,9 +113,7 @@ const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap
   const [selectedMarker, seSelectedMarker] = useState<IMarker | null>(null);
 
   if (!JVectorMapWithNoSSR || !markers?.length) {
-    return (
-      <div className='min-h-80'></div>
-    );
+    return null;
   }
 
   return (
