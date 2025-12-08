@@ -375,23 +375,6 @@
   },
   {
     "latLng": [
-      39.9611755,
-      -82.9987942
-    ],
-    "name": "Columbus",
-    "continent": "North America",
-    "country": "United States",
-    "country_code": "US",
-    "subdivision": "Washington D.C.",
-    "city": "Columbus",
-    "supernodeAccount": "lumera1x6e45rudg37fxeaq58a9h883xcrxs4alzy3jq3",
-    "validatorAddress": "lumeravaloper1772e2pq56mzz972te69yhhnvew0eyc5d3vxrj8",
-    "validatorMoniker": "Aurora Staking",
-    "address": "3.146.151.198:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
       50.4750046,
       12.3649754
     ],
