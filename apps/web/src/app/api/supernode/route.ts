@@ -24,7 +24,7 @@ async function readFile() {
     return {
       status: false,
       supernodes: [],
-      message: error instanceof Error ? error.message : 'An unknown error occurred.'
+      message: (error as Error)?.message ||  'An unknown error occurred.'
     };
   }
 }
@@ -64,6 +64,6 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('API Error:', error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'An unknown error occurred.' }, { status: 500 });
+    return NextResponse.json({ error: (error as Error)?.message ||  'An unknown error occurred.' }, { status: 500 });
   }
 }

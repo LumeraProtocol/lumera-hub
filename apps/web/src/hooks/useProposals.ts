@@ -181,7 +181,7 @@ const useProposals = (options: UseDepositOptions = {}) => {
         }
       }
     } catch (error) {
-      setErrorVote(error instanceof Error ? error?.message : 'An unknown error occurred.')
+      setErrorVote((error as Error)?.message ||  'An unknown error occurred.')
     } finally {
       setVoteLoading(false);
     }

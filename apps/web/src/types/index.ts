@@ -186,6 +186,7 @@ export type TMessage = {
     validator_address: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     amount: any;
+    metadata?: string;
 }
 
 export type TOption = {

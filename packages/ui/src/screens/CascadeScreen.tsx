@@ -10,6 +10,8 @@ import {
   Checkbox,
   Dialog,
   VisuallyHidden,
+  RadioGroup,
+  Label,
 } from 'tamagui';
 import Dropzone from 'react-dropzone';
 import { CloudUpload } from '@tamagui/lucide-icons';
@@ -33,7 +35,14 @@ import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
-import useCascade, { FILES_TYPE, TFileTypeKey, IMarker, ISelectedFile, IMyFile } from '@/hooks/useCascade';
+import useCascade, {
+  FILES_TYPE,
+  TFileTypeKey,
+  IMarker,
+  ISelectedFile,
+  IMyFile,
+  getTxHash,
+} from '@/hooks/useCascade';
 import { formatAddress, formatFileSize } from '@/utils/format';
 import { getSimplifiedType, formatBytes } from '@/utils/helpers';
 import { useLumeraClientWrapper } from '@/hooks/useLumeraClientWrapper';
@@ -62,6 +71,7 @@ interface IActionFeeModal {
   onCloseModal: () => void;
   onCancelClick: () => void;
   onOkClick: () => void;
+  setPublish: (status: boolean) => void;
 }
 
 interface IUploadCascadeSuccessModal {
@@ -113,9 +123,7 @@ const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap
   const [selectedMarker, seSelectedMarker] = useState<IMarker | null>(null);
 
   if (!JVectorMapWithNoSSR || !markers?.length) {
-    return (
-      <div className='min-h-80'></div>
-    );
+    return null;
   }
 
   return (
@@ -301,6 +309,7 @@ const ActionFeeModal = ({
   onCloseModal,
   onCancelClick,
   onOkClick,
+  setPublish,
 }: IActionFeeModal) => {
   return (
     <Dialog
@@ -348,6 +357,33 @@ const ActionFeeModal = ({
               <p>Size: <strong>{formatFileSize(fileZise)}</strong></p>
               <p>Fee: <strong>{uploadFee}</strong></p>
               <p className='mt-2'>Do you want to upload this file?</p>
+              <div>
+                <RadioGroup
+                  defaultValue="private"
+                  name="status"
+                  id="status"
+                  onValueChange={(value) => setPublish(value === 'publish')}
+                >
+                  <div className='flex items-center gap-6 mt-1'>
+                    <div className='flex items-center gap-2'>
+                      <RadioGroup.Item value='private' id='radiogroup-private' size="$4">
+                        <RadioGroup.Indicator />
+                      </RadioGroup.Item>
+                      <Label size="$4" id='radiogroup-private' className='leading-none'>
+                        Private
+                      </Label>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <RadioGroup.Item value='publish' id='radiogroup-publish' size="$4">
+                        <RadioGroup.Indicator />
+                      </RadioGroup.Item>
+                      <Label size="$4" id='radiogroup-publish' className='leading-none'>
+                        Publish
+                      </Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
             </div>
             <div className='flex justify-end mt-5 gap-3'>
               <AppButton
@@ -432,6 +468,29 @@ const UploadCascadeSuccessModal = ({
   );
 }
 
+const getFileStatus = (state: string) => {
+  if (!state) {
+    return '--';
+  }
+  return state.replaceAll('ACTION_STATE_', '').replaceAll('_', ' ').toLocaleLowerCase();
+}
+
+const getStatusColor = (state: string) => {
+  if (!state) {
+    return '';
+  }
+  switch (state) {
+    case 'ACTION_STATE_EXPIRED':
+      return 'text-red-700';
+    case 'ACTION_STATE_DONE':
+      return 'text-lumera-green';
+    case 'ACTION_STATE_PENDING':
+      return 'text-orange-400';
+    default:
+      return '';
+  }
+}
+
 export const CascadeContent = React.memo(({
   JVectorMapWithNoSSR,
   client,
@@ -450,7 +509,6 @@ export const CascadeContent = React.memo(({
     selectedFiles,
     filteredFiles,
     markers,
-    isDownloading,
     isMyFilesLoading,
     isMarkerLoading,
     selectedModal,
@@ -458,6 +516,9 @@ export const CascadeContent = React.memo(({
     myUsage,
     totalPage,
     isMyFilesLoadMore,
+    selectedFileDownload,
+    txs,
+    setPublish,
     openActionFeeModal,
     closeActionFeeModal,
     handleDownloadAllFile,
@@ -497,7 +558,7 @@ export const CascadeContent = React.memo(({
                 {
                   isMyFilesLoading ? <Skeleton /> : <>
                     <div className='font-bold text-white leading-[1.1]'>
-                      <span className='text-[40px]'>TBD</span> <span className='text-xl whitespace-nowrap'>({myUsage.uploaded} Files Uploaded)</span>
+                      <span className='text-[40px]'>{myUsage.size}</span> <span className='text-xl whitespace-nowrap'>({myUsage.uploaded} Files Uploaded)</span>
                     </div>
                   </>
                 }
@@ -552,7 +613,7 @@ export const CascadeContent = React.memo(({
               <h2 className="text-xl font-semibold text-white">My Files</h2>
               <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                 <div className="flex items-center border border-gray-700 rounded-lg p-1 bg-gray-900/50 gap-1 overflow-x-auto">
-                  {!isMyFilesLoading ?
+                  {!isMyFilesLoadMore ?
                     <>
                       {FILES_TYPE.map(type => (
                         <button
@@ -566,7 +627,7 @@ export const CascadeContent = React.memo(({
                       ))}
                     </> : null
                   }
-                  {isMyFilesLoading ? (
+                  {isMyFilesLoadMore ? (
                     <Skeleton className='min-w-[426px] !mb-0 min-h-[22px]' />
                   ) : null }
                 </div>
@@ -598,7 +659,7 @@ export const CascadeContent = React.memo(({
             <div className='md:overflow-x-auto '>
               <div className="space-y-2 md:min-w-[1050px]">
                 <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase items-center">
-                  <div className="col-span-5">
+                  <div className="col-span-4">
                     <div className='flex items-start'>
                       <div className='w-10'>
                         <Checkbox
@@ -615,6 +676,7 @@ export const CascadeContent = React.memo(({
                       <span>Name</span>
                     </div>
                   </div>
+                  <div className="col-span-1">Status</div>
                   <div className="col-span-2">Last Modified</div>
                   <div className="col-span-2">TX ID</div>
                   <div className="col-span-1 text-right">Size</div>
@@ -630,61 +692,72 @@ export const CascadeContent = React.memo(({
                     <Skeleton type='list' className='min-h-8' count={3} />
                   </div>
                 ) : null }
-                {!isMyFilesLoading && memoizedFilteredFiles.map((file, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
-                    <div className="col-span-full md:col-span-5 flex items-center gap-4">
-                      <div className='flex items-start'>
-                        <div className='w-10'>
-                          <Checkbox
-                            id="checkAll"
-                            size="$4"
-                            checked={checkSelectedFile(selectedFiles, file)}
-                            onCheckedChange={() => handleSelectFile(file)}
-                          >
-                            <Checkbox.Indicator>
-                              <CheckIcon />
-                            </Checkbox.Indicator>
-                          </Checkbox>
-                        </div>
-                        <div className='flex items-start flex-wrap gap-2'>
-                          {getFileIcon(getSimplifiedType(file.type))}
-                          <span className="font-medium text-white truncate">{file.name}</span>
+                {!isMyFilesLoading && memoizedFilteredFiles.map((file, index) => {
+                  const isDisabledButton = selectedFileDownload.includes(file.actionID) || file.state !== 'ACTION_STATE_DONE';
+                  let txId = file.txId;
+                  let lastModified = file.lastModified;
+                  if (!txId) {
+                    const tx = getTxHash(file, txs);
+                    txId = tx.txhash;
+                    lastModified = tx.timestamp || '';
+                  }
+                  return (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
+                      <div className="col-span-full md:col-span-4 flex items-center gap-4">
+                        <div className='flex items-start'>
+                          <div className='w-10'>
+                            <Checkbox
+                              id="checkAll"
+                              size="$4"
+                              checked={checkSelectedFile(selectedFiles, file)}
+                              onCheckedChange={() => handleSelectFile(file)}
+                            >
+                              <Checkbox.Indicator>
+                                <CheckIcon />
+                              </Checkbox.Indicator>
+                            </Checkbox>
+                          </div>
+                          <div className='flex items-start flex-wrap gap-2'>
+                            {getFileIcon(getSimplifiedType(file.type))}
+                            <span className="font-medium text-white truncate">{file.name}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="col-span-full md:col-span-2 text-sm text-gray-400">
-                      <span className="md:hidden font-semibold text-gray-500 mr-2">Last Modified: </span>
-                      {/* {new Date(file.lastModified).toLocaleDateString()} */}
-                      TBD
-                    </div>
-                    <div className="col-span-full md:col-span-2 text-sm">
-                      <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
-                      {/* {file.txId ?
-                        <AppLink
-                          href={`/tx/${file.txId}`}
-                          className="font-mono text-indigo-400 hover:underline truncate inline-flex items-center gap-1.5"
+                      <div className="col-span-full md:col-span-1 text-sm text-gray-400">
+                        <span className="md:hidden font-semibold text-gray-500 mr-2">Status: </span>
+                        <span className={`capitalize ${getStatusColor(file.state)}`}>{getFileStatus(file.state)}</span>
+                      </div>
+                      <div className="col-span-full md:col-span-2 text-sm text-gray-400">
+                        <span className="md:hidden font-semibold text-gray-500 mr-2">Last Modified: </span>
+                        {lastModified ? new Date(lastModified).toLocaleDateString() : '--'}
+                      </div>
+                      <div className="col-span-full md:col-span-2 text-sm">
+                        <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
+                        {txId ?
+                          <AppLink
+                            href={`/tx/${txId}`}
+                            className="font-mono text-indigo-400 hover:underline truncate inline-flex items-center gap-1.5"
+                          >
+                            {formatAddress(txId, 6, -6)}<ArrowUpRight className="w-3 h-3"/>
+                          </AppLink> : '--'
+                        }
+                      </div>
+                      <div className="col-span-full md:col-span-1 text-sm text-gray-300 md:text-right">
+                        <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
+                        {file.size ? formatBytes(file.size) : '--'}
+                      </div>
+                      <div className="col-span-full md:col-span-2 flex justify-start md:justify-end">
+                        <AppButton
+                          variant="secondary"
+                          className={`!py-1.5 !px-4 text-sm w-full md:w-auto max-w-40 ${isDisabledButton ? 'cursor-default opacity-40' : ''}`}
+                          onClick={() => handleDownloadFile(file)}
+                          disabled={isDisabledButton}
                         >
-                          {formatAddress(file.txId, 6, -6)}<ArrowUpRight className="w-3 h-3"/>
-                        </AppLink> : '--'
-                      } */}
-                      TBD
+                          <Download className="w-4 h-4"/> {selectedFileDownload.includes(file.actionID) ? 'Downloading' : 'Download'}
+                        </AppButton>
+                      </div>
                     </div>
-                    <div className="col-span-full md:col-span-1 text-sm text-gray-300 md:text-right">
-                      <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                      {/* {formatBytes(file.size)} */}
-                      TBD
-                    </div>
-                    <div className="col-span-full md:col-span-2 flex justify-start md:justify-end">
-                      <AppButton
-                        variant="secondary"
-                        className="!py-1.5 !px-4 text-sm w-full md:w-auto max-w-40"
-                        onClick={() => handleDownloadFile(file)}
-                      >
-                        <Download className="w-4 h-4"/> Download
-                      </AppButton>
-                    </div>
-                  </div>
-                ))}
+                )})}
               </div>
             </div>
             {isMyFilesLoadMore && !isMyFilesLoading ?
@@ -707,16 +780,6 @@ export const CascadeContent = React.memo(({
           </Card>
         </div> : null
       }
-
-      {isDownloading ?
-        <div className='fixed right-2 bottom-2 z-50'>
-          <Card elevate bordered className='w-full !overflow-hidden'>
-            <div className='px-5 py-3 flex items-center gap-2'>
-              <Loading isLoading className='relative !top-0 !left-0 !transform-none' /> Downloading ....
-            </div>
-          </Card>
-        </div> : null
-      }
       <ActionFeeModal
         fileName={uploadCascadeInfo.fileName}
         fileZise={uploadCascadeInfo.fileZise}
@@ -725,6 +788,7 @@ export const CascadeContent = React.memo(({
         onCancelClick={closeActionFeeModal}
         onCloseModal={closeActionFeeModal}
         onOkClick={handleUploadCascade}
+        setPublish={setPublish}
       />
       <UploadCascadeSuccessModal
         isOpen={selectedModal === 'upload-cascade-success'}

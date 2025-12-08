@@ -158,7 +158,7 @@ const useGovernances = () => {
     } catch (error) {
       setMsg({
         type: 'gov-error',
-        message: error instanceof Error ? error.message : 'An unknown error occurred.',
+        message: (error as Error)?.message ||  'An unknown error occurred.',
       });
     }
     setSumaryLoading(false);
@@ -200,7 +200,7 @@ const useGovernances = () => {
     } catch (error) {
       setMsg({
         type: 'gov-error',
-        message: error instanceof Error ? error.message : 'An unknown error occurred.',
+        message: (error as Error)?.message ||  'An unknown error occurred.',
       });
     }
     setLoading(false);
@@ -385,7 +385,7 @@ const useGovernances = () => {
       return latestBlock?.header?.height + bufferBlocks;
     } catch (error) {
       console.error(error);
-      throw new Error(error instanceof Error ? error.message : 'An unknown error occurred.');
+      throw new Error((error as Error)?.message ||  'An unknown error occurred.');
     }
   }
 
@@ -497,7 +497,7 @@ const useGovernances = () => {
           } catch (error) {
             setMsg({
               type: 'error',
-              message: `Failed to retrieve block height for software upgrade proposal: ${error instanceof Error ? error.message : String(error)}`,
+              message: `Failed to retrieve block height for software upgrade proposal: ${(error as Error)?.message ||  'An unknown error occurred.'}`,
             });
             return;
           }
@@ -556,7 +556,7 @@ const useGovernances = () => {
     } catch(error) {
       setMsg({
         type: 'error',
-        message: error instanceof Error ? error.message : 'An unknown error occurred.',
+        message: (error as Error)?.message ||  'An unknown error occurred.',
       });
       console.error('error', error);
     }
