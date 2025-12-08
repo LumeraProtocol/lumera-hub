@@ -8,7 +8,7 @@ import {
 } from '@/contants/network';
 
 const useWalletConnect = () => {
-    const { chain, wallet } = useChain(CHAIN_NAME);
+  const { chain, wallet } = useChain(CHAIN_NAME);
   const { isConnected, address, walletName, isModalOpen } = useSelector((state) => state.wallet);
 
   const getClient = async () => {
