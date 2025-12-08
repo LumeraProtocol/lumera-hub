@@ -64,6 +64,11 @@ interface IActionFeeModal {
   onOkClick: () => void;
 }
 
+interface IUploadCascadeSuccessModal {
+  isOpen: boolean;
+  onCloseModal: () => void;
+}
+
 const countryNames: { [key: string]: string } = {
   AR: "Argentina",
   AU: "Australia",
@@ -183,14 +188,26 @@ const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap
                       {formatAddress(selectedMarker.supernodeAccount, 15, -6)}
                     </div>
                   </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>Validator Address:</div>
-                    <div className="w-full truncate">
-                      <AppLink href={`/staking/${selectedMarker.validatorAddress}`}>
-                        {formatAddress(selectedMarker.validatorAddress, 15, -6)}
-                      </AppLink>
-                    </div>
-                  </div>
+                  {selectedMarker.validatorAddress ?
+                    <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+                      <div className='w-full md:w-60 text-gray-500'>Validator Name:</div>
+                      <div className="w-full truncate">
+                        <AppLink href={`/block/${selectedMarker.validatorAddress}`}>
+                          {selectedMarker.validatorMoniker}
+                        </AppLink>
+                      </div>
+                    </div> : null
+                  }
+                  {selectedMarker.validatorAddress ?
+                    <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+                      <div className='w-full md:w-60 text-gray-500'>Validator Address:</div>
+                      <div className="w-full truncate">
+                        <AppLink href={`/staking/${selectedMarker.validatorAddress}`}>
+                          {formatAddress(selectedMarker.validatorAddress, 15, -6)}
+                        </AppLink>
+                      </div>
+                    </div> : null
+                  }
                   <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
                     <div className='w-full md:w-60 text-gray-500'>IP:</div>
                     <div className="w-full truncate">
@@ -201,14 +218,6 @@ const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap
                     <div className='w-full md:w-60 text-gray-500'>P2pPort:</div>
                     <div className="w-full truncate">
                       {selectedMarker.p2pPort}
-                    </div>
-                  </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>Height:</div>
-                    <div className="w-full truncate">
-                      <AppLink href={`/block/${selectedMarker.height}`}>
-                        {selectedMarker.height}
-                      </AppLink>
                     </div>
                   </div>
                   <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
@@ -356,6 +365,73 @@ const ActionFeeModal = ({
   );
 }
 
+const UploadCascadeSuccessModal = ({
+  isOpen,
+  onCloseModal,
+}: IUploadCascadeSuccessModal) => {
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={onCloseModal}
+      modal
+    >
+      <Dialog.Trigger asChild>
+      </Dialog.Trigger>
+
+      <Dialog.Portal>
+        <Dialog.Overlay
+          key="overlay"
+          animation="quick"
+          opacity={0.5}
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
+        />
+
+        <Dialog.Content
+          bordered
+          elevate
+          key="content"
+          animation={[
+            'quick',
+            {
+              opacity: {
+                overshootClamping: true,
+              },
+            },
+          ]}
+          enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+          exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+          x={0}
+          scale={1}
+          opacity={1}
+          y={0}
+        >
+          <VisuallyHidden>
+            <Dialog.Title></Dialog.Title>
+          </VisuallyHidden>
+          <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
+            <div className='flex justify-between items-center'>
+              <div>&nbsp;</div>
+              <button className='btn-close-modal cursor-pointer' onClick={onCloseModal}><CircleX /></button>
+            </div>
+            <div className='mt-4'>
+              <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! upload completed successfully.</H3>
+            </div>
+            <div className='mt-5 pb-3'>
+              <button
+                className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
+                onClick={onCloseModal}
+              >
+                Back to Cascade
+              </button>
+            </div>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog>
+  );
+}
+
 export const CascadeContent = React.memo(({
   JVectorMapWithNoSSR,
   client,
@@ -392,6 +468,7 @@ export const CascadeContent = React.memo(({
     handleFileTypeFilterChange,
     handleUploadCascade,
     handlePageClick,
+    handleCloseUploadCascadeSuccessModal,
   } = useCascade({ lumeraSdk: memoizedClient });
 
   const memoizedFilteredFiles = React.useMemo(() => filteredFiles, [filteredFiles, fileSearch, fileTypeFilter]);
@@ -420,8 +497,7 @@ export const CascadeContent = React.memo(({
                 {
                   isMyFilesLoading ? <Skeleton /> : <>
                     <div className='font-bold text-white leading-[1.1]'>
-                      {/* <span className='text-[40px]'>{myUsage.size}</span> <span className='text-xl whitespace-nowrap'>({myUsage.uploaded} Files Uploaded)</span> */}
-                      <span className='text-[40px]'>TBD</span>
+                      <span className='text-[40px]'>TBD</span> <span className='text-xl whitespace-nowrap'>({myUsage.uploaded} Files Uploaded)</span>
                     </div>
                   </>
                 }
@@ -554,7 +630,7 @@ export const CascadeContent = React.memo(({
                     <Skeleton type='list' className='min-h-8' count={3} />
                   </div>
                 ) : null }
-                {memoizedFilteredFiles.map((file, index) => (
+                {!isMyFilesLoading && memoizedFilteredFiles.map((file, index) => (
                   <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
                     <div className="col-span-full md:col-span-5 flex items-center gap-4">
                       <div className='flex items-start'>
@@ -649,6 +725,10 @@ export const CascadeContent = React.memo(({
         onCancelClick={closeActionFeeModal}
         onCloseModal={closeActionFeeModal}
         onOkClick={handleUploadCascade}
+      />
+      <UploadCascadeSuccessModal
+        isOpen={selectedModal === 'upload-cascade-success'}
+        onCloseModal={handleCloseUploadCascadeSuccessModal}
       />
     </YStack>
   )

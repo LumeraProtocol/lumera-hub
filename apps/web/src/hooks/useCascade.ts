@@ -3,18 +3,16 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from 'react-toastify';
 import JSZip from 'jszip';
-import { fromBase64, toHex } from '@cosmjs/encoding';
 
 import { useSelector } from '@/redux/hooks';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import * as instance from '@/utils/api';
 import { formatBytes, isValidIPv4 } from '@/utils/helpers';
-import { loadProto } from '@/utils/lumera-proto';
+import { formatNumber } from '@/utils/format';
 import {
-  RPC_ENDPOINT,
   CHAIN_ID,
-  REST_AI_URL,
-  SNAPI_URL,
+  SDK_PRESET,
+  SNSCOPE_URL,
 } from '@/contants/network';
 import { RATE_VALUE } from '@/contants';
 
@@ -38,8 +36,8 @@ export interface IMarker {
   name: string;
   supernodeAccount: string;
   validatorAddress: string;
+  validatorMoniker: string;
   address: string;
-  height: string;
   p2pPort: string;
   continent:string;
   country: string;
@@ -60,21 +58,72 @@ interface FileToDownload {
   name: string;
 }
 
-type TIpAddresses = {
-  address: string;
-  height: string;
+interface ISupernode {
+  actual_version: string;
+  cpu_cores: number;
+  cpu_usage_percent: number;
+  current_state: string;
+  failed_probe_counter: number;
+  hardware_summary: string;
+  ip_address: string;
+  is_status_api_available: boolean;
+  last_known_actual_version: string;
+  last_status_check: string;
+  last_successful_probe: string;
+  memory_total_gb: number;
+  memory_usage_percent: number;
+  memory_used_gb: number;
+  metrics_report: {
+    ports: {
+      p2p: boolean;
+      p2pPort: number;
+      port1: boolean;
+      port1Num: number;
+    };
+    status: {
+      Available: boolean;
+      CPUCores: number;
+      CPUUsagePercent: number;
+      HardwareSummary: string;
+      MemoryTotalGb: number;
+      MemoryUsagePercent: number;
+      MemoryUsedGb: number;
+      PeersCount: number;
+      Rank: number;
+      StorageTotalBytes: number;
+      StorageUsagePercent: number;
+      StorageUsedBytes: number;
+      UptimeSeconds: number;
+      Version:string;
+    };
+  };
+  p2p_port: number;
+  peers_count: number;
+  protocol_version: string;
+  rank: number;
+  schema_version: string;
+  storage_total_bytes: number;
+  storage_usage_percent: number;
+  storage_used_bytes: number;
+  supernode_account: string;
+  uptime_seconds: number;
+  validator_address: string;
+  validator_moniker: string;
 }
 
-interface ISupernode {
-  metrics: {
-    height: string;
-    reportCount: string;
+interface IAction {
+  block_height: string;
+  creator: string;
+  decoded: {
+     data_hash: string;
+     file_name: string;
+     rq_ids_ic: number;
+     rq_ids_max: number;
+     signatures: string;
   };
-  note: string;
-  p2pPort: string;
-  prevIpAddresses: TIpAddresses[];
-  supernodeAccount: string;
-  validatorAddress: string;
+  id: string;
+  state: string;
+  type: string;
 }
 
 export interface ISelectedFile {
@@ -121,28 +170,7 @@ const getFileType = (filename: string) => {
   return 'archive';
 }
 
-const GAS_PRICE = '0.025ulume';
 const ITEM_PER_PAGE = 10;
-const PAGE_LIMIT = 500;
-const SDK_PRESET = process.env.NEXT_PUBLIC_SDK_PRESET || 'testnet';
-const protoTypes = loadProto();
-
-const parseMetaData = (metadata: string) => {
-  try {
-    const decodedBytes = fromBase64(metadata);
-    const metadataType = protoTypes.CascadeMetadata;
-    const message = metadataType.decode(decodedBytes);
-    return metadataType.toObject(message, {
-      longs: String,
-      enums: String,
-      bytes: String,
-    });
-
-  } catch (parseError) {
-    console.error('Parse metadata error for action: ', parseError);
-    return null
-  }
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
@@ -195,7 +223,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         archive: 0,
         other: 0,
     };
-    myFiles.forEach(file => {
+    myFilesOriginal.forEach(file => {
       if (counts.hasOwnProperty(file.type)) {
         counts[file.type as TFileTypeKey]++;
       } else {
@@ -203,7 +231,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       }
     });
     return counts;
-  }, [myFiles]);
+  }, [myFilesOriginal]);
 
   const handleSelectFile = (file: IMyFile) => {
     setSelectedFiles(prev => {
@@ -287,7 +315,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       const results: IMarker[] = [];
       const supernodeData: IMarker[] = await readSupernodeFile();
       for (const item of items) {
-        const address = item.prevIpAddresses[0].address;
+        const address = item.ip_address;
         const ip = address.split(':')[0];
         if (isValidIPv4(ip)) {
           const supernode = supernodeData.find((s) => s.address === address);
@@ -302,11 +330,11 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
                 country_code: data?.country_code || '',
                 subdivision: data?.subdivision || '',
                 city: data?.city || '',
-                supernodeAccount: item.supernodeAccount,
-                validatorAddress: item.validatorAddress,
+                supernodeAccount: item.supernode_account,
+                validatorAddress: item.validator_address,
+                validatorMoniker: item.validator_moniker,
                 address,
-                height: item.prevIpAddresses[0].height,
-                p2pPort: item.p2pPort,
+                p2pPort: item.p2p_port.toString(),
               });
             }
           } else {
@@ -326,21 +354,48 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     }
   }, [markers]);
 
+  const fetchSupernodes = async (cursor = '') => {
+    try {
+      const nextCursor = cursor ? `&cursor=${cursor}` : '';
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/metrics?currentState=SUPERNODE_STATE_ACTIVE&status=available&minFailedProbeCounter=0&limit=200${nextCursor}`);
+
+      return {
+        next_cursor: data.next_cursor,
+        nodes: data.nodes,
+      }
+    } catch {
+      return {
+        next_cursor: null,
+        nodes: [],
+      };
+    }
+  }
+
   const getSummary = useCallback(async () => {
     setFetchSummaryLoading(true);
     setMarkerLoading(true);
     try {
       if (lumeraSdk) {
-        const client = await lumeraSdk.getLumeraClientWithoutSigner({
-          preset: SDK_PRESET,
-        });
-        const items: ISupernode[] = await lumeraSdk.getSupernodes(client);
+        const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/stats`);
+        const snResults = [];
+        let isContinue = true;
+        let cursor = '';
+        do {
+          const data = await fetchSupernodes(cursor);
+          if (data.nodes?.length) {
+            snResults.push(...data.nodes)
+          }
+          cursor = data.next_cursor;
+          if (!data.next_cursor) {
+            isContinue = false;
+          }
+        } while (isContinue)
         setNetworkStorage({
-          totalSupernode: items?.length || 0,
-          networkStorage: 'TBD', // TBD
+          totalSupernode: snResults.length || 0,
+          networkStorage: data?.total_memory_gb ? `${formatNumber(data.total_memory_gb, { decimalsLength: 2})} GB` : '',
         });
         setFetchSummaryLoading(false);
-        await getChartMarker(items);
+        await getChartMarker(snResults);
       }
     } catch {
       setMarkerLoading(false);
@@ -349,64 +404,67 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setMarkerLoading(false);
   }, [lumeraSdk, address, getChartMarker]);
 
-  const fetchMyFiles = async (offset = 0) => {
+  const fetchMyFiles = async (nextKey = '') => {
     try {
-      const { data } = await instance.get(`/LumeraProtocol/lumera/action/v1/list_actions?actionType=ACTION_TYPE_UNSPECIFIED&actionState=ACTION_STATE_UNSPECIFIED&pagination.limit=${PAGE_LIMIT}&pagination.offset=${offset}&pagination.reverse=true&pagination.count_total=true`);
+      const nextKeyParam = nextKey ? `&cursor=${nextKey}` : '';
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=${ITEM_PER_PAGE}${nextKeyParam}&creator=${address}`)
 
       return {
-        actions: data.actions,
-        nextKey: data.pagination.next_key,
-        total: data.pagination.total,
+        actions: data.items,
+        nextKey: data.next_cursor,
       };
     } catch (e) {
       console.error('API Error:', e);
       return {
         actions: null,
         nextKey: null,
-        total: 0,
       };
     }
   };
+
+  const generateFile = (items: IAction[]) => {
+    const files: IMyFile[] = [];
+    for (const item of items) {
+      files.push({
+        name: item.decoded.file_name || '',
+        size: 0,// TBD
+        txId: '',// TBD
+        type: getFileType(item.decoded.file_name),
+        actionID: item.id,
+        lastModified: `${new Date()}`,// TBD
+      });
+    }
+    return files;
+  }
 
   const getMyFiles = useCallback(async () => {
     setMyFilesLoading(true);
     setMyFilesLoadMore(true);
     try {
-      let isContinue = true;
+      const results = await fetchMyFiles();
+      let isContinue = false;
       const files: IMyFile[] = [];
+      let nextCursor = '';
+      if (results?.actions) {
+        isContinue = !!results.nextKey;
+        nextCursor = results.nextKey;
+        const data = generateFile(results?.actions);
+        files.push(...data)
+        setMyFiles(data);
+      }
       let counter = 1;
-      let isUpdateMyFIles = false;
       do {
-        const offset = (counter - 1) * PAGE_LIMIT;
-        const results = await fetchMyFiles(offset);
-        if (results.actions) {
-          for (const action of results.actions) {
-            if (action.creator === address) {
-              const metadata = parseMetaData(action.metadata);
-              files.push({
-                name: metadata?.fileName || '',
-                size: 0,// TBD
-                txId: '',// TBD
-                type: getFileType(metadata?.fileName),
-                actionID: action.actionID,
-                lastModified: `${new Date()}`,// TBD
-              });
-            }
-          }
+        const results = await fetchMyFiles(nextCursor);
+        if (results?.actions) {
+          const data = generateFile(results?.actions);
+          files.push(...data)
         }
-        if (files.length >= ITEM_PER_PAGE && !myFiles?.length) {
-          setMyFiles(files.slice(0, ITEM_PER_PAGE));
-          setMyFilesLoading(false);
-          isUpdateMyFIles = true;
-        }
-        if (PAGE_LIMIT * counter >= Number(results.total)) {
+        if (!results?.nextKey || counter > 3) {
           isContinue = false;
         }
         counter++;
-      } while (isContinue);
-      if (!isUpdateMyFIles) {
-        setMyFiles(files);
-      }
+      } while (isContinue)
+
       setMyFilesOriginal(files);
       const totalSize = files.reduce((total, item) => total + item.size, 0);
       setTotalPage(Math.ceil(files?.length / ITEM_PER_PAGE));
@@ -469,6 +527,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
             txPrompter,
           }, client);
           setUploadResult(result);
+          setSelectedModal('upload-cascade-success');
         }
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An unknown error occurred.');
@@ -628,6 +687,11 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setMyFiles(myFilesOriginal.slice(offset, offset + ITEM_PER_PAGE));
   }
 
+  const handleCloseUploadCascadeSuccessModal = () => {
+    getMyFiles();
+    setSelectedModal('');
+  }
+
   return {
     isUploading,
     error,
@@ -649,6 +713,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     myUsage,
     totalPage,
     isMyFilesLoadMore,
+    handleCloseUploadCascadeSuccessModal,
     handlePageClick,
     closeActionFeeModal,
     openActionFeeModal,
