@@ -219,7 +219,7 @@ export const getSimplifiedType = (type: string) => {
   if (type.startsWith('image')) return 'Image';
   if (type.startsWith('video')) return 'Video';
   if (type === 'pdf') return 'PDF';
-  if (['zip', 'x-zip-compressed', 'rar', '7z'].includes(type)) return 'Archive';
+  if (['archive'].includes(type)) return 'Archive';
   return 'Other';
 }
 

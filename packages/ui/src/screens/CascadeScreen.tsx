@@ -12,6 +12,7 @@ import {
   VisuallyHidden,
   RadioGroup,
   Label,
+  Tooltip,
 } from 'tamagui';
 import Dropzone from 'react-dropzone';
 import { CloudUpload } from '@tamagui/lucide-icons';
@@ -19,7 +20,6 @@ import { worldMill } from "@react-jvectormap/world";
 import {
   Search,
   Download,
-  ArrowUpRight,
   ImageIcon,
   Video,
   FileText,
@@ -29,6 +29,7 @@ import {
   CircleX,
 } from 'lucide-react';
 import ReactPaginate from 'react-paginate';
+import dayjs from 'dayjs';
 
 import Loading from '@/components/Loading';
 import Skeleton from '@/components/Skeleton';
@@ -270,7 +271,6 @@ const getFileIcon = (type: string) => {
 };
 
 const checkSelectedFile = (selectedFiles: ISelectedFile[], file: IMyFile) => {
-  selectedFiles.includes(file)
   const existFile = selectedFiles.find((f) => f.actionID === file.actionID);
   if (existFile) {
     return true;
@@ -485,7 +485,7 @@ const getStatusColor = (state: string) => {
     case 'ACTION_STATE_DONE':
       return 'text-lumera-green';
     case 'ACTION_STATE_PENDING':
-      return 'text-orange-400';
+      return 'text-lumera-warning';
     default:
       return '';
   }
@@ -518,6 +518,7 @@ export const CascadeContent = React.memo(({
     isMyFilesLoadMore,
     selectedFileDownload,
     txs,
+    isAllDownloading,
     setPublish,
     openActionFeeModal,
     closeActionFeeModal,
@@ -651,117 +652,180 @@ export const CascadeContent = React.memo(({
             {selectedFiles.length > 0 &&
               <div className="bg-gray-700/50 p-3 rounded-lg flex justify-between items-center mb-4">
                 <span className="text-sm font-semibold text-white">{selectedFiles.length} file(s) selected</span>
-                <AppButton variant="secondary" className="!py-1.5 !px-4" onClick={handleDownloadAllFile}>
-                  <Download className="w-4 h-4" /> Download as .zip
+                <AppButton variant="secondary" className={`!py-1.5 !px-4 ${isAllDownloading ? 'opacity-40 cursor-default' : ''}`} onClick={handleDownloadAllFile} disabled={isAllDownloading}>
+                  <Download className="w-4 h-4" /> {isAllDownloading ? 'Downloading' : 'Download as .zip'}
                 </AppButton>
               </div>
             }
             <div className='md:overflow-x-auto '>
-              <div className="space-y-2 md:min-w-[1050px]">
-                <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase items-center">
-                  <div className="col-span-4">
-                    <div className='flex items-start'>
-                      <div className='w-10'>
-                        <Checkbox
-                          id="checkAll"
-                          size="$4"
-                          checked={selectedFiles.length === memoizedFilteredFiles.length && memoizedFilteredFiles.length > 0}
-                          onCheckedChange={handleSelectAll}
-                        >
-                          <Checkbox.Indicator>
-                            <CheckIcon />
-                          </Checkbox.Indicator>
-                        </Checkbox>
-                      </div>
-                      <span>Name</span>
-                    </div>
-                  </div>
-                  <div className="col-span-1">Status</div>
-                  <div className="col-span-2">Last Modified</div>
-                  <div className="col-span-2">TX ID</div>
-                  <div className="col-span-1 text-right">Size</div>
-                  <div className="col-span-2 text-right">Action</div>
-                </div>
-                {!filteredFiles?.length && !isMyFilesLoading ? (
-                  <div className="w-full bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
-                    <H3 className='text-2xl'>No files</H3>
-                  </div>
-                ) : null }
-                {isMyFilesLoading ? (
-                  <div className="w-full rounded-lg">
-                    <Skeleton type='list' className='min-h-8' count={3} />
-                  </div>
-                ) : null }
-                {!isMyFilesLoading && memoizedFilteredFiles.map((file, index) => {
-                  const isDisabledButton = selectedFileDownload.includes(file.actionID) || file.state !== 'ACTION_STATE_DONE';
-                  let txId = file.txId;
-                  let lastModified = file.lastModified;
-                  if (!txId) {
-                    const tx = getTxHash(file, txs);
-                    txId = tx.txhash;
-                    lastModified = tx.timestamp || '';
-                  }
-                  return (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
-                      <div className="col-span-full md:col-span-4 flex items-center gap-4">
+              <div className="space-y-2 md:min-w-[1130px]">
+                <table className='w-full border-separate border-spacing-y-2'>
+                  <thead>
+                    <tr>
+                      <th className='px-2 py-3'>
                         <div className='flex items-start'>
                           <div className='w-10'>
                             <Checkbox
                               id="checkAll"
                               size="$4"
-                              checked={checkSelectedFile(selectedFiles, file)}
-                              onCheckedChange={() => handleSelectFile(file)}
+                              checked={selectedFiles.length === memoizedFilteredFiles.length && memoizedFilteredFiles.length > 0}
+                              onCheckedChange={handleSelectAll}
                             >
                               <Checkbox.Indicator>
                                 <CheckIcon />
                               </Checkbox.Indicator>
                             </Checkbox>
                           </div>
-                          <div className='flex items-start flex-wrap gap-2'>
-                            {getFileIcon(getSimplifiedType(file.type))}
-                            <span className="font-medium text-white truncate">{file.name}</span>
-                          </div>
+                          <span>Name</span>
                         </div>
-                      </div>
-                      <div className="col-span-full md:col-span-1 text-sm text-gray-400">
-                        <span className="md:hidden font-semibold text-gray-500 mr-2">Status: </span>
-                        <span className={`capitalize ${getStatusColor(file.state)}`}>{getFileStatus(file.state)}</span>
-                      </div>
-                      <div className="col-span-full md:col-span-2 text-sm text-gray-400">
-                        <span className="md:hidden font-semibold text-gray-500 mr-2">Last Modified: </span>
-                        {lastModified ? new Date(lastModified).toLocaleDateString() : '--'}
-                      </div>
-                      <div className="col-span-full md:col-span-2 text-sm">
-                        <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
-                        {txId ?
-                          <AppLink
-                            href={`/tx/${txId}`}
-                            className="font-mono text-indigo-400 hover:underline truncate inline-flex items-center gap-1.5"
-                          >
-                            {formatAddress(txId, 6, -6)}<ArrowUpRight className="w-3 h-3"/>
-                          </AppLink> : '--'
-                        }
-                      </div>
-                      <div className="col-span-full md:col-span-1 text-sm text-gray-300 md:text-right">
-                        <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                        {file.size ? formatBytes(file.size) : '--'}
-                      </div>
-                      <div className="col-span-full md:col-span-2 flex justify-start md:justify-end">
-                        <AppButton
-                          variant="secondary"
-                          className={`!py-1.5 !px-4 text-sm w-full md:w-auto max-w-40 ${isDisabledButton ? 'cursor-default opacity-40' : ''}`}
-                          onClick={() => handleDownloadFile(file)}
-                          disabled={isDisabledButton}
-                        >
-                          <Download className="w-4 h-4"/> {selectedFileDownload.includes(file.actionID) ? 'Downloading' : 'Download'}
-                        </AppButton>
-                      </div>
-                    </div>
-                )})}
+                      </th>
+                      <th align='left' className='px-2 py-3'>Status</th>
+                      <th align='left' className='px-2 py-3'>TX ID</th>
+                      <th align='right' className='px-2 py-3'>Price</th>
+                      <th align='right' className='px-2 py-3'>Fee</th>
+                      <th align='right' className='px-2 py-3'>Size</th>
+                      <th align='left' className='px-2 py-3'>Last Modified</th>
+                      <th align='right' className='px-2 py-3'>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {!filteredFiles?.length && !isMyFilesLoading ? (
+                      <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
+                        <td colSpan={8} className='px-2 py-3'>
+                          <H3 className='text-2xl'>No files</H3>
+                        </td>
+                      </tr>
+                     ) : null }
+                    {isMyFilesLoading ? (
+                      <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
+                        <td colSpan={8} className='px-2 py-3'>
+                          <Skeleton type='list' className='min-h-8' count={3} />
+                        </td>
+                      </tr>
+                    ) : null }
+                    {!isMyFilesLoading && memoizedFilteredFiles.map((file, index) => {
+                      const isDisabledButton = selectedFileDownload.includes(file.actionID) || file.state !== 'ACTION_STATE_DONE' || file.size <= 0;
+                      let txId = file.txId;
+                      let lastModified = file.lastModified;
+                      let price = file.price;
+                      let fee = file.fee;
+                      if (!txId || !lastModified || !Number(price) || !Number(fee)) {
+                        const tx = getTxHash(file, txs);
+                        txId = tx.txhash;
+                        lastModified = tx.timestamp || '';
+                        price = tx.price || '';
+                        fee = tx.fee || '';
+                      }
+                      return (
+                        <tr key={index} className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
+                          <td className='px-2 py-3'>
+                            <div className='flex items-start w-full'>
+                              <div className='w-10'>
+                                <Checkbox
+                                  id="checkAll"
+                                  size="$4"
+                                  checked={checkSelectedFile(selectedFiles, file)}
+                                  onCheckedChange={() => handleSelectFile(file)}
+                                >
+                                  <Checkbox.Indicator>
+                                    <CheckIcon />
+                                  </Checkbox.Indicator>
+                                </Checkbox>
+                              </div>
+                              <div className='w-[82%]'>
+                                <Tooltip>
+                                  <Tooltip.Trigger>
+                                    <div className='flex items-start flex-wrap gap-2 w-full'>
+                                      {getFileIcon(getSimplifiedType(file.type))}
+                                      <span className="font-medium text-white truncate max-w-2/3 inline-block">{file.name}</span>
+                                    </div>
+                                  </Tooltip.Trigger>
+                                  <Tooltip.Content
+                                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                    scale={1}
+                                    x={0}
+                                    y={0}
+                                    opacity={1}
+                                    animation={[
+                                      'quick',
+                                      {
+                                        opacity: {
+                                          overshootClamping: true,
+                                        },
+                                      },
+                                    ]}
+                                  >
+                                    <div className='text-white'>
+                                      {file.name}
+                                    </div>
+                                  </Tooltip.Content>
+                                </Tooltip>
+                              </div>
+                            </div>
+                          </td>
+                          <td className='px-2 py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2">Status: </span>
+                            <span className={`capitalize ${getStatusColor(file.state)}`}>{getFileStatus(file.state)}</span>
+                          </td>
+                          <td className='px-2 py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
+                            {txId ?
+                              <AppLink
+                                href={`/tx/${txId}`}
+                                className="font-mono text-lumera-teal hover:text-lumera-green truncate inline-flex items-center gap-1.5"
+                              >
+                                {formatAddress(txId, 6, -4)}
+                              </AppLink> : '--'
+                            }
+                          </td>
+                          <td className='text-right px-2 py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2">Price: </span>
+                            {price}
+                          </td>
+                          <td className='text-right px-2 py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2">Fee: </span>
+                            {fee}
+                          </td>
+                          <td className='text-right px-2 py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
+                            {formatBytes(file.size)}
+                          </td>
+                          <td className='px-2 py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2">Last Modified: </span>
+                            {lastModified ?
+                            <>
+                              {dayjs(lastModified).format('MMMM DD, YYYY')} at {dayjs(lastModified).format('HH:mm:ss')}
+                            </> : '--'}
+                          </td>
+                          <td className='text-right px-2 py-3'>
+                            <AppButton
+                              variant="secondary"
+                              className={`!px-4 text-sm w-full md:w-auto max-w-40 ${isDisabledButton ? 'cursor-default opacity-40' : ''}`}
+                              onClick={() => handleDownloadFile(file)}
+                              disabled={isDisabledButton}
+                            >
+                              <Download className="w-4 h-4"/> {selectedFileDownload.includes(file.actionID) ? 'Downloading' : 'Download'}
+                            </AppButton>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
             {isMyFilesLoadMore && !isMyFilesLoading ?
               <div className='my-3'>Searching for more data</div> : null
+            }
+            {isAllDownloading ?
+              <div className='fixed right-2 bottom-2 z-50'>
+                <Card elevate bordered className='w-full !overflow-hidden'>
+                  <div className='px-5 py-3 flex items-center gap-2'>
+                    <Loading isLoading className='relative !top-0 !left-0 !transform-none' /> Downloading ....
+                  </div>
+                </Card>
+              </div> : null
             }
             {totalPage > 1 ?
               <div className="paginate-wrapper pt-3">

@@ -1,36 +1,19 @@
 [
   {
     "latLng": [
-      49.4254092,
-      11.0796553
+      52.2296756,
+      21.0122287
     ],
-    "name": "Nuremberg",
+    "name": "Warsaw",
     "continent": "Europe",
-    "country": "Germany",
-    "country_code": "DE",
-    "subdivision": "Berlin",
-    "city": "Nuremberg",
-    "supernodeAccount": "lumera1563uuzljqvpanh79w2tvymqsly73v9nwygda73",
-    "validatorAddress": "lumeravaloper1563uuzljqvpanh79w2tvymqsly73v9nwtj7pcj",
-    "validatorMoniker": "Yami",
-    "address": "152.53.138.108:4444 ",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      40.0992294,
-      -83.1140771
-    ],
-    "name": "Dublin",
-    "continent": "North America",
-    "country": "United States",
-    "country_code": "US",
-    "subdivision": "Washington D.C.",
-    "city": "Dublin",
-    "supernodeAccount": "lumera160ykrfmz8y99zvcf4750mhye69upa38rl4ykqz",
-    "validatorAddress": "lumeravaloper1glr5cyvmn7a8av5u5mxt4mvs8ahgappglkpmcu",
-    "validatorMoniker": "lumera-testnet-light-validator-4",
-    "address": "3.128.152.132:4444",
+    "country": "Poland",
+    "country_code": "PL",
+    "subdivision": "Warsaw",
+    "city": "Warsaw",
+    "supernodeAccount": "lumera1h0ljtgz7khx02lrv37pgwry5zk54uc3ztyacjq",
+    "validatorAddress": "lumeravaloper1h0ljtgz7khx02lrv37pgwry5zk54uc3zy7wy5r",
+    "validatorMoniker": "HusoNode",
+    "address": "149.50.96.58:4444",
     "p2pPort": "4445"
   },
   {
@@ -44,10 +27,10 @@
     "country_code": "US",
     "subdivision": "Washington D.C.",
     "city": "Columbus",
-    "supernodeAccount": "lumera1ryrea8vdxqkh048965kyurexya784ptnesqpvz",
-    "validatorAddress": "lumeravaloper1p9zp9uuwywuh3r4gtt7tq7qskn2sql4cqrke96",
-    "address": "3.138.185.199:4444",
-    "height": "427688",
+    "supernodeAccount": "lumera1ntcrs6m7ccxnq7pk7nmydt8902w2972wxzsel8",
+    "validatorAddress": "lumeravaloper1hv63d80cssswfxnyqw67d0chhhuctaflca2vre",
+    "validatorMoniker": "lumera-testnet-light-validator-2",
+    "address": "3.147.255.62:4444",
     "p2pPort": "4445"
   },
   {
@@ -65,57 +48,6 @@
     "validatorAddress": "lumeravaloper1x7f7mhf9azwmpds2czcqkdv435uqudeg6xl4m0",
     "validatorMoniker": "Innovating Capital",
     "address": "18.216.80.56:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      48.974797,
-      8.176773
-    ],
-    "name": "Lauterbourg",
-    "continent": "Europe",
-    "country": "France",
-    "country_code": "FR",
-    "subdivision": "Paris",
-    "city": "Lauterbourg",
-    "supernodeAccount": "lumera1uq7lylrf0mrvrfq5s5uzk5my2f4562w2qxxftw",
-    "validatorAddress": "lumeravaloper1kqwk00kpez2fctrmj4l836f827fxs6yahrfdzy",
-    "validatorMoniker": "MaouamNodelab",
-    "address": "185.197.195.18:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      49.1200802,
-      10.7318864
-    ],
-    "name": "Gunzenhausen",
-    "continent": "Europe",
-    "country": "Germany",
-    "country_code": "DE",
-    "subdivision": "Berlin",
-    "city": "Gunzenhausen",
-    "supernodeAccount": "lumera1wmq0wu60a63cnx5fhln0m0zv6u5rq6dw0dhvhn",
-    "validatorAddress": "lumeravaloper1uj98474n68v52ycwu25chs6ldj77svrtqyddca",
-    "validatorMoniker": "Encapsulate",
-    "address": "176.9.8.81:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      50.4750046,
-      12.3649754
-    ],
-    "name": "Falkenstein",
-    "continent": "Europe",
-    "country": "Germany",
-    "country_code": "DE",
-    "subdivision": "Berlin",
-    "city": "Falkenstein",
-    "supernodeAccount": "lumera1yl39t9djgh4gnjw77h9k354eus305n7pnyup7m",
-    "validatorAddress": "lumeravaloper1yl39t9djgh4gnjw77h9k354eus305n7pu70acc",
-    "validatorMoniker": "LINQNODE",
-    "address": "195.201.61.205:4444",
     "p2pPort": "4445"
   }
 ]

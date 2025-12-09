@@ -5,9 +5,8 @@ import { toast } from 'react-toastify';
 import JSZip from 'jszip';
 
 import { useSelector } from '@/redux/hooks';
-import useWalletConnect from '@/hooks/useWalletConnect';
 import * as instance from '@/utils/api';
-import { formatBytes, isValidIPv4 } from '@/utils/helpers';
+import { formatBytes, isValidIPv4, extractValidNumber } from '@/utils/helpers';
 import { formatNumber } from '@/utils/format';
 import {
   CHAIN_ID,
@@ -37,6 +36,8 @@ export interface IMyFile {
   state: string;
   datahash: string;
   height: string;
+  price: string;
+  fee: string;
 }
 
 export interface IMarker {
@@ -64,6 +65,7 @@ interface FileTypeOption {
 interface FileToDownload {
   actionID: string;
   name: string;
+  signatures: string;
 }
 
 interface ISupernode {
@@ -144,11 +146,13 @@ type TError = {
 export interface ISelectedFile {
   name: string;
   actionID: string;
+  signatures: string;
 }
 
 const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
 const PDF_EXT = ['pdf'];
 const VIDEO_EXT = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
+const ARCHIVE_EXT = ['zip', 'rar', '7z'];
 
 export const FILES_TYPE: FileTypeOption[] = [
   {
@@ -171,6 +175,10 @@ export const FILES_TYPE: FileTypeOption[] = [
     value: 'archive',
     label: 'Archive',
   },
+  {
+    value: 'other',
+    label: 'Other',
+  },
 ];
 
 const getFileType = (filename: string) => {
@@ -181,8 +189,9 @@ const getFileType = (filename: string) => {
   if (IMAGE_EXT.includes(ext)) return 'image';
   if (PDF_EXT.includes(ext)) return 'pdf';
   if (VIDEO_EXT.includes(ext)) return 'video';
+  if (ARCHIVE_EXT.includes(ext)) return 'archive';
 
-  return 'archive';
+  return 'other';
 }
 
 const ITEM_PER_PAGE = 10;
@@ -190,16 +199,18 @@ const GAS_PRICE = '025ulume';
 
 export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
   const tx = txs.find((t) => t.height.toString() === file.height.toString() && t.tx.body.messages.some((m) => m.metadata?.indexOf(file.datahash) !== -1));
+  const amount = tx?.tx?.auth_info?.fee?.amount;
   return {
     txhash: tx ? tx.txhash : '',
     timestamp: tx?.timestamp,
+    price: tx?.tx.body.messages[0].price ? formatNumber(Number(extractValidNumber(tx?.tx.body.messages[0].price)) / RATE_VALUE, { decimalsLength: 2 }) + ' LUME' : '0',
+    fee: `${amount?.length ? (formatNumber(Number(amount[0].amount) / RATE_VALUE, { decimalsLength: 3 })) + ' LUME' : '0'}`
   };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { getOfflineSigner } = useWalletConnect();
   const { address } = useSelector((state) => state.wallet);
   const [isUploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -220,6 +231,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const [selectedFiles, setSelectedFiles] = useState<ISelectedFile[]>([]);
   const [markers, setMarkers] = useState<IMarker[]>([]);
   const [isDownloading, setDownloading] = useState(false);
+  const [isAllDownloading, setAllDownloading] = useState(false);
   const [isMyFilesLoading, setMyFilesLoading] = useState(false);
   const [isMyFilesLoadMore, setMyFilesLoadMore] = useState(false);
   const [isMarkerLoading, setMarkerLoading] = useState(false);
@@ -262,13 +274,14 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
 
   const handleSelectFile = (file: IMyFile) => {
     setSelectedFiles(prev => {
-      const existFile = prev.find((file) => file.actionID === file.actionID);
+      const existFile = prev.find((p) => p.actionID === file.actionID);
       if (existFile) {
         return prev.filter(f => f.actionID !== file.actionID);
       }
       return [...prev, {
         name: file.name,
         actionID: file.actionID,
+        signatures: file.signatures,
       }];
     });
   };
@@ -278,6 +291,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       setSelectedFiles(filteredFiles.map(f => ({
         name: f.name,
         actionID: f.actionID,
+        signatures: f.signatures,
       })));
     } else {
       setSelectedFiles([]);
@@ -499,7 +513,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       const fileInfo = await getFileInfo(item);
       files.push({
         name: item.decoded.file_name || '',
-        size: fileInfo.file_size_kbs,
+        size: fileInfo.file_size_kbs || 0,
         txId: '',
         type: getFileType(item.decoded.file_name),
         actionID: item.id,
@@ -508,6 +522,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         state: item.state,
         datahash: item.decoded.data_hash,
         height: item.block_height,
+        price: '0',
+        fee: '0',
       });
     }
     return files;
@@ -547,6 +563,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         return ({
           ...file,
           txId: tx.txhash || '',
+          fee: tx.fee || '',
+          price: tx.price || '',
           lastModified: file.lastModified || tx?.timestamp || '',
         })
       }));
@@ -601,6 +619,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           const selectedFile = selectedUploadCascadeFiles[0];
           const fileBuffer = await selectedFile.arrayBuffer();
           const fileBytes = new Uint8Array(fileBuffer);
+          // Calculate expiration time (default to 24 hours from now)
+          // Date.now() returns milliseconds, convert to seconds
           const expirationTime = Math.floor(Date.now() / 1000 + 86400 * 1.5).toString();
           const signaturePrompter = lumeraSdk.createBatchedSignaturePrompter();
           const txPrompter = lumeraSdk.createDefaultTxPrompter() || undefined;
@@ -729,36 +749,34 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   }
 
   const handleDownloadAllFile = async () => {
-    setDownloading(true);
+    setAllDownloading(true);
     try {
       if (lumeraSdk) {
         const files: FileToDownload[] = selectedFiles;
         const zipFileName = 'downloaded_files.zip';
-        const offlineSigner = await getOfflineSigner();
-        const client = await lumeraSdk.getLumeraClient({
-          signer: offlineSigner,
-          address,
-          preset: SDK_PRESET,
-        });
         const zip = new JSZip();
         for (const file of files) {
-          const stream =  await lumeraSdk.downloadCascade({
-            lastActionId: file.actionID,
-          }, client);
+          const { data } = await instance.postExternal(`${SNSCOPE_URL}/api/v1/actions/cascade/${file.actionID}/downloads`, {
+            signature: file.signatures
+          });
+          const task_id = data.task_id;
+          await instance.getExternal(`${SNSCOPE_URL}/api/v1/downloads/cascade/${task_id}/status`);
+          const streamResul = await instance.getExternal(`${SNSCOPE_URL}/api/v1/downloads/cascade/${task_id}/file`);
 
-          if (!stream) {
+          if (!streamResul.data) {
             toast.error('Error when downloading the file. Please try again.', {
               position: "bottom-center",
               theme: "dark",
             });
             return;
           }
-          const downloadedBytes = await getDownloadedBytes(stream);
+          const downloadedBytes = await getDownloadedBytes(streamResul.data);
           const blob = new Blob([downloadedBytes]);
           zip.file(file.name, blob);
         }
         const content = await zip.generateAsync({ type: 'blob' });
         downloadFile(content, zipFileName);
+        setSelectedFiles([]);
       }
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
@@ -766,7 +784,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         theme: "dark",
       });
     }
-    setDownloading(false);
+    setAllDownloading(false);
   }
 
   const handlePageClick = ({ selected }: { selected: number }) => {
@@ -793,6 +811,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     filteredFiles,
     markers,
     isDownloading,
+    isAllDownloading,
     isMyFilesLoading,
     isMarkerLoading,
     selectedModal,
