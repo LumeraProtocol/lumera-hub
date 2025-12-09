@@ -187,6 +187,7 @@ export type TMessage = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     amount: any;
     metadata?: string;
+    price?: string;
 }
 
 export type TOption = {
