@@ -13,8 +13,12 @@ import {
   CHAIN_ID,
   SDK_PRESET,
   SNSCOPE_URL,
+  RPC_ENDPOINT,
+  REST_AI_URL,
+  SNAPI_URL,
 } from '@/contants/network';
 import { RATE_VALUE } from '@/contants';
+import { IRecentActivity } from '@/types';
 
 export interface ITask {
   taskId?: string | undefined;
@@ -29,6 +33,10 @@ export interface IMyFile {
   type: string;
   actionID: string;
   lastModified: string;
+  signatures: string;
+  state: string;
+  datahash: string;
+  height: string;
 }
 
 export interface IMarker {
@@ -126,6 +134,13 @@ interface IAction {
   type: string;
 }
 
+type TError = {
+  message: string | undefined;
+  status: string | undefined
+  statusCode: number;
+  statusText: string;
+}
+
 export interface ISelectedFile {
   name: string;
   actionID: string;
@@ -171,6 +186,15 @@ const getFileType = (filename: string) => {
 }
 
 const ITEM_PER_PAGE = 10;
+const GAS_PRICE = '025ulume';
+
+export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
+  const tx = txs.find((t) => t.height.toString() === file.height.toString() && t.tx.body.messages.some((m) => m.metadata?.indexOf(file.datahash) !== -1));
+  return {
+    txhash: tx ? tx.txhash : '',
+    timestamp: tx?.timestamp,
+  };
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
@@ -207,6 +231,9 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     uploadFee: '',
   });
   const [totalPage, setTotalPage] = useState(0);
+  const [isPublic, setPublish] = useState(false);
+  const [selectedFileDownload, setSelectedFileDownload] = useState<string[]>([]);
+  const [txs, setTxs] = useState<IRecentActivity[]>([]);
 
   const filteredFiles = useMemo(() => {
     return myFiles
@@ -270,7 +297,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         country_code: data?.country_code || null,
       };
     } catch (error) {
-      throw new Error(error instanceof Error ? error?.message : 'An unknown error occurred.')
+      throw new Error((error as Error)?.message ||  'An unknown error occurred.')
     }
   }
 
@@ -347,7 +374,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         await writeSupernodeFile(results);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
+      toast.error((error as Error)?.message ||  'An unknown error occurred.', {
         position: "bottom-center",
         theme: "dark",
       });
@@ -414,7 +441,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         nextKey: data.next_cursor,
       };
     } catch (e) {
-      console.error('API Error:', e);
       return {
         actions: null,
         nextKey: null,
@@ -422,16 +448,66 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     }
   };
 
-  const generateFile = (items: IAction[]) => {
+  const getAllTxs = useCallback(async () => {
+    try {
+      const { data } = await instance.get(`/cosmos/tx/v1beta1/txs?query=message.sender=%27${address}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC`);
+      const txResponses = (data.tx_responses as IRecentActivity[]).filter((tx) =>
+        tx.events?.some(event =>
+          event.type === 'action_registered' &&
+          event.attributes?.some(attr =>
+            attr.key === 'action_type' && attr.value === 'ACTION_TYPE_CASCADE'
+          )
+        )
+      );
+      setTxs(txResponses)
+    } catch {
+      // noop
+    }
+  }, [address])
+
+  const getFileInfo = async (action: IAction) => {
+    try {
+      const { data } = await instance.getExternal(`${SNAPI_URL}/api/v1/actions/cascade/${action.id}/tasks`);
+      const item = data.requests[0];
+      if (item) {
+        return {
+          file_size_kbs: item.file_size_kbs,
+          created_at: item.created_at,
+          action_id: item.action_id,
+          task_id: item.task_id,
+        };
+      }
+      return {
+        file_size_kbs: 0,
+        created_at: '',
+        action_id: '',
+        task_id: '',
+      };
+    } catch (e) {
+      return {
+        file_size_kbs: 0,
+        created_at: '',
+        action_id: '',
+        task_id: '',
+      };
+    }
+  }
+
+  const generateFile = async (items: IAction[]) => {
     const files: IMyFile[] = [];
     for (const item of items) {
+      const fileInfo = await getFileInfo(item);
       files.push({
         name: item.decoded.file_name || '',
-        size: 0,// TBD
-        txId: '',// TBD
+        size: fileInfo.file_size_kbs,
+        txId: '',
         type: getFileType(item.decoded.file_name),
         actionID: item.id,
-        lastModified: `${new Date()}`,// TBD
+        signatures: item.decoded.signatures,
+        lastModified: fileInfo.created_at,
+        state: item.state,
+        datahash: item.decoded.data_hash,
+        height: item.block_height,
       });
     }
     return files;
@@ -448,15 +524,16 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       if (results?.actions) {
         isContinue = !!results.nextKey;
         nextCursor = results.nextKey;
-        const data = generateFile(results?.actions);
+        const data = await generateFile(results?.actions);
         files.push(...data)
         setMyFiles(data);
       }
+      setMyFilesLoading(false);
       let counter = 1;
       do {
         const results = await fetchMyFiles(nextCursor);
         if (results?.actions) {
-          const data = generateFile(results?.actions);
+          const data = await generateFile(results?.actions);
           files.push(...data)
         }
         if (!results?.nextKey || counter > 3) {
@@ -465,7 +542,14 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         counter++;
       } while (isContinue)
 
-      setMyFilesOriginal(files);
+      setMyFilesOriginal(files.map((file) => {
+        const tx = getTxHash(file, txs);
+        return ({
+          ...file,
+          txId: tx.txhash || '',
+          lastModified: file.lastModified || tx?.timestamp || '',
+        })
+      }));
       const totalSize = files.reduce((total, item) => total + item.size, 0);
       setTotalPage(Math.ceil(files?.length / ITEM_PER_PAGE));
       setMyUsage({
@@ -473,7 +557,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         uploaded: files?.length || 0,
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
+      toast.error((error as Error)?.message ||  'An unknown error occurred.', {
         position: "bottom-center",
         theme: "dark",
       });
@@ -489,7 +573,14 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   }, [address, getMyFiles]);
 
   useEffect(() => {
+    if (address) {
+      getAllTxs();
+    }
+  }, [address, getAllTxs]);
+
+  useEffect(() => {
     getSummary();
+
 
     return () => {
       if (timeoutRef.current) {
@@ -517,12 +608,17 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
             signer: offlineSigner,
             address,
             preset: SDK_PRESET,
-          });
+            chainId: CHAIN_ID,
+            rpcUrl: RPC_ENDPOINT,
+            lcdUrl: REST_AI_URL,
+            snapiUrl: SNAPI_URL,
+            gasPrice: GAS_PRICE,
+          }, true);
           const result = await lumeraSdk.uploadCascade({
             fileBytes,
             fileName: selectedFile.name,
             expirationTime,
-            isPublic: false,
+            isPublic,
             signaturePrompter,
             txPrompter,
           }, client);
@@ -530,7 +626,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           setSelectedModal('upload-cascade-success');
         }
       } catch (error) {
-        setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+        setError((error as Error)?.message ||  'An unknown error occurred.');
       }
       setUploading(false);
     }
@@ -553,7 +649,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       });
       setSelectedModal('upload-cascade');
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+      setError((error as Error)?.message ||  'An unknown error occurred.');
     }
     setUploading(false);
   }
@@ -610,34 +706,25 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setDownloading(true);
     try {
       if (lumeraSdk) {
-        const lastActionId = file.actionID;
-        const offlineSigner = await getOfflineSigner();
-        const client = await lumeraSdk.getLumeraClient({
-          signer: offlineSigner,
-          address,
-          preset: SDK_PRESET,
+        setSelectedFileDownload((prev) => [...prev, file.actionID]);
+        const { data } = await instance.postExternal(`${SNSCOPE_URL}/api/v1/actions/cascade/${file.actionID}/downloads`, {
+          signature: file.signatures
         });
-        const stream =  await lumeraSdk.downloadCascade({
-          lastActionId,
-        }, client);
-        if (!stream) {
-          toast.error('Error when downloading the file. Please try again.', {
-            position: "bottom-center",
-            theme: "dark",
-          });
-          return;
-        }
-        const downloadedBytes = await getDownloadedBytes(stream);
-        // Create a blob and download it
-        const blob = new Blob([downloadedBytes]);
-        downloadFile(blob, file.name);
+        const task_id = data.task_id;
+        await instance.getExternal(`${SNSCOPE_URL}/api/v1/downloads/cascade/${task_id}/status`);
+        const streamResul = await instance.getExternal(`${SNSCOPE_URL}/api/v1/downloads/cascade/${task_id}/file`);
+        const downloade = await getDownloadedBytes(streamResul.data);
+        const blob1 = new Blob([downloade]);
+        downloadFile(blob1, file.name);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
+      const errorMessage = (error as Error)?.message || (error as TError)?.statusText ||  'An unknown error occurred.';
+      toast.error(errorMessage, {
         position: "bottom-center",
         theme: "dark",
       });
     }
+    setSelectedFileDownload((prev) => prev.filter((val) => val !== file.actionID));
     setDownloading(false);
   }
 
@@ -674,7 +761,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         downloadFile(content, zipFileName);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An unknown error occurred.', {
+      toast.error((error as Error)?.message ||  'An unknown error occurred.', {
         position: "bottom-center",
         theme: "dark",
       });
@@ -713,6 +800,9 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     myUsage,
     totalPage,
     isMyFilesLoadMore,
+    selectedFileDownload,
+    txs,
+    setPublish,
     handleCloseUploadCascadeSuccessModal,
     handlePageClick,
     closeActionFeeModal,

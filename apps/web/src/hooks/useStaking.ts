@@ -61,7 +61,7 @@ const useStaking = (address = '') => {
       setValidators(allValidators);
       setTotalValidators(`${allValidators.length}`);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+      setError((error as Error)?.message ||  'An unknown error occurred.');
     }
     setLoading(false);
   }
@@ -78,7 +78,7 @@ const useStaking = (address = '') => {
       setSlashingParams(slashingParamsRes.data.params);
       setSigningInfos(signingInfosRes.data.info);
     } catch (error) {
-      console.error(error instanceof Error ? error.message : 'An unknown error occurred.');
+      console.error((error as Error)?.message ||  'An unknown error occurred.');
     }
     setLoading(false);
   }
@@ -88,7 +88,7 @@ const useStaking = (address = '') => {
       const { data } = await instance.get(`/cosmos/distribution/v1beta1/delegators/${address}/rewards`);
       setRewards(data.rewards);
     } catch (error) {
-      console.error(error instanceof Error ? error.message : 'An unknown error occurred.');
+      console.error((error as Error)?.message ||  'An unknown error occurred.');
     }
   }
 
@@ -99,7 +99,7 @@ const useStaking = (address = '') => {
       const { data } = await instance.get(`/cosmos/tx/v1beta1/txs?query=message.sender=%27${address}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC`);
       setActivities(data.tx_responses);
     } catch (error) {
-      setActivitiesError(error instanceof Error ? error.message : 'An unknown error occurred.');
+      setActivitiesError((error as Error)?.message ||  'An unknown error occurred.');
     }
     setActivitiesLoading(false);
   }, [])
@@ -137,7 +137,7 @@ const useStaking = (address = '') => {
       }
       setUnbondingDelegations(items.sort((a, b) => dayjs(a.completion_time).valueOf() - dayjs(b.completion_time).valueOf()));
     } catch (error) {
-      setUnbondingDelegationsError(error instanceof Error ? error.message : 'An unknown error occurred.');
+      setUnbondingDelegationsError((error as Error)?.message ||  'An unknown error occurred.');
     }
     setUnbondingDelegationsLoading(false);
   }, []);

@@ -163,7 +163,7 @@ const useUnbond = (options: UseDepositOptions = {}) => {
 
 
       } catch (error) {
-        setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+        setError((error as Error)?.message ||  'An unknown error occurred.');
       }
       setLoading(false);
     }

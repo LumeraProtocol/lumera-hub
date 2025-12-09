@@ -39,7 +39,7 @@ const useLatestBlocks = () => {
         setBlocks(prev => [...mergeArraysById(prev, [data?.block]).sort((a, b) => Number(b.header.height) - Number(a.header.height))].slice(0, 100));
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+      setError((error as Error)?.message ||  'An unknown error occurred.');
     }
   }
 
@@ -62,7 +62,7 @@ const useLatestBlocks = () => {
 
       intervalRef.current = setInterval(() => fetchLatestBlock(), 6000);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+      setError((error as Error)?.message ||  'An unknown error occurred.');
     }
     setFetchBlockLoading(false);
   }

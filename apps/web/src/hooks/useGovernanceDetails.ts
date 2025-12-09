@@ -89,7 +89,7 @@ const useGovernanceDetails = (id: string) => {
         setTotalVotes(Math.ceil(Number(data.pagination.total) / VOTE_LIMIT));
         setVotes(data.votes);
       } catch (error) {
-          setErrorVote(error instanceof Error ? error.message : 'An unknown error occurred.');
+          setErrorVote((error as Error)?.message ||  'An unknown error occurred.');
       }
       setVoteLoading(false);
     }
@@ -111,7 +111,7 @@ const useGovernanceDetails = (id: string) => {
             setPool(resPool.data.pool)
             setLatestBlock(resLatestBlock.data.block)
         } catch (error) {
-           setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+           setError((error as Error)?.message ||  'An unknown error occurred.');
         }
         setLoading(false);
     }
