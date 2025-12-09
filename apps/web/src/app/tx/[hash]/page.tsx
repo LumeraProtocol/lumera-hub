@@ -13,7 +13,7 @@ export default function Page() {
   const { isLoading, transaction } = useTransactionDetails();
 
   useEffect(() => {
-    document.title = 'Transaction';
+    document.title = 'Transaction - Lumera Hub';
     dispatch(setCurrentPath({
       currentPath: '/tx',
     }));
@@ -25,7 +25,7 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title>Transaction</title>
+        <title>Transaction - Lumera Hub</title>
       </Helmet>
       <div className="sense-content">
         <TransactionDetailsScreen isLoading={isLoading} transaction={transaction} />

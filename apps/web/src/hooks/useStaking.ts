@@ -92,7 +92,7 @@ const useStaking = (address = '') => {
     }
   }
 
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
     setActivitiesLoading(true);
     setActivitiesError('');
     try {
@@ -102,9 +102,9 @@ const useStaking = (address = '') => {
       setActivitiesError(error instanceof Error ? error.message : 'An unknown error occurred.');
     }
     setActivitiesLoading(false);
-  }
+  }, [])
 
-  const fetchUnbondingDelegations = async () => {
+  const fetchUnbondingDelegations = useCallback(async () => {
     setUnbondingDelegationsLoading(true);
     setUnbondingDelegationsError('');
     try {
@@ -140,7 +140,7 @@ const useStaking = (address = '') => {
       setUnbondingDelegationsError(error instanceof Error ? error.message : 'An unknown error occurred.');
     }
     setUnbondingDelegationsLoading(false);
-  }
+  }, []);
 
   const fetchDataForAPR = async () => {
     setAPRLoading(true);
@@ -170,7 +170,6 @@ const useStaking = (address = '') => {
     setAPRLoading(false);
   }
 
-
   const handleFetchDataForSubTab = useCallback((_subTab: string) => {
     switch (_subTab) {
       case 'activities':
@@ -185,8 +184,8 @@ const useStaking = (address = '') => {
   }, [fetchActivities, fetchUnbondingDelegations]);
 
   useEffect(() => {
+    fetchValidator();
     if (validatorTab === 'all') {
-      fetchValidator();
       fetchParams();
       fetchDataForAPR();
     }

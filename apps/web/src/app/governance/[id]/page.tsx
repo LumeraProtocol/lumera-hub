@@ -37,13 +37,13 @@ export default function Page({ params }: Props) {
   const { address } = useWalletConnect();
 
   useEffect(() => {
-    document.title = governance?.title || 'Governance Details';
+    document.title = `${governance?.title || 'Governance Details'} - Lumera Hub`;
   }, []);
 
   return (
     <>
       <Helmet>
-        <title>{governance?.title || 'Governance Detail'}</title>
+        <title>{`${governance?.title || 'Governance Detail'} - Lumera Hub`}</title>
       </Helmet>
       <div className="governance-content-details">
         <GovernanceDetailsScreen

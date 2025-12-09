@@ -48,13 +48,13 @@ export default function Page() {
   });
 
   useEffect(() => {
-    document.title = 'Staking';
+    document.title = 'Staking - Lumera Hub';
   }, []);
 
   return (
     <>
       <Helmet>
-        <title>Staking</title>
+        <title>Staking - Lumera Hub</title>
       </Helmet>
       <div className="staking-content">
         <StakingScreen

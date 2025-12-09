@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react"
 import {
   X,
   BarChart2,
-  Hotel,
   LaptopMinimalCheck,
   Database,
   ShieldCheck,
@@ -13,6 +12,7 @@ import {
   Wallet,
 } from '@tamagui/lucide-icons';
 import Image from 'next/image';
+import { Layers } from 'lucide-react';
 
 import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 import AppLink from '@/components/AppLink';
@@ -32,7 +32,7 @@ type TNaxItems = {
 export const NAV_ITEMS: TNaxItems[] = [
   { id: "dashboard", label: "Dashboard", url: "/", icon: <BarChart2 /> },
   { id: "wallet", label: "Wallet", url: "/wallet", icon: <Wallet /> },
-  { id: "staking", label: "Staking", url: "/staking", icon: <Hotel /> },
+  { id: "staking", label: "Staking", url: "/staking", icon: <Layers /> },
   { id: "governance", label: "Governance", url: "/governance", icon: <LaptopMinimalCheck /> },
   { id: "cascade", label: "Cascade", url: "/cascade", icon: <Database /> },
   { id: "sense", label: "Sense", url: "/sense", icon: <ShieldCheck /> },
@@ -103,14 +103,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col flex-grow bg-lumera-navy border-r border-gray-800/50">
           <AppLink href="/">
             <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800">
-              <div className="w-6 h-6 grid place-items-center">
-                <Image src="/lumera-symbol.svg" alt="Lumera" width={24} height={24} />
+              <div className="w-[104px] h-6 grid place-items-center">
+                <Image src="logo.svg" alt="Lumera" width={104} height={24} />
               </div>
-              <h1 className="text-2xl font-bold tracking-tight">Lumera</h1>
             </div>
           </AppLink>
           <nav className="flex-1 px-4 py-6 space-y-2">
-            <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Menu</p>
             {NAV_ITEMS.map((item) => (
               <AppLink
                 key={item.id}
@@ -146,18 +144,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="relative flex flex-1 w-full">
             <div className="flex flex-grow flex-col bg-lumera-navy border-r border-gray-800/50">
               <div className="flex justify-between items-center w-full">
-                <AppLink href="/">
+                <AppLink href="/" className="text-lumera-teal hover:text-lumera-green w-full">
                   <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800 w-full">
-                    <div className="w-6 h-6 grid place-items-center">
-                      <Image src="/lumera-symbol.svg" alt="Lumera" width={24} height={24} />
+                    <div className="w-[104px] h-6 grid place-items-center">
+                      <Image src="logo.svg" alt="Lumera" width={104} height={24} />
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight">Lumera</h1>
                   </div>
                 </AppLink>
                 <button className="btn-close" onClick={() => setSidebarOpen(false)}><X /></button>
               </div>
               <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Menu</p>
                 {NAV_ITEMS.map((item) => (
                   <AppLink
                     key={item.id}

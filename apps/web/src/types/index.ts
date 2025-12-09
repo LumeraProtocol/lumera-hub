@@ -155,12 +155,12 @@ export type TUnbondingDelegation = {
   validator_address: string;
   validator_src_address?: string;
   validator_dst_address?: string;
-  type?: string;
+  type: string;
   entries: TEntry[];
   completion_time?: string;
 }
 
-interface DelegationResponse {
+export interface DelegationResponse {
   delegation: {
     delegator_address: string;
     validator_address: string;

@@ -13,10 +13,10 @@ const uploadHeaders = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const customFetch = (url: string, method: string, body = {}, isUpload = false): any => {
+const customFetch = (url: string, method: string, body = {}, isUpload = false, isExternal = false): any => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const options: any = {
-    url: `${REST_AI_URL}${url}`,
+    url: `${!isExternal ? REST_AI_URL : ''}${url}`,
     method,
     headers: isUpload ? uploadHeaders : headers,
   };
@@ -55,6 +55,7 @@ const customFetch = (url: string, method: string, body = {}, isUpload = false): 
   });
 };
 
+export const getExternal = (path: string) => customFetch(path, 'GET', {}, false, true);
 export const get = (path: string) => customFetch(path, 'GET');
 export const post = (path: string, body: object) => customFetch(path, 'POST', body);
 export const put = (path: string, body: object) => customFetch(path, 'PUT', body);

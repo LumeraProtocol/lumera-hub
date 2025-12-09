@@ -10,6 +10,7 @@ import { DENOM } from '@/contants/network';
 import { RATE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 import { IProposal } from '@/hooks/useProposals';
 import useWalletConnect from '@/hooks/useWalletConnect';
+import { extractValidNumber } from '@/utils/helpers';
 
 const LIMIT = 20;
 
@@ -369,7 +370,7 @@ const useGovernances = () => {
   }
 
   const handleInputChange = (name: string, value: string, type = 'text', checked = false) => {
-    setProposal(p => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
+    setProposal(p => ({ ...p, [name]: type === 'checkbox' ? checked : name === 'initialDeposit' ? extractValidNumber(value) : value }));
   }
 
   const handleBackClick = () => {

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Landmark,
   XCircle,
   ArrowUpRight,
   Copy,
@@ -10,6 +9,10 @@ import {
   ArrowLeftRight,
   ArrowDownLeft,
   Check,
+  Layers,
+  ClockPlus,
+  Unlink,
+  Star,
 } from 'lucide-react';
 import { YStack, H2, Paragraph, Card as TamaguiCard, H3 } from 'tamagui';
 import ReactPaginate from 'react-paginate';
@@ -104,41 +107,47 @@ export const WalletScreen = ({
     onOpenModal,
     onCloseModal,
 }: IWalletScreen) => {
-    const [isCopied, setCopied] = useState(false);
+  const [isCopied, setCopied] = useState(false);
 
-    const getTxIcon = (type: string) => {
-      switch(type) {
-        case 'Send':
-          return <ArrowUpRight className="w-5 h-5 text-red-400" />;
-        case 'Received':
-          return <ArrowDownLeft className="w-5 h-5 text-green-400" />;
-        case 'BeginRedelegate':
-        case 'Delegate':
-          return <Landmark className="w-5 h-5 text-indigo-400" />;
-        case 'WithdrawDelegatorReward×2':
-          return <Coins className="w-5 h-5 text-amber-400" />;
-        case 'Failed':
-          return <XCircle className="w-5 h-5 text-gray-500" />;
-        default:
-          return <ArrowLeftRight className="w-5 h-5 text-gray-400" />;
-      }
-    };
-
-    const getColor = (type: string) => {
-        switch(type) {
-            case 'Send':
-            case 'Failed':
-                return 'bg-red-500/20';
-            case 'Delegate':
-            case 'BeginRedelegate':
-                return 'bg-green-400/20';
-            case 'WithdrawDelegatorReward×2':
-            case 'Received':
-                return 'bg-green-500/20';
-            default:
-                return 'bg-red-500/20';
+  const getTxIcon = (type: string) => {
+    switch(type) {
+      case 'Send':
+        return <ArrowUpRight className="w-5 h-5 text-red-400" />;
+      case 'Received':
+        return <ArrowDownLeft className="w-5 h-5 text-green-400" />;
+      case 'BeginRedelegate':
+        return <ClockPlus className="w-5 h-5 text-indigo-400" />;
+      case 'Delegate':
+        return <Layers className="w-5 h-5 text-indigo-400" />;
+      case 'Failed':
+        return <XCircle className="w-5 h-5 text-gray-500" />;
+      case 'Undelegate':
+        return <Unlink className='w-5 h-5 text-red-600' />;
+      default:
+        if (type.indexOf('WithdrawDelegatorReward') !== -1) {
+          return <Star className='w-5 h-5 text-amber-400' />;
         }
+        return <ArrowLeftRight className="w-5 h-5 text-gray-400" />;
     }
+  };
+
+  const getColor = (type: string) => {
+    switch(type) {
+      case 'Send':
+      case 'Failed':
+        return 'bg-red-500/20';
+      case 'Delegate':
+      case 'BeginRedelegate':
+        return 'bg-green-400/20';
+      case 'Received':
+        return 'bg-green-500/20';
+      default:
+         if (type.indexOf('WithdrawDelegatorReward') !== -1) {
+          return 'recent-activity-icon';
+        }
+        return 'bg-red-500/20';
+    }
+  }
 
     const getTotalBalances = () => {
       let total = 0;
@@ -373,7 +382,7 @@ export const WalletScreen = ({
                   onClick={() => onOpenModal('stake')}
                   disabled={isLoading}
                 >
-                  <Landmark className="w-5 h-5"/> Stake
+                  <Layers className="w-5 h-5"/> Stake
                 </AppButton>
             </div>
           </Card>
@@ -397,8 +406,8 @@ export const WalletScreen = ({
           <div className="space-y-2 relative w-full">
             <Loading isLoading={isLoading} />
             <div className='w-full overflow-x-auto'>
-              <div className='w-full min-w-[968px]'>
-                <div className="grid grid-cols-12 gap-4 items-center p-4">
+              <div className='w-full md:min-w-[968px] text-base'>
+                <div className="hidden md:grid grid-cols-12 gap-4 items-center p-4">
                   <div className="col-span-2 flex items-center text-gray-500">
                     Block Height
                   </div>
@@ -416,34 +425,41 @@ export const WalletScreen = ({
                   </div>
                 </div>
                 {transactions.map((tx) => (
-                  <div key={tx.txhash} className="grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors">
-                    <div className="col-span-2 flex items-center">
-                      <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
+                  <div key={tx.txhash} className="md:grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors mb-3 md:mb-0">
+                    <div className="w-full md:col-span-2">
+                      <div className="md:hidden font-semibold text-gray-500 mr-2">Block Height: </div>
+                      <div className='flex items-center mt-1 md:mt-0'>
+                        <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
                           {getTxIcon(getMessages(tx.tx.body.messages))}
+                        </div>
+                        <AppLink href={`/block/${tx.height}`} className="text-white ml-2 hover:text-lumera-green">{tx.height}</AppLink>
                       </div>
-                      <AppLink href={`/block/${tx.height}`} className="text-white ml-2 hover:text-lumera-green">{tx.height}</AppLink>
                     </div>
-                    <div className="col-span-2">
+                    <div className="w-full md:col-span-2 mt-3 md:mt-0">
+                      <div className="md:hidden font-semibold text-gray-500 mr-2">TX Hash: </div>
                       <AppLink href={`/tx/${tx.txhash}`} className="text-white whitespace-nowrap hover:text-lumera-green">
-                          {formatAddress(tx.txhash, 10, -4)}
+                        {formatAddress(tx.txhash, 10, -4)}
                       </AppLink>
                     </div>
-                    <div className="col-span-3 text-left whitespace-nowrap">
+                    <div className="w-full md:col-span-3 text-left whitespace-nowrap mt-3 md:mt-0">
+                      <div className="md:hidden font-semibold text-gray-500 mr-2">Transaction Type: </div>
                       {getMessages(tx.tx.body.messages)}
                     </div>
-                    <div className="col-span-2 text-left whitespace-nowrap">
+                    <div className="w-full md:col-span-2 text-left whitespace-nowrap mt-3 md:mt-0">
+                      <div className="md:hidden font-semibold text-gray-500 mr-2">Transaction Status: </div>
                       <span className={`truncate relative w-fit rounded ${tx?.code === 0 ? 'text-lumera-teal' : 'text-red-500'}`}>
                         {tx?.code === 0 ? 'Success' : 'Failed'}
                       </span>
                     </div>
-                    <div className="col-span-3 text-sm text-gray-500 flex justify-end">
+                    <div className="w-full md:col-span-3 text-sm text-gray-500 md:flex justify-end mt-3 md:mt-0">
+                      <div className="md:hidden font-semibold text-gray-500 mr-2">Time: </div>
                       <span className="text-white pr-1 whitespace-nowrap">{dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}</span>
                       (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm whitespace-nowrap' />)
                     </div>
                   </div>
                 ))}
-                {!transactions?.length ?
-                  <div className="grid grid-cols-12 gap-4 items-center">
+                {!transactions?.length && !isLoading ?
+                  <div className="block items-center">
                     <H3>No Transactions</H3>
                   </div> : null
                 }

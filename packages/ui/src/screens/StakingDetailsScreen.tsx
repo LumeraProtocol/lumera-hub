@@ -403,8 +403,8 @@ export const StakingDetailsScreen = ({
           <div className='mt-3 relative'>
             <Loading isLoading={isFetchDelegatorsLoading} />
             <div className="overflow-x-auto">
-              <div className="min-w-[500px] space-y-2">
-                <div className="grid grid-cols-10 gap-4 px-4 py-3 text-sm font-semibold text-gray-400">
+              <div className="md:min-w-[500px] space-y-2">
+                <div className="hidden md:grid grid-cols-10 gap-4 px-4 py-3 text-sm font-semibold text-gray-400">
                   <div className="col-span-5">Delegator Address</div>
                   <div className="col-span-2 text-right">Stake Share</div>
                   <div className="col-span-3 text-right">Amount</div>
@@ -412,19 +412,22 @@ export const StakingDetailsScreen = ({
                 {delegators.map((item, i) => {
                   const tx = decodeTxRaw(fromBase64(item.tx));
                   return (
-                    <div key={i} className="grid grid-cols-10 gap-4 p-3 bg-gray-900/40 rounded-lg text-sm">
-                      <div className="col-span-5 font-mono text-gray-300 truncate">
+                    <div key={i} className="flex flex-col md:grid grid-cols-10 gap-2 md:gap-4 p-3 bg-gray-900/40 rounded-lg text-sm">
+                      <div className="w-full md:col-span-5 font-mono text-gray-300 truncate">
+                        <div className="md:hidden font-semibold text-gray-500 mr-2">Delegator Address: </div>
                         {mapDelegators(tx?.body?.messages).map((d) => (
                           <AppLink href={`/account/${d}`} key={d}>
                             {d}
                           </AppLink>
                         ))}
                       </div>
-                      <div className="col-span-2 text-right text-indigo-400">
-                        {getStakeShare(item)}
+                      <div className="w-full md:col-span-2 md:text-right text-indigo-400">
+                        <div className="md:hidden font-semibold text-gray-500 mr-2">Stake Share: </div>
+                        <span>{getStakeShare(item)}</span>
                       </div>
-                      <div className="col-span-3 text-right font-mono text-white">
-                        {mapEvents(item.tx_result.events)}
+                      <div className="w-full md:col-span-3 md:text-right font-mono text-white">
+                        <div className="md:hidden font-semibold text-gray-500 mr-2">Amount: </div>
+                        <span>{mapEvents(item.tx_result.events)}</span>
                       </div>
                     </div>
                   )

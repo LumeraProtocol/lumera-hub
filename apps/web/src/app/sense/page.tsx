@@ -7,13 +7,13 @@ import { SenseScreen } from '@lumera-hub/ui/src/screens/SenseScreen';
 
 export default function Page() {
   useEffect(() => {
-    document.title = 'Sense';
+    document.title = 'Sense - Lumera Hub';
   }, []);
-  
+
   return (
     <>
       <Helmet>
-        <title>Sense</title>
+        <title>Sense - Lumera Hub</title>
       </Helmet>
       <div className="sense-content">
         <SenseScreen />

@@ -7,13 +7,13 @@ import { AccountScreen } from '@lumera-hub/ui/src/screens/AccountScreen';
 
 export default function Page() {
   useEffect(() => {
-    document.title = 'Account';
+    document.title = 'Account - Lumera Hub';
   }, []);
 
   return (
     <>
       <Helmet>
-        <title>Account</title>
+        <title>Account - Lumera Hub</title>
       </Helmet>
       <div className="account-content">
         <AccountScreen />
