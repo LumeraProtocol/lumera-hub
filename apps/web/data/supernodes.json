@@ -66,5 +66,56 @@
     "validatorMoniker": "Innovating Capital",
     "address": "18.216.80.56:4444",
     "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      48.974797,
+      8.176773
+    ],
+    "name": "Lauterbourg",
+    "continent": "Europe",
+    "country": "France",
+    "country_code": "FR",
+    "subdivision": "Paris",
+    "city": "Lauterbourg",
+    "supernodeAccount": "lumera1uq7lylrf0mrvrfq5s5uzk5my2f4562w2qxxftw",
+    "validatorAddress": "lumeravaloper1kqwk00kpez2fctrmj4l836f827fxs6yahrfdzy",
+    "validatorMoniker": "MaouamNodelab",
+    "address": "185.197.195.18:4444",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      49.1200802,
+      10.7318864
+    ],
+    "name": "Gunzenhausen",
+    "continent": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "subdivision": "Berlin",
+    "city": "Gunzenhausen",
+    "supernodeAccount": "lumera1wmq0wu60a63cnx5fhln0m0zv6u5rq6dw0dhvhn",
+    "validatorAddress": "lumeravaloper1uj98474n68v52ycwu25chs6ldj77svrtqyddca",
+    "validatorMoniker": "Encapsulate",
+    "address": "176.9.8.81:4444",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      50.4750046,
+      12.3649754
+    ],
+    "name": "Falkenstein",
+    "continent": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "subdivision": "Berlin",
+    "city": "Falkenstein",
+    "supernodeAccount": "lumera1yl39t9djgh4gnjw77h9k354eus305n7pnyup7m",
+    "validatorAddress": "lumeravaloper1yl39t9djgh4gnjw77h9k354eus305n7pu70acc",
+    "validatorMoniker": "LINQNODE",
+    "address": "195.201.61.205:4444",
+    "p2pPort": "4445"
   }
 ]
