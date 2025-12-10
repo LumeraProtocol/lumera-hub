@@ -67,7 +67,7 @@ interface ISuperNodeMap {
 interface IActionFeeModal {
   isOpen: boolean;
   fileName: string;
-  fileZise: number;
+  fileSize: number;
   uploadFee: string;
   onCloseModal: () => void;
   onCancelClick: () => void;
@@ -304,7 +304,7 @@ export const CascadeScreen = ({
 const ActionFeeModal = ({
   isOpen,
   fileName,
-  fileZise,
+  fileSize,
   uploadFee,
   onCloseModal,
   onCancelClick,
@@ -354,7 +354,7 @@ const ActionFeeModal = ({
           <div className="relative p-3">
             <div className='mx-auto max-w-[550px] sm:min-w-[450px]'>
               <p>You are uploading "<strong>{fileName}</strong>"</p>
-              <p>Size: <strong>{formatFileSize(fileZise)}</strong></p>
+              <p>Size: <strong>{formatFileSize(fileSize)}</strong></p>
               <p>Fee: <strong>{uploadFee}</strong></p>
               <p className='mt-2'>Do you want to upload this file?</p>
               <div>
@@ -846,7 +846,7 @@ export const CascadeContent = React.memo(({
       }
       <ActionFeeModal
         fileName={uploadCascadeInfo.fileName}
-        fileZise={uploadCascadeInfo.fileZise}
+        fileSize={uploadCascadeInfo.fileSize}
         uploadFee={uploadCascadeInfo.uploadFee}
         isOpen={selectedModal === 'upload-cascade'}
         onCancelClick={closeActionFeeModal}

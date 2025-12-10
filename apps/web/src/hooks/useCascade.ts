@@ -239,7 +239,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const [selectedModal, setSelectedModal] = useState('');
   const [uploadCascadeInfo, setSploadCascadeInfo] = useState({
     fileName: '',
-    fileZise: 0,
+    fileSize: 0,
     uploadFee: '',
   });
   const [totalPage, setTotalPage] = useState(0);
@@ -417,21 +417,33 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/stats`);
         const snResults = [];
         let isContinue = true;
+        let hasError = false;
         let cursor = '';
         do {
-          const data = await fetchSupernodes(cursor);
-          if (data.nodes?.length) {
-            snResults.push(...data.nodes)
-          }
-          cursor = data.next_cursor;
-          if (!data.next_cursor) {
+          try {
+            const supernodes = await fetchSupernodes(cursor);
+            if (supernodes.nodes?.length) {
+              snResults.push(...supernodes.nodes)
+            }
+            cursor = supernodes.next_cursor;
+            isContinue = !!cursor;
+          } catch {
             isContinue = false;
+            hasError = true;
+            break;
           }
         } while (isContinue)
-        setNetworkStorage({
-          totalSupernode: snResults.length || 0,
-          networkStorage: data?.total_memory_gb ? `${formatNumber(data.total_memory_gb, { decimalsLength: 2})} GB` : '',
-        });
+        if (hasError) {
+          setNetworkStorage({
+            totalSupernode: snResults.length,
+            networkStorage: data?.total_memory_gb ? `${formatNumber(data.total_memory_gb, { decimalsLength: 2})} GB` : '',
+          });
+        } else {
+          setNetworkStorage({
+            totalSupernode: 0,
+            networkStorage: data?.total_memory_gb ? `${formatNumber(data.total_memory_gb, { decimalsLength: 2})} GB` : '',
+          });
+        }
         setFetchSummaryLoading(false);
         await getChartMarker(snResults);
       }
@@ -660,7 +672,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       const result = await lumeraSdk.getActionFee(client, selectedFile.size);
       setSploadCascadeInfo({
         fileName: selectedFile.name,
-        fileZise: selectedFile.size,
+        fileSize: selectedFile.size,
         uploadFee: `${parseFloat((Number(result.amount) / RATE_VALUE).toFixed(2))} LUME`,
       });
       setSelectedModal('upload-cascade');
