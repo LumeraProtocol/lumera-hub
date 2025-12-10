@@ -330,21 +330,16 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
 
   const readSupernodeFile = async () => {
     try {
-      const { data } = await instance.postExternal('/api/supernode', {
-        action: 'read'
-      });
+      const { data } = await instance.getExternal('/api/supernode');
       return data?.supernodes || [];
     } catch {
       return [];
     }
   }
 
-  const writeSupernodeFile = async (content: IMarker[]) => {
+  const writeSupernodeFile = async () => {
     try {
-      const { data } = await instance.postExternal('/api/supernode', {
-        action: 'write',
-        content
-      });
+      const { data } = await instance.postExternal('/api/supernode', {});
       return data;
     } catch {
       return null;
@@ -355,12 +350,14 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     try {
       const results: IMarker[] = [];
       const supernodeData: IMarker[] = await readSupernodeFile();
+      let isUpdate = false;
       for (const item of items) {
         const address = item.ip_address;
         const ip = address.split(':')[0];
         if (isValidIPv4(ip)) {
           const supernode = supernodeData.find((s) => s.address === address);
           if (!supernode) {
+            isUpdate = true;
             const data = await fetchLocationForIP(ip);
             if (data?.latitude && data?.longitude) {
               results.push({
@@ -384,8 +381,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         }
       }
       setMarkers(results);
-      if (results?.length) {
-        await writeSupernodeFile(results);
+      if (isUpdate) {
+        await writeSupernodeFile();
       }
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
@@ -598,7 +595,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
 
   useEffect(() => {
     getSummary();
-
 
     return () => {
       if (timeoutRef.current) {
