@@ -260,13 +260,12 @@ const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap
 });
 
 const getFileIcon = (type: string) => {
-  const simpleType = getSimplifiedType(type);
-  switch (simpleType) {
-    case 'Image': return <ImageIcon className="w-6 h-6 text-blue-400" />;
-    case 'Video': return <Video className="w-6 h-6 text-purple-400" />;
-    case 'PDF': return <FileText className="w-6 h-6 text-red-400" />;
-    case 'Archive': return <FileArchive className="w-6 h-6 text-yellow-400" />;
-    default: return <FileIcon className="w-6 h-6 text-gray-400" />;
+  switch (type) {
+    case 'Image': return <ImageIcon className="w-4 h-4 text-blue-400" />;
+    case 'Video': return <Video className="w-4 h-4 text-purple-400" />;
+    case 'PDF': return <FileText className="w-4 h-4 text-red-400" />;
+    case 'Archive': return <FileArchive className="w-4 h-4 text-yellow-400" />;
+    default: return <FileIcon className="w-4 h-4 text-gray-400" />;
   }
 };
 
@@ -620,8 +619,8 @@ export const CascadeContent = React.memo(({
                         <button
                           key={type.value}
                           onClick={() => handleFileTypeFilterChange(type.value)}
-                          className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap ${fileTypeFilter === type.value ? 'bg-lumera-teal text-white' :
-                            'text-gray-300 hover:bg-lumera-teal'}`}
+                          className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-300 cursor-pointer whitespace-nowrap ${fileTypeFilter === type.value ? 'bg-lumera-teal text-white' :
+                            'text-gray-300 hover:bg-lumera-teal hover:text-white'}`}
                         >
                           {type.label} ({fileCounts[type.value as TFileTypeKey]})
                         </button>
@@ -659,12 +658,12 @@ export const CascadeContent = React.memo(({
             }
             <div className='md:overflow-x-auto '>
               <div className="space-y-2 md:min-w-[1130px]">
-                <table className='w-full border-separate border-spacing-y-2'>
+                <table className='w-full border-separate border-spacing-y-2 text-sm'>
                   <thead>
                     <tr>
                       <th className='px-2 py-3'>
                         <div className='flex items-start'>
-                          <div className='w-10'>
+                          <div className='w-7'>
                             <Checkbox
                               id="checkAll"
                               size="$4"
@@ -679,6 +678,7 @@ export const CascadeContent = React.memo(({
                           <span>Name</span>
                         </div>
                       </th>
+                      <th align='left' className='px-2 py-3'>Public</th>
                       <th align='left' className='px-2 py-3'>Status</th>
                       <th align='left' className='px-2 py-3'>TX ID</th>
                       <th align='right' className='px-2 py-3'>Price</th>
@@ -691,14 +691,14 @@ export const CascadeContent = React.memo(({
                   <tbody>
                     {!filteredFiles?.length && !isMyFilesLoading ? (
                       <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
-                        <td colSpan={8} className='px-2 py-3'>
+                        <td colSpan={9} className='px-2 py-3'>
                           <H3 className='text-2xl'>No files</H3>
                         </td>
                       </tr>
                      ) : null }
                     {isMyFilesLoading ? (
                       <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
-                        <td colSpan={8} className='px-2 py-3'>
+                        <td colSpan={9} className='px-2 py-3'>
                           <Skeleton type='list' className='min-h-8' count={3} />
                         </td>
                       </tr>
@@ -716,11 +716,12 @@ export const CascadeContent = React.memo(({
                         price = tx.price || '';
                         fee = tx.fee || '';
                       }
+                      const isExpired = file.state === 'ACTION_STATE_EXPIRED';
                       return (
                         <tr key={index} className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
                           <td className='px-2 py-3'>
                             <div className='flex items-start w-full'>
-                              <div className='w-10'>
+                              <div className='w-7'>
                                 <Checkbox
                                   id="checkAll"
                                   size="$4"
@@ -765,12 +766,16 @@ export const CascadeContent = React.memo(({
                             </div>
                           </td>
                           <td className='px-2 py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2">Public: </span>
+                            <span>{file.isPublic ? 'Yes' : 'No'}</span>
+                          </td>
+                          <td className='px-2 py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Status: </span>
                             <span className={`capitalize ${getStatusColor(file.state)}`}>{getFileStatus(file.state)}</span>
                           </td>
                           <td className='px-2 py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
-                            {txId ?
+                            {txId && !isExpired ?
                               <AppLink
                                 href={`/tx/${txId}`}
                                 className="font-mono text-lumera-teal hover:text-lumera-green truncate inline-flex items-center gap-1.5"
@@ -781,15 +786,15 @@ export const CascadeContent = React.memo(({
                           </td>
                           <td className='text-right px-2 py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Price: </span>
-                            {price}
+                            {!isExpired ? price : '0 LUME'}
                           </td>
                           <td className='text-right px-2 py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Fee: </span>
-                            {fee}
+                            {!isExpired ? fee : '0 LUME'}
                           </td>
                           <td className='text-right px-2 py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                            {formatBytes(file.size)}
+                            {formatBytes(!isExpired ? file.size : 0)}
                           </td>
                           <td className='px-2 py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Last Modified: </span>
@@ -799,14 +804,16 @@ export const CascadeContent = React.memo(({
                             </> : '--'}
                           </td>
                           <td className='text-right px-2 py-3'>
-                            <AppButton
-                              variant="secondary"
-                              className={`!px-4 text-sm w-full md:w-auto max-w-40 ${isDisabledButton ? 'cursor-default opacity-40' : ''}`}
-                              onClick={() => handleDownloadFile(file)}
-                              disabled={isDisabledButton}
-                            >
-                              <Download className="w-4 h-4"/> {selectedFileDownload.includes(file.actionID) ? 'Downloading' : 'Download'}
-                            </AppButton>
+                            <div className='flex justify-end w-full'>
+                              <AppButton
+                                variant="secondary"
+                                className={`!px-4 !text-sm w-full md:w-auto max-w-40 !font-normal ${isDisabledButton ? 'cursor-default opacity-40' : ''}`}
+                                onClick={() => handleDownloadFile(file)}
+                                disabled={isDisabledButton}
+                              >
+                                <Download className="w-3 h-3"/> {selectedFileDownload.includes(file.actionID) ? 'Downloading' : 'Download'}
+                              </AppButton>
+                            </div>
                           </td>
                         </tr>
                       )
@@ -827,7 +834,7 @@ export const CascadeContent = React.memo(({
                 </Card>
               </div> : null
             }
-            {totalPage > 1 ?
+            {totalPage > 1 && !isMyFilesLoadMore && !isMyFilesLoading ?
               <div className="paginate-wrapper pt-3">
                 <ReactPaginate
                   breakLabel="..."

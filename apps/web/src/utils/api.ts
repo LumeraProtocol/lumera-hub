@@ -61,4 +61,4 @@ export const get = (path: string) => customFetch(path, 'GET');
 export const post = (path: string, body: object) => customFetch(path, 'POST', body);
 export const put = (path: string, body: object) => customFetch(path, 'PUT', body);
 export const remove = (path: string, body: object) => customFetch(path, 'DELETE', body);
-export const upload = (path: string, body: object) => customFetch(path, 'post', body, true);
+export const upload = (path: string, body: object) => customFetch(path, 'POST', body, true);
