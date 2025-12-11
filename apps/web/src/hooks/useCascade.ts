@@ -417,7 +417,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/stats`);
         const snResults = [];
         let isContinue = true;
-        let hasError = false;
         let cursor = '';
         do {
           try {
@@ -429,21 +428,13 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
             isContinue = !!cursor;
           } catch {
             isContinue = false;
-            hasError = true;
             break;
           }
         } while (isContinue)
-        if (hasError) {
-          setNetworkStorage({
-            totalSupernode: snResults.length,
-            networkStorage: data?.total_memory_gb ? `${formatNumber(data.total_memory_gb, { decimalsLength: 2})} GB` : '',
-          });
-        } else {
-          setNetworkStorage({
-            totalSupernode: 0,
-            networkStorage: data?.total_memory_gb ? `${formatNumber(data.total_memory_gb, { decimalsLength: 2})} GB` : '',
-          });
-        }
+        setNetworkStorage({
+          totalSupernode: snResults.length,
+          networkStorage: data?.total_memory_gb ? `${formatNumber(data.total_memory_gb, { decimalsLength: 2})} GB` : '',
+        });
         setFetchSummaryLoading(false);
         await getChartMarker(snResults);
       }
