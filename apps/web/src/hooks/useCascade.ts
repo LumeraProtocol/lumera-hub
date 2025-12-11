@@ -6,7 +6,11 @@ import JSZip from 'jszip';
 
 import { useSelector } from '@/redux/hooks';
 import * as instance from '@/utils/api';
-import { formatBytes, isValidIPv4, extractValidNumber } from '@/utils/helpers';
+import {
+  formatBytes,
+  isValidIPv4,
+  extractValidNumber,
+} from '@/utils/helpers';
 import { formatNumber } from '@/utils/format';
 import {
   CHAIN_ID,
@@ -38,6 +42,7 @@ export interface IMyFile {
   height: string;
   price: string;
   fee: string;
+  isPublic: boolean | null;
 }
 
 export interface IMarker {
@@ -125,11 +130,12 @@ interface IAction {
   block_height: string;
   creator: string;
   decoded: {
-     data_hash: string;
-     file_name: string;
-     rq_ids_ic: number;
-     rq_ids_max: number;
-     signatures: string;
+    data_hash: string;
+    file_name: string;
+    rq_ids_ic: number;
+    rq_ids_max: number;
+    signatures: string;
+    public: boolean;
   };
   id: string;
   state: string;
@@ -204,7 +210,7 @@ export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
     txhash: tx ? tx.txhash : '',
     timestamp: tx?.timestamp,
     price: tx?.tx.body.messages[0].price ? formatNumber(Number(extractValidNumber(tx?.tx.body.messages[0].price)) / RATE_VALUE, { decimalsLength: 2 }) + ' LUME' : '0',
-    fee: `${amount?.length ? (formatNumber(Number(amount[0].amount) / RATE_VALUE, { decimalsLength: 3 })) + ' LUME' : '0'}`
+    fee: `${amount?.length ? (formatNumber(Number(amount[0].amount) / RATE_VALUE, { decimalsLength: 3 })) + ' LUME' : '0'}`,
   };
 }
 
@@ -433,17 +439,10 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
             break;
           }
         } while (isContinue)
-        if (hasError) {
-          setNetworkStorage({
-            totalSupernode: snResults.length,
-            networkStorage: data?.total_memory_gb ? `${formatNumber(data.total_memory_gb, { decimalsLength: 2})} GB` : '',
-          });
-        } else {
-          setNetworkStorage({
-            totalSupernode: 0,
-            networkStorage: data?.total_memory_gb ? `${formatNumber(data.total_memory_gb, { decimalsLength: 2})} GB` : '',
-          });
-        }
+        setNetworkStorage({
+          totalSupernode: snResults.length,
+          networkStorage: data?.total_memory_gb ? `${formatNumber(data.total_memory_gb, { decimalsLength: 2})} GB` : '',
+        });
         setFetchSummaryLoading(false);
         await getChartMarker(snResults);
       }
@@ -458,7 +457,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     try {
       const nextKeyParam = nextKey ? `&cursor=${nextKey}` : '';
       const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=${ITEM_PER_PAGE}${nextKeyParam}&creator=${address}`)
-
       return {
         actions: data.items,
         nextKey: data.next_cursor,
@@ -519,23 +517,26 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const generateFile = async (items: IAction[]) => {
     const files: IMyFile[] = [];
     for (const item of items) {
-      const fileInfo = await getFileInfo(item);
-      files.push({
-        name: item.decoded.file_name || '',
-        size: fileInfo.file_size_kbs || 0,
-        txId: '',
-        type: getFileType(item.decoded.file_name),
-        actionID: item.id,
-        signatures: item.decoded.signatures,
-        lastModified: fileInfo.created_at,
-        state: item.state,
-        datahash: item.decoded.data_hash,
-        height: item.block_height,
-        price: '0',
-        fee: '0',
-      });
+      if (item.creator === address) {
+        const fileInfo = await getFileInfo(item);
+        files.push({
+          name: item.decoded.file_name || '',
+          size: fileInfo.file_size_kbs || 0,
+          txId: '',
+          type: getFileType(item.decoded.file_name),
+          actionID: item.id,
+          signatures: item.decoded.signatures,
+          lastModified: fileInfo.created_at,
+          state: item.state,
+          datahash: item.decoded.data_hash,
+          height: item.block_height,
+          price: '0',
+          fee: '0',
+          isPublic: item.decoded.public,
+        });
+      }
     }
-    return files;
+    return [...new Map(files.map(item => [item.actionID, item])).values()];
   }
 
   const getMyFiles = useCallback(async () => {
@@ -544,30 +545,37 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     try {
       const results = await fetchMyFiles();
       let isContinue = false;
-      const files: IMyFile[] = [];
+      let files: IMyFile[] = [];
       let nextCursor = '';
       if (results?.actions) {
         isContinue = !!results.nextKey;
         nextCursor = results.nextKey;
         const data = await generateFile(results?.actions);
-        files.push(...data)
-        setMyFiles(data);
+        files = data;
+        if (data?.length >= ITEM_PER_PAGE) {
+          setMyFiles(data);
+        }
       }
       setMyFilesLoading(false);
-      let counter = 1;
-      do {
-        const results = await fetchMyFiles(nextCursor);
-        if (results?.actions) {
-          const data = await generateFile(results?.actions);
-          files.push(...data)
-        }
-        if (!results?.nextKey || counter > 3) {
-          isContinue = false;
-        }
-        counter++;
-      } while (isContinue)
-
-      setMyFilesOriginal(files.map((file) => {
+      if (nextCursor) {
+        do {
+          const myFilesResults = await fetchMyFiles(nextCursor);
+          if (myFilesResults?.actions) {
+            const data = await generateFile(myFilesResults?.actions);
+            files = [...files, ...data];
+            if (files?.length >= ITEM_PER_PAGE && !myFiles.length) {
+              setMyFiles(files.slice(0, ITEM_PER_PAGE));
+            }
+          }
+          if (!myFilesResults?.nextKey) {
+            isContinue = false;
+            break;
+          }
+          nextCursor = myFilesResults?.nextKey;
+        } while (isContinue)
+      }
+      const uniqueArray = [...new Map(files.map(item => [item.actionID, item])).values()];
+      setMyFilesOriginal(uniqueArray.map((file) => {
         const tx = getTxHash(file, txs);
         return ({
           ...file,
@@ -577,11 +585,11 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           lastModified: file.lastModified || tx?.timestamp || '',
         })
       }));
-      const totalSize = files.reduce((total, item) => total + item.size, 0);
-      setTotalPage(Math.ceil(files?.length / ITEM_PER_PAGE));
+      const totalSize = uniqueArray.reduce((total, item) => total + item.size, 0);
+      setTotalPage(Math.ceil(uniqueArray?.length / ITEM_PER_PAGE));
       setMyUsage({
         size: formatBytes(totalSize),
-        uploaded: files?.length || 0,
+        uploaded: uniqueArray?.length || 0,
       });
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
@@ -629,7 +637,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           const fileBytes = new Uint8Array(fileBuffer);
           // Calculate expiration time (default to 24 hours from now)
           // Date.now() returns milliseconds, convert to seconds
-          const expirationTime = Math.floor(Date.now() / 1000 + 86400 * 1.5).toString();
+          const expirationTime = Math.floor(Date.now() / 1000 + 86400 * 5).toString();
           const signaturePrompter = lumeraSdk.createBatchedSignaturePrompter();
           const txPrompter = lumeraSdk.createDefaultTxPrompter() || undefined;
           const client = await lumeraSdk.getLumeraClient({
@@ -730,17 +738,27 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     URL.revokeObjectURL(url);
   }
 
+  const downloadCascadeFile = async (actionID: string, signatures: string) => {
+    try {
+      const { data } = await instance.postExternal(`${SNSCOPE_URL}/api/v1/actions/cascade/${actionID}/downloads`, {
+        signature: signatures,
+      });
+      const task_id = data.task_id;
+      await instance.getExternal(`${SNSCOPE_URL}/api/v1/downloads/cascade/${task_id}/status`);
+      const streamResul = await instance.getExternal(`${SNSCOPE_URL}/api/v1/downloads/cascade/${task_id}/file`);
+      return streamResul;
+    } catch (error) {
+      const errorMessage = (error as Error)?.message || (error as TError)?.statusText ||  'An unknown error occurred.';
+      throw new Error(errorMessage);
+    }
+  }
+
   const handleDownloadFile = async (file: IMyFile) => {
     setDownloading(true);
     try {
       if (lumeraSdk) {
         setSelectedFileDownload((prev) => [...prev, file.actionID]);
-        const { data } = await instance.postExternal(`${SNSCOPE_URL}/api/v1/actions/cascade/${file.actionID}/downloads`, {
-          signature: file.signatures
-        });
-        const task_id = data.task_id;
-        await instance.getExternal(`${SNSCOPE_URL}/api/v1/downloads/cascade/${task_id}/status`);
-        const streamResul = await instance.getExternal(`${SNSCOPE_URL}/api/v1/downloads/cascade/${task_id}/file`);
+        const streamResul = await downloadCascadeFile(file.actionID, file.signatures);
         const downloade = await getDownloadedBytes(streamResul.data);
         const blob1 = new Blob([downloade]);
         downloadFile(blob1, file.name);
@@ -764,13 +782,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         const zipFileName = 'downloaded_files.zip';
         const zip = new JSZip();
         for (const file of files) {
-          const { data } = await instance.postExternal(`${SNSCOPE_URL}/api/v1/actions/cascade/${file.actionID}/downloads`, {
-            signature: file.signatures
-          });
-          const task_id = data.task_id;
-          await instance.getExternal(`${SNSCOPE_URL}/api/v1/downloads/cascade/${task_id}/status`);
-          const streamResul = await instance.getExternal(`${SNSCOPE_URL}/api/v1/downloads/cascade/${task_id}/file`);
-
+          const streamResul = await downloadCascadeFile(file.actionID, file.signatures);
           if (!streamResul.data) {
             toast.error('Error when downloading the file. Please try again.', {
               position: "bottom-center",
