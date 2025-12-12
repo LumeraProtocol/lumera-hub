@@ -42,6 +42,7 @@ export interface IMyFile {
   height: string;
   price: string;
   fee: string;
+  taskId: string;
   isPublic: boolean | null;
 }
 
@@ -155,6 +156,11 @@ export interface ISelectedFile {
   signatures: string;
 }
 
+type TCascadeStogre = {
+  fileName: string;
+  taskId: string;
+}
+
 const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
 const PDF_EXT = ['pdf'];
 const VIDEO_EXT = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
@@ -202,6 +208,7 @@ const getFileType = (filename: string) => {
 
 const ITEM_PER_PAGE = 10;
 const GAS_PRICE = '025ulume';
+const storeName = 'lumera-cascade-files';
 
 export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
   const tx = txs.find((t) => t.height.toString() === file.height.toString() && t.tx.body.messages.some((m) => m.metadata?.indexOf(file.datahash) !== -1));
@@ -249,7 +256,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     uploadFee: '',
   });
   const [totalPage, setTotalPage] = useState(0);
-  const [isPublic, setPublish] = useState(false);
+  const [isPublic, setPublic] = useState(false);
   const [selectedFileDownload, setSelectedFileDownload] = useState<string[]>([]);
   const [txs, setTxs] = useState<IRecentActivity[]>([]);
 
@@ -531,10 +538,44 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           price: '0',
           fee: '0',
           isPublic: item.decoded.public,
+          taskId: fileInfo.task_id,
         });
       }
     }
     return [...new Map(files.map(item => [item.actionID, item])).values()];
+  }
+
+  const updateFilesStogre = (files: IMyFile[]) => {
+    let results: TCascadeStogre[] = [];
+    const currentUploadFiles = localStorage.getItem(storeName);
+    if (currentUploadFiles) {
+      const currentFiles: TCascadeStogre[] = JSON.parse(currentUploadFiles);
+      const filteredFiles = currentFiles.filter(item => {
+        return !files.some(obj => obj.taskId === item.taskId && obj.name === item.fileName);
+      });
+      if (filteredFiles?.length) {
+        localStorage.setItem(storeName, JSON.stringify(filteredFiles));
+        results = filteredFiles;
+      } else {
+        localStorage.removeItem(storeName);
+      }
+    }
+    return results.map((r) => ({
+      name: r.fileName,
+      size: 0,
+      txId: '',
+      type: getFileType(r.fileName),
+      actionID: `${new Date().getTime()}`,
+      signatures: '',
+      lastModified: '',
+      state: 'In progress',
+      datahash: '',
+      height: '',
+      price: '0',
+      fee: '0',
+      isPublic,
+      taskId: r.taskId,
+    }));
   }
 
   const getMyFiles = useCallback(async () => {
@@ -572,7 +613,12 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           nextCursor = myFilesResults?.nextKey;
         } while (isContinue)
       }
-      const uniqueArray = [...new Map(files.map(item => [item.actionID, item])).values()];
+      let uniqueArray = [...new Map(files.map(item => [item.actionID, item])).values()];
+      const stogreFiles = updateFilesStogre(uniqueArray);
+      if (stogreFiles) {
+        uniqueArray = [...stogreFiles, ...uniqueArray];
+        setMyFiles(uniqueArray.slice(0, ITEM_PER_PAGE));
+      }
       setMyFilesOriginal(uniqueArray.map((file) => {
         const tx = getTxHash(file, txs);
         return ({
@@ -621,6 +667,41 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     };
   }, []);
 
+  const updateCascadeStogre = (taskId: string, fileName: string, isPublic: boolean) => {
+    try {
+      const currentUploadFiles = localStorage.getItem(storeName);
+      let files = [];
+      if (currentUploadFiles) {
+        files = JSON.parse(currentUploadFiles);
+      }
+      files.push({
+        taskId,
+        fileName,
+      });
+      localStorage.setItem(storeName, JSON.stringify(files));
+      const newFiles = myFilesOriginal;
+      newFiles.unshift({
+        name: fileName,
+        size: 0,
+        txId: '',
+        type: getFileType(fileName),
+        actionID: `${new Date().getTime()}`,
+        signatures: '',
+        lastModified: `${new Date()}`,
+        state: 'In progress',
+        datahash: '',
+        height: '',
+        price: '0',
+        fee: '0',
+        isPublic,
+        taskId,
+      });
+      setMyFilesOriginal(newFiles);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   const handleUploadCascade = async () => {
     if (selectedUploadCascadeFiles?.length) {
       setSelectedModal('');
@@ -636,8 +717,8 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           // Calculate expiration time (default to 24 hours from now)
           // Date.now() returns milliseconds, convert to seconds
           const expirationTime = Math.floor(Date.now() / 1000 + 86400 * 5).toString();
-          const signaturePrompter = lumeraSdk.createBatchedSignaturePrompter();
-          const txPrompter = lumeraSdk.createDefaultTxPrompter() || undefined;
+          const signaturePrompter = await lumeraSdk.createBatchedSignaturePrompter();
+          const txPrompter = await lumeraSdk.createDefaultTxPrompter() || undefined;
           const client = await lumeraSdk.getLumeraClient({
             signer: offlineSigner,
             address,
@@ -657,6 +738,9 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
             txPrompter,
           }, client);
           setUploadResult(result);
+          if (result?.task_id) {
+            updateCascadeStogre(result.task_id, selectedFile.name, isPublic);
+          }
           setSelectedModal('upload-cascade-success');
         }
       } catch (error) {
@@ -839,7 +923,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     isMyFilesLoadMore,
     selectedFileDownload,
     txs,
-    setPublish,
+    setPublic,
     handleCloseUploadCascadeSuccessModal,
     handlePageClick,
     closeActionFeeModal,

@@ -72,7 +72,7 @@ interface IActionFeeModal {
   onCloseModal: () => void;
   onCancelClick: () => void;
   onOkClick: () => void;
-  setPublish: (status: boolean) => void;
+  setPublic: (status: boolean) => void;
 }
 
 interface IUploadCascadeSuccessModal {
@@ -308,7 +308,7 @@ const ActionFeeModal = ({
   onCloseModal,
   onCancelClick,
   onOkClick,
-  setPublish,
+  setPublic,
 }: IActionFeeModal) => {
   return (
     <Dialog
@@ -361,7 +361,7 @@ const ActionFeeModal = ({
                   defaultValue="private"
                   name="status"
                   id="status"
-                  onValueChange={(value) => setPublish(value === 'publish')}
+                  onValueChange={(value) => setPublic(value === 'public')}
                 >
                   <div className='flex items-center gap-6 mt-1'>
                     <div className='flex items-center gap-2'>
@@ -373,11 +373,11 @@ const ActionFeeModal = ({
                       </Label>
                     </div>
                     <div className='flex items-center gap-2'>
-                      <RadioGroup.Item value='publish' id='radiogroup-publish' size="$4">
+                      <RadioGroup.Item value='public' id='radiogroup-public' size="$4">
                         <RadioGroup.Indicator />
                       </RadioGroup.Item>
-                      <Label size="$4" id='radiogroup-publish' className='leading-none'>
-                        Publish
+                      <Label size="$4" id='radiogroup-public' className='leading-none'>
+                        Public
                       </Label>
                     </div>
                   </div>
@@ -518,7 +518,7 @@ export const CascadeContent = React.memo(({
     selectedFileDownload,
     txs,
     isAllDownloading,
-    setPublish,
+    setPublic,
     openActionFeeModal,
     closeActionFeeModal,
     handleDownloadAllFile,
@@ -859,7 +859,7 @@ export const CascadeContent = React.memo(({
         onCancelClick={closeActionFeeModal}
         onCloseModal={closeActionFeeModal}
         onOkClick={handleUploadCascade}
-        setPublish={setPublish}
+        setPublic={setPublic}
       />
       <UploadCascadeSuccessModal
         isOpen={selectedModal === 'upload-cascade-success'}
