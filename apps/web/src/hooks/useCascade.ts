@@ -142,6 +142,7 @@ interface IAction {
   id: string;
   state: string;
   type: string;
+  size: number;
 }
 
 type TError = {
@@ -261,10 +262,11 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const [isPublic, setPublic] = useState(false);
   const [selectedFileDownload, setSelectedFileDownload] = useState<string[]>([]);
   const [txs, setTxs] = useState<IRecentActivity[]>([]);
-  const [currentOffset, setOffset] = useState(1);
+  const [currentOffset, setOffset] = useState(0);
   const [step, setStep] = useState('');
 
   const filteredFiles = useMemo(() => {
+    setOffset(0);
     return myFilesOriginal
       .filter(file => file.name.toLowerCase().includes(fileSearch.toLowerCase()))
       .filter(file => fileTypeFilter === 'all' || file.type === fileTypeFilter);
@@ -463,6 +465,12 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   }, [lumeraSdk, address, getChartMarker]);
 
   const fetchMyFiles = async (nextKey = '') => {
+    if (!address) {
+      return {
+        actions: null,
+        nextKey: null,
+      };
+    }
     try {
       const nextKeyParam = nextKey ? `&cursor=${nextKey}` : '';
       const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=${ITEM_PER_PAGE}${nextKeyParam}&creator=${address}`)
@@ -526,25 +534,23 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const generateFile = async (items: IAction[]) => {
     const files: IMyFile[] = [];
     for (const item of items) {
-      if (item.creator === address) {
-        const fileInfo = await getFileInfo(item);
-        files.push({
-          name: item.decoded.file_name || '',
-          size: fileInfo.file_size_kbs || 0,
-          txId: '',
-          type: getFileType(item.decoded.file_name),
-          actionID: item.id,
-          signatures: item.decoded.signatures,
-          lastModified: fileInfo.created_at,
-          state: item.state,
-          datahash: item.decoded.data_hash,
-          height: item.block_height,
-          price: '0',
-          fee: '0',
-          isPublic: item.decoded.public,
-          taskId: fileInfo.task_id,
-        });
-      }
+      const fileInfo = await getFileInfo(item);
+      files.push({
+        name: item.decoded.file_name || '',
+        size: item.size || 0,
+        txId: '',
+        type: getFileType(item.decoded.file_name),
+        actionID: item.id,
+        signatures: item.decoded.signatures,
+        lastModified: fileInfo.created_at,
+        state: item.state,
+        datahash: item.decoded.data_hash,
+        height: item.block_height,
+        price: '0',
+        fee: '0',
+        isPublic: item.decoded.public,
+        taskId: fileInfo.task_id,
+      });
     }
     return [...new Map(files.map(item => [item.actionID, item])).values()];
   }
@@ -583,6 +589,9 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   }
 
   const getMyFiles = useCallback(async () => {
+    if (!address) {
+      return;
+    }
     setMyFilesLoading(true);
     setMyFilesLoadMore(true);
     try {
@@ -595,9 +604,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         nextCursor = results.nextKey;
         const data = await generateFile(results?.actions);
         files = data;
-        if (data?.length >= ITEM_PER_PAGE) {
-          setMyFiles(data);
-        }
+        setMyFilesOriginal(data);
       }
       setMyFilesLoading(false);
       if (nextCursor) {
@@ -608,6 +615,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
             files = [...files, ...data];
             if (files?.length >= ITEM_PER_PAGE && !myFiles.length) {
               setMyFiles(files.slice(0, ITEM_PER_PAGE));
+              setMyFilesOriginal(files.slice(0, ITEM_PER_PAGE));
             }
           }
           if (!myFilesResults?.nextKey) {
@@ -646,7 +654,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     }
     setMyFilesLoading(false);
     setMyFilesLoadMore(false);
-  }, []);
+  }, [address]);
 
   useEffect(() => {
     if (address) {
@@ -870,7 +878,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         downloadFile(blob1, file.name);
       }
     } catch (error) {
-      console.log('error', error)
       const errorMessage = (error as Error)?.message || (error as TError)?.statusText ||  'An unknown error occurred.';
       toast.error(errorMessage, {
         position: "bottom-center",
