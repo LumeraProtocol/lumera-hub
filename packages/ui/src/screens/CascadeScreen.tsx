@@ -15,7 +15,7 @@ import {
   Tooltip,
 } from 'tamagui';
 import Dropzone from 'react-dropzone';
-import { CloudUpload } from '@tamagui/lucide-icons';
+import { CloudUpload, Wallet } from '@tamagui/lucide-icons';
 import { worldMill } from "@react-jvectormap/world";
 import {
   Search,
@@ -43,9 +43,10 @@ import useCascade, {
   ISelectedFile,
   IMyFile,
   getTxHash,
+  ITEM_PER_PAGE,
 } from '@/hooks/useCascade';
 import { formatAddress, formatFileSize } from '@/utils/format';
-import { getSimplifiedType, formatBytes } from '@/utils/helpers';
+import { getSimplifiedType, formatKb } from '@/utils/helpers';
 import { useLumeraClientWrapper } from '@/hooks/useLumeraClientWrapper';
 
 import 'react-paginate/theme/basic/react-paginate.css';
@@ -69,6 +70,7 @@ interface IActionFeeModal {
   fileName: string;
   fileSize: number;
   uploadFee: string;
+  address: string;
   onCloseModal: () => void;
   onCancelClick: () => void;
   onOkClick: () => void;
@@ -305,6 +307,7 @@ const ActionFeeModal = ({
   fileName,
   fileSize,
   uploadFee,
+  address,
   onCloseModal,
   onCancelClick,
   onOkClick,
@@ -391,7 +394,13 @@ const ActionFeeModal = ({
               >
                 Cancel
               </AppButton>
-              <AppButton onClick={onOkClick} className='min-w-[100px]'>Continue</AppButton>
+              <AppButton onClick={onOkClick} className='min-w-[100px]'>
+                {address ? 'Continue' :
+                  <>
+                    <Wallet size="$1" /> <span className="ml-1">Connect Wallet</span>
+                  </>
+                }
+              </AppButton>
             </div>
           </div>
         </Dialog.Content>
@@ -518,6 +527,7 @@ export const CascadeContent = React.memo(({
     selectedFileDownload,
     txs,
     isAllDownloading,
+    currentOffset,
     setPublic,
     openActionFeeModal,
     closeActionFeeModal,
@@ -556,7 +566,7 @@ export const CascadeContent = React.memo(({
             {address ?
               <>
                 {
-                  isMyFilesLoading ? <Skeleton /> : <>
+                  isMyFilesLoading || isMyFilesLoadMore ? <Skeleton /> : <>
                     <div className='font-bold text-white leading-[1.1]'>
                       <span className='text-[40px]'>{myUsage.size}</span> <span className='text-xl whitespace-nowrap'>({myUsage.uploaded} Files Uploaded)</span>
                     </div>
@@ -689,7 +699,7 @@ export const CascadeContent = React.memo(({
                     </tr>
                   </thead>
                   <tbody>
-                    {!filteredFiles?.length && !isMyFilesLoading ? (
+                    {!memoizedFilteredFiles?.length && !isMyFilesLoading && !isMyFilesLoadMore ? (
                       <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
                         <td colSpan={9} className='px-2 py-3'>
                           <H3 className='text-2xl'>No files</H3>
@@ -703,7 +713,7 @@ export const CascadeContent = React.memo(({
                         </td>
                       </tr>
                     ) : null }
-                    {!isMyFilesLoading && memoizedFilteredFiles.map((file, index) => {
+                    {!isMyFilesLoading && memoizedFilteredFiles.slice(currentOffset, currentOffset + ITEM_PER_PAGE).map((file, index) => {
                       const isDisabledButton = selectedFileDownload.includes(file.actionID) || file.state !== 'ACTION_STATE_DONE' || file.size <= 0;
                       let txId = file.txId;
                       let lastModified = file.lastModified;
@@ -794,7 +804,7 @@ export const CascadeContent = React.memo(({
                           </td>
                           <td className='text-right px-2 py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                            {formatBytes(!isExpired ? file.size : 0)}
+                            {formatKb(!isExpired ? file.size : 0)}
                           </td>
                           <td className='px-2 py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Last Modified: </span>
@@ -855,6 +865,7 @@ export const CascadeContent = React.memo(({
         fileName={uploadCascadeInfo.fileName}
         fileSize={uploadCascadeInfo.fileSize}
         uploadFee={uploadCascadeInfo.uploadFee}
+        address={address}
         isOpen={selectedModal === 'upload-cascade'}
         onCancelClick={closeActionFeeModal}
         onCloseModal={closeActionFeeModal}

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { Wallet, LogOut } from '@tamagui/lucide-icons';
 import { useChain } from '@interchain-kit/react';
-import { InterchainWalletModal } from '@interchain-kit/react';
+import { InterchainWalletModal, useWalletModal } from '@interchain-kit/react';
 import { toast } from 'react-toastify';
 
 import { useDispatch } from '@/redux/hooks';
@@ -14,9 +14,11 @@ import { setAddress, setConnected } from '@/redux/wallet.slice';
 export function WalletModalComponent() {
   const dispatch = useDispatch();
   const { address } = useChain(CHAIN_NAME);
+  const { close } = useWalletModal();
 
   useEffect(() => {
     if (address) {
+      close();
       dispatch(setAddress({
         address,
       }));
