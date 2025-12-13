@@ -430,7 +430,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/stats`);
         const snResults = [];
         let isContinue = true;
-        let hasError = false;
         let cursor = '';
         do {
           try {
@@ -442,7 +441,6 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
             isContinue = !!cursor;
           } catch {
             isContinue = false;
-            hasError = true;
             break;
           }
         } while (isContinue)
@@ -698,6 +696,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         isPublic,
         taskId,
       });
+      setMyFiles(newFiles.slice(0, ITEM_PER_PAGE));
       setMyFilesOriginal(newFiles);
     } catch (error) {
       console.error(error);
@@ -718,16 +717,14 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
           const fileBytes = new Uint8Array(fileBuffer);
           // Calculate expiration time (default to 24 hours from now)
           // Date.now() returns milliseconds, convert to seconds
-          const expirationTime = Math.floor(Date.now() / 1000 + 86400 * 5).toString();
+          const expirationTime = Math.floor(Date.now() / 1000 + 86400 * 1.5).toString();
           const signaturePrompter = await lumeraSdk.createBatchedSignaturePrompter();
           const txPrompter = await lumeraSdk.createDefaultTxPrompter() || undefined;
-          const client = await lumeraSdk.getLumeraClient({
+          const client = await lumeraSdk.createLumeraClient({
             signer: offlineSigner,
             address,
             preset: SDK_PRESET,
             chainId: CHAIN_ID,
-            rpcUrl: RPC_ENDPOINT,
-            lcdUrl: REST_AI_URL,
             snapiUrl: SNAPI_URL,
             gasPrice: GAS_PRICE,
           }, true);
@@ -758,7 +755,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setSelectedUploadCascadeFiles(files);
     try {
       const selectedFile = files[0];
-      const client = await lumeraSdk.getLumeraClientWithoutSigner({
+      const client = await lumeraSdk.createLumeraClient({
         preset: SDK_PRESET,
       });
       const result = await lumeraSdk.getActionFee(client, selectedFile.size);
@@ -822,32 +819,33 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     URL.revokeObjectURL(url);
   }
 
-  const downloadCascadeFile = async (actionID: string, signatures: string) => {
-    try {
-      const { data } = await instance.postExternal(`${SNSCOPE_URL}/api/v1/actions/cascade/${actionID}/downloads`, {
-        signature: signatures,
-      });
-      const task_id = data.task_id;
-      await instance.getExternal(`${SNSCOPE_URL}/api/v1/downloads/cascade/${task_id}/status`);
-      const streamResul = await instance.getExternal(`${SNSCOPE_URL}/api/v1/downloads/cascade/${task_id}/file`);
-      return streamResul;
-    } catch (error) {
-      const errorMessage = (error as Error)?.message || (error as TError)?.statusText ||  'An unknown error occurred.';
-      throw new Error(errorMessage);
-    }
-  }
-
   const handleDownloadFile = async (file: IMyFile) => {
     setDownloading(true);
     try {
       if (lumeraSdk) {
         setSelectedFileDownload((prev) => [...prev, file.actionID]);
-        const streamResul = await downloadCascadeFile(file.actionID, file.signatures);
-        const downloade = await getDownloadedBytes(streamResul.data);
+        const signer = await lumeraSdk.getKeplrSigner(CHAIN_ID);
+        const client = await lumeraSdk.createLumeraClient({
+          preset: SDK_PRESET,
+          snapiUrl: SNAPI_URL,
+          signer,
+          address: address!,
+          gasPrice: "0.025ulume",
+          http: {
+            timeout: 45000,
+            maxRetries: 3,
+          },
+        });
+        const stream = await client.Cascade.downloader.download(file.actionID, {
+          pollInterval: 2000,
+          timeout: 300000,
+        });
+        const downloade = await getDownloadedBytes(stream);
         const blob1 = new Blob([downloade]);
         downloadFile(blob1, file.name);
       }
     } catch (error) {
+      console.log('error', error)
       const errorMessage = (error as Error)?.message || (error as TError)?.statusText ||  'An unknown error occurred.';
       toast.error(errorMessage, {
         position: "bottom-center",
@@ -862,19 +860,27 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setAllDownloading(true);
     try {
       if (lumeraSdk) {
+        const signer = await lumeraSdk.getKeplrSigner(CHAIN_ID);
+        const client = await lumeraSdk.createLumeraClient({
+          preset: SDK_PRESET,
+          snapiUrl: SNAPI_URL,
+          signer,
+          address: address!,
+          gasPrice: "0.025ulume",
+          http: {
+            timeout: 45000,
+            maxRetries: 3,
+          },
+        });
         const files: FileToDownload[] = selectedFiles;
         const zipFileName = 'downloaded_files.zip';
         const zip = new JSZip();
         for (const file of files) {
-          const streamResul = await downloadCascadeFile(file.actionID, file.signatures);
-          if (!streamResul.data) {
-            toast.error('Error when downloading the file. Please try again.', {
-              position: "bottom-center",
-              theme: "dark",
-            });
-            return;
-          }
-          const downloadedBytes = await getDownloadedBytes(streamResul.data);
+          const stream = await client.Cascade.downloader.download(file.actionID, {
+            pollInterval: 2000,
+            timeout: 300000,
+          });
+          const downloadedBytes = await getDownloadedBytes(stream);
           const blob = new Blob([downloadedBytes]);
           zip.file(file.name, blob);
         }

@@ -20,7 +20,7 @@ module.exports = withTamagui({
     '@lumera-protocol/sdk-js',
     '@cosmjs/proto-signing',
     '@cosmjs/stargate',
-    'react-lumera-sdk'
+    'sdk-js-react'
   ],
   ...(isDesktopExport ? { output: 'export' } : {}),
   webpack: (config, { dev }) => {
@@ -38,7 +38,7 @@ module.exports = withTamagui({
 
     config.module.rules.unshift({
       test: /\.js$/,
-      include: /node_modules\/react-lumera-sdk/,
+      include: /node_modules\/sdk-js-react/,
       type: 'javascript/auto',
     });
 
