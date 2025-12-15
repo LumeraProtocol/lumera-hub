@@ -540,7 +540,7 @@ export const CascadeContent = React.memo(({
     handleUploadCascade,
     handlePageClick,
     handleCloseUploadCascadeSuccessModal,
-  } = useCascade({ lumeraSdk: memoizedClient });
+  } = useCascade({ sdkjsReact: memoizedClient });
 
   const memoizedFilteredFiles = React.useMemo(() => filteredFiles, [filteredFiles, fileSearch, fileTypeFilter]);
 

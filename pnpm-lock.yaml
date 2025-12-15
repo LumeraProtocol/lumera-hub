@@ -211,8 +211,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0(react@19.1.0)(redux@5.0.1)
       sdk-js-react:
-        specifier: ^0.0.1
-        version: 0.0.1(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        specifier: ^0.0.3
+        version: 0.0.3(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       tailwindcss:
         specifier: ^4.1.14
         version: 4.1.14
@@ -1723,8 +1723,8 @@ packages:
   '@ledgerhq/logs@6.13.0':
     resolution: {integrity: sha512-4+qRW2Pc8V+btL0QEmdB2X+uyx0kOWMWE1/LWsq5sZy3Q5tpi4eItJS6mB0XL3wGW59RQ+8bchNQQ1OW/va8Og==}
 
-  '@lumera-protocol/sdk-js@0.2.4':
-    resolution: {integrity: sha512-qhN4ksCNCSzbRJQGz27zf3o8xq8MLlwh8+IOLf7awhIl1NkUSoNprOlDjy/u6nVChfxuBgkof44nIibUQrv2vA==}
+  '@lumera-protocol/sdk-js@0.2.5':
+    resolution: {integrity: sha512-EjYxN7RYeeDjzivgSeXx1LTR5Pvrf34H+9Y9YuVS4z0XUIc+2cd/FXJSS5Dsl+u8uw+nM0ikxaDJ5xq/KkZBLg==}
     engines: {node: '>=18'}
 
   '@mongodb-js/zstd@2.0.1':
@@ -7532,8 +7532,8 @@ packages:
     resolution: {integrity: sha512-Gn/JaSk/Mt9gYubxTtSn/QCV4em9mpAPiR1rqy/Ocu19u/G9J5WWdNoUT4SiV6mFC3y6cxyFcFwdzPM3FgxGAQ==}
     engines: {node: '>= 10.13.0'}
 
-  sdk-js-react@0.0.1:
-    resolution: {integrity: sha512-L+hXoD2jqy35UB+Lw73g+V5wQCAQ4+TuBA+1zk/JhuBmip5Wz0tvVS6luMTtS+fAtwUZaFMEB3gYTfWDkQhYfw==}
+  sdk-js-react@0.0.3:
+    resolution: {integrity: sha512-Nz7a3GgLG98A2CP2w2DOIeQt5oRQ5mTNAiZ2mU8HbjS0iNp0wUXr1xhrSVNIh3RopZyWTtJJhuW/E+ejj0aoww==}
 
   secure-json-parse@2.7.0:
     resolution: {integrity: sha512-6aU+Rwsezw7VR8/nyvKTx8QpWH9FrcYiXXlqC4z5d5XQBDRqtbfsRjnwGyqbi3gddNtWHuEk9OANUotL26qKUw==}
@@ -10941,7 +10941,7 @@ snapshots:
 
   '@ledgerhq/logs@6.13.0': {}
 
-  '@lumera-protocol/sdk-js@0.2.4(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@lumera-protocol/sdk-js@0.2.5(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@bokuweb/zstd-wasm': 0.0.27
       '@bufbuild/protobuf': 2.10.2
@@ -21268,10 +21268,10 @@ snapshots:
       ajv-formats: 2.1.1(ajv@8.17.1)
       ajv-keywords: 5.1.0(ajv@8.17.1)
 
-  sdk-js-react@0.0.1(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10):
+  sdk-js-react@0.0.3(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10):
     dependencies:
       '@cosmjs/proto-signing': 0.37.0
-      '@lumera-protocol/sdk-js': 0.2.4(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      '@lumera-protocol/sdk-js': 0.2.5(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
       rq-library-wasm: 1.0.2
