@@ -46,7 +46,7 @@
     "react-toastify": "^11.0.5",
     "redux": "^5.0.1",
     "redux-persist": "^6.0.0",
-    "sdk-js-react": "^0.0.1",
+    "sdk-js-react": "^0.0.3",
     "tailwindcss": "^4.1.14",
     "tamagui": "^1.132.16"
   },

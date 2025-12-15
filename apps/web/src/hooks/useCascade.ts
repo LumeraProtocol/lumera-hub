@@ -224,7 +224,7 @@ export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
+const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const { openView } = useChain(CHAIN_NAME);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { address } = useSelector((state) => state.wallet);
@@ -432,37 +432,35 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setFetchSummaryLoading(true);
     setMarkerLoading(true);
     try {
-      if (lumeraSdk) {
-        const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/stats`);
-        const snResults = [];
-        let isContinue = true;
-        let cursor = '';
-        do {
-          try {
-            const supernodes = await fetchSupernodes(cursor);
-            if (supernodes.nodes?.length) {
-              snResults.push(...supernodes.nodes)
-            }
-            cursor = supernodes.next_cursor;
-            isContinue = !!cursor;
-          } catch {
-            isContinue = false;
-            break;
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/stats`);
+      const snResults = [];
+      let isContinue = true;
+      let cursor = '';
+      do {
+        try {
+          const supernodes = await fetchSupernodes(cursor);
+          if (supernodes.nodes?.length) {
+            snResults.push(...supernodes.nodes)
           }
-        } while (isContinue)
-        setNetworkStorage({
-          totalSupernode: snResults.length,
-          networkStorage: data?.total_storage_bytes ? `${formatBytes(data.total_storage_bytes)}` : '',
-        });
-        setFetchSummaryLoading(false);
-        await getChartMarker(snResults);
-      }
+          cursor = supernodes.next_cursor;
+          isContinue = !!cursor;
+        } catch {
+          isContinue = false;
+          break;
+        }
+      } while (isContinue)
+      setNetworkStorage({
+        totalSupernode: snResults.length,
+        networkStorage: data?.total_storage_bytes ? `${formatBytes(data.total_storage_bytes)}` : '',
+      });
+      setFetchSummaryLoading(false);
+      await getChartMarker(snResults);
     } catch {
       setMarkerLoading(false);
     }
     setFetchSummaryLoading(false);
     setMarkerLoading(false);
-  }, [lumeraSdk, address, getChartMarker]);
+  }, [address, getChartMarker]);
 
   const fetchMyFiles = async (nextKey = '') => {
     if (!address) {
@@ -732,32 +730,29 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
       setError('');
       setUploadResult(null);
       try {
-        if (lumeraSdk) {
-          const signer = await lumeraSdk.getKeplrSigner(CHAIN_ID);
+        if (sdkjsReact) {
+          const signer = await sdkjsReact.getKeplrSigner(CHAIN_ID);
           const selectedFile = selectedUploadCascadeFiles[0];
           const fileBuffer = await selectedFile.arrayBuffer();
           const fileBytes = new Uint8Array(fileBuffer);
           // Calculate expiration time (default to 24 hours from now)
           // Date.now() returns milliseconds, convert to seconds
           const expirationTime = Math.floor(Date.now() / 1000 + 86400 * 1.5).toString();
-          const signaturePrompter = await lumeraSdk.createBatchedSignaturePrompter();
-          const txPrompter = await lumeraSdk.createDefaultTxPrompter() || undefined;
-          const client = await lumeraSdk.createLumeraClient({
+          const signaturePrompter = await sdkjsReact.createBatchedSignaturePrompter();
+          const txPrompter = await sdkjsReact.createDefaultTxPrompter() || undefined;
+          const client = await sdkjsReact.createLumeraClient({
             signer,
             address,
             preset: SDK_PRESET,
-            chainId: CHAIN_ID,
-            snapiUrl: SNAPI_URL,
             gasPrice: GAS_PRICE,
           }, true);
-          const result = await lumeraSdk.uploadCascade({
-            fileBytes,
+          const result = await client.Cascade.uploader.uploadFile(fileBytes, {
             fileName: selectedFile.name,
             expirationTime,
             isPublic,
             signaturePrompter,
             txPrompter,
-          }, client);
+          });
           setUploadResult(result);
           if (result?.task_id) {
             updateCascadeStogre(result.task_id, selectedFile.name, isPublic);
@@ -787,10 +782,10 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
     setSelectedUploadCascadeFiles(files);
     try {
       const selectedFile = files[0];
-      const client = await lumeraSdk.createLumeraClient({
+      const client = await sdkjsReact.createLumeraClient({
         preset: SDK_PRESET,
       });
-      const result = await lumeraSdk.getActionFee(client, selectedFile.size);
+      const result = await client.Blockchain.Action.getActionFee(selectedFile.size);
       setSploadCascadeInfo({
         fileName: selectedFile.name,
         fileSize: selectedFile.size,
@@ -855,12 +850,11 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const handleDownloadFile = async (file: IMyFile) => {
     setDownloading(true);
     try {
-      if (lumeraSdk) {
+      if (sdkjsReact) {
         setSelectedFileDownload((prev) => [...prev, file.actionID]);
-        const signer = await lumeraSdk.getKeplrSigner(CHAIN_ID);
-        const client = await lumeraSdk.createLumeraClient({
+        const signer = await sdkjsReact.getKeplrSigner(CHAIN_ID);
+        const client = await sdkjsReact.createLumeraClient({
           preset: SDK_PRESET,
-          snapiUrl: SNAPI_URL,
           signer,
           address: address!,
           gasPrice: "0.025ulume",
@@ -869,12 +863,9 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
             maxRetries: 3,
           },
         });
-        const stream = await client.Cascade.downloader.download(file.actionID, {
-          pollInterval: 2000,
-          timeout: 300000,
-        });
-        const downloade = await getDownloadedBytes(stream);
-        const blob1 = new Blob([downloade]);
+        const stream = await client.Cascade.downloader.download(file.actionID);
+        const downloadedBytes = await getDownloadedBytes(stream);
+        const blob1 = new Blob([downloadedBytes]);
         downloadFile(blob1, file.name);
       }
     } catch (error) {
@@ -891,11 +882,10 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   const handleDownloadAllFile = async () => {
     setAllDownloading(true);
     try {
-      if (lumeraSdk) {
-        const signer = await lumeraSdk.getKeplrSigner(CHAIN_ID);
-        const client = await lumeraSdk.createLumeraClient({
+      if (sdkjsReact) {
+        const signer = await sdkjsReact.getKeplrSigner(CHAIN_ID);
+        const client = await sdkjsReact.createLumeraClient({
           preset: SDK_PRESET,
-          snapiUrl: SNAPI_URL,
           signer,
           address: address!,
           gasPrice: "0.025ulume",
@@ -908,10 +898,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
         const zipFileName = 'downloaded_files.zip';
         const zip = new JSZip();
         for (const file of files) {
-          const stream = await client.Cascade.downloader.download(file.actionID, {
-            pollInterval: 2000,
-            timeout: 300000,
-          });
+           const stream = await client.Cascade.downloader.download(file.actionID);
           const downloadedBytes = await getDownloadedBytes(stream);
           const blob = new Blob([downloadedBytes]);
           zip.file(file.name, blob);
@@ -935,6 +922,7 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
   }
 
   const handleCloseUploadCascadeSuccessModal = () => {
+    getAllTxs();
     getMyFiles();
     setSelectedModal('');
   }
