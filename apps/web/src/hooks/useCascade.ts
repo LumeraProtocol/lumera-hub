@@ -7,21 +7,21 @@ import { useChain } from '@interchain-kit/react';
 
 import { useSelector } from '@/redux/hooks';
 import * as instance from '@/utils/api';
+import { isValidIPv4 } from '@/utils/helpers';
 import {
   formatBytes,
-  isValidIPv4,
-  extractValidNumber,
   formatKb,
-} from '@/utils/helpers';
-import { formatNumber } from '@/utils/format';
+  formatTokenDisplay,
+} from '@/utils/format';
 import {
   CHAIN_ID,
   SDK_PRESET,
   SNSCOPE_URL,
   SNAPI_URL,
   CHAIN_NAME,
+  DENOM,
 } from '@/contants/network';
-import { RATE_VALUE } from '@/contants';
+import { UPLOAD_MAX_FILES } from '@/contants';
 import { IRecentActivity } from '@/types';
 
 export interface ITask {
@@ -143,6 +143,10 @@ interface IAction {
   state: string;
   type: string;
   size: number;
+  price: {
+    denom: string;
+    amount: string;
+  };
 }
 
 type TError = {
@@ -161,6 +165,15 @@ export interface ISelectedFile {
 type TCascadeStogre = {
   fileName: string;
   taskId: string;
+}
+
+export type TUploadCascadeInfo = {
+  fileName: string;
+  fileSize: number;
+  uploadFee: string;
+  type: string;
+  status?: string;
+  message?: string;
 }
 
 const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
@@ -218,8 +231,10 @@ export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
   return {
     txhash: tx ? tx.txhash : '',
     timestamp: tx?.timestamp,
-    price: tx?.tx.body.messages[0].price ? formatNumber(Number(extractValidNumber(tx?.tx.body.messages[0].price)) / RATE_VALUE, { decimalsLength: 2 }) + ' LUME' : '0',
-    fee: `${amount?.length ? (formatNumber(Number(amount[0].amount) / RATE_VALUE, { decimalsLength: 3 })) + ' LUME' : '0'}`,
+    fee: `${amount?.length ? formatTokenDisplay({
+      amount: amount[0].amount,
+      denom: amount[0].denom,
+    }) + ' LUME' : '0 LUME'}`,
   };
 }
 
@@ -230,7 +245,6 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const { address } = useSelector((state) => state.wallet);
   const [isUploading, setUploading] = useState(false);
   const [error, setError] = useState('');
-  const [uploadResult, setUploadResult] = useState<ITask | null>(null);
   const [isFetchSummaryLoading, setFetchSummaryLoading] = useState(false);
   const [networkStorage, setNetworkStorage] = useState({
     totalSupernode: 0,
@@ -253,11 +267,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const [isMarkerLoading, setMarkerLoading] = useState(false);
   const [selectedUploadCascadeFiles, setSelectedUploadCascadeFiles] = useState<File[]>([]);
   const [selectedModal, setSelectedModal] = useState('');
-  const [uploadCascadeInfo, setSploadCascadeInfo] = useState({
-    fileName: '',
-    fileSize: 0,
-    uploadFee: '',
-  });
+  const [uploadCascadeInfo, setUploadCascadeInfo] = useState<TUploadCascadeInfo[]>([]);
   const [totalPage, setTotalPage] = useState(0);
   const [isPublic, setPublic] = useState(false);
   const [selectedFileDownload, setSelectedFileDownload] = useState<string[]>([]);
@@ -535,7 +545,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       const fileInfo = await getFileInfo(item);
       files.push({
         name: item.decoded.file_name || '',
-        size: item.size || 0,
+        size: item.size || fileInfo.file_size_kbs || 0,
         txId: '',
         type: getFileType(item.decoded.file_name),
         actionID: item.id,
@@ -544,7 +554,10 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         state: item.state,
         datahash: item.decoded.data_hash,
         height: item.block_height,
-        price: '0',
+        price: `${formatTokenDisplay({
+          amount: item.price.amount,
+          denom: item.price.denom,
+        })} LUME`,
         fee: '0',
         isPublic: item.decoded.public,
         taskId: fileInfo.task_id,
@@ -635,7 +648,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
           ...file,
           txId: tx.txhash || '',
           fee: tx.fee || '',
-          price: tx.price || '',
+          price: file.price || '',
           lastModified: file.lastModified || tx?.timestamp || '',
         })
       }));
@@ -725,19 +738,12 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const handleUploadCascadeFiles = async () => {
     setStep('');
     if (selectedUploadCascadeFiles?.length) {
-      setSelectedModal('');
       setUploading(true);
       setError('');
-      setUploadResult(null);
+      setSelectedModal('');
       try {
         if (sdkjsReact) {
           const signer = await sdkjsReact.getKeplrSigner(CHAIN_ID);
-          const selectedFile = selectedUploadCascadeFiles[0];
-          const fileBuffer = await selectedFile.arrayBuffer();
-          const fileBytes = new Uint8Array(fileBuffer);
-          // Calculate expiration time (default to 24 hours from now)
-          // Date.now() returns milliseconds, convert to seconds
-          const expirationTime = Math.floor(Date.now() / 1000 + 86400 * 1.5).toString();
           const signaturePrompter = await sdkjsReact.createBatchedSignaturePrompter();
           const txPrompter = await sdkjsReact.createDefaultTxPrompter() || undefined;
           const client = await sdkjsReact.createLumeraClient({
@@ -746,16 +752,56 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
             preset: SDK_PRESET,
             gasPrice: GAS_PRICE,
           }, true);
-          const result = await client.Cascade.uploader.uploadFile(fileBytes, {
-            fileName: selectedFile.name,
-            expirationTime,
-            isPublic,
-            signaturePrompter,
-            txPrompter,
-          });
-          setUploadResult(result);
-          if (result?.task_id) {
-            updateCascadeStogre(result.task_id, selectedFile.name, isPublic);
+          // Calculate expiration time (default to 24 hours from now)
+          // Date.now() returns milliseconds, convert to seconds
+          const expirationTime = Math.floor(Date.now() / 1000 + 86400 * 1.5).toString();
+          for (const file of selectedUploadCascadeFiles) {
+            try {
+              const fileBuffer = await file.arrayBuffer();
+              const fileBytes = new Uint8Array(fileBuffer);
+              setUploadCascadeInfo(prev => prev.map((f) => {
+                let status = f.status;
+                if (f.fileName === file.name) {
+                  status = 'in-process'
+                }
+                return {
+                  ...f,
+                  status,
+                }
+              }));
+              const result = await client.Cascade.uploader.uploadFile(fileBytes, {
+                fileName: file.name,
+                expirationTime,
+                isPublic,
+                signaturePrompter,
+                txPrompter,
+              });
+              if (result?.task_id) {
+                updateCascadeStogre(result.task_id, file.name, isPublic);
+                setUploadCascadeInfo(prev => prev.map((f) => {
+                  let status = f.status;
+                  if (f.fileName === file.name) {
+                    status = 'done'
+                  }
+                  return {
+                    ...f,
+                    status,
+                  }
+                }));
+              }
+            } catch (error) {
+              setUploadCascadeInfo(prev => prev.map((f) => {
+                let status = f.status;
+                if (f.fileName === file.name) {
+                  status = 'error'
+                }
+                return {
+                  ...f,
+                  status,
+                  message: (error as Error)?.message ||  '',
+                }
+              }));
+            }
           }
           setSelectedModal('upload-cascade-success');
         }
@@ -777,29 +823,57 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   }
 
   const openActionFeeModal = async (files: File[]) => {
-    setUploading(true);
-    setError('');
-    setSelectedUploadCascadeFiles(files);
-    try {
-      const selectedFile = files[0];
-      const client = await sdkjsReact.createLumeraClient({
-        preset: SDK_PRESET,
-      });
-      const result = await client.Blockchain.Action.getActionFee(selectedFile.size);
-      setSploadCascadeInfo({
-        fileName: selectedFile.name,
-        fileSize: selectedFile.size,
-        uploadFee: `${parseFloat((Number(result.amount) / RATE_VALUE).toFixed(2))} LUME`,
-      });
-      setSelectedModal('upload-cascade');
-    } catch (error) {
-      setError((error as Error)?.message ||  'An unknown error occurred.');
+    if (files.length) {
+      setUploading(true);
+      setError('');
+      setSelectedUploadCascadeFiles(files);
+      try {
+        const client = await sdkjsReact.createLumeraClient({
+          preset: SDK_PRESET,
+        });
+        const results = [];
+        let errorMsg: string = '';
+        for (const file of files) {
+          try {
+            const { amount  } = await client.Blockchain.Action.getActionFee(file.size);
+            const fee = formatTokenDisplay({
+              amount: amount,
+              denom: DENOM,
+            });
+            results.push({
+              fileName: file.name,
+              fileSize: file.size,
+              uploadFee: `${fee} LUME`,
+              status: '',
+              type: file.type,
+            })
+          } catch (error) {
+            errorMsg = (error as Error)?.message ||  'An unknown error occurred.';
+          }
+        }
+        if (!errorMsg) {
+          setUploadCascadeInfo(results);
+          setSelectedModal('upload-cascade');
+        } else {
+          setError(errorMsg);
+        }
+      } catch (error) {
+        setError((error as Error)?.message ||  'An unknown error occurred.');
+      }
+      setUploading(false);
     }
-    setUploading(false);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleDropRejected = (fileRejections: any) => {
+    if (fileRejections.length > 0) {
+      setError(`You can only select a maximum of ${UPLOAD_MAX_FILES} files. Please select fewer.`);
+    }
   }
 
   const closeActionFeeModal = () => {
     setSelectedUploadCascadeFiles([]);
+    setUploadCascadeInfo([]);
     setSelectedModal('');
     setStep('');
   }
@@ -925,12 +999,20 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     getAllTxs();
     getMyFiles();
     setSelectedModal('');
+    setUploadCascadeInfo([]);
+    setSelectedUploadCascadeFiles([]);
+  }
+
+  const handleRemoveUploadFile = (file: TUploadCascadeInfo) => {
+    const newFiles = uploadCascadeInfo.filter((f) => f.fileName !== file.fileName);
+    setUploadCascadeInfo([...newFiles]);
+    const newSelectFiles = selectedUploadCascadeFiles.filter((f) => f.name !== file.fileName);
+    setSelectedUploadCascadeFiles(newSelectFiles);
   }
 
   return {
     isUploading,
     error,
-    uploadResult,
     isFetchSummaryLoading,
     address,
     networkStorage,
@@ -964,6 +1046,8 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     handleFileSearchChange,
     handleFileTypeFilterChange,
     handleUploadCascade,
+    handleRemoveUploadFile,
+    handleDropRejected,
   }
 }
 

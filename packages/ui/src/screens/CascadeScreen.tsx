@@ -27,6 +27,8 @@ import {
   FileIcon,
   Check as CheckIcon,
   CircleX,
+  Trash2,
+  CircleCheckBig,
 } from 'lucide-react';
 import ReactPaginate from 'react-paginate';
 import dayjs from 'dayjs';
@@ -44,20 +46,23 @@ import useCascade, {
   IMyFile,
   getTxHash,
   ITEM_PER_PAGE,
+  TUploadCascadeInfo,
 } from '@/hooks/useCascade';
-import { formatAddress, formatFileSize } from '@/utils/format';
-import { getSimplifiedType, formatKb } from '@/utils/helpers';
+import { formatAddress, formatBytes, formatKb } from '@/utils/format';
+import { getSimplifiedType } from '@/utils/helpers';
 import { useLumeraClientWrapper } from '@/hooks/useLumeraClientWrapper';
 
 import 'react-paginate/theme/basic/react-paginate.css';
 
 interface ICascadeScreen {
   JVectorMapWithNoSSR: any;
+  maxFiles: number;
 }
 
 interface ICascadeContent {
   JVectorMapWithNoSSR: any;
   client: any;
+  maxFiles: number;
 }
 
 interface ISuperNodeMap {
@@ -67,18 +72,18 @@ interface ISuperNodeMap {
 
 interface IActionFeeModal {
   isOpen: boolean;
-  fileName: string;
-  fileSize: number;
-  uploadFee: string;
+  uploadedFiles: TUploadCascadeInfo[];
   address: string;
   onCloseModal: () => void;
   onCancelClick: () => void;
   onOkClick: () => void;
   setPublic: (status: boolean) => void;
+  onRemoveUploadFile: (file: TUploadCascadeInfo) => void;
 }
 
 interface IUploadCascadeSuccessModal {
   isOpen: boolean;
+  uploadedFiles: TUploadCascadeInfo[];
   onCloseModal: () => void;
 }
 
@@ -261,13 +266,13 @@ const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap
   );
 });
 
-const getFileIcon = (type: string) => {
+const getFileIcon = (type: string, className = 'w-4 h-4') => {
   switch (type) {
-    case 'Image': return <ImageIcon className="w-4 h-4 text-blue-400" />;
-    case 'Video': return <Video className="w-4 h-4 text-purple-400" />;
-    case 'PDF': return <FileText className="w-4 h-4 text-red-400" />;
-    case 'Archive': return <FileArchive className="w-4 h-4 text-yellow-400" />;
-    default: return <FileIcon className="w-4 h-4 text-gray-400" />;
+    case 'Image': return <ImageIcon className={`${className} text-blue-400`} />;
+    case 'Video': return <Video className={`${className} text-purple-400`} />;
+    case 'PDF': return <FileText className={`${className} text-red-400`} />;
+    case 'Archive': return <FileArchive className={`${className} text-yellow-400`} />;
+    default: return <FileIcon className={`${className} text-gray-400`} />;
   }
 };
 
@@ -281,6 +286,7 @@ const checkSelectedFile = (selectedFiles: ISelectedFile[], file: IMyFile) => {
 
 export const CascadeScreen = ({
   JVectorMapWithNoSSR,
+  maxFiles,
 }: ICascadeScreen) => {
   const { module, isLoaded, error } = useLumeraClientWrapper();
 
@@ -298,20 +304,23 @@ export const CascadeScreen = ({
   }
 
   return (
-    <CascadeContent client={module} JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
+    <CascadeContent
+      client={module}
+      JVectorMapWithNoSSR={JVectorMapWithNoSSR}
+      maxFiles={maxFiles}
+    />
   );
 };
 
 const ActionFeeModal = ({
   isOpen,
-  fileName,
-  fileSize,
-  uploadFee,
+  uploadedFiles,
   address,
   onCloseModal,
   onCancelClick,
   onOkClick,
   setPublic,
+  onRemoveUploadFile,
 }: IActionFeeModal) => {
   return (
     <Dialog
@@ -329,6 +338,7 @@ const ActionFeeModal = ({
           opacity={0.5}
           enterStyle={{ opacity: 0 }}
           exitStyle={{ opacity: 0 }}
+          zIndex={1000}
         />
 
         <Dialog.Content
@@ -349,16 +359,43 @@ const ActionFeeModal = ({
           scale={1}
           opacity={1}
           y={0}
+          zIndex={1001}
         >
           <VisuallyHidden>
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
           <div className="relative p-3">
             <div className='mx-auto max-w-[550px] sm:min-w-[450px]'>
-              <p>You are uploading "<strong>{fileName}</strong>"</p>
-              <p>Size: <strong>{formatFileSize(fileSize)}</strong></p>
-              <p>Fee: <strong>{uploadFee}</strong></p>
-              <p className='mt-2'>Do you want to upload this file?</p>
+              <h3 className='mb-4'>Upload Files - {uploadedFiles.length} file(s)</h3>
+              <div className='max-h-[56vh] overflow-y-auto overflow-x-hidden'>
+                {uploadedFiles?.map((file) => (
+                  <Card key={file.fileName} className='mb-2 px-3 py-2'>
+                    <div className='flex gap-3 items-center justify-between'>
+                      <div className='flex gap-4 items-center w-full'>
+                        <div>
+                          {getFileIcon(getSimplifiedType(file.type), 'w-6 h-6')}
+                        </div>
+                        <div>
+                          <div className='whitespace-nowrap truncate max-w-[75vw] sm:max-w-[450px]'>{file.fileName}</div>
+                          <div className='text-[13px] text-lumera-gray'>
+                            <span>Size: {formatBytes(file.fileSize)}</span>
+                            <span className='mx-1'>-</span>
+                            <span>Fee: {file.uploadFee}</span>
+                          </div>
+                        </div>
+                      </div>
+                      {uploadedFiles.length > 1 ?
+                        <div>
+                          <button className='cursor-pointer' onClick={() => onRemoveUploadFile(file)}>
+                            <Trash2 className='w-5 h-5 text-red-500' />
+                          </button>
+                        </div> : null
+                      }
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              <p className='mt-4'>Do you want to upload this file?</p>
               <div>
                 <RadioGroup
                   defaultValue="private"
@@ -411,6 +448,7 @@ const ActionFeeModal = ({
 
 const UploadCascadeSuccessModal = ({
   isOpen,
+  uploadedFiles,
   onCloseModal,
 }: IUploadCascadeSuccessModal) => {
   return (
@@ -429,6 +467,7 @@ const UploadCascadeSuccessModal = ({
           opacity={0.5}
           enterStyle={{ opacity: 0 }}
           exitStyle={{ opacity: 0 }}
+          zIndex={1000}
         />
 
         <Dialog.Content
@@ -449,19 +488,56 @@ const UploadCascadeSuccessModal = ({
           scale={1}
           opacity={1}
           y={0}
+          zIndex={1001}
         >
           <VisuallyHidden>
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
-          <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
+          <div className='withdraw-main-content relative p-5 max-w-[550px] sm:min-w-[450px]'>
             <div className='flex justify-between items-center'>
               <div>&nbsp;</div>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseModal}><CircleX /></button>
             </div>
-            <div className='mt-4'>
+            <div className='mt-4 text-center'>
               <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! upload completed successfully.</H3>
             </div>
-            <div className='mt-5 pb-3'>
+            <div className='mt-4'>
+              <div className='max-h-[56vh] overflow-y-auto overflow-x-hidden'>
+                {uploadedFiles?.map((file) => (
+                  <Card key={file.fileName} className='mb-2 px-3 py-2'>
+                    <div className='flex gap-3 items-center justify-between'>
+                      <div className='flex gap-3 items-center'>
+                        <div>
+                          {getFileIcon(getSimplifiedType(file.type), 'w-6 h-6')}
+                        </div>
+                        <div>
+                          <div className='whitespace-nowrap truncate max-w-[75vw] sm:max-w-[450px]'>{file.fileName}</div>
+                          <div className='text-[13px] text-lumera-gray'>
+                            <span>Size: {formatBytes(file.fileSize)}</span>
+                            <span className='mx-1'>-</span>
+                            <span>Fee: {file.uploadFee}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        {file.status === 'error' ?
+                          <CircleX className='w-5 h-5 text-red-500' /> : null
+                        }
+                        {file.status === 'done' ?
+                          <CircleCheckBig className='w-5 h-5 text-lumera-teal' /> : null
+                        }
+                      </div>
+                    </div>
+                    {file.status === 'error' ?
+                      <div className='w-full mt-1 relative text-sm text-red-500'>
+                        {file.message}
+                      </div> : null
+                    }
+                  </Card>
+                ))}
+              </div>
+            </div>
+            <div className='mt-3 pb-3 text-center'>
               <button
                 className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
                 onClick={onCloseModal}
@@ -502,6 +578,7 @@ const getStatusColor = (state: string) => {
 export const CascadeContent = React.memo(({
   JVectorMapWithNoSSR,
   client,
+  maxFiles,
 }: ICascadeContent) => {
   const memoizedClient = React.useMemo(() => client, [client]);
 
@@ -540,6 +617,8 @@ export const CascadeContent = React.memo(({
     handleUploadCascade,
     handlePageClick,
     handleCloseUploadCascadeSuccessModal,
+    handleRemoveUploadFile,
+    handleDropRejected,
   } = useCascade({ sdkjsReact: memoizedClient });
 
   const memoizedFilteredFiles = React.useMemo(() => filteredFiles, [filteredFiles, fileSearch, fileTypeFilter]);
@@ -595,7 +674,7 @@ export const CascadeContent = React.memo(({
       </div>
       <div className='mt-6 w-full relative'>
         <Loading isLoading={isUploading} />
-        <Dropzone onDrop={openActionFeeModal} multiple={false}>
+        <Dropzone onDrop={openActionFeeModal} multiple maxFiles={maxFiles} onDropRejected={handleDropRejected}>
           {({getRootProps, getInputProps}) => (
             <div {...getRootProps()} className='dropzone-wrapper flex flex-col justify-center items-center'>
               <input {...getInputProps()} />
@@ -717,13 +796,11 @@ export const CascadeContent = React.memo(({
                       const isDisabledButton = selectedFileDownload.includes(file.actionID) || file.state !== 'ACTION_STATE_DONE' || file.size <= 0;
                       let txId = file.txId;
                       let lastModified = file.lastModified;
-                      let price = file.price;
                       let fee = file.fee;
-                      if (!txId || !lastModified || !Number(price) || !Number(fee)) {
+                      if (!txId || !lastModified || !fee) {
                         const tx = getTxHash(file, txs);
                         txId = tx.txhash;
                         lastModified = tx.timestamp || '';
-                        price = tx.price || '';
                         fee = tx.fee || '';
                       }
                       const isExpired = file.state === 'ACTION_STATE_EXPIRED';
@@ -796,7 +873,7 @@ export const CascadeContent = React.memo(({
                           </td>
                           <td className='text-right px-2 py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Price: </span>
-                            {!isExpired ? price : '0 LUME'}
+                            {!isExpired ? file.price : '0 LUME'}
                           </td>
                           <td className='text-right px-2 py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Fee: </span>
@@ -862,19 +939,19 @@ export const CascadeContent = React.memo(({
         </div> : null
       }
       <ActionFeeModal
-        fileName={uploadCascadeInfo.fileName}
-        fileSize={uploadCascadeInfo.fileSize}
-        uploadFee={uploadCascadeInfo.uploadFee}
+        uploadedFiles={uploadCascadeInfo}
         address={address}
         isOpen={selectedModal === 'upload-cascade'}
         onCancelClick={closeActionFeeModal}
         onCloseModal={closeActionFeeModal}
         onOkClick={handleUploadCascade}
         setPublic={setPublic}
+        onRemoveUploadFile={handleRemoveUploadFile}
       />
       <UploadCascadeSuccessModal
         isOpen={selectedModal === 'upload-cascade-success'}
         onCloseModal={handleCloseUploadCascadeSuccessModal}
+        uploadedFiles={uploadCascadeInfo}
       />
     </YStack>
   )
