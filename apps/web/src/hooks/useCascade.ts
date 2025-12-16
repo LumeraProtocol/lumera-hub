@@ -7,7 +7,7 @@ import { useChain } from '@interchain-kit/react';
 
 import { useSelector } from '@/redux/hooks';
 import * as instance from '@/utils/api';
-import { isValidIPv4 } from '@/utils/helpers';
+import { isValidIPv4, delay } from '@/utils/helpers';
 import {
   formatBytes,
   formatKb,
@@ -165,6 +165,7 @@ export interface ISelectedFile {
 type TCascadeStogre = {
   fileName: string;
   taskId: string;
+  isPublic?: boolean;
 }
 
 export type TUploadCascadeInfo = {
@@ -174,6 +175,7 @@ export type TUploadCascadeInfo = {
   type: string;
   status?: string;
   message?: string;
+  isPublic?: boolean;
 }
 
 const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
@@ -269,7 +271,6 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const [selectedModal, setSelectedModal] = useState('');
   const [uploadCascadeInfo, setUploadCascadeInfo] = useState<TUploadCascadeInfo[]>([]);
   const [totalPage, setTotalPage] = useState(0);
-  const [isPublic, setPublic] = useState(false);
   const [selectedFileDownload, setSelectedFileDownload] = useState<string[]>([]);
   const [txs, setTxs] = useState<IRecentActivity[]>([]);
   const [currentOffset, setOffset] = useState(0);
@@ -594,7 +595,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       height: '',
       price: '0',
       fee: '0',
-      isPublic,
+      isPublic: r.isPublic || false,
       taskId: r.taskId,
     }));
   }
@@ -709,6 +710,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       files.push({
         taskId,
         fileName,
+        isPublic,
       });
       localStorage.setItem(storeName, JSON.stringify(files));
       const newFiles = myFilesOriginal;
@@ -757,6 +759,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
           const expirationTime = Math.floor(Date.now() / 1000 + 86400 * 1.5).toString();
           for (const file of selectedUploadCascadeFiles) {
             try {
+              setSelectedModal('');
               const fileBuffer = await file.arrayBuffer();
               const fileBytes = new Uint8Array(fileBuffer);
               setUploadCascadeInfo(prev => prev.map((f) => {
@@ -769,6 +772,8 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
                   status,
                 }
               }));
+              const currentFile = uploadCascadeInfo.find((f) => f.fileName === file.name);
+              const isPublic = currentFile?.isPublic || false;
               const result = await client.Cascade.uploader.uploadFile(fileBytes, {
                 fileName: file.name,
                 expirationTime,
@@ -789,6 +794,8 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
                   }
                 }));
               }
+              setSelectedModal('upload-cascade');
+              await delay(5000);
             } catch (error) {
               setUploadCascadeInfo(prev => prev.map((f) => {
                 let status = f.status;
@@ -846,6 +853,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
               uploadFee: `${fee} LUME`,
               status: '',
               type: file.type,
+              isPublic: false,
             })
           } catch (error) {
             errorMsg = (error as Error)?.message ||  'An unknown error occurred.';
@@ -1010,6 +1018,20 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     setSelectedUploadCascadeFiles(newSelectFiles);
   }
 
+  const handlePublicFile = (fileName: string, status: boolean) => {
+    const newUploadCascadeInfo = uploadCascadeInfo.map((file) => {
+      if (file.fileName === fileName) {
+        return ({
+          ...file,
+          isPublic: status,
+        })
+      }
+
+      return file;
+    });
+    setUploadCascadeInfo(newUploadCascadeInfo);
+  }
+
   return {
     isUploading,
     error,
@@ -1034,7 +1056,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     selectedFileDownload,
     txs,
     currentOffset,
-    setPublic,
+    handlePublicFile,
     handleCloseUploadCascadeSuccessModal,
     handlePageClick,
     closeActionFeeModal,
