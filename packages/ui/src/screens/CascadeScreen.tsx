@@ -13,6 +13,9 @@ import {
   RadioGroup,
   Label,
   Tooltip,
+  Popover,
+  Adapt,
+  Sheet,
 } from 'tamagui';
 import Dropzone from 'react-dropzone';
 import { CloudUpload, Wallet } from '@tamagui/lucide-icons';
@@ -72,12 +75,13 @@ interface ISuperNodeMap {
 
 interface IActionFeeModal {
   isOpen: boolean;
+  isUploading: boolean;
   uploadedFiles: TUploadCascadeInfo[];
   address: string;
   onCloseModal: () => void;
   onCancelClick: () => void;
   onOkClick: () => void;
-  setPublic: (status: boolean) => void;
+  handlePublicFile: (fileName: string, status: boolean) => void;
   onRemoveUploadFile: (file: TUploadCascadeInfo) => void;
 }
 
@@ -316,16 +320,22 @@ const ActionFeeModal = ({
   isOpen,
   uploadedFiles,
   address,
+  isUploading,
   onCloseModal,
   onCancelClick,
   onOkClick,
-  setPublic,
+  handlePublicFile,
   onRemoveUploadFile,
 }: IActionFeeModal) => {
+  const handleCloseModal = () => {
+    if (!isUploading) {
+      onCloseModal();
+    }
+  }
   return (
     <Dialog
       open={isOpen}
-      onOpenChange={onCloseModal}
+      onOpenChange={handleCloseModal}
       modal
     >
       <Dialog.Trigger asChild>
@@ -382,63 +392,82 @@ const ActionFeeModal = ({
                             <span className='mx-1'>-</span>
                             <span>Fee: {file.uploadFee}</span>
                           </div>
+                          <div className='flex gap-2 items-center mt-2'>
+                            <span className='font-normal text-sm'>Set this file:</span>
+                            <RadioGroup
+                              defaultValue="private"
+                              name="status"
+                              id="status"
+                              onValueChange={(value) => handlePublicFile(file.fileName, value === 'public')}
+                              disabled={isUploading}
+                            >
+                              <div className='flex items-center gap-6'>
+                                <div className='flex items-center gap-2'>
+                                  <RadioGroup.Item value='private' id={`radiogroup-private-${file.fileName}`} size="$4">
+                                    <RadioGroup.Indicator />
+                                  </RadioGroup.Item>
+                                  <Label size="$4" id={`radiogroup-private-${file.fileName}`} className='!leading-none'>
+                                    Private
+                                  </Label>
+                                </div>
+                                <div className='flex items-center gap-2'>
+                                  <RadioGroup.Item value='public' id={`radiogroup-public-${file.fileName}`} size="$4">
+                                    <RadioGroup.Indicator />
+                                  </RadioGroup.Item>
+                                  <Label size="$4" id={`radiogroup-public-${file.fileName}`} className='!leading-none'>
+                                    Public
+                                  </Label>
+                                </div>
+                              </div>
+                            </RadioGroup>
+                          </div>
                         </div>
                       </div>
-                      {uploadedFiles.length > 1 ?
-                        <div>
+                      <div>
+                        {file.status === 'error' ?
+                          <CircleX className='w-5 h-5 text-red-500' /> : null
+                        }
+                        {file.status === 'done' ?
+                          <CircleCheckBig className='w-5 h-5 text-lumera-teal' /> : null
+                        }
+                        {uploadedFiles.length > 1 && !isUploading ?
                           <button className='cursor-pointer' onClick={() => onRemoveUploadFile(file)}>
                             <Trash2 className='w-5 h-5 text-red-500' />
-                          </button>
-                        </div> : null
-                      }
+                          </button> : null
+                        }
+                      </div>
                     </div>
+                    {file.status === 'error' && isUploading ?
+                      <div className='w-full mt-1 relative text-sm text-red-500'>
+                        {file.message}
+                      </div> : null
+                    }
+                    {isUploading && !['done', 'error'].includes(file.status || '') ?
+                      <div className='w-full mt-1 relative bg-gray-500 rounded-2xl overflow-hidden h-[6px]'>
+                        <div className='w-0 absolute top-0 left-0 bg-lumera-teal rounded-2xl slideBackForth h-[6px]'></div>
+                      </div> : null
+                    }
                   </Card>
                 ))}
               </div>
-              <p className='mt-4'>Do you want to upload this file?</p>
-              <div>
-                <RadioGroup
-                  defaultValue="private"
-                  name="status"
-                  id="status"
-                  onValueChange={(value) => setPublic(value === 'public')}
+            </div>
+            {!isUploading ?
+              <div className='flex justify-end mt-5 gap-3'>
+                <AppButton
+                  variant="secondary"
+                  onClick={onCancelClick}
                 >
-                  <div className='flex items-center gap-6 mt-1'>
-                    <div className='flex items-center gap-2'>
-                      <RadioGroup.Item value='private' id='radiogroup-private' size="$4">
-                        <RadioGroup.Indicator />
-                      </RadioGroup.Item>
-                      <Label size="$4" id='radiogroup-private' className='leading-none'>
-                        Private
-                      </Label>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <RadioGroup.Item value='public' id='radiogroup-public' size="$4">
-                        <RadioGroup.Indicator />
-                      </RadioGroup.Item>
-                      <Label size="$4" id='radiogroup-public' className='leading-none'>
-                        Public
-                      </Label>
-                    </div>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
-            <div className='flex justify-end mt-5 gap-3'>
-              <AppButton
-                variant="secondary"
-                onClick={onCancelClick}
-              >
-                Cancel
-              </AppButton>
-              <AppButton onClick={onOkClick} className='min-w-[100px]'>
-                {address ? 'Continue' :
-                  <>
-                    <Wallet size="$1" /> <span className="ml-1">Connect Wallet</span>
-                  </>
-                }
-              </AppButton>
-            </div>
+                  Cancel
+                </AppButton>
+                <AppButton onClick={onOkClick} className='min-w-[100px]'>
+                  {address ? 'Continue' :
+                    <>
+                      <Wallet size="$1" /> <span className="ml-1">Connect Wallet</span>
+                    </>
+                  }
+                </AppButton>
+              </div> : null
+            }
           </div>
         </Dialog.Content>
       </Dialog.Portal>
@@ -517,6 +546,7 @@ const UploadCascadeSuccessModal = ({
                             <span className='mx-1'>-</span>
                             <span>Fee: {file.uploadFee}</span>
                           </div>
+                          <div className='text-[13px]'>Public: {!file.isPublic ? 'No' : 'Yes'}</div>
                         </div>
                       </div>
                       <div>
@@ -605,7 +635,7 @@ export const CascadeContent = React.memo(({
     txs,
     isAllDownloading,
     currentOffset,
-    setPublic,
+    handlePublicFile,
     openActionFeeModal,
     closeActionFeeModal,
     handleDownloadAllFile,
@@ -941,11 +971,12 @@ export const CascadeContent = React.memo(({
       <ActionFeeModal
         uploadedFiles={uploadCascadeInfo}
         address={address}
+        isUploading={isUploading}
         isOpen={selectedModal === 'upload-cascade'}
         onCancelClick={closeActionFeeModal}
         onCloseModal={closeActionFeeModal}
         onOkClick={handleUploadCascade}
-        setPublic={setPublic}
+        handlePublicFile={handlePublicFile}
         onRemoveUploadFile={handleRemoveUploadFile}
       />
       <UploadCascadeSuccessModal
