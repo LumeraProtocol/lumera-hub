@@ -460,6 +460,20 @@
   border: 1px solid #2a323f!important;
   border-radius: 9px !important;
 }
+.slideBackForth {
+  animation: slideBackForth 1s infinite ease-in-out;
+}
+@keyframes slideBackForth {
+  050% {
+    width: 100%;
+  }
+
+  100% {
+    width: 0;
+    right: 0;
+    left: unset;
+  }
+}
 @media screen and (min-width: 1025px) and (max-width: 1290px) {
   .governance-card-header {
     flex-direction: column;
