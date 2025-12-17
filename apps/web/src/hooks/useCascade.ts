@@ -893,14 +893,22 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const handleFileTypeFilterChange = (type: string) => {
     setFileTypeFilter(prev => {
       let results: string[] = prev;
-      if (results.length === 1 && type !== FILES_TYPE[0].value) {
-        results = results.filter((value) => value !== FILES_TYPE[0].value)
-      }
-      const item = results.find((value) => value === type);
-      if (item) {
-        results = results.filter((value) => value !== type);
+      if (type === FILES_TYPE[0].value) {
+        const item = results.find((value) => value === type);
+        if (item) {
+          return [];
+        }
+        return [type];
       } else {
-        results.push(type);
+        if (type !== FILES_TYPE[0].value) {
+          results = results.filter((value) => value !== FILES_TYPE[0].value)
+        }
+        const item = results.find((value) => value === type);
+        if (item) {
+          results = results.filter((value) => value !== type);
+        } else {
+          results.push(type);
+        }
       }
       return [...results];
     });

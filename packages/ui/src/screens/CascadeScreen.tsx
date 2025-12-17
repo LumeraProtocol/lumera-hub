@@ -780,23 +780,28 @@ export const CascadeContent = React.memo(({
 
                         <YStack gap="$1">
                           <div>
-                            {FILES_TYPE.map(type => (
-                              <div key={type.value} className='flex gap-3 items-center'>
-                                <Checkbox
-                                  id={`file-type-${type.value.toLowerCase()}`}
-                                  size="$4"
-                                  checked={fileTypeFilter.includes(type.value)}
-                                  onCheckedChange={() => handleFileTypeFilterChange(type.value)}
-                                >
-                                  <Checkbox.Indicator>
-                                    <CheckIcon />
-                                  </Checkbox.Indicator>
-                                </Checkbox>
-                                <Label size={"$4"} htmlFor={`file-type-${type.value.toLowerCase()}`}>
-                                  {type.label} ({fileCounts[type.value as TFileTypeKey]})
-                                </Label>
-                              </div>
-                            ))}
+                            {FILES_TYPE.map(type => {
+                              if (!Number(fileCounts[type.value as TFileTypeKey])) {
+                                return null;
+                              }
+                              return (
+                                <div key={type.value} className='flex gap-3 items-center'>
+                                  <Checkbox
+                                    id={`file-type-${type.value.toLowerCase()}`}
+                                    size="$4"
+                                    checked={fileTypeFilter.includes(type.value)}
+                                    onCheckedChange={() => handleFileTypeFilterChange(type.value)}
+                                  >
+                                    <Checkbox.Indicator>
+                                      <CheckIcon />
+                                    </Checkbox.Indicator>
+                                  </Checkbox>
+                                  <Label size={"$4"} htmlFor={`file-type-${type.value.toLowerCase()}`}>
+                                    {type.label} ({fileCounts[type.value as TFileTypeKey]})
+                                  </Label>
+                                </div>
+                              )
+                            })}
                           </div>
                         </YStack>
                       </Popover.Content>
