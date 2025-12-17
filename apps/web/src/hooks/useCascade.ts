@@ -256,7 +256,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     size: '0 Bytes',
     uploaded: 0,
   });
-  const [fileTypeFilter, setFileTypeFilter] = useState<string>(FILES_TYPE[0].value);
+  const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([FILES_TYPE[0].value]);
   const [fileSearch, setFileSearch] = useState('');
   const [myFiles, setMyFiles] = useState<IMyFile[]>([]);
   const [myFilesOriginal, setMyFilesOriginal] = useState<IMyFile[]>([]);
@@ -280,7 +280,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     setOffset(0);
     return myFilesOriginal
       .filter(file => file.name.toLowerCase().includes(fileSearch.toLowerCase()))
-      .filter(file => fileTypeFilter === 'all' || file.type === fileTypeFilter);
+      .filter(file => fileTypeFilter.includes('all') || fileTypeFilter.includes(file.type));
   }, [myFilesOriginal, fileSearch, fileTypeFilter]);
 
   const fileCounts: Record<TFileTypeKey, number> = useMemo(() => {
@@ -757,6 +757,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
           // Calculate expiration time (default to 24 hours from now)
           // Date.now() returns milliseconds, convert to seconds
           const expirationTime = Math.floor(Date.now() / 1000 + 86400 * 1.5).toString();
+          let counter = 1;
           for (const file of selectedUploadCascadeFiles) {
             try {
               setSelectedModal('');
@@ -794,8 +795,10 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
                   }
                 }));
               }
-              setSelectedModal('upload-cascade');
-              await delay(5000);
+              if (counter < selectedUploadCascadeFiles.length) {
+                setSelectedModal('upload-cascade');
+                await delay(5000);
+              }
             } catch (error) {
               setUploadCascadeInfo(prev => prev.map((f) => {
                 let status = f.status;
@@ -809,6 +812,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
                 }
               }));
             }
+             counter++;
           }
           setSelectedModal('upload-cascade-success');
         }
@@ -852,7 +856,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
               fileSize: file.size,
               uploadFee: `${fee} LUME`,
               status: '',
-              type: file.type,
+              type: getFileType(file.name),
               isPublic: false,
             })
           } catch (error) {
@@ -887,7 +891,19 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   }
 
   const handleFileTypeFilterChange = (type: string) => {
-    setFileTypeFilter(type);
+    setFileTypeFilter(prev => {
+      let results: string[] = prev;
+      if (results.length === 1 && type !== FILES_TYPE[0].value) {
+        results = results.filter((value) => value !== FILES_TYPE[0].value)
+      }
+      const item = results.find((value) => value === type);
+      if (item) {
+        results = results.filter((value) => value !== type);
+      } else {
+        results.push(type);
+      }
+      return [...results];
+    });
   }
 
   const handleFileSearchChange = (keyword: string) => {

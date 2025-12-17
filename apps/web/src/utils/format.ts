@@ -155,20 +155,50 @@ export const formatTokenDisplay = (
   return result;
 }
 
-export const formatBytes = (bytes: number, decimals = 2) => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes/ Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+const toTruncPrecision3 = (number: number) => {
+  let result: number;
+  if (number < 10) {
+    result = Math.trunc(number * 100) / 100;
+  } else if (number < 100) {
+    result = Math.trunc(number * 10) / 10;
+  } else if (number < 1000) {
+    result = Math.trunc(number);
+  } else {
+    result = Math.trunc(number);
+  }
+
+  if (number < 0.1) {
+    return (Math.trunc(number * 10) / 10).toString();
+  } else if (number < 1) {
+    return (Math.trunc(number * 100) / 100).toString();
+  }
+  return result.toString();
+}
+
+export const formatBytes = (bytes: number) => {
+  if (bytes < 1024) {
+    return bytes + ' Bytes';
+  }
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  let i = Math.floor(Math.log(bytes) / Math.log(1024));
+  let result = bytes / Math.pow(1024, i);
+  if (result >= 1000) {
+    i++;
+    result /= 1024;
+  }
+  return toTruncPrecision3(result) + ' ' + sizes[i];
 };
 
-export const formatKb = (kb: number, decimals = 2) => {
-  if (kb === 0) return '0 KB';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['KB', 'MB', 'GB', 'TB', 'PB'];
-  const i = Math.floor(Math.log(kb) / Math.log(k));
-  return parseFloat((kb/ Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+export const formatKb = (bytes: number) => {
+  if (bytes < 1024) {
+    return bytes + ' KB';
+  }
+  const sizes = ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  let i = Math.floor(Math.log(bytes) / Math.log(1024));
+  let result = bytes / Math.pow(1024, i);
+  if (result >= 1000) {
+    i++;
+    result /= 1024;
+  }
+  return toTruncPrecision3(result) + ' ' + sizes[i];
 };
