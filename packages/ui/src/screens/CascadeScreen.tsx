@@ -375,9 +375,9 @@ const ActionFeeModal = ({
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
           <div className="relative p-3">
-            <div className='mx-auto max-w-[550px] sm:min-w-[450px]'>
+            <div className='mx-auto max-w-[550px] sm:w-[550px]'>
               <h3 className='mb-4'>Upload Files - {uploadedFiles.length} file(s)</h3>
-              <div className='max-h-[56vh] overflow-y-auto overflow-x-hidden'>
+              <div className='max-h-[56vh] overflow-y-auto overflow-x-hidden max-w-[92vw] sm:max-w-full'>
                 {uploadedFiles?.map((file) => (
                   <Card key={file.fileName} className='mb-2 px-3 py-2'>
                     <div className='flex gap-3 items-center justify-between'>
@@ -386,18 +386,16 @@ const ActionFeeModal = ({
                           {getFileIcon(getSimplifiedType(file.type), 'w-6 h-6')}
                         </div>
                         <div>
-                          <div className='whitespace-nowrap truncate max-w-[75vw] sm:max-w-[450px]'>{file.fileName}</div>
-                          <div className='text-[13px] text-lumera-gray'>
+                          <div className='whitespace-nowrap truncate max-w-[55vw] sm:max-w-[400px]'>{file.fileName}</div>
+                          <div className='text-[13px] text-lumera-gray flex flex-col sm:flex-row'>
                             <span>Size: {formatBytes(file.fileSize)}</span>
-                            <span className='mx-1'>-</span>
+                            <span className='mx-1 hidden sm:inline-block'>-</span>
                             <span>Fee: {file.uploadFee}</span>
                           </div>
-                          <div className='flex gap-2 items-center mt-2'>
+                          <div className='flex gap-2 sm:items-center sm:mt-2 flex-col sm:flex-row'>
                             <span className='font-normal text-sm'>Set this file:</span>
                             <RadioGroup
                               defaultValue="private"
-                              name="status"
-                              id="status"
                               onValueChange={(value) => handlePublicFile(file.fileName, value === 'public')}
                               disabled={isUploading}
                             >
@@ -522,7 +520,7 @@ const UploadCascadeSuccessModal = ({
           <VisuallyHidden>
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
-          <div className='withdraw-main-content relative p-5 max-w-[550px] sm:min-w-[450px]'>
+          <div className='withdraw-main-content relative p-5 max-w-[550px] sm:w-[550px]'>
             <div className='flex justify-between items-center'>
               <div>&nbsp;</div>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseModal}><CircleX /></button>
@@ -540,10 +538,10 @@ const UploadCascadeSuccessModal = ({
                           {getFileIcon(getSimplifiedType(file.type), 'w-6 h-6')}
                         </div>
                         <div>
-                          <div className='whitespace-nowrap truncate max-w-[75vw] sm:max-w-[450px]'>{file.fileName}</div>
-                          <div className='text-[13px] text-lumera-gray'>
+                          <div className='whitespace-nowrap truncate max-w-[55vw] sm:max-w-[400px]'>{file.fileName}</div>
+                          <div className='text-[13px] text-lumera-gray flex flex-col sm:flex-row'>
                             <span>Size: {formatBytes(file.fileSize)}</span>
-                            <span className='mx-1'>-</span>
+                            <span className='mx-1 hidden sm:inline-block'>-</span>
                             <span>Fee: {file.uploadFee}</span>
                           </div>
                           <div className='text-[13px]'>Public: {!file.isPublic ? 'No' : 'Yes'}</div>
@@ -653,6 +651,11 @@ export const CascadeContent = React.memo(({
 
   const memoizedFilteredFiles = React.useMemo(() => filteredFiles, [filteredFiles, fileSearch, fileTypeFilter]);
 
+  const getTypeFilter = () => {
+    const selectedFilter = FILES_TYPE.filter((file) => fileTypeFilter.some((value) => value === file.value));
+    return selectedFilter.map((f) => f.value).join(', ');
+  }
+
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className="flex justify-between gap-6 w-full cascade-overview relative">
@@ -729,28 +732,78 @@ export const CascadeContent = React.memo(({
         <div className='mt-6 w-full relative'>
           <Card elevate size="$4" bordered className='w-full !p-[18px]'>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-              <h2 className="text-xl font-semibold text-white">My Files</h2>
-              <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                <div className="flex items-center border border-gray-700 rounded-lg p-1 bg-gray-900/50 gap-1 overflow-x-auto">
-                  {!isMyFilesLoadMore ?
-                    <>
-                      {FILES_TYPE.map(type => (
-                        <button
-                          key={type.value}
-                          onClick={() => handleFileTypeFilterChange(type.value)}
-                          className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-300 cursor-pointer whitespace-nowrap ${fileTypeFilter === type.value ? 'bg-lumera-teal text-white' :
-                            'text-gray-300 hover:bg-lumera-teal hover:text-white'}`}
-                        >
-                          {type.label} ({fileCounts[type.value as TFileTypeKey]})
-                        </button>
-                      ))}
-                    </> : null
-                  }
+              <h2 className="text-xl font-semibold text-white whitespace-nowrap">My Files</h2>
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <div className="flex items-center w-auto">
                   {isMyFilesLoadMore ? (
-                    <Skeleton className='min-w-[426px] !mb-0 min-h-[22px]' />
-                  ) : null }
+                    <Skeleton className='min-w-[180px] !mb-0 min-h-11' containerClassName="min-h-11" />
+                  ) : (
+                    <Popover size="$5" allowFlip stayInFrame offset={5} resize>
+                      <Popover.Trigger asChild>
+                        <button
+                          type='button'
+                          className='border border-gray-700 rounded-lg py-2 px-4 min-h-11 bg-gray-900/50 w-[180px] text-left whitespace-nowrap truncate text-sm'
+                        >
+                          Types: <span className='capitalize'>{getTypeFilter()}</span>
+                        </button>
+                      </Popover.Trigger>
+
+                      <Adapt platform="touch">
+                        <Sheet animation="medium" modal dismissOnSnapToBottom>
+                          <Sheet.Frame>
+                            <Adapt.Contents />
+                          </Sheet.Frame>
+                          <Sheet.Overlay
+                            animation="lazy"
+                            enterStyle={{ opacity: 0 }}
+                            exitStyle={{ opacity: 0 }}
+                          />
+                        </Sheet>
+                      </Adapt>
+
+                      <Popover.Content
+                        borderWidth={1}
+                        borderColor="$borderColor"
+                        enterStyle={{ y: -10, opacity: 0 }}
+                        exitStyle={{ y: -10, opacity: 0 }}
+                        elevate
+                        animation={[
+                          'quick',
+                          {
+                            opacity: {
+                              overshootClamping: true,
+                            },
+                          },
+                        ]}
+                      >
+                        <Popover.Arrow borderWidth={1} borderColor="$borderColor" />
+
+                        <YStack gap="$1">
+                          <div>
+                            {FILES_TYPE.map(type => (
+                              <div key={type.value} className='flex gap-3 items-center'>
+                                <Checkbox
+                                  id={`file-type-${type.value.toLowerCase()}`}
+                                  size="$4"
+                                  checked={fileTypeFilter.includes(type.value)}
+                                  onCheckedChange={() => handleFileTypeFilterChange(type.value)}
+                                >
+                                  <Checkbox.Indicator>
+                                    <CheckIcon />
+                                  </Checkbox.Indicator>
+                                </Checkbox>
+                                <Label size={"$4"} htmlFor={`file-type-${type.value.toLowerCase()}`}>
+                                  {type.label} ({fileCounts[type.value as TFileTypeKey]})
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                        </YStack>
+                      </Popover.Content>
+                    </Popover>
+                  )}
                 </div>
-                <div className="relative w-full md:w-auto">
+                <div className="relative w-full sm:w-auto">
                   <div className='input-wrapper'>
                     <Input
                       id="keyword"
@@ -776,9 +829,9 @@ export const CascadeContent = React.memo(({
               </div>
             }
             <div className='md:overflow-x-auto '>
-              <div className="space-y-2 md:min-w-[1130px]">
+              <div className="space-y-2 md:w-[1130px]">
                 <table className='w-full border-separate border-spacing-y-2 text-sm'>
-                  <thead>
+                  <thead className='hidden md:table-header-group'>
                     <tr>
                       <th className='px-2 py-3'>
                         <div className='flex items-start'>
@@ -835,9 +888,9 @@ export const CascadeContent = React.memo(({
                       }
                       const isExpired = file.state === 'ACTION_STATE_EXPIRED';
                       return (
-                        <tr key={index} className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
-                          <td className='px-2 py-3'>
-                            <div className='flex items-start w-full'>
+                        <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row'>
+                          <td className='px-2 pt-3 pb-1 md:py-3'>
+                            <div className='flex items-start w-full gap-2'>
                               <div className='w-7'>
                                 <Checkbox
                                   id="checkAll"
@@ -850,12 +903,12 @@ export const CascadeContent = React.memo(({
                                   </Checkbox.Indicator>
                                 </Checkbox>
                               </div>
-                              <div className='w-[82%]'>
+                              <div className='w-auto'>
                                 <Tooltip>
                                   <Tooltip.Trigger>
-                                    <div className='flex items-start flex-wrap gap-2 w-full'>
+                                    <div className='flex items-start gap-2 w-full'>
                                       {getFileIcon(getSimplifiedType(file.type))}
-                                      <span className="font-medium text-white truncate max-w-2/3 inline-block">{file.name}</span>
+                                      <span className="font-medium text-white max-w-[180px] truncate">{file.name}</span>
                                     </div>
                                   </Tooltip.Trigger>
                                   <Tooltip.Content
@@ -882,15 +935,15 @@ export const CascadeContent = React.memo(({
                               </div>
                             </div>
                           </td>
-                          <td className='px-2 py-3'>
+                          <td className='px-2 py-1 md:py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Public: </span>
                             <span>{file.isPublic ? 'Yes' : 'No'}</span>
                           </td>
-                          <td className='px-2 py-3'>
+                          <td className='px-2 py-1 md:py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Status: </span>
                             <span className={`capitalize ${getStatusColor(file.state)}`}>{getFileStatus(file.state)}</span>
                           </td>
-                          <td className='px-2 py-3'>
+                          <td className='px-2 py-1 md:py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
                             {txId && !isExpired ?
                               <AppLink
@@ -901,27 +954,27 @@ export const CascadeContent = React.memo(({
                               </AppLink> : '--'
                             }
                           </td>
-                          <td className='text-right px-2 py-3'>
+                          <td className='md:text-right px-2 py-1 md:py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Price: </span>
-                            {!isExpired ? file.price : '0 LUME'}
+                            <span className=' whitespace-nowrap'>{!isExpired ? file.price : '0 LUME'}</span>
                           </td>
-                          <td className='text-right px-2 py-3'>
+                          <td className='md:text-right px-2 py-1 md:py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Fee: </span>
-                            {!isExpired ? fee : '0 LUME'}
+                            <span className=' whitespace-nowrap'>{!isExpired ? fee : '0 LUME'}</span>
                           </td>
-                          <td className='text-right px-2 py-3'>
+                          <td className='md:text-right px-2 py-1 md:py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                            {formatKb(!isExpired ? file.size : 0)}
+                            <span className=' whitespace-nowrap'>{formatKb(!isExpired ? file.size : 0)}</span>
                           </td>
-                          <td className='px-2 py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2">Last Modified: </span>
+                          <td className='px-2 py-1 md:py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2 whitespace-nowrap">Last Modified: </span>
                             {lastModified ?
-                            <>
-                              {dayjs(lastModified).format('MMMM DD, YYYY')} at {dayjs(lastModified).format('HH:mm:ss')}
-                            </> : '--'}
+                            <span className='whitespace-nowrap'>
+                              {dayjs(lastModified).format('MM/DD/YYYY')} at {dayjs(lastModified).format('HH:mm:ss')}
+                            </span> : '--'}
                           </td>
-                          <td className='text-right px-2 py-3'>
-                            <div className='flex justify-end w-full'>
+                          <td className='md:text-right px-2 pt-1 pb-3 md:py-3'>
+                            <div className='flex md:justify-end w-full'>
                               <AppButton
                                 variant="secondary"
                                 className={`!px-4 !text-sm w-full md:w-auto max-w-40 !font-normal ${isDisabledButton ? 'cursor-default opacity-40' : ''}`}
