@@ -366,7 +366,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       const newSupernodeData = supernodes.filter((supernode) => {
         const address = supernode.ip_address;
         const ip = address.split(':')[0];
-        return isValidIPv4(ip)
+        return isValidIPv4(ip.trim())
       }).map((supernode) => ({
         supernode_account: supernode.supernode_account,
         validator_address: supernode.validator_address,
@@ -389,7 +389,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         const address = item.ip_address;
         const ip = address.split(':')[0];
         if (isValidIPv4(ip)) {
-          const supernode = supernodeData.find((s) => s.address === address);
+          const supernode = supernodeData.find((s) => s.address.trim() === address.trim());
           if (!supernode) {
             const data = await fetchLocationForIP(ip);
             if (data?.latitude && data?.longitude) {
