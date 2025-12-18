@@ -358,36 +358,39 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     return data;
   }
 
-  const readSupernodeFile = async () => {
+  const readSupernodeFile = async (supernodes: ISupernode[]) => {
     try {
-      const { data } = await instance.getExternal('/api/supernode');
+      if (!supernodes?.length) {
+        return [];
+      }
+      const newSupernodeData = supernodes.filter((supernode) => {
+        const address = supernode.ip_address;
+        const ip = address.split(':')[0];
+        return isValidIPv4(ip)
+      }).map((supernode) => ({
+        supernode_account: supernode.supernode_account,
+        validator_address: supernode.validator_address,
+        validator_moniker: supernode.validator_moniker,
+        p2p_port: supernode.p2p_port,
+        ip_address: supernode.ip_address,
+      }));
+      const { data } = await instance.postExternal('/api/supernode', { supernodes: newSupernodeData });
       return data?.supernodes || [];
     } catch {
       return [];
     }
   }
 
-  const writeSupernodeFile = async () => {
-    try {
-      const { data } = await instance.postExternal('/api/supernode', {});
-      return data;
-    } catch {
-      return null;
-    }
-  }
-
   const getChartMarker = useCallback(async (items: ISupernode[]) => {
     try {
       const results: IMarker[] = [];
-      const supernodeData: IMarker[] = await readSupernodeFile();
-      let isUpdate = false;
+      const supernodeData: IMarker[] = await readSupernodeFile(items);
       for (const item of items) {
         const address = item.ip_address;
         const ip = address.split(':')[0];
         if (isValidIPv4(ip)) {
           const supernode = supernodeData.find((s) => s.address === address);
           if (!supernode) {
-            isUpdate = true;
             const data = await fetchLocationForIP(ip);
             if (data?.latitude && data?.longitude) {
               results.push({
@@ -411,9 +414,6 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         }
       }
       setMarkers(results);
-      if (isUpdate) {
-        await writeSupernodeFile();
-      }
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
         position: "bottom-center",
@@ -894,16 +894,15 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     setFileTypeFilter(prev => {
       let results: string[] = prev;
       if (type === FILES_TYPE[0].value) {
-        const item = results.find((value) => value === type);
-        if (item) {
-          return [];
-        }
         return [type];
       } else {
+        const item = results.find((value) => value === type);
+        if (item && results.length === 1) {
+          return [...results];
+        }
         if (type !== FILES_TYPE[0].value) {
           results = results.filter((value) => value !== FILES_TYPE[0].value)
         }
-        const item = results.find((value) => value === type);
         if (item) {
           results = results.filter((value) => value !== type);
         } else {
