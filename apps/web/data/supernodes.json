@@ -30,7 +30,7 @@
     "supernodeAccount": "lumera1563uuzljqvpanh79w2tvymqsly73v9nwygda73",
     "validatorAddress": "lumeravaloper1563uuzljqvpanh79w2tvymqsly73v9nwtj7pcj",
     "validatorMoniker": "Yami",
-    "address": "152.53.138.108:4444 ",
+    "address": "152.53.138.108:4444",
     "p2pPort": "4445"
   },
   {
@@ -64,7 +64,7 @@
     "supernodeAccount": "lumera17mku7r3ljspatx3c86kg2qw4mmlzrpnsg9jrel",
     "validatorAddress": "lumeravaloper17mku7r3ljspatx3c86kg2qw4mmlzrpns8lpllu",
     "validatorMoniker": "Batana",
-    "address": "144.91.79.28:4444 ",
+    "address": "144.91.79.28:4444",
     "p2pPort": "4445"
   },
   {
@@ -183,7 +183,7 @@
     "supernodeAccount": "lumera1k3wuph3f695uugf7k46m6jzqmc308sy20m0k63",
     "validatorAddress": "lumeravaloper1k3wuph3f695uugf7k46m6jzqmc308sy2qpu2uj",
     "validatorMoniker": "nagagininode",
-    "address": "185.207.105.80:4444 ",
+    "address": "185.207.105.80:4444",
     "p2pPort": "4445"
   },
   {

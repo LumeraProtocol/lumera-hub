@@ -2,21 +2,15 @@
 import { NextResponse, NextRequest } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { z } from 'zod';
 
 import * as instance from '@/utils/api';
 import { IMarker } from '@/hooks/useCascade';
+import { supernodeListSchema, SupernodeItem } from '@/app/api/supernode/validators';
 
-interface ISupernode {
-  supernode_account: string;
-  validator_address: string;
-  validator_moniker: string;
-  ip_address: string;
-  p2p_port: number;
-}
-
-interface ApiRequestBody {
-  supernodes: ISupernode[];
-}
+const bodySchema = z.object({
+  supernodes: supernodeListSchema,
+});
 
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // ~ 1 minute
@@ -92,9 +86,9 @@ async function fetchLocationFromIpWho(ip: string) {
   }
 }
 
-async function readAndUpdateSupernode(supernodes: ISupernode[]) {
+async function readAndUpdateSupernode(supernodes: SupernodeItem[]) {
   if (!supernodes?.length) {
-    throw new Error("supernodes is required.")
+    throw new Error("Supernodes list cannot be empty.");
   }
   try {
     const data = await readFile();
@@ -154,7 +148,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { supernodes } = await request.json() as ApiRequestBody;
+    const body = await request.json();
+    const validatedBody = bodySchema.parse(body);
+    const { supernodes } = validatedBody;
+
     const data = await readAndUpdateSupernode(supernodes);
     return NextResponse.json({
       status: true,
@@ -162,8 +159,23 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('API Error:', error);
-    return NextResponse.json({ error: 'An unknown error occurred.' }, {
-      status: 500,
-    });
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        {
+          error: 'Invalid data',
+          details: error.issues.map(e => ({
+            field: e.path.join('.'),
+            message: e.message,
+          })),
+        },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: (error as Error).message || 'An unknown error occurred.' },
+      { status: 500 }
+    );
   }
 }
