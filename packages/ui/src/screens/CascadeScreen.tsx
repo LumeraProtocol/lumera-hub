@@ -395,9 +395,9 @@ const ActionFeeModal = ({
                           <div className='flex gap-2 sm:items-center sm:mt-2 flex-col sm:flex-row'>
                             <span className='font-normal text-sm'>Set this file:</span>
                             <RadioGroup
-                              defaultValue="private"
                               onValueChange={(value) => handlePublicFile(file.fileName, value === 'public')}
                               disabled={isUploading}
+                              value={file.isPublic ? 'public' : 'private'}
                             >
                               <div className='flex items-center gap-6'>
                                 <div className='flex items-center gap-2'>
@@ -435,7 +435,7 @@ const ActionFeeModal = ({
                         }
                       </div>
                     </div>
-                    {file.status === 'error' && isUploading ?
+                    {file.message ?
                       <div className='w-full mt-1 relative text-sm text-red-500'>
                         {file.message}
                       </div> : null
@@ -478,6 +478,7 @@ const UploadCascadeSuccessModal = ({
   uploadedFiles,
   onCloseModal,
 }: IUploadCascadeSuccessModal) => {
+
   return (
     <Dialog
       open={isOpen}
