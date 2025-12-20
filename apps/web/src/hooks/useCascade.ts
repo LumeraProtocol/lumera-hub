@@ -21,7 +21,7 @@ import {
   CHAIN_NAME,
   DENOM,
 } from '@/contants/network';
-import { UPLOAD_MAX_FILES } from '@/contants';
+import { RATE_VALUE, UPLOAD_MAX_FILES } from '@/contants';
 import { IRecentActivity } from '@/types';
 
 export interface ITask {
@@ -275,6 +275,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const [txs, setTxs] = useState<IRecentActivity[]>([]);
   const [currentOffset, setOffset] = useState(0);
   const [step, setStep] = useState('');
+  const [totalBalance, setTotalBalance] = useState(0);
 
   const filteredFiles = useMemo(() => {
     setOffset(0);
@@ -416,7 +417,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       setMarkers(results);
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
-        position: "bottom-center",
+        position: "bottom-right",
         theme: "dark",
       });
     }
@@ -482,7 +483,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
     try {
       const nextKeyParam = nextKey ? `&cursor=${nextKey}` : '';
-      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=${ITEM_PER_PAGE}${nextKeyParam}&creator=${address}`)
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=${ITEM_PER_PAGE}${nextKeyParam}&creator=${address}`);
       return {
         actions: data.items,
         nextKey: data.next_cursor,
@@ -573,7 +574,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     if (currentUploadFiles) {
       const currentFiles: TCascadeStogre[] = JSON.parse(currentUploadFiles);
       const filteredFiles = currentFiles.filter(item => {
-        return !files.some(obj => obj.taskId === item.taskId && obj.name === item.fileName);
+        return !files.some(obj => obj.taskId === item.taskId || obj.name === item.fileName);
       });
       if (filteredFiles?.length) {
         localStorage.setItem(storeName, JSON.stringify(filteredFiles));
@@ -582,22 +583,26 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         localStorage.removeItem(storeName);
       }
     }
-    return results.map((r) => ({
-      name: r.fileName,
-      size: 0,
-      txId: '',
-      type: getFileType(r.fileName),
-      actionID: `${new Date().getTime()}`,
-      signatures: '',
-      lastModified: '',
-      state: 'In progress',
-      datahash: '',
-      height: '',
-      price: '0',
-      fee: '0',
-      isPublic: r.isPublic || false,
-      taskId: r.taskId,
-    }));
+    if (results?.length) {
+      return results.map((r) => ({
+        name: r.fileName,
+        size: 0,
+        txId: '',
+        type: getFileType(r.fileName),
+        actionID: `${new Date().getTime()}`,
+        signatures: '',
+        lastModified: '',
+        state: 'In progress',
+        datahash: '',
+        height: '',
+        price: '0',
+        fee: '0',
+        isPublic: r.isPublic || false,
+        taskId: r.taskId,
+      }));
+    }
+
+    return [];
   }
 
   const getMyFiles = useCallback(async () => {
@@ -616,7 +621,11 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         nextCursor = results.nextKey;
         const data = await generateFile(results?.actions);
         files = data;
-        setMyFilesOriginal(data);
+        const stogreFiles = updateFilesStogre(files);
+        if (stogreFiles) {
+          files = [...stogreFiles, ...files];
+        }
+        setMyFilesOriginal(files);
       }
       setMyFilesLoading(false);
       if (nextCursor) {
@@ -660,13 +669,40 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       });
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
-        position: "bottom-center",
+        position: "bottom-right",
         theme: "dark",
       });
     }
     setMyFilesLoading(false);
     setMyFilesLoadMore(false);
   }, [address]);
+
+  const getTotalBalances = useCallback(async () => {
+    if (!address) {
+      return;
+    }
+
+    try {
+      const { data } = await instance.get(`/cosmos/bank/v1beta1/balances/${address}`);
+      if (data?.balances?.length) {
+        let total = 0;
+        for (const item of data.balances) {
+          if (item.denom === DENOM) {
+            total += Number(item.amount);
+          }
+        }
+        setTotalBalance(total);
+      }
+    } catch {
+      // noop
+    }
+  }, [address]);
+
+  useEffect(() => {
+    if (address) {
+      getTotalBalances();
+    }
+  }, [address, getTotalBalances]);
 
   useEffect(() => {
     if (address) {
@@ -758,48 +794,76 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
           // Date.now() returns milliseconds, convert to seconds
           const expirationTime = Math.floor(Date.now() / 1000 + 86400 * 1.5).toString();
           let counter = 1;
+          let isSkip = false;
+          setUploadCascadeInfo(prev => prev.map((f) => ({
+            ...f,
+            status: 'in-process',
+            message: '',
+          })));
           for (const file of selectedUploadCascadeFiles) {
             try {
-              setSelectedModal('');
-              const fileBuffer = await file.arrayBuffer();
-              const fileBytes = new Uint8Array(fileBuffer);
-              setUploadCascadeInfo(prev => prev.map((f) => {
-                let status = f.status;
-                if (f.fileName === file.name) {
-                  status = 'in-process'
-                }
-                return {
-                  ...f,
-                  status,
-                }
-              }));
-              const currentFile = uploadCascadeInfo.find((f) => f.fileName === file.name);
-              const isPublic = currentFile?.isPublic || false;
-              const result = await client.Cascade.uploader.uploadFile(fileBytes, {
-                fileName: file.name,
-                expirationTime,
-                isPublic,
-                signaturePrompter,
-                txPrompter,
-              });
-              if (result?.task_id) {
-                updateCascadeStogre(result.task_id, file.name, isPublic);
+              if (isSkip) {
+                setUploadCascadeInfo(prev => prev.map((f) => {
+                  let status = f.status;
+                  let message = f.message;
+                  if (f.fileName === file.name) {
+                    status = 'error';
+                    message = 'Not enough LUME';
+                  }
+                  return {
+                    ...f,
+                    status,
+                    message,
+                  }
+                }));
+                setSelectedModal('upload-cascade');
+                await delay(1000);
+              } else {
+                setSelectedModal('');
+                const fileBuffer = await file.arrayBuffer();
+                const fileBytes = new Uint8Array(fileBuffer);
                 setUploadCascadeInfo(prev => prev.map((f) => {
                   let status = f.status;
                   if (f.fileName === file.name) {
-                    status = 'done'
+                    status = 'in-process'
                   }
                   return {
                     ...f,
                     status,
                   }
                 }));
-              }
-              if (counter < selectedUploadCascadeFiles.length) {
-                setSelectedModal('upload-cascade');
-                await delay(5000);
+                const currentFile = uploadCascadeInfo.find((f) => f.fileName === file.name);
+                const isPublic = currentFile?.isPublic || false;
+                const result = await client.Cascade.uploader.uploadFile(fileBytes, {
+                  fileName: file.name,
+                  expirationTime,
+                  isPublic,
+                  signaturePrompter,
+                  txPrompter,
+                });
+                if (result?.task_id) {
+                  updateCascadeStogre(result.task_id, file.name, isPublic);
+                  setUploadCascadeInfo(prev => prev.map((f) => {
+                    let status = f.status;
+                    if (f.fileName === file.name) {
+                      status = 'done'
+                    }
+                    return {
+                      ...f,
+                      status,
+                    }
+                  }));
+                }
+                if (counter < selectedUploadCascadeFiles.length) {
+                  setSelectedModal('upload-cascade');
+                  await delay(5000);
+                }
               }
             } catch (error) {
+              const message = (error as Error)?.message ||  '';
+              if (message.indexOf('insufficient funds') !== -1) {
+                isSkip = true;
+              }
               setUploadCascadeInfo(prev => prev.map((f) => {
                 let status = f.status;
                 if (f.fileName === file.name) {
@@ -808,11 +872,11 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
                 return {
                   ...f,
                   status,
-                  message: (error as Error)?.message ||  '',
+                  message,
                 }
               }));
             }
-             counter++;
+            counter++;
           }
           setSelectedModal('upload-cascade-success');
         }
@@ -837,14 +901,15 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     if (files.length) {
       setUploading(true);
       setError('');
-      setSelectedUploadCascadeFiles(files);
+      const newFiles = files.sort((a, b) => a.size - b.size);
+      setSelectedUploadCascadeFiles(newFiles);
       try {
         const client = await sdkjsReact.createLumeraClient({
           preset: SDK_PRESET,
         });
         const results = [];
         let errorMsg: string = '';
-        for (const file of files) {
+        for (const file of newFiles) {
           try {
             const { amount  } = await client.Blockchain.Action.getActionFee(file.size);
             const fee = formatTokenDisplay({
@@ -858,6 +923,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
               status: '',
               type: getFileType(file.name),
               isPublic: false,
+              message: Number(amount) > totalBalance ? 'Not enough LUME' : '',
             })
           } catch (error) {
             errorMsg = (error as Error)?.message ||  'An unknown error occurred.';
@@ -950,6 +1016,10 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    toast.success(`File "${fileName}" downloaded successfully.`, {
+      position: "bottom-right",
+      theme: "dark",
+    })
   }
 
   const handleDownloadFile = async (file: IMyFile) => {
@@ -976,7 +1046,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     } catch (error) {
       const errorMessage = (error as Error)?.message || (error as TError)?.statusText ||  'An unknown error occurred.';
       toast.error(errorMessage, {
-        position: "bottom-center",
+        position: "bottom-right",
         theme: "dark",
       });
     }
@@ -1014,7 +1084,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       }
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
-        position: "bottom-center",
+        position: "bottom-right",
         theme: "dark",
       });
     }
