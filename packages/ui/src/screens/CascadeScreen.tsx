@@ -631,7 +631,6 @@ export const CascadeContent = React.memo(({
     totalPage,
     isMyFilesLoadMore,
     selectedFileDownload,
-    txs,
     isAllDownloading,
     currentOffset,
     handlePublicFile,
@@ -883,15 +882,9 @@ export const CascadeContent = React.memo(({
                     ) : null }
                     {!isMyFilesLoading && memoizedFilteredFiles.slice(currentOffset, currentOffset + ITEM_PER_PAGE).map((file, index) => {
                       const isDisabledButton = selectedFileDownload.includes(file.actionID) || file.state !== 'ACTION_STATE_DONE' || file.size <= 0;
-                      let txId = file.txId;
-                      let lastModified = file.lastModified;
-                      let fee = file.fee;
-                      if (!txId || !lastModified || !fee) {
-                        const tx = getTxHash(file, txs);
-                        txId = tx.txhash;
-                        lastModified = tx.timestamp || '';
-                        fee = tx.fee || '';
-                      }
+                      const txId = file.txId;
+                      const lastModified = file.lastModified;
+                      const fee = file.fee;
                       const isExpired = file.state === 'ACTION_STATE_EXPIRED';
                       return (
                         <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row'>
