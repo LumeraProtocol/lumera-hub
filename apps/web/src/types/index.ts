@@ -296,3 +296,50 @@ export interface IFullBlock {
     };
   };
 }
+
+
+interface ITransaction {
+  action_price: string;
+  action_price_denom: string;
+  block_time: string;
+  flow_payee: string;
+  flow_payer: string;
+  gas_used: number;
+  gas_wanted: number;
+  height: number;
+  tx_fee: string;
+  tx_fee_denom: string;
+  tx_hash: string;
+  tx_type: string;
+}
+
+export interface IActionDetail {
+  block_height: number;
+  creator: string;
+  decoded: {
+    data_hash: string;
+    file_name: string;
+    public: boolean;
+    rq_ids_ic: number;
+    rq_ids_ids: string[];
+    rq_ids_max: number;
+    signatures: string;
+  };
+  finalize_tx_id: string;
+  finalize_tx_time: string;
+  id: string;
+  mime_type: string;
+  price: {
+    amount: string;
+    denom: string;
+  };
+  register_tx_id: string;
+  register_tx_time: string;
+  schema_version: string;
+  size: number;
+  state: string;
+  super_nodes: string[];
+  timestamp: string;
+  transactions: ITransaction[];
+  type: string;
+}

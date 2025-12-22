@@ -21,8 +21,8 @@ import {
   CHAIN_NAME,
   DENOM,
 } from '@/contants/network';
-import { RATE_VALUE, UPLOAD_MAX_FILES } from '@/contants';
-import { IRecentActivity } from '@/types';
+import { UPLOAD_MAX_FILES } from '@/contants';
+import { IRecentActivity, IActionDetail } from '@/types';
 
 export interface ITask {
   taskId?: string | undefined;
@@ -147,6 +147,11 @@ interface IAction {
     denom: string;
     amount: string;
   };
+  register_tx_id: string;
+  finalize_tx_id: string;
+  finalize_tx_time: string;
+  mime_type: string;
+  register_tx_time: string;
 }
 
 type TError = {
@@ -272,7 +277,6 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const [uploadCascadeInfo, setUploadCascadeInfo] = useState<TUploadCascadeInfo[]>([]);
   const [totalPage, setTotalPage] = useState(0);
   const [selectedFileDownload, setSelectedFileDownload] = useState<string[]>([]);
-  const [txs, setTxs] = useState<IRecentActivity[]>([]);
   const [currentOffset, setOffset] = useState(0);
   const [step, setStep] = useState('');
   const [totalBalance, setTotalBalance] = useState(0);
@@ -496,22 +500,17 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
   };
 
-  const getAllTxs = useCallback(async () => {
-    try {
-      const { data } = await instance.get(`/cosmos/tx/v1beta1/txs?query=message.sender=%27${address}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC`);
-      const txResponses = (data.tx_responses as IRecentActivity[]).filter((tx) =>
-        tx.events?.some(event =>
-          event.type === 'action_registered' &&
-          event.attributes?.some(attr =>
-            attr.key === 'action_type' && attr.value === 'ACTION_TYPE_CASCADE'
-          )
-        )
-      );
-      setTxs(txResponses)
-    } catch {
-      // noop
+  const fetchAction = async (actionId = ''): Promise<IActionDetail | null> => {
+    if (!actionId) {
+      return null;
     }
-  }, [address])
+    try {
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions/${actionId}`);
+      return data;
+    } catch {
+      return null
+    }
+  };
 
   const getFileInfo = async (action: IAction) => {
     try {
@@ -541,18 +540,41 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
   }
 
+  const getAction = async (actionId: string) => {
+    if (!actionId) {
+      return {
+        fee: '0',
+      };
+    }
+    const action = await fetchAction(actionId);
+    let fee = '0';
+    if (action) {
+      const transaction = action.transactions.find((tx) => tx.tx_type === 'register');
+      if (transaction) {
+        fee = formatTokenDisplay({
+          amount: transaction.tx_fee,
+          denom: transaction.tx_fee_denom,
+        })
+      }
+    }
+    return {
+      fee
+    };
+  }
+
   const generateFile = async (items: IAction[]) => {
     const files: IMyFile[] = [];
     for (const item of items) {
       const fileInfo = await getFileInfo(item);
+      const { fee } = await getAction(item.id);
       files.push({
         name: item.decoded.file_name || '',
         size: item.size || fileInfo.file_size_kbs || 0,
-        txId: '',
+        txId: item?.register_tx_id,
         type: getFileType(item.decoded.file_name),
         actionID: item.id,
         signatures: item.decoded.signatures,
-        lastModified: fileInfo.created_at,
+        lastModified: item.finalize_tx_time || fileInfo.created_at,
         state: item.state,
         datahash: item.decoded.data_hash,
         height: item.block_height,
@@ -560,7 +582,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
           amount: item.price.amount,
           denom: item.price.denom,
         })} LUME`,
-        fee: '0',
+        fee,
         isPublic: item.decoded.public,
         taskId: fileInfo.task_id,
       });
@@ -652,16 +674,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         uniqueArray = [...stogreFiles, ...uniqueArray];
         setMyFiles(uniqueArray.slice(0, ITEM_PER_PAGE));
       }
-      setMyFilesOriginal(uniqueArray.map((file) => {
-        const tx = getTxHash(file, txs);
-        return ({
-          ...file,
-          txId: tx.txhash || '',
-          fee: tx.fee || '',
-          price: file.price || '',
-          lastModified: file.lastModified || tx?.timestamp || '',
-        })
-      }));
+      setMyFilesOriginal(uniqueArray);
       const totalSize = uniqueArray.reduce((total, item) => total + item.size, 0);
       setMyUsage({
         size: formatKb(totalSize),
@@ -709,12 +722,6 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       getMyFiles();
     }
   }, [address, getMyFiles]);
-
-  useEffect(() => {
-    if (address) {
-      getAllTxs();
-    }
-  }, [address, getAllTxs]);
 
   useEffect(() => {
     getSummary();
@@ -1097,7 +1104,6 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   }
 
   const handleCloseUploadCascadeSuccessModal = () => {
-    getAllTxs();
     getMyFiles();
     setSelectedModal('');
     setUploadCascadeInfo([]);
@@ -1147,7 +1153,6 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     totalPage,
     isMyFilesLoadMore,
     selectedFileDownload,
-    txs,
     currentOffset,
     handlePublicFile,
     handleCloseUploadCascadeSuccessModal,
