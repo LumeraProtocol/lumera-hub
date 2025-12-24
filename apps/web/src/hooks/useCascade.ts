@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from 'react-toastify';
 import JSZip from 'jszip';
 import { useChain } from '@interchain-kit/react';
+import dayjs from 'dayjs';
 
 import { useSelector } from '@/redux/hooks';
 import * as instance from '@/utils/api';
@@ -171,6 +172,7 @@ type TCascadeStogre = {
   fileName: string;
   taskId: string;
   isPublic?: boolean;
+  time: number;
 }
 
 export type TUploadCascadeInfo = {
@@ -233,7 +235,7 @@ const GAS_PRICE = '025ulume';
 const storeName = 'lumera-cascade-files';
 
 export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
-  const tx = txs.find((t) => t.height.toString() === file.height.toString() && t.tx.body.messages.some((m) => m.metadata?.indexOf(file.datahash) !== -1));
+  const tx = txs?.find((t) => t.height.toString() === file.height.toString() && t.tx.body.messages.some((m) => m.metadata?.indexOf(file.datahash) !== -1));
   const amount = tx?.tx?.auth_info?.fee?.amount;
   return {
     txhash: tx ? tx.txhash : '',
@@ -309,7 +311,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
 
   const handleSelectFile = (file: IMyFile) => {
     setSelectedFiles(prev => {
-      const existFile = prev.find((p) => p.actionID === file.actionID);
+      const existFile = prev?.find((p) => p.actionID === file.actionID);
       if (existFile) {
         return prev.filter(f => f.actionID !== file.actionID);
       }
@@ -394,7 +396,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         const address = item.ip_address;
         const ip = address.split(':')[0];
         if (isValidIPv4(ip)) {
-          const supernode = supernodeData.find((s) => s.address.trim() === address.trim());
+          const supernode = supernodeData?.find((s) => s.address.trim() === address.trim());
           if (!supernode) {
             const data = await fetchLocationForIP(ip);
             if (data?.latitude && data?.longitude) {
@@ -544,21 +546,25 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     if (!actionId) {
       return {
         fee: '0',
+        size: 0,
       };
     }
     const action = await fetchAction(actionId);
     let fee = '0';
+    let size = 0;
     if (action) {
-      const transaction = action.transactions.find((tx) => tx.tx_type === 'register');
+      const transaction = action.transactions?.find((tx) => tx.tx_type === 'register');
       if (transaction) {
         fee = formatTokenDisplay({
           amount: transaction.tx_fee,
           denom: transaction.tx_fee_denom,
-        })
+        });
       }
+      size = action.size;
     }
     return {
-      fee
+      fee,
+      size,
     };
   }
 
@@ -566,10 +572,10 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     const files: IMyFile[] = [];
     for (const item of items) {
       const fileInfo = await getFileInfo(item);
-      const { fee } = await getAction(item.id);
+      const { fee, size } = await getAction(item.id);
       files.push({
         name: item.decoded.file_name || '',
-        size: item.size || fileInfo.file_size_kbs || 0,
+        size: item.size || size || fileInfo.file_size_kbs || 0,
         txId: item?.register_tx_id,
         type: getFileType(item.decoded.file_name),
         actionID: item.id,
@@ -596,7 +602,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     if (currentUploadFiles) {
       const currentFiles: TCascadeStogre[] = JSON.parse(currentUploadFiles);
       const filteredFiles = currentFiles.filter(item => {
-        return !files.some(obj => obj.taskId === item.taskId || obj.name === item.fileName);
+        const currentDate = dayjs().subtract(1, 'day').valueOf();
+        const isExist = files.some(obj => obj.taskId === item.taskId && obj.name === item.fileName);
+        return !isExist || Number(currentDate) > Number(item.time);
       });
       if (filteredFiles?.length) {
         localStorage.setItem(storeName, JSON.stringify(filteredFiles));
@@ -754,6 +762,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         taskId,
         fileName,
         isPublic,
+        time: dayjs().valueOf(),
       });
       localStorage.setItem(storeName, JSON.stringify(files));
       const newFiles = myFilesOriginal;
@@ -839,7 +848,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
                     status,
                   }
                 }));
-                const currentFile = uploadCascadeInfo.find((f) => f.fileName === file.name);
+                const currentFile = uploadCascadeInfo?.find((f) => f.fileName === file.name);
                 const isPublic = currentFile?.isPublic || false;
                 const result = await client.Cascade.uploader.uploadFile(fileBytes, {
                   fileName: file.name,
@@ -969,7 +978,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       if (type === FILES_TYPE[0].value) {
         return [type];
       } else {
-        const item = results.find((value) => value === type);
+        const item = results?.find((value) => value === type);
         if (item && results.length === 1) {
           return [...results];
         }
