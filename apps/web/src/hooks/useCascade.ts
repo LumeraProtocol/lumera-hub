@@ -547,10 +547,12 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       return {
         fee: '0',
         size: 0,
+        register_tx_id: '',
       };
     }
     const action = await fetchAction(actionId);
     let fee = '0';
+    let register_tx_id = '';
     let size = 0;
     if (action) {
       const transaction = action.transactions?.find((tx) => tx.tx_type === 'register');
@@ -561,10 +563,12 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         });
       }
       size = action.size;
+      register_tx_id = action.register_tx_id;
     }
     return {
       fee,
       size,
+      register_tx_id,
     };
   }
 
@@ -572,11 +576,11 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     const files: IMyFile[] = [];
     for (const item of items) {
       const fileInfo = await getFileInfo(item);
-      const { fee, size } = await getAction(item.id);
+      const { fee, size, register_tx_id } = await getAction(item.id);
       files.push({
         name: item.decoded.file_name || '',
         size: item.size || size || fileInfo.file_size_kbs || 0,
-        txId: item?.register_tx_id,
+        txId: item?.register_tx_id || register_tx_id,
         type: getFileType(item.decoded.file_name),
         actionID: item.id,
         signatures: item.decoded.signatures,
