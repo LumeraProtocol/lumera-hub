@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   YStack,
   Card,
@@ -19,7 +19,6 @@ import {
 } from 'tamagui';
 import Dropzone from 'react-dropzone';
 import { CloudUpload, Wallet } from '@tamagui/lucide-icons';
-import { worldMill } from "@react-jvectormap/world";
 import {
   Search,
   Download,
@@ -35,6 +34,7 @@ import {
 } from 'lucide-react';
 import ReactPaginate from 'react-paginate';
 import dayjs from 'dayjs';
+import { NetworkOverview, NodeData, EdgeData } from 'earth-map-3d-react';
 
 import Loading from '@/components/Loading';
 import Skeleton from '@/components/Skeleton';
@@ -47,7 +47,6 @@ import useCascade, {
   IMarker,
   ISelectedFile,
   IMyFile,
-  getTxHash,
   ITEM_PER_PAGE,
   TUploadCascadeInfo,
 } from '@/hooks/useCascade';
@@ -91,178 +90,178 @@ interface IUploadCascadeSuccessModal {
   onCloseModal: () => void;
 }
 
-const countryNames: { [key: string]: string } = {
-  AR: "Argentina",
-  AU: "Australia",
-  BH: "Bahrain",
-  BR: "Brazil",
-  CM: "Cameroon",
-  CA: "Canada",
-  CN: "China",
-  CO: "Colombia",
-  CU: "Cuba",
-  FR: "France",
-  GL: "Greenland",
-  GU: "Guam",
-  HK: "Hong Kong",
-  IN: "India",
-  ID: "Indonesia",
-  IL: "Israel",
-  IT: "Italy",
-  JP: "Japan",
-  MO: "Macau",
-  MV: "Maldives",
-  MX: "Mexico",
-  NZ: "New Zealand",
-  NO: "Norway",
-  PY: "Paraguay",
-  PE: "Peru",
-  QA: "Qatar",
-  RU: "Russia",
-  SN: "Senegal",
-  SG: "Singapore",
-  ZA: "South Africa",
-  ES: "Spain",
-  TW: "Taiwan",
-  TZ: "Tanzania",
-  GB: "United Kingdom",
-  // US: "United States",
-  UZ: "Uzbekistan",
-  VN: "Vietnam",
+const generateFullEdges = (nodeIds: number[]) => {
+  const edges: { from: number; to: number }[] = [];
+  for (let i = 0; i < nodeIds.length; i++) {
+    for (let j = i + 1; j < nodeIds.length; j++) {
+      edges.push({ from: nodeIds[i], to: nodeIds[j] });
+    }
+  }
+  return edges;
 };
 
-const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap) => {
-  const [selectedMarker, seSelectedMarker] = useState<IMarker | null>(null);
+const getChartData = (markers: IMarker[]) =>{
+  const nodes: NodeData[] = [];
+  markers.forEach((market, index) => {
+    nodes.push({
+      id: index,
+      lat: market.latLng[0],
+      lng: market.latLng[1],
+      name: market.city,
+      country: market.country,
+      countryCode: market.country_code.toLowerCase(),
+    })
+  });
+  console.log('nodes', nodes)
+  const edges: EdgeData[] = generateFullEdges(nodes.map((node) => node.id));
+console.log('edges', edges)
+  const countries = Object.values(
+    nodes.reduce((acc: Record<string, { code: string; count: number; sumLat: number; sumLng: number; country: string }>, node) => {
+      const code = node.countryCode;
+      if (!acc[code]) {
+        acc[code] = { code, count: 0, sumLat: 0, sumLng: 0, country: node.country };
+      }
+      acc[code].count += 1;
+      acc[code].sumLat += node.lat;
+      acc[code].sumLng += node.lng;
+      return acc;
+    }, {})
+  ).map(({ code, country, count, sumLat, sumLng }) => ({
+    code,
+    country,
+    count,
+    avgLat: sumLat / count,
+    avgLng: sumLng / count,
+  }));
 
-  if (!JVectorMapWithNoSSR || !markers?.length) {
+  const countryEdges = edges
+    .map((edge) => {
+      const fromNode = nodes.find((n) => n.id === edge.from);
+      const toNode = nodes.find((n) => n.id === edge.to);
+      return { fromCode: fromNode?.countryCode || '', toCode: toNode?.countryCode || '' };
+    })
+    .filter((edge) => edge.fromCode && edge.toCode && edge.fromCode !== edge.toCode)
+    .reduce((acc: any, edge) => {
+      if (!acc.some((e: any) =>
+        (e.fromCode === edge.fromCode && e.toCode === edge.toCode) ||
+        (e.fromCode === edge.toCode && e.toCode === edge.fromCode)
+      )) {
+        acc.push(edge);
+      }
+      return acc;
+    }, []);
+
+  return {
+    countries,
+    countryEdges,
+  }
+}
+
+const Marker = ({ marker }: { marker: IMarker }) => {
+  return (
+    <>
+      <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+        <div className='w-full md:w-60 text-gray-500 whitespace-nowrap'>Supernode Account:</div>
+        <div className="w-full truncate">
+          {formatAddress(marker.supernodeAccount, 15, -6)}
+        </div>
+      </div>
+      {marker.validatorAddress ?
+        <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+          <div className='w-full md:w-60 text-gray-500'>Validator Name:</div>
+          <div className="w-full truncate">
+            <AppLink href={`/staking/${marker.validatorAddress}`}>
+              {marker.validatorMoniker}
+            </AppLink>
+          </div>
+        </div> : null
+      }
+      {marker.validatorAddress ?
+        <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+          <div className='w-full md:w-60 text-gray-500'>Validator Address:</div>
+          <div className="w-full truncate">
+            <AppLink href={`/staking/${marker.validatorAddress}`}>
+              {formatAddress(marker.validatorAddress, 15, -6)}
+            </AppLink>
+          </div>
+        </div> : null
+      }
+      <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+        <div className='w-full md:w-60 text-gray-500'>IP:</div>
+        <div className="w-full truncate">
+          {marker.address}
+        </div>
+      </div>
+      <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+        <div className='w-full md:w-60 text-gray-500'>P2pPort:</div>
+        <div className="w-full truncate">
+          {marker.p2pPort}
+        </div>
+      </div>
+      <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+        <div className='w-full md:w-60 text-gray-500'>City:</div>
+        <div className="w-full truncate">
+          {marker.city}
+        </div>
+      </div>
+      <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+        <div className='w-full md:w-60 text-gray-500'>Country:</div>
+        <div className="w-full truncate">
+          {marker.country}
+        </div>
+      </div>
+    </>
+  )
+}
+
+const SuperNodeMap = React.memo(({ markers }: ISuperNodeMap) => {
+  const [selectedMarkers, seSelectedMarkers] = React.useState<IMarker[]>([]);
+
+  if (!markers?.length) {
     return null;
+  }
+  const { countries, countryEdges } = getChartData(markers);
+
+  const handleNodeClick = (countryCode: string) => {
+    const items = markers.filter((market) => market.country_code.toLowerCase() === countryCode.toLowerCase());
+    seSelectedMarkers(items);
   }
 
   return (
-    <div style={{ width: "100%", height: "500px" }}>
-      <JVectorMapWithNoSSR
-        map={worldMill}
-        backgroundColor="#151d29"
-        zoomOnScroll={true}
-        zoomMax={8}
-        regionStyle={{
-          initial: {
-            fill: "#0e1420",
-            stroke: "none",
-          },
-          hover: {
-            cursor: "pointer",
-          },
-        }}
-        regionLabelStyle={{
-          initial: {
-            fill: "#373c44",
-            fontSize: 12,
-            fontWeight: "bold",
-          },
-          hover: {
-            fill: "#373c44",
-          },
-        }}
-        labels={{
-          regions: {
-            render: (code: string) => countryNames[code] || '',
-            offsets: (code: string) => {
-              return [0, 0];
-            },
-          },
-        }}
-        markerStyle={{
-          initial: {
-            r: 5,
-            fill: "#078A8A",
-            stroke: "#2a323f",
-            "stroke-width": 1,
-          },
-          hover: {
-            r: 6,
-            stroke: "#2a323f",
-          },
-        }}
-        markers={markers}
-        onMarkerClick={(event: Event, code: string) => {
-          const index = parseInt(code);
-          const selectedMarker = markers[index];
-          seSelectedMarker(selectedMarker);
-        }}
+    <div className='w-full h-[600px]'>
+      <NetworkOverview
+        countries={countries}
+        countryEdges={countryEdges}
+        className='w-full h-[600px]'
+        fov={80}
+        onFlagClick={handleNodeClick}
+        badgeBg="#078A8A"
+        countFont='normal 140px Arial'
       />
-      {selectedMarker ? (
+      {selectedMarkers?.length ? (
         <>
           <div className='fixed top-0 right-0 z-[100] bottom-0 transform-3d transition-all duration-300'>
             <Card elevate size="$4" bordered className='!h-full'>
               <div className='relative'>
                 <div className='text-right my-2 pr-5'>
-                  <button className='cursor-pointer' onClick={() => seSelectedMarker(null)}>
+                  <button className='cursor-pointer' onClick={() => seSelectedMarkers([])}>
                     <CircleX />
                   </button>
                 </div>
                 <div className='h-full p-5 overflow-y-auto max-h-[90vh]'>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500 whitespace-nowrap'>Supernode Account:</div>
-                    <div className="w-full truncate">
-                      {formatAddress(selectedMarker.supernodeAccount, 15, -6)}
-                    </div>
-                  </div>
-                  {selectedMarker.validatorAddress ?
-                    <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                      <div className='w-full md:w-60 text-gray-500'>Validator Name:</div>
-                      <div className="w-full truncate">
-                        <AppLink href={`/block/${selectedMarker.validatorAddress}`}>
-                          {selectedMarker.validatorMoniker}
-                        </AppLink>
-                      </div>
-                    </div> : null
-                  }
-                  {selectedMarker.validatorAddress ?
-                    <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                      <div className='w-full md:w-60 text-gray-500'>Validator Address:</div>
-                      <div className="w-full truncate">
-                        <AppLink href={`/staking/${selectedMarker.validatorAddress}`}>
-                          {formatAddress(selectedMarker.validatorAddress, 15, -6)}
-                        </AppLink>
-                      </div>
-                    </div> : null
-                  }
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>IP:</div>
-                    <div className="w-full truncate">
-                      {selectedMarker.address}
-                    </div>
-                  </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>P2pPort:</div>
-                    <div className="w-full truncate">
-                      {selectedMarker.p2pPort}
-                    </div>
-                  </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>City:</div>
-                    <div className="w-full truncate">
-                      {selectedMarker.city}
-                    </div>
-                  </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>Country:</div>
-                    <div className="w-full truncate">
-                      {selectedMarker.country}
-                    </div>
-                  </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>Continent:</div>
-                    <div className="w-full truncate">
-                      {selectedMarker.continent}
-                    </div>
-                  </div>
+                  {selectedMarkers.map((marker, index) => (
+                    <React.Fragment key={marker.address}>
+                      <Marker marker={marker} />
+                      {index < selectedMarkers.length - 1 ?
+                        <div className='my-3 w-full h-[1px] bg-lumera-navy'></div> : null
+                      }
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
             </Card>
           </div>
-          <div className='fixed inset-0 z-50 bg-black/10' onClick={() => seSelectedMarker(null)}></div>
+          <div className='fixed inset-0 z-50 bg-black/10' onClick={() => seSelectedMarkers([])}></div>
         </>
       ): null
       }
@@ -700,9 +699,8 @@ export const CascadeContent = React.memo(({
           {isMarkerLoading ?
             <div className='min-h-[500px]'>
               <Skeleton className='min-h-[500px] !mb-0' />
-            </div> : null
+            </div> : <SuperNodeMap JVectorMapWithNoSSR={JVectorMapWithNoSSR} markers={markers} />
           }
-          <SuperNodeMap JVectorMapWithNoSSR={JVectorMapWithNoSSR} markers={markers} />
         </Card>
       </div>
       <div className='mt-6 w-full relative'>
