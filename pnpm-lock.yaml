@@ -290,8 +290,8 @@ importers:
         specifier: ^1.11.18
         version: 1.11.18
       earth-map-3d-react:
-        specifier: ^0.0.2
-        version: 0.0.2(4xibse2gcag3aa7epiahniz2na)
+        specifier: ^0.0.3
+        version: 0.0.3(4xibse2gcag3aa7epiahniz2na)
       echarts:
         specifier: ^6.0.0
         version: 6.0.0
@@ -5059,8 +5059,8 @@ packages:
   duplexify@4.1.3:
     resolution: {integrity: sha512-M3BmBhwJRZsSx38lZyhE53Csddgzl5R7xGJNk7CVddZD6CcmwMCH8J+7AprIrQKH7TonKxaCjcv27Qmf+sQ+oA==}
 
-  earth-map-3d-react@0.0.2:
-    resolution: {integrity: sha512-sbmUZimm613YijAbMNRD7qGataHE6NMt//oOaGqNPv+ZDW2cV94+YnCc7h3Qpc2SN07HPCvyeRk19udHE3ocyQ==}
+  earth-map-3d-react@0.0.3:
+    resolution: {integrity: sha512-9/nkcz4cBUUz3xXize4rC1rgshfzpdqv1qnxgjbwplpRoNzLa9NR0Y2cSFsVVZAjHk6mE4VOkInPzEaeRCzBzQ==}
 
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
@@ -6784,6 +6784,7 @@ packages:
   next@15.4.8:
     resolution: {integrity: sha512-jwOXTz/bo0Pvlf20FSb6VXVeWRssA2vbvq9SdrOPEg9x8E1B27C2rQtvriAn600o9hH61kjrVRexEffv3JybuA==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
+    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
@@ -18365,7 +18366,7 @@ snapshots:
       readable-stream: 3.6.2
       stream-shift: 1.0.3
 
-  earth-map-3d-react@0.0.2(4xibse2gcag3aa7epiahniz2na):
+  earth-map-3d-react@0.0.3(4xibse2gcag3aa7epiahniz2na):
     dependencies:
       '@react-three/drei': 10.7.7(@react-three/fiber@9.4.2(dicfm3qnrremtg3gajrmg2vo44))(@types/react@19.0.14)(@types/three@0.182.0)(immer@10.1.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@0.182.0)
       '@react-three/fiber': 9.4.2(ekaj2iqngydal7ek4mfter2ao4)
