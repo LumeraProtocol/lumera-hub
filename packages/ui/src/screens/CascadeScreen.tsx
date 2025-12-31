@@ -112,9 +112,7 @@ const getChartData = (markers: IMarker[]) =>{
       countryCode: market.country_code.toLowerCase(),
     })
   });
-  console.log('nodes', nodes)
   const edges: EdgeData[] = generateFullEdges(nodes.map((node) => node.id));
-console.log('edges', edges)
   const countries = Object.values(
     nodes.reduce((acc: Record<string, { code: string; count: number; sumLat: number; sumLng: number; country: string }>, node) => {
       const code = node.countryCode;
