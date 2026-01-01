@@ -47,6 +47,14 @@ module.exports = withTamagui({
       config.devtool = false
     }
 
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'asset/resource',
+    });
+
     return config
+  },
+  experimental: {
+    esmExternals: 'loose',
   },
 })
