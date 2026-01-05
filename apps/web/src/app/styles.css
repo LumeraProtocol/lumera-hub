@@ -293,7 +293,7 @@
   background-color: #fe6a6a !important;
 }
 .dropzone-wrapper {
-  min-height: 320px;
+  min-height: 140px;
   background-color: #1a212e;
   border: 2px dashed #4d5562;
   border-radius: 9px;
@@ -327,12 +327,7 @@
   color: #fff;
   background-color: #078A8A;
 }
-.cascade-top-left {
-  width: 55%;
-}
-.cascade-top-right {
-  width: calc(45% - 24px);
-}
+
 .z-1 {
   z-index: 1;
 }
@@ -504,9 +499,6 @@
   .governance-content .governance-overview {
     grid-template-columns: repeat(2, 1fr);
   }
-  .cascade-overview .is_Card {
-    width: 48%;
-  }
   .governance-control {
     flex-direction: column;
     justify-content: flex-start;
@@ -568,9 +560,6 @@
     grid-template-columns: repeat(1, 1fr);
   }
   .home-content .governance-proposals-activity {
-    flex-direction: column;
-  }
-  .cascade-overview {
     flex-direction: column;
   }
   .home-content .active-governance-proposals,

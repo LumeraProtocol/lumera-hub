@@ -31,10 +31,12 @@ import {
   CircleX,
   Trash2,
   CircleCheckBig,
+  MonitorCog,
 } from 'lucide-react';
 import ReactPaginate from 'react-paginate';
 import dayjs from 'dayjs';
 import { NetworkOverview, NodeData, EdgeData } from 'earth-map-3d-react';
+import ReactECharts from 'echarts-for-react';
 
 import Loading from '@/components/Loading';
 import Skeleton from '@/components/Skeleton';
@@ -226,11 +228,11 @@ const SuperNodeMap = React.memo(({ markers }: ISuperNodeMap) => {
   }
 
   return (
-    <div className='w-full h-[600px]'>
+    <div className='w-full h-[200px]'>
       <NetworkOverview
         countries={countries}
         countryEdges={countryEdges}
-        className='w-full h-[600px]'
+        className='w-full h-[200px]'
         fov={80}
         onFlagClick={handleNodeClick}
         badgeBg="#078A8A"
@@ -271,7 +273,8 @@ const getFileIcon = (type: string, className = 'w-4 h-4') => {
   switch (type) {
     case 'Image': return <ImageIcon className={`${className} text-blue-400`} />;
     case 'Video': return <Video className={`${className} text-purple-400`} />;
-    case 'PDF': return <FileText className={`${className} text-red-400`} />;
+    case 'Document': return <FileText className={`${className} text-red-400`} />;
+    case 'Program': return <MonitorCog className={`${className} text-emerald-500`} />;
     case 'Archive': return <FileArchive className={`${className} text-yellow-400`} />;
     default: return <FileIcon className={`${className} text-gray-400`} />;
   }
@@ -601,6 +604,313 @@ const getStatusColor = (state: string) => {
   }
 }
 
+interface INetworkStorage {
+  isFetchSummaryLoading: boolean;
+  networkStorage: {
+    totalSupernode: number;
+    usedStorageBytes: number;
+    availableStorageBytes: number;
+    networkStorage: string;
+  };
+}
+
+const NetworkStorage = ({
+  isFetchSummaryLoading,
+  networkStorage,
+}: INetworkStorage) => {
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: function(params: any) {
+        return `<div class="px-4 py-3">
+          <div class="font-bold">${params.seriesName}</div>
+          <div>
+            ${params.marker} <span class="font-bold">${params.name}</span>: ${params.value}%
+          </div>
+        </div>`;
+      }
+    },
+    grid: {
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+      containLabel: true
+    },
+    series: [
+      {
+        name: 'Network Storage',
+        type: 'pie',
+        radius: ['60%', '100%'],
+        center: ['50%', '60%'],
+        top: 0,
+        bottom: -50,
+        left: 0,
+        right: 0,
+        startAngle: 180,
+        endAngle: 360,
+        data: [
+          {
+            value: networkStorage.usedStorageBytes,
+            name: 'Used',
+            itemStyle: {
+              color: '#078A8A',
+            },
+          },
+          {
+            value: networkStorage.availableStorageBytes,
+            name: 'Available',
+            itemStyle: {
+              color: '#9da3ae',
+            },
+          }
+        ],
+        label: {
+          show: true,
+          backgroundColor: 'transparent',
+          borderWidth: 0,
+          shadowBlur: 0,
+          shadowColor: 'transparent',
+          shadowOffsetX: 0,
+          shadowOffsetY: 0,
+          color: '#fff',
+          position: 'outer',
+        },
+        labelLine: {
+          show: true,
+          length: 10,
+          length2: 5,
+          lineStyle: {
+            color: '#fff'
+          }
+        }
+      }
+    ]
+  };
+
+  return (
+    <Card elevate size="$4" bordered className='w-full'>
+      <Card.Header padded>
+        <h2 className="text-xl font-semibold text-white whitespace-nowrap">Network Storage</h2>
+        <div className='mt-2.5 h-36'>
+          <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
+        </div>
+        <div className='text-center'>
+          <div className='font-bold leading-[1.1]'>
+            {
+              isFetchSummaryLoading ? <Skeleton className='min-h-10 !w-40' /> : <>
+                <span className='text-4xl'>{networkStorage.networkStorage}</span>
+              </>
+            }
+          </div>
+          <div className='text-lumera-label'>Total data stored across all supernodes.</div>
+        </div>
+      </Card.Header>
+    </Card>
+  );
+}
+
+interface IYourUsage {
+  address: string;
+  isMyFilesLoading: boolean;
+  isMyFilesLoadMore: boolean;
+  myUsage: {
+    size: string;
+    uploaded: number;
+  };
+}
+
+const COLORS = ['#088a8a', '#47c78a', '#bce4a6', '#ff9a30', '#ffae3e', '#fed847'];
+
+const YourUsage = ({
+  address,
+  isMyFilesLoading,
+  isMyFilesLoadMore,
+  myUsage,
+}: IYourUsage) => {
+  return (
+    <Card elevate size="$4" bordered className='cascade-top-right'>
+      <Card.Header padded className='h-full'>
+        <h2 className="text-xl font-semibold text-white whitespace-nowrap">Your Usage</h2>
+        {address ?
+          <div className='flex justify-center flex-col h-full'>
+            {
+              isMyFilesLoading || isMyFilesLoadMore ? <Skeleton /> : <>
+                <div className='font-bold text-white leading-[1.1]'>
+                  <span className='text-[40px]'>{myUsage.size}</span> <span className='text-xl whitespace-nowrap'>({myUsage.uploaded} Files Uploaded)</span>
+                </div>
+              </>
+            }
+            <div className='text-lumera-label mt-2'>Your contribution to the network.</div>
+          </div> : (
+            <div className='flex items-center justify-center flex-col gap-0 text-center h-full'>
+              <div className='mb-5'>
+                <ConnectWalletButton className='bg-lumera-teal hover:bg-lumera-green' />
+              </div>
+              <H3 className='!leading-[1.2]'>No Wallet Connected</H3>
+              <Paragraph className='text-base text-lumera-gray'>
+                Get started by connecting your wallet.
+              </Paragraph>
+            </div>
+          )
+        }
+      </Card.Header>
+    </Card>
+  )
+
+  const option = {
+    tooltip: {
+      trigger: 'item',
+    },
+    legend: {
+      show: false
+    },
+    grid: {
+      left: 0,
+      right: 0,
+      bottom: 0,
+      top: 0,
+      containLabel: true
+    },
+    xAxis: {
+      type: 'value',
+      name: '',
+      axisLabel: {
+        show: false
+      },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { show: false }
+    },
+    yAxis: {
+      type: 'category',
+      data: ['Total'],
+      name: '',
+      axisLabel: {
+        show: false
+      },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { show: false }
+    },
+    series: [
+      {
+        name: 'Images',
+        type: 'bar',
+        stack: 'total',
+        data: [20],
+        itemStyle: {
+          color: COLORS[0],
+          borderRadius: [10, 0, 0, 10]
+        },
+        label: {
+          show: false
+        }
+      },
+      {
+        name: 'Videos',
+        type: 'bar',
+        stack: 'total',
+        data: [30],
+        itemStyle: {
+          color: COLORS[1],
+          borderRadius: 0
+        },
+        label: {
+          show: false
+        }
+      },
+      {
+        name: 'Programs',
+        type: 'bar',
+        stack: 'total',
+        data: [15],
+        itemStyle: {
+          color: COLORS[2],
+          borderRadius: 0
+        },
+        label: {
+          show: false
+        }
+      },
+      {
+        name: 'Archives',
+        type: 'bar',
+        stack: 'total',
+        data: [35],
+        itemStyle: {
+          color: COLORS[3],
+          borderRadius: 0
+        },
+        label: {
+          show: false
+        }
+      },
+      {
+        name: 'Documents',
+        type: 'bar',
+        stack: 'total',
+        data: [35],
+        itemStyle: {
+          color: COLORS[4],
+          borderRadius: 0
+        },
+        label: {
+          show: false
+        }
+      },
+      {
+        name: 'Other',
+        type: 'bar',
+        stack: 'total',
+        data: [35],
+        itemStyle: {
+          color: COLORS[5],
+          borderRadius: [0, 10, 10, 0]
+        },
+        label: {
+          show: false
+        }
+      },
+    ]
+  };
+
+  return (
+    <Card elevate size="$4" bordered className='w-full'>
+      <Card.Header padded className='h-full'>
+        <H3 className='text-white'>Your Usage</H3>
+        {address ?
+          <>
+            {
+              isMyFilesLoading || isMyFilesLoadMore ? <Skeleton /> : (
+                <div>
+                  <div>
+                    <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
+                  </div>
+                  <div className='font-bold text-white leading-[1.1] text-center'>
+                    <span className='text-4xl'>{myUsage.size}</span> / <span className='text-base whitespace-nowrap'>{myUsage.uploaded} Files</span>
+                  </div>
+                </div>
+              )
+            }
+            <div className='text-lumera-label mt-2'>Your contribution to the network.</div>
+          </> : (
+            <div className='flex items-center justify-center flex-col gap-0 text-center h-full'>
+              <H3 className='!leading-[1.2]'>No Wallet Connected</H3>
+              <Paragraph className='text-base text-lumera-gray'>
+                Get started by connecting your wallet.
+              </Paragraph>
+              <div className='mt-3'>
+                <ConnectWalletButton className='bg-lumera-teal hover:bg-lumera-green' />
+              </div>
+            </div>
+          )
+        }
+      </Card.Header>
+    </Card>
+  )
+}
+
 export const CascadeContent = React.memo(({
   JVectorMapWithNoSSR,
   client,
@@ -630,6 +940,8 @@ export const CascadeContent = React.memo(({
     selectedFileDownload,
     isAllDownloading,
     currentOffset,
+    recentlyUploaded,
+    isRecentlyUploadedLoading,
     handlePublicFile,
     openActionFeeModal,
     closeActionFeeModal,
@@ -654,67 +966,51 @@ export const CascadeContent = React.memo(({
   }
 
   return (
-    <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
-      <div className="flex justify-between gap-6 w-full cascade-overview relative">
-        <Card elevate size="$4" bordered className='cascade-top-left'>
+    <YStack flex={1} alignItems="center" justifyContent="center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full cascade-overview relative">
+        <YourUsage
+          address={address}
+          isMyFilesLoading={isMyFilesLoading}
+          isMyFilesLoadMore={isMyFilesLoadMore}
+          myUsage={myUsage}
+        />
+        <NetworkStorage
+          isFetchSummaryLoading={isFetchSummaryLoading}
+          networkStorage={networkStorage}
+        />
+        <Card elevate size="$4" bordered className='w-full'>
           <Card.Header padded>
-            <H3 className='text-white'>Network Storage</H3>
-            <div className='font-bold text-lumera-blue-light leading-[1.1]'>
-              {
-                isFetchSummaryLoading ? <Skeleton /> : <>
-                  <span className='text-[40px]'>{networkStorage.networkStorage}</span> <span className='text-xl whitespace-nowrap'>({networkStorage.totalSupernode} Active Supernodes)</span>
-                </>
+            <h2 className="text-xl font-semibold text-white whitespace-nowrap">
+              {networkStorage.totalSupernode} Supernodes
+            </h2>
+            <div className='mt-4'>
+              {isMarkerLoading ?
+                <div className='min-h-[200px]'>
+                  <Skeleton className='min-h-[200px] !mb-0' />
+                </div> : <SuperNodeMap JVectorMapWithNoSSR={JVectorMapWithNoSSR} markers={markers} />
               }
             </div>
-            <div className='text-lumera-label mt-2'>Total data stored across all supernodes.</div>
           </Card.Header>
-        </Card>
-        <Card elevate size="$4" bordered className='cascade-top-right'>
-          <Card.Header padded>
-            <H3 className='text-white'>Your Usage</H3>
-            {address ?
-              <>
-                {
-                  isMyFilesLoading || isMyFilesLoadMore ? <Skeleton /> : <>
-                    <div className='font-bold text-white leading-[1.1]'>
-                      <span className='text-[40px]'>{myUsage.size}</span> <span className='text-xl whitespace-nowrap'>({myUsage.uploaded} Files Uploaded)</span>
-                    </div>
-                  </>
-                }
-                <div className='text-lumera-label mt-2'>Your contribution to the network.</div>
-              </> : <>
-                <Paragraph className='text-base text-lumera-gray'>Please connect your wallet to view this section.</Paragraph>
-                <div className='mt-3'>
-                  <ConnectWalletButton />
-                </div>
-              </>
-            }
-          </Card.Header>
-        </Card>
-      </div>
-      <div className='mt-6 w-full'>
-        <Card elevate size="$4" bordered className='w-full relative overflow-hidden'>
-          {isMarkerLoading ?
-            <div className='min-h-[500px]'>
-              <Skeleton className='min-h-[500px] !mb-0' />
-            </div> : <SuperNodeMap JVectorMapWithNoSSR={JVectorMapWithNoSSR} markers={markers} />
-          }
         </Card>
       </div>
       <div className='mt-6 w-full relative'>
         <Loading isLoading={isUploading} />
         <Dropzone onDrop={openActionFeeModal} multiple maxFiles={maxFiles} onDropRejected={handleDropRejected}>
           {({getRootProps, getInputProps}) => (
-            <div {...getRootProps()} className='dropzone-wrapper flex flex-col justify-center items-center'>
+            <div
+              {...getRootProps()}
+              className='dropzone-wrapper flex flex-col justify-center items-center cursor-pointer'
+            >
               <input {...getInputProps()} />
               <div className='text-center'>
                 <div className='upload-icon flex justify-center'>
                   <CloudUpload />
                 </div>
-                <div className='mt-2'>Drag & drop files here</div>
-                <div className='text-sm text-lumera-label mt-3'>or</div>
-                <div className='mt-2 flex justify-center btn-blue'>
-                  <AppButton className='font-bold'>Browse Files</AppButton>
+                <div className='flex items-center gap-1.5'>
+                  <div>Drag & drop files here or</div>
+                  <div className='flex justify-center text-lumera-teal'>
+                    Browse
+                  </div>
                 </div>
                 {error ?
                   <div className='mt-5 text-red-600'>{error}</div> : null
@@ -1014,7 +1310,125 @@ export const CascadeContent = React.memo(({
               </div> : null
             }
           </Card>
-        </div> : null
+        </div> : (
+          <div className='mt-6 w-full relative'>
+          <Card elevate size="$4" bordered className='w-full !p-[18px]'>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <h2 className="text-xl font-semibold text-white whitespace-nowrap">Recently Uploaded</h2>
+            </div>
+            <div className='md:overflow-x-auto '>
+              <div className="space-y-2 md:w-[1130px]">
+                <table className='w-full border-separate border-spacing-y-2 text-sm'>
+                  <thead className='hidden md:table-header-group'>
+                    <tr>
+                      <th className='px-2 py-3'>
+                        <div className='flex items-start'>
+                          <span>Name</span>
+                        </div>
+                      </th>
+                      <th align='left' className='px-2 py-3'>TX ID</th>
+                      <th align='right' className='px-2 py-3'>Price</th>
+                      <th align='right' className='px-2 py-3'>Fee</th>
+                      <th align='right' className='px-2 py-3'>Size</th>
+                      <th align='left' className='px-2 py-3'>Last Modified</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {!recentlyUploaded?.length && !isRecentlyUploadedLoading ? (
+                      <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
+                        <td colSpan={9} className='px-2 py-3'>
+                          <H3 className='text-2xl'>No files</H3>
+                        </td>
+                      </tr>
+                     ) : null }
+                    {isRecentlyUploadedLoading ? (
+                      <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
+                        <td colSpan={9} className='px-2 py-3'>
+                          <Skeleton type='list' className='min-h-8' count={3} />
+                        </td>
+                      </tr>
+                    ) : null }
+                    {!isRecentlyUploadedLoading && recentlyUploaded.map((file, index) => {
+                      const txId = file.txId;
+                      const lastModified = file.lastModified;
+                      const fee = file.fee;
+                      const isExpired = file.state === 'ACTION_STATE_EXPIRED';
+                      return (
+                        <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row'>
+                          <td className='px-2 pt-3 pb-1 md:py-3'>
+                            <div className='flex items-start w-full gap-2'>
+                              <div className='w-auto'>
+                                <Tooltip>
+                                  <Tooltip.Trigger>
+                                    <div className='flex items-start gap-2 w-full'>
+                                      {getFileIcon(getSimplifiedType(file.type))}
+                                      <span className="font-medium text-white max-w-[180px] truncate">{file.name}</span>
+                                    </div>
+                                  </Tooltip.Trigger>
+                                  <Tooltip.Content
+                                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                    scale={1}
+                                    x={0}
+                                    y={0}
+                                    opacity={1}
+                                    animation={[
+                                      'quick',
+                                      {
+                                        opacity: {
+                                          overshootClamping: true,
+                                        },
+                                      },
+                                    ]}
+                                  >
+                                    <div className='text-white'>
+                                      {file.name}
+                                    </div>
+                                  </Tooltip.Content>
+                                </Tooltip>
+                              </div>
+                            </div>
+                          </td>
+                          <td className='px-2 py-1 md:py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
+                            {txId && !isExpired ?
+                              <AppLink
+                                href={`/tx/${txId}`}
+                                className="font-mono text-lumera-teal hover:text-lumera-green truncate inline-flex items-center gap-1.5"
+                              >
+                                {formatAddress(txId, 6, -4)}
+                              </AppLink> : '--'
+                            }
+                          </td>
+                          <td className='md:text-right px-2 py-1 md:py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2">Price: </span>
+                            <span className=' whitespace-nowrap'>{!isExpired ? file.price : '0 LUME'}</span>
+                          </td>
+                          <td className='md:text-right px-2 py-1 md:py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2">Fee: </span>
+                            <span className=' whitespace-nowrap'>{!isExpired ? fee : '0 LUME'}</span>
+                          </td>
+                          <td className='md:text-right px-2 py-1 md:py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
+                            <span className=' whitespace-nowrap'>{formatKb(!isExpired ? file.size : 0)}</span>
+                          </td>
+                          <td className='px-2 py-1 md:py-3'>
+                            <span className="md:hidden font-semibold text-gray-500 mr-2 whitespace-nowrap">Last Modified: </span>
+                            {lastModified ?
+                            <span className='whitespace-nowrap'>
+                              {dayjs(lastModified).format('MM/DD/YYYY')} at {dayjs(lastModified).format('HH:mm:ss')}
+                            </span> : '--'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </Card>
+        </div>
+        )
       }
       <ActionFeeModal
         uploadedFiles={uploadCascadeInfo}
