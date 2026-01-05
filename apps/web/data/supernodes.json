@@ -112,6 +112,23 @@
     "country_code": "DE",
     "subdivision": "Berlin",
     "city": "Nuremberg",
+    "supernodeAccount": "lumera1ek4vulycd3ag0lvaa4qsr8w44dcc8090z57chf",
+    "validatorAddress": "lumeravaloper1gapqwfgz45mw2lrvy5nwks9ndfkdzn6pg0u69s",
+    "validatorMoniker": "Winnode",
+    "address": "152.53.138.217:4444",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      49.4254092,
+      11.0796553
+    ],
+    "name": "Nuremberg",
+    "continent": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "subdivision": "Berlin",
+    "city": "Nuremberg",
     "supernodeAccount": "lumera1epyav8gvn9es0s3mfzj8pkle7hdjdhwald7rds",
     "validatorAddress": "lumeravaloper15tltd8srxkxda6nyrg95tpc2dm4z328kg8e83w",
     "validatorMoniker": "AstroStake",
@@ -218,6 +235,23 @@
     "validatorAddress": "lumeravaloper1q2vr2027lmczswdtpu6lfwk43g7qagxqnf4z8f",
     "validatorMoniker": "killerwhales_user",
     "address": "136.243.74.81:4444",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      48.974797,
+      8.176773
+    ],
+    "name": "Lauterbourg",
+    "continent": "Europe",
+    "country": "France",
+    "country_code": "FR",
+    "subdivision": "Paris",
+    "city": "Lauterbourg",
+    "supernodeAccount": "lumera1rqpde8600qhuyqds4wlp5mau46y7tdwgj2yqpc",
+    "validatorAddress": "lumeravaloper1jyhgnwq426am46w9t3ps0x4uadyemly7e8d73n",
+    "validatorMoniker": "CoreNode",
+    "address": "84.247.139.25:4444",
     "p2pPort": "4445"
   },
   {

@@ -218,7 +218,8 @@ export const convertUint8ArrayToJson = (encodedBytes: Uint8Array) => {
 export const getSimplifiedType = (type: string) => {
   if (type.startsWith('image')) return 'Image';
   if (type.startsWith('video')) return 'Video';
-  if (type === 'pdf') return 'PDF';
+  if (type === 'document') return 'Document';
+  if (type === 'program') return 'Program';
   if (['archive'].includes(type)) return 'Archive';
   return 'Other';
 }

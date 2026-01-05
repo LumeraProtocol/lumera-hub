@@ -63,7 +63,7 @@ export interface IMarker {
   city: string;
 }
 
-export type TFileTypeKey = 'all' | 'image' | 'pdf' | 'video' | 'archive' | 'other';
+export type TFileTypeKey = 'all' | 'image' | 'program' | 'video' | 'archive' | 'document' | 'other';
 
 interface FileTypeOption {
   value: TFileTypeKey;
@@ -186,9 +186,10 @@ export type TUploadCascadeInfo = {
 }
 
 const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
-const PDF_EXT = ['pdf'];
+const DOCUMENT_EXT = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'ppt', 'pptx'];
 const VIDEO_EXT = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
 const ARCHIVE_EXT = ['zip', 'rar', '7z'];
+const PROGRAM_EXT = ['exe', 'bat', 'sh', 'dll', 'app'];
 
 export const FILES_TYPE: FileTypeOption[] = [
   {
@@ -197,19 +198,23 @@ export const FILES_TYPE: FileTypeOption[] = [
   },
   {
     value: 'image',
-    label: 'Image',
-  },
-  {
-    value: 'pdf',
-    label: 'PDF',
+    label: 'Images',
   },
   {
     value: 'video',
-    label: 'Video',
+    label: 'Videos',
+  },
+  {
+    value: 'program',
+    label: 'Programs',
   },
   {
     value: 'archive',
-    label: 'Archive',
+    label: 'Archives',
+  },
+  {
+    value: 'document',
+    label: 'Documents',
   },
   {
     value: 'other',
@@ -223,9 +228,10 @@ const getFileType = (filename: string) => {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
 
   if (IMAGE_EXT.includes(ext)) return 'image';
-  if (PDF_EXT.includes(ext)) return 'pdf';
+  if (DOCUMENT_EXT.includes(ext)) return 'document';
   if (VIDEO_EXT.includes(ext)) return 'video';
   if (ARCHIVE_EXT.includes(ext)) return 'archive';
+  if (PROGRAM_EXT.includes(ext)) return 'program';
 
   return 'other';
 }
@@ -258,6 +264,8 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const [networkStorage, setNetworkStorage] = useState({
     totalSupernode: 0,
     networkStorage: 'TBD',
+    usedStorageBytes: 0,
+    availableStorageBytes: 0,
   });
   const [myUsage, setMyUsage] = useState({
     size: '0 Bytes',
@@ -282,6 +290,8 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const [currentOffset, setOffset] = useState(0);
   const [step, setStep] = useState('');
   const [totalBalance, setTotalBalance] = useState(0);
+  const [recentlyUploaded, setRecentlyUploaded] = useState<IMyFile[]>([]);
+  const [isRecentlyUploadedLoading, setRecentlyUploadedLoading] = useState(false);
 
   const filteredFiles = useMemo(() => {
     setOffset(0);
@@ -294,7 +304,8 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     const counts: Record<TFileTypeKey, number> = {
         all: myFilesOriginal.length,
         image: 0,
-        pdf: 0,
+        program: 0,
+        document: 0,
         video: 0,
         archive: 0,
         other: 0,
@@ -466,10 +477,12 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
           isContinue = false;
           break;
         }
-      } while (isContinue)
+      } while (isContinue);
       setNetworkStorage({
         totalSupernode: snResults.length,
         networkStorage: data?.total_storage_bytes ? `${formatBytes(data.total_storage_bytes)}` : '',
+        usedStorageBytes: data?.storage_used_percent?.toFixed(2) || 0,
+        availableStorageBytes: data?.storage_available_percent?.toFixed(2) || 0,
       });
       setFetchSummaryLoading(false);
       await getChartMarker(snResults);
@@ -702,6 +715,38 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     setMyFilesLoadMore(false);
   }, [address]);
 
+  const fetchRecentlyUploaded = async () => {
+    try {
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=20`);
+      return {
+        actions: data.items,
+        nextKey: data.next_cursor,
+      };
+    } catch (e) {
+      return {
+        actions: null,
+        nextKey: null,
+      };
+    }
+  };
+
+  const getRecentlyUploaded = useCallback(async () => {
+    setRecentlyUploadedLoading(true);
+    try {
+      const results = await fetchRecentlyUploaded();
+      if (results?.actions) {
+        const data = await generateFile(results?.actions);
+        setRecentlyUploaded(data);
+      }
+    } catch (error) {
+      toast.error((error as Error)?.message ||  'An unknown error occurred.', {
+        position: "bottom-right",
+        theme: "dark",
+      });
+    }
+    setRecentlyUploadedLoading(false);
+  }, []);
+
   const getTotalBalances = useCallback(async () => {
     if (!address) {
       return;
@@ -728,6 +773,12 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       getTotalBalances();
     }
   }, [address, getTotalBalances]);
+
+  useEffect(() => {
+    if (!address) {
+      getRecentlyUploaded();
+    }
+  }, [address, getRecentlyUploaded]);
 
   useEffect(() => {
     if (address) {
@@ -1167,6 +1218,8 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     isMyFilesLoadMore,
     selectedFileDownload,
     currentOffset,
+    recentlyUploaded,
+    isRecentlyUploadedLoading,
     handlePublicFile,
     handleCloseUploadCascadeSuccessModal,
     handlePageClick,
