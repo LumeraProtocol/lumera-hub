@@ -62,7 +62,7 @@ export function ConnectWallet() {
       {!address ?
         <button
           onClick={openView}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors flex cursor-pointer"
+          className="bg-lumera-teal hover:bg-lumera-green text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors flex cursor-pointer"
         >
           <Wallet size="$1" /> <div className="ml-1 connect-wallet-label">Connect Wallet</div>
         </button> :
@@ -89,7 +89,7 @@ export function ConnectWalletButton({
       {!address ?
         <button
           onClick={openView}
-          className={`bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors flex cursor-pointer ${className}`}
+          className={`bg-lumera-teal hover:bg-lumera-green text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors flex cursor-pointer ${className}`}
         >
           <Wallet size="$1" /> <div className="ml-1">Connect Wallet</div>
         </button> : null

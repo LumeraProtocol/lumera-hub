@@ -320,6 +320,26 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     return counts;
   }, [myFilesOriginal]);
 
+  const fileSizes: Record<TFileTypeKey, number> = useMemo(() => {
+    const sizes: Record<TFileTypeKey, number> = {
+        all: 0,
+        image: 0,
+        program: 0,
+        document: 0,
+        video: 0,
+        archive: 0,
+        other: 0,
+    };
+    myFilesOriginal.forEach(file => {
+      if (sizes.hasOwnProperty(file.type)) {
+        sizes[file.type as TFileTypeKey] += file.size;
+      } else {
+        sizes.other += file.size;
+      }
+    });
+    return sizes;
+  }, [myFilesOriginal]);
+
   const handleSelectFile = (file: IMyFile) => {
     setSelectedFiles(prev => {
       const existFile = prev?.find((p) => p.actionID === file.actionID);
@@ -558,22 +578,22 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const getAction = async (actionId: string) => {
     if (!actionId) {
       return {
-        fee: '0',
+        fee: '0 LUME',
         size: 0,
         register_tx_id: '',
       };
     }
     const action = await fetchAction(actionId);
-    let fee = '0';
+    let fee = '0 LUME';
     let register_tx_id = '';
     let size = 0;
     if (action) {
       const transaction = action.transactions?.find((tx) => tx.tx_type === 'register');
       if (transaction) {
-        fee = formatTokenDisplay({
+        fee = `${formatTokenDisplay({
           amount: transaction.tx_fee,
           denom: transaction.tx_fee_denom,
-        });
+        })} LUME`;
       }
       size = action.size;
       register_tx_id = action.register_tx_id;
@@ -1220,6 +1240,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     currentOffset,
     recentlyUploaded,
     isRecentlyUploadedLoading,
+    fileSizes,
     handlePublicFile,
     handleCloseUploadCascadeSuccessModal,
     handlePageClick,
