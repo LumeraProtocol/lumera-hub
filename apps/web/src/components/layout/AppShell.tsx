@@ -6,8 +6,8 @@ import {
   BarChart2,
   LaptopMinimalCheck,
   Database,
-  ShieldCheck,
-  Image as ImageIcon,
+  // ShieldCheck,
+  // Image as ImageIcon,
   BrainCircuit,
   Wallet,
 } from '@tamagui/lucide-icons';
@@ -35,9 +35,9 @@ export const NAV_ITEMS: TNaxItems[] = [
   { id: "staking", label: "Staking", url: "/staking", icon: <Layers /> },
   { id: "governance", label: "Governance", url: "/governance", icon: <LaptopMinimalCheck /> },
   { id: "cascade", label: "Cascade", url: "/cascade", icon: <Database /> },
-  { id: "sense", label: "Sense", url: "/sense", icon: <ShieldCheck /> },
+  // { id: "sense", label: "Sense", url: "/sense", icon: <ShieldCheck /> },
   { id: "inference", label: "Inference", url: "/inference", icon: <BrainCircuit /> },
-  { id: "nfts", label: "NFTs", url: "/nfts", icon: <ImageIcon /> },
+  // { id: "nfts", label: "NFTs", url: "/nfts", icon: <ImageIcon /> },
 ]
 
 const VIEW_TITLES: Record<ViewId, string> = {
@@ -112,8 +112,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {NAV_ITEMS.map((item) => (
               <AppLink
                 key={item.id}
+                id={item.id}
                 href={item?.url || '#'}
-                className="text-lumera-teal hover:text-lumera-green text-base font-medium">
+                className="text-lumera-teal hover:text-lumera-green text-base font-medium"
+              >
                 <span
                   onClick={() => handleMenuItemClick(item)}
                   className={`flex items-center gap-3 px-4 py-3 transition-colors duration-200 rounded-lg w-full ${

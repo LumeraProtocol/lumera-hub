@@ -52,7 +52,7 @@ import useCascade, {
   ITEM_PER_PAGE,
   TUploadCascadeInfo,
 } from '@/hooks/useCascade';
-import { formatAddress, formatBytes, formatKb } from '@/utils/format';
+import { formatAddress, formatBytes, formatKb, formatNumber } from '@/utils/format';
 import { getSimplifiedType } from '@/utils/helpers';
 import { useLumeraClientWrapper } from '@/hooks/useLumeraClientWrapper';
 
@@ -622,7 +622,7 @@ const NetworkStorage = ({
     tooltip: {
       trigger: 'item',
       formatter: function(params: any) {
-        return `<div class="px-4 py-3">
+        return `<div class="px-2 py-1">
           <div class="font-bold">${params.seriesName}</div>
           <div>
             ${params.marker} <span class="font-bold">${params.name}</span>: ${params.value}%
@@ -718,49 +718,79 @@ interface IYourUsage {
     size: string;
     uploaded: number;
   };
+  fileSizes: Record<TFileTypeKey, number>;
 }
 
 const COLORS = ['#088a8a', '#47c78a', '#bce4a6', '#ff9a30', '#ffae3e', '#fed847'];
 
-const YourUsage = ({
-  address,
-  isMyFilesLoading,
-  isMyFilesLoadMore,
-  myUsage,
-}: IYourUsage) => {
-  return (
-    <Card elevate size="$4" bordered className='cascade-top-right'>
-      <Card.Header padded className='h-full'>
-        <h2 className="text-xl font-semibold text-white whitespace-nowrap">Your Usage</h2>
-        {address ?
-          <div className='flex justify-center flex-col h-full'>
-            {
-              isMyFilesLoading || isMyFilesLoadMore ? <Skeleton /> : <>
-                <div className='font-bold text-white leading-[1.1]'>
-                  <span className='text-[40px]'>{myUsage.size}</span> <span className='text-xl whitespace-nowrap'>({myUsage.uploaded} Files Uploaded)</span>
-                </div>
-              </>
-            }
-            <div className='text-lumera-label mt-2'>Your contribution to the network.</div>
-          </div> : (
-            <div className='flex items-center justify-center flex-col gap-0 text-center h-full'>
-              <div className='mb-5'>
-                <ConnectWalletButton className='bg-lumera-teal hover:bg-lumera-green' />
-              </div>
-              <H3 className='!leading-[1.2]'>No Wallet Connected</H3>
-              <Paragraph className='text-base text-lumera-gray'>
-                Get started by connecting your wallet.
-              </Paragraph>
-            </div>
-          )
+const getYourUsageChartOption = (fileSizes: Record<TFileTypeKey, number>) => {
+  let series = [];
+  let index = 0;
+  const totalSize = Object.values(fileSizes).reduce((sum, value) => sum + value, 0);
+  const labels = [];
+  for (const type of FILES_TYPE) {
+    if (fileSizes[type.value] > 0) {
+      const percent = (fileSizes[type.value] / totalSize) * 100
+      series.push({
+        name: type.label,
+        type: 'bar',
+        stack: 'total',
+        data: [percent],
+        itemStyle: {
+          color: COLORS[index],
+          borderRadius: 0
+        },
+        label: {
+          show: false
         }
-      </Card.Header>
-    </Card>
-  )
+      });
+      labels.push({
+        name: type.label,
+        color: COLORS[index],
+      });
+      index++;
+    }
+  }
+
+  series = series.map((serie, index) => {
+    if (index === 0) {
+      return ({
+        ...serie,
+        itemStyle: {
+          color: COLORS[index],
+          borderRadius: [10, 0, 0, 10],
+        },
+      });
+    }
+    if (index === series.length - 1) {
+      return ({
+        ...serie,
+        itemStyle: {
+          color: COLORS[index],
+          borderRadius: [0, 10, 10, 0],
+        },
+      });
+    }
+    return ({
+      ...serie,
+      itemStyle: {
+        color: COLORS[index],
+        borderRadius: 0,
+      },
+    });
+  })
 
   const option = {
     tooltip: {
       trigger: 'item',
+      formatter: function(params: any) {
+        return `<div class="px-2 py-1">
+          <div class="font-bold">${params.seriesName}</div>
+          <div>
+            ${params.marker} <span class="font-bold">Total</span>: ${formatNumber(params.value)}%
+          </div>
+        </div>`;
+      }
     },
     legend: {
       show: false
@@ -770,7 +800,7 @@ const YourUsage = ({
       right: 0,
       bottom: 0,
       top: 0,
-      containLabel: true
+      containLabel: false
     },
     xAxis: {
       type: 'value',
@@ -793,107 +823,47 @@ const YourUsage = ({
       axisTick: { show: false },
       splitLine: { show: false }
     },
-    series: [
-      {
-        name: 'Images',
-        type: 'bar',
-        stack: 'total',
-        data: [20],
-        itemStyle: {
-          color: COLORS[0],
-          borderRadius: [10, 0, 0, 10]
-        },
-        label: {
-          show: false
-        }
-      },
-      {
-        name: 'Videos',
-        type: 'bar',
-        stack: 'total',
-        data: [30],
-        itemStyle: {
-          color: COLORS[1],
-          borderRadius: 0
-        },
-        label: {
-          show: false
-        }
-      },
-      {
-        name: 'Programs',
-        type: 'bar',
-        stack: 'total',
-        data: [15],
-        itemStyle: {
-          color: COLORS[2],
-          borderRadius: 0
-        },
-        label: {
-          show: false
-        }
-      },
-      {
-        name: 'Archives',
-        type: 'bar',
-        stack: 'total',
-        data: [35],
-        itemStyle: {
-          color: COLORS[3],
-          borderRadius: 0
-        },
-        label: {
-          show: false
-        }
-      },
-      {
-        name: 'Documents',
-        type: 'bar',
-        stack: 'total',
-        data: [35],
-        itemStyle: {
-          color: COLORS[4],
-          borderRadius: 0
-        },
-        label: {
-          show: false
-        }
-      },
-      {
-        name: 'Other',
-        type: 'bar',
-        stack: 'total',
-        data: [35],
-        itemStyle: {
-          color: COLORS[5],
-          borderRadius: [0, 10, 10, 0]
-        },
-        label: {
-          show: false
-        }
-      },
-    ]
+    series,
   };
+  return {
+    option,
+    labels,
+  };
+}
 
+const YourUsage = ({
+  address,
+  isMyFilesLoading,
+  isMyFilesLoadMore,
+  myUsage,
+  fileSizes,
+}: IYourUsage) => {
+  const { option, labels } = getYourUsageChartOption(fileSizes);
   return (
     <Card elevate size="$4" bordered className='w-full'>
       <Card.Header padded className='h-full'>
-        <H3 className='text-white'>Your Usage</H3>
+        <h2 className="text-xl font-semibold text-white whitespace-nowrap mb-5">Your Usage</h2>
         {address ?
           <>
             {
-              isMyFilesLoading || isMyFilesLoadMore ? <Skeleton /> : (
+              isMyFilesLoading || isMyFilesLoadMore ? <Skeleton className='min-h-[176px]' /> : (
                 <div>
                   <div>
                     <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
                   </div>
                   <div className='font-bold text-white leading-[1.1] text-center'>
-                    <span className='text-4xl'>{myUsage.size}</span> / <span className='text-base whitespace-nowrap'>{myUsage.uploaded} Files</span>
+                    <span className='text-4xl'>{myUsage.size}</span> <span className='font-normal text-lumera-label'>/</span> <span className='text-base whitespace-nowrap font-normal text-lumera-label'>{myUsage.uploaded} Files</span>
                   </div>
+                  <ul className='mt-3 list-none flex flex-wrap gap-x-4 gap-y-2 text-[13px]'>
+                    {labels.map((label, index) => (
+                      <li key={`${label.name}-${index}`} className='w-[30%] flex items-center gap-2'>
+                        <span className='inline-block w-3 h-3 rounded-full' style={{ backgroundColor: label.color }}></span> <span>{label.name}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )
             }
-            <div className='text-lumera-label mt-2'>Your contribution to the network.</div>
           </> : (
             <div className='flex items-center justify-center flex-col gap-0 text-center h-full'>
               <H3 className='!leading-[1.2]'>No Wallet Connected</H3>
@@ -901,7 +871,7 @@ const YourUsage = ({
                 Get started by connecting your wallet.
               </Paragraph>
               <div className='mt-3'>
-                <ConnectWalletButton className='bg-lumera-teal hover:bg-lumera-green' />
+                <ConnectWalletButton />
               </div>
             </div>
           )
@@ -942,6 +912,7 @@ export const CascadeContent = React.memo(({
     currentOffset,
     recentlyUploaded,
     isRecentlyUploadedLoading,
+    fileSizes,
     handlePublicFile,
     openActionFeeModal,
     closeActionFeeModal,
@@ -973,6 +944,7 @@ export const CascadeContent = React.memo(({
           isMyFilesLoading={isMyFilesLoading}
           isMyFilesLoadMore={isMyFilesLoadMore}
           myUsage={myUsage}
+          fileSizes={fileSizes}
         />
         <NetworkStorage
           isFetchSummaryLoading={isFetchSummaryLoading}
@@ -1317,7 +1289,7 @@ export const CascadeContent = React.memo(({
               <h2 className="text-xl font-semibold text-white whitespace-nowrap">Recently Uploaded</h2>
             </div>
             <div className='md:overflow-x-auto '>
-              <div className="space-y-2 md:w-[1130px]">
+              <div className="space-y-2 md:max-w-[1130px] md:min-w-[900px] md:w-full">
                 <table className='w-full border-separate border-spacing-y-2 text-sm'>
                   <thead className='hidden md:table-header-group'>
                     <tr>
