@@ -52,25 +52,22 @@ import useCascade, {
   ITEM_PER_PAGE,
   TUploadCascadeInfo,
 } from '@/hooks/useCascade';
-import { formatAddress, formatBytes, formatKb, formatNumber } from '@/utils/format';
+import { formatAddress, formatBytes, formatNumber } from '@/utils/format';
 import { getSimplifiedType } from '@/utils/helpers';
 import { useLumeraClientWrapper } from '@/hooks/useLumeraClientWrapper';
 
 import 'react-paginate/theme/basic/react-paginate.css';
 
 interface ICascadeScreen {
-  JVectorMapWithNoSSR: any;
   maxFiles: number;
 }
 
 interface ICascadeContent {
-  JVectorMapWithNoSSR: any;
   client: any;
   maxFiles: number;
 }
 
 interface ISuperNodeMap {
-  JVectorMapWithNoSSR: any;
   markers: IMarker[];
 }
 
@@ -217,9 +214,6 @@ const Marker = ({ marker }: { marker: IMarker }) => {
 const SuperNodeMap = React.memo(({ markers }: ISuperNodeMap) => {
   const [selectedMarkers, seSelectedMarkers] = React.useState<IMarker[]>([]);
 
-  if (!markers?.length) {
-    return null;
-  }
   const { countries, countryEdges } = getChartData(markers);
 
   const handleNodeClick = (countryCode: string) => {
@@ -228,44 +222,46 @@ const SuperNodeMap = React.memo(({ markers }: ISuperNodeMap) => {
   }
 
   return (
-    <div className='w-full h-[200px]'>
-      <NetworkOverview
-        countries={countries}
-        countryEdges={countryEdges}
-        className='w-full h-[200px]'
-        fov={80}
-        onFlagClick={handleNodeClick}
-        badgeBg="#078A8A"
-        countFont='normal 140px Arial'
-      />
-      {selectedMarkers?.length ? (
-        <>
-          <div className='fixed top-0 right-0 z-[100] bottom-0 transform-3d transition-all duration-300'>
-            <Card elevate size="$4" bordered className='!h-full'>
-              <div className='relative'>
-                <div className='text-right my-2 pr-5'>
-                  <button className='cursor-pointer' onClick={() => seSelectedMarkers([])}>
-                    <CircleX />
-                  </button>
+    <React.Suspense fallback={<Skeleton className='min-h-[190px] !mb-0' />}>
+      <div className='w-full h-[200px]'>
+        <NetworkOverview
+          countries={countries}
+          countryEdges={countryEdges}
+          className='w-full h-[200px]'
+          fov={60}
+          onFlagClick={handleNodeClick}
+          badgeBg="#078A8A"
+          countFont='normal 140px Arial'
+        />
+        {selectedMarkers?.length ? (
+          <>
+            <div className='fixed top-0 right-0 z-[100] bottom-0 transform-3d transition-all duration-300'>
+              <Card elevate size="$4" bordered className='!h-full'>
+                <div className='relative'>
+                  <div className='text-right my-2 pr-5'>
+                    <button className='cursor-pointer' onClick={() => seSelectedMarkers([])}>
+                      <CircleX />
+                    </button>
+                  </div>
+                  <div className='h-full p-5 overflow-y-auto max-h-[90vh]'>
+                    {selectedMarkers.map((marker, index) => (
+                      <React.Fragment key={marker.address}>
+                        <Marker marker={marker} />
+                        {index < selectedMarkers.length - 1 ?
+                          <div className='my-3 w-full h-[1px] bg-lumera-navy'></div> : null
+                        }
+                      </React.Fragment>
+                    ))}
+                  </div>
                 </div>
-                <div className='h-full p-5 overflow-y-auto max-h-[90vh]'>
-                  {selectedMarkers.map((marker, index) => (
-                    <React.Fragment key={marker.address}>
-                      <Marker marker={marker} />
-                      {index < selectedMarkers.length - 1 ?
-                        <div className='my-3 w-full h-[1px] bg-lumera-navy'></div> : null
-                      }
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          </div>
-          <div className='fixed inset-0 z-50 bg-black/10' onClick={() => seSelectedMarkers([])}></div>
-        </>
-      ): null
-      }
-    </div>
+              </Card>
+            </div>
+            <div className='fixed inset-0 z-50 bg-black/10' onClick={() => seSelectedMarkers([])}></div>
+          </>
+        ): null
+        }
+      </div>
+    </React.Suspense>
   );
 });
 
@@ -289,7 +285,6 @@ const checkSelectedFile = (selectedFiles: ISelectedFile[], file: IMyFile) => {
 }
 
 export const CascadeScreen = ({
-  JVectorMapWithNoSSR,
   maxFiles,
 }: ICascadeScreen) => {
   const { module, isLoaded, error } = useLumeraClientWrapper();
@@ -310,7 +305,6 @@ export const CascadeScreen = ({
   return (
     <CascadeContent
       client={module}
-      JVectorMapWithNoSSR={JVectorMapWithNoSSR}
       maxFiles={maxFiles}
     />
   );
@@ -693,12 +687,12 @@ const NetworkStorage = ({
       <Card.Header padded>
         <h2 className="text-xl font-semibold text-white whitespace-nowrap">Network Storage</h2>
         <div className='mt-2.5 h-36'>
-          <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
+          <ReactECharts option={option} style={{ height: '144px', width: '100%' }} />
         </div>
         <div className='text-center'>
           <div className='font-bold leading-[1.1]'>
             {
-              isFetchSummaryLoading ? <Skeleton className='min-h-10 !w-40' /> : <>
+              isFetchSummaryLoading ? <Skeleton className='h-10 !w-40' /> : <>
                 <span className='text-4xl'>{networkStorage.networkStorage}</span>
               </>
             }
@@ -721,13 +715,33 @@ interface IYourUsage {
   fileSizes: Record<TFileTypeKey, number>;
 }
 
+type TSerie = {
+  name: string;
+  type: string;
+  stack: string;
+  data: number[];
+  itemStyle: {
+    color: string;
+    borderRadius: number;
+  };
+  label: {
+    show: boolean;
+  };
+}
+
+type TLable = {
+  name: string;
+  color: string;
+  percent: number;
+}
+
 const COLORS = ['#088a8a', '#47c78a', '#bce4a6', '#ff9a30', '#ffae3e', '#fed847'];
 
 const getYourUsageChartOption = (fileSizes: Record<TFileTypeKey, number>) => {
-  let series = [];
+  const series: TSerie[] = [];
   let index = 0;
   const totalSize = Object.values(fileSizes).reduce((sum, value) => sum + value, 0);
-  const labels = [];
+  const labels: TLable[] = [];
   for (const type of FILES_TYPE) {
     if (fileSizes[type.value] > 0) {
       const percent = (fileSizes[type.value] / totalSize) * 100
@@ -747,38 +761,11 @@ const getYourUsageChartOption = (fileSizes: Record<TFileTypeKey, number>) => {
       labels.push({
         name: type.label,
         color: COLORS[index],
+        percent,
       });
       index++;
     }
   }
-
-  series = series.map((serie, index) => {
-    if (index === 0) {
-      return ({
-        ...serie,
-        itemStyle: {
-          color: COLORS[index],
-          borderRadius: [10, 0, 0, 10],
-        },
-      });
-    }
-    if (index === series.length - 1) {
-      return ({
-        ...serie,
-        itemStyle: {
-          color: COLORS[index],
-          borderRadius: [0, 10, 10, 0],
-        },
-      });
-    }
-    return ({
-      ...serie,
-      itemStyle: {
-        color: COLORS[index],
-        borderRadius: 0,
-      },
-    });
-  })
 
   const option = {
     tooltip: {
@@ -823,11 +810,38 @@ const getYourUsageChartOption = (fileSizes: Record<TFileTypeKey, number>) => {
       axisTick: { show: false },
       splitLine: { show: false }
     },
-    series,
+    series: series.map((serie, index) => {
+      if (index === 0) {
+        return ({
+          ...serie,
+          itemStyle: {
+            color: COLORS[index],
+            borderRadius: [10, 0, 0, 10],
+          },
+        });
+      }
+      if (index === series.length - 1) {
+        return ({
+          ...serie,
+          itemStyle: {
+            color: COLORS[index],
+            borderRadius: [0, 10, 10, 0],
+          },
+        });
+      }
+      return ({
+        ...serie,
+        itemStyle: {
+          color: COLORS[index],
+          borderRadius: 0,
+        },
+      });
+    }),
   };
   return {
     option,
     labels,
+    totalSize,
   };
 }
 
@@ -838,7 +852,10 @@ const YourUsage = ({
   myUsage,
   fileSizes,
 }: IYourUsage) => {
-  const { option, labels } = getYourUsageChartOption(fileSizes);
+  const { option, labels, totalSize } = getYourUsageChartOption(fileSizes);
+  if (!totalSize) {
+
+  }
   return (
     <Card elevate size="$4" bordered className='w-full'>
       <Card.Header padded className='h-full'>
@@ -848,7 +865,7 @@ const YourUsage = ({
             {
               isMyFilesLoading || isMyFilesLoadMore ? <Skeleton className='min-h-[176px]' /> : (
                 <div>
-                  <div>
+                  <div className='h-[100px]'>
                     <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
                   </div>
                   <div className='font-bold text-white leading-[1.1] text-center'>
@@ -857,7 +874,7 @@ const YourUsage = ({
                   <ul className='mt-3 list-none flex flex-wrap gap-x-4 gap-y-2 text-[13px]'>
                     {labels.map((label, index) => (
                       <li key={`${label.name}-${index}`} className='w-[30%] flex items-center gap-2'>
-                        <span className='inline-block w-3 h-3 rounded-full' style={{ backgroundColor: label.color }}></span> <span>{label.name}</span>
+                        <span className='block w-3 h-3 rounded-full' style={{ backgroundColor: label.color }}></span> <span>{label.name}</span>
                       </li>
                     ))}
                   </ul>
@@ -882,7 +899,6 @@ const YourUsage = ({
 }
 
 export const CascadeContent = React.memo(({
-  JVectorMapWithNoSSR,
   client,
   maxFiles,
 }: ICascadeContent) => {
@@ -958,8 +974,8 @@ export const CascadeContent = React.memo(({
             <div className='mt-4'>
               {isMarkerLoading ?
                 <div className='min-h-[200px]'>
-                  <Skeleton className='min-h-[200px] !mb-0' />
-                </div> : <SuperNodeMap JVectorMapWithNoSSR={JVectorMapWithNoSSR} markers={markers} />
+                  <Skeleton className='min-h-[190px] !mb-0' />
+                </div> : <SuperNodeMap markers={markers} />
               }
             </div>
           </Card.Header>
@@ -1227,7 +1243,7 @@ export const CascadeContent = React.memo(({
                           </td>
                           <td className='md:text-right px-2 py-1 md:py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                            <span className=' whitespace-nowrap'>{formatKb(!isExpired ? file.size : 0)}</span>
+                            <span className=' whitespace-nowrap'>{formatBytes(!isExpired ? file.size : 0)}</span>
                           </td>
                           <td className='px-2 py-1 md:py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2 whitespace-nowrap">Last Modified: </span>
@@ -1244,7 +1260,7 @@ export const CascadeContent = React.memo(({
                                 onClick={() => handleDownloadFile(file)}
                                 disabled={isDisabledButton}
                               >
-                                <Download className="w-3 h-3"/> {selectedFileDownload.includes(file.actionID) ? 'Downloading' : 'Download'}
+                                <Download className="w-3 h-3"/>
                               </AppButton>
                             </div>
                           </td>
@@ -1382,7 +1398,7 @@ export const CascadeContent = React.memo(({
                           </td>
                           <td className='md:text-right px-2 py-1 md:py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                            <span className=' whitespace-nowrap'>{formatKb(!isExpired ? file.size : 0)}</span>
+                            <span className=' whitespace-nowrap'>{formatBytes(!isExpired ? file.size : 0)}</span>
                           </td>
                           <td className='px-2 py-1 md:py-3'>
                             <span className="md:hidden font-semibold text-gray-500 mr-2 whitespace-nowrap">Last Modified: </span>

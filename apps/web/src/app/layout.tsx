@@ -1,10 +1,12 @@
 import './globals.css'
 import './styles.css'
 import React from 'react'
+import Script from 'next/script'
 import ClientRoot from './providers/client-root'
 import AppShell from '@/components/layout/AppShell'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const googleTagAccount = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   return (
     <html lang="en">
       <head>
@@ -19,6 +21,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta property="og:title" content="Lumera Hub - Web3 infrastructure built for scale." />
         <meta property="og:site_name" content="Lumera Hub - Web3 infrastructure built for scale." />
         <meta property="title" content="Lumera Hub - Web3 infrastructure built for scale." />
+        {googleTagAccount ?
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${googleTagAccount}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${googleTagAccount}');
+              `}
+            </Script>
+          </> : null
+        }
       </head>
       <body>
         <ClientRoot>

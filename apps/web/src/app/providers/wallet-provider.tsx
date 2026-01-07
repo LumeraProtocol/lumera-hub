@@ -69,7 +69,11 @@ export function WebWalletProviders({ children }: { children: React.ReactNode }) 
           <ThemeProvider>
             <RegistryProvider>
               {isBrowser && chainData ? (
-                <ChainProvider wallets={walletAdapters} chains={[chainData.chain]} assetLists={[chainData.assets]}>
+                <ChainProvider
+                  wallets={walletAdapters}
+                  chains={[chainData.chain]}
+                  assetLists={[chainData.assets]}
+                >
                   {children}
                   <OverlaysManager />
                 </ChainProvider>

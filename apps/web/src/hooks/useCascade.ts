@@ -11,7 +11,6 @@ import * as instance from '@/utils/api';
 import { isValidIPv4, delay } from '@/utils/helpers';
 import {
   formatBytes,
-  formatKb,
   formatTokenDisplay,
 } from '@/utils/format';
 import {
@@ -722,7 +721,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       setMyFilesOriginal(uniqueArray);
       const totalSize = uniqueArray.reduce((total, item) => total + item.size, 0);
       setMyUsage({
-        size: formatKb(totalSize),
+        size: formatBytes(totalSize),
         uploaded: uniqueArray?.length || 0,
       });
     } catch (error) {

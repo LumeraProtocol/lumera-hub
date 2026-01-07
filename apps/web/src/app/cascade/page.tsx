@@ -7,13 +7,6 @@ import dynamic from 'next/dynamic';
 
 import { UPLOAD_MAX_FILES } from '@/contants';
 
-const JVectorMapWithNoSSR = dynamic(
-  () => import('@react-jvectormap/core').then((mod) => mod.VectorMap),
-  {
-    ssr: false,
-  }
-);
-
 const CascadeScreen = dynamic(
   () => import('@lumera-hub/ui/src/screens/CascadeScreen').then((mod) => mod.CascadeScreen),
   {
@@ -33,7 +26,6 @@ export default function Page() {
       </Helmet>
       <div className="cascade-content">
         <CascadeScreen
-          JVectorMapWithNoSSR={JVectorMapWithNoSSR}
           maxFiles={Number(UPLOAD_MAX_FILES)}
         />
       </div>

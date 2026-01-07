@@ -137,6 +137,23 @@
   },
   {
     "latLng": [
+      50.1109221,
+      8.6821267
+    ],
+    "name": "Frankfurt",
+    "continent": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "subdivision": "Berlin",
+    "city": "Frankfurt",
+    "supernodeAccount": "lumera1gtwgx5d36mkkhchc447p8hs0y36cccjtmtgxs3",
+    "validatorAddress": "lumeravaloper1gtwgx5d36mkkhchc447p8hs0y36cccjt53m6kj",
+    "validatorMoniker": "Nodeyus",
+    "address": "94.16.121.30:4444",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
       52.2296756,
       21.0122287
     ],
