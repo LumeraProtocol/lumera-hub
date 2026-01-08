@@ -36,12 +36,25 @@ export function WalletModalComponent() {
 }
 
 export function ConnectWallet() {
+  useEffect(() => {
+    setTimeout(() => {
+      const isNewSession = !sessionStorage.getItem('start_new_session');
+      if (isNewSession) {
+        handleDesconnect();
+        localStorage.removeItem('interchain-kit-store');
+        localStorage.removeItem('interchain-ui-store');
+        localStorage.removeItem('persist:root');
+        sessionStorage.setItem('start_new_session', 'true');
+      }
+    }, 200)
+  }, []);
+
   const dispatch = useDispatch();
   const { address, disconnect, openView } = useChain(CHAIN_NAME);
 
   const handleDesconnect = () => {
     disconnect();
-     dispatch(setAddress({
+    dispatch(setAddress({
       address: '',
     }));
     dispatch(setConnected({

@@ -12,13 +12,15 @@ import {
   Wallet,
 } from '@tamagui/lucide-icons';
 import Image from 'next/image';
-import { Layers } from 'lucide-react';
+import { Layers, TriangleAlert } from 'lucide-react';
 
 import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 import AppLink from '@/components/AppLink';
+import Tooltip from '@/components/Tooltip';
 
 import { useSelector, useDispatch } from '@/redux/hooks';
 import { setActiveView, setCurrentPath, setViewTitle } from '@/redux/app.slice';
+import { setError } from '@/redux/error.slice';
 
 import { ViewId } from '@/types';
 
@@ -55,9 +57,14 @@ const VIEW_TITLES: Record<ViewId, string> = {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch();
   const { activeView, currentPath, viewTitle } = useSelector((state) => state.app);
+  const { message } = useSelector((state) => state.error);
   const [isSidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
+    dispatch(setError({
+      message: null,
+      status: null,
+    }))
     if (window?.location?.pathname) {
       dispatch(setCurrentPath({
         currentPath: window.location.pathname,
@@ -204,8 +211,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center">
               <h1 className="text-base sm:text-2xl font-bold">{viewTitle || VIEW_TITLES[activeView]}</h1>
             </div>
-            <div className="ml-4 flex items-center md:ml-6 gap-3">
+            <div className="ml-4 flex items-center md:ml-6 gap-1">
               {/* Placeholder for wallet actions */}
+              {message ?
+                <Tooltip icon={<TriangleAlert className="text-yellow-400" />} content={<div className="text-white">Failed to fetch</div>} /> : null
+              }
               <ConnectWallet />
               <WalletModalComponent />
             </div>

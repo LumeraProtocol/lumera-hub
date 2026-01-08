@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 import { REST_AI_URL } from '@/contants/network';
+import store from '@/store';
+import { setError } from '@/redux/error.slice';
 
 const headers = {
   'Content-Type': 'application/json',
@@ -37,20 +39,32 @@ const customFetch = (url: string, method: string, body = {}, isUpload = false, i
             message: 'unknown error',
           });
         }
-        if (response.status === 401) {
-          return reject({
-            statusCode: response.status,
-            statusText: response.statusText,
-            status: response.data.status,
-            message: response.data.message,
-          });
+        switch (response.status) {
+          case 500:
+          case 429:
+          case 408:
+          case 405:
+          case 404:
+          case 403:
+          case 401:
+            store.dispatch(setError({
+              message: response.statusText,
+              status: response.status,
+            }));
+            return reject({
+              statusCode: response.status,
+              statusText: response.statusText,
+              status: response.data.status,
+              message: response.data.message,
+            });
+          default:
+            return reject({
+              statusCode: response.status,
+              statusText: response.statusText,
+              status: response.data.status,
+              message: response.data.message,
+            });
         }
-        return reject({
-          statusCode: response.status,
-          statusText: response.statusText,
-          status: response.data.status,
-          message: response.data.message,
-        });
       });
   });
 };
