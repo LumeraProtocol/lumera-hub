@@ -864,20 +864,25 @@ const YourUsage = ({
           <>
             {
               isMyFilesLoading || isMyFilesLoadMore ? <Skeleton className='min-h-[176px]' /> : (
-                <div>
-                  <div className='h-[100px]'>
-                    <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
-                  </div>
-                  <div className='font-bold text-white leading-[1.1] text-center'>
-                    <span className='text-4xl'>{myUsage.size}</span> <span className='font-normal text-lumera-label'>/</span> <span className='text-base whitespace-nowrap font-normal text-lumera-label'>{myUsage.uploaded} Files</span>
-                  </div>
-                  <ul className='mt-3 list-none flex flex-wrap gap-x-4 gap-y-2 text-[13px]'>
-                    {labels.map((label, index) => (
-                      <li key={`${label.name}-${index}`} className='w-[30%] flex items-center gap-2'>
-                        <span className='block w-3 h-3 rounded-full' style={{ backgroundColor: label.color }}></span> <span>{label.name}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className='h-full'>
+                  {totalSize ?
+                    <>
+                      <div className='h-[100px]'>
+                        <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
+                      </div>
+                      <div className='font-bold text-white leading-[1.1] text-center'>
+                        <span className='text-4xl'>{myUsage.size}</span> <span className='font-normal text-lumera-label'>/</span> <span className='text-base whitespace-nowrap font-normal text-lumera-label'>{myUsage.uploaded} Files</span>
+                      </div>
+                      <ul className='mt-3 list-none flex flex-wrap gap-x-4 gap-y-2 text-[13px]'>
+                        {labels.map((label, index) => (
+                          <li key={`${label.name}-${index}`} className='w-[30%] flex items-center gap-2'>
+                            <span className='block w-3 h-3 rounded-full' style={{ backgroundColor: label.color }}></span> <span>{label.name}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </> :
+                    <div className='flex items-center justify-center h-full w-full text-4xl font-bold'>No data.</div>
+                  }
                 </div>
               )
             }
