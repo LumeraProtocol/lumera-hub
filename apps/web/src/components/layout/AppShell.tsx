@@ -13,10 +13,13 @@ import {
 } from '@tamagui/lucide-icons';
 import Image from 'next/image';
 import { Layers, TriangleAlert } from 'lucide-react';
+import { useChain } from '@interchain-kit/react';
 
 import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 import AppLink from '@/components/AppLink';
 import Tooltip from '@/components/Tooltip';
+import GetStarted from '@/components/GetStarted';
+import { CHAIN_NAME } from '@/contants/network';
 
 import { useSelector, useDispatch } from '@/redux/hooks';
 import { setActiveView, setCurrentPath, setViewTitle } from '@/redux/app.slice';
@@ -56,6 +59,7 @@ const VIEW_TITLES: Record<ViewId, string> = {
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch();
+  const { address } = useChain(CHAIN_NAME);
   const { activeView, currentPath, viewTitle } = useSelector((state) => state.app);
   const { message } = useSelector((state) => state.error);
   const [isSidebarOpen, setSidebarOpen] = useState(false)
@@ -127,8 +131,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => handleMenuItemClick(item)}
                   className={`flex items-center gap-3 px-4 py-3 transition-colors duration-200 rounded-lg w-full ${
                     isActive(currentPath, item.url)
-                      ? "text-white bg-indigo-600/30"
-                      : "text-lumera-gray hover:text-white hover:bg-gray-700/50"
+                      ? "text-white bg-lumera-teal"
+                      : "text-lumera-gray hover:text-white hover:bg-lumera-teal"
                   }`}
                 >
                   <span className="inline-block w-6 h-6">{item.icon}</span>
@@ -160,28 +164,33 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     </div>
                   </div>
                 </AppLink>
-                <button className="btn-close" onClick={() => setSidebarOpen(false)}><X /></button>
+                <button className="btn-close mr-3" onClick={() => setSidebarOpen(false)}><X /></button>
               </div>
-              <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                {NAV_ITEMS.map((item) => (
-                  <AppLink
-                    key={item.id}
-                    href={item?.url || '#'}
-                    className="text-lumera-teal hover:text-lumera-green text-base font-medium">
-                    <span
-                      onClick={() => handleMenuItemClick(item)}
-                      className={`flex items-center gap-3 px-4 py-3  transition-colors duration-200 rounded-lg w-full ${
-                        isActive(currentPath, item.url)
-                          ? "text-white bg-indigo-600/30"
-                          : "text-lumera-gray hover:text-white hover:bg-gray-700/50"
-                      }`}
-                    >
-                      <span className="inline-block w-6 h-6">{item.icon}</span>
-                      <span>{item.label}</span>
-                    </span>
-                  </AppLink>
-                ))}
-              </nav>
+              <div className="flex-1 flex flex-col justify-between">
+                <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+                  {NAV_ITEMS.map((item) => (
+                    <AppLink
+                      key={item.id}
+                      href={item?.url || '#'}
+                      className="text-lumera-teal hover:text-lumera-green text-base font-medium">
+                      <span
+                        onClick={() => handleMenuItemClick(item)}
+                        className={`flex items-center gap-3 px-4 py-3  transition-colors duration-200 rounded-lg w-full ${
+                          isActive(currentPath, item.url)
+                            ? "text-white bg-lumera-teal"
+                            : "text-lumera-gray hover:text-white hover:bg-lumera-teal"
+                        }`}
+                      >
+                        <span className="inline-block w-6 h-6">{item.icon}</span>
+                        <span>{item.label}</span>
+                      </span>
+                    </AppLink>
+                  ))}
+                </nav>
+                {!address ?
+                  <div className="px-4 pb-6"><GetStarted className="w-full justify-center py-3" /></div> : null
+                }
+              </div>
               <div className="px-6 py-4 mt-auto border-t border-gray-800 text-center text-xs text-gray-500">
                 © {new Date().getFullYear()} Lumera
               </div>
@@ -211,7 +220,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center">
               <h1 className="text-base sm:text-2xl font-bold">{viewTitle || VIEW_TITLES[activeView]}</h1>
             </div>
-            <div className="ml-4 flex items-center md:ml-6 gap-1">
+            <div className="ml-4 flex items-center md:ml-6 gap-2">
+              {!address ?
+                <div className="hidden sm:block">
+                  <GetStarted />
+                </div> : null
+              }
               {/* Placeholder for wallet actions */}
               {message ?
                 <Tooltip icon={<TriangleAlert className="text-yellow-400" />} content={<div className="text-white">Failed to fetch</div>} /> : null

@@ -27,13 +27,7 @@ const supernodeItemSchema = z.object({
   ip_address: z
     .string()
     .min(1, 'IP address cannot be empty')
-    .transform((val) => val.trim())
-    .pipe(
-      z.string().regex(
-        /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?):[0-9]{1,5}$/,
-        'IP address must be a valid IPv4 in format "xxx.xxx.xxx.xxx:port" (port 1-65535)'
-      )
-    ),
+    .max(50, 'IP addres is too long (maximum 50 characters)'),
 });
 
 export const supernodeListSchema = z.array(supernodeItemSchema).min(1, 'Supernode list cannot be empty');
