@@ -46,7 +46,7 @@ export function ConnectWallet() {
         localStorage.removeItem('persist:root');
         sessionStorage.setItem('start_new_session', 'true');
       }
-    }, 200)
+    }, 100)
   }, []);
 
   const dispatch = useDispatch();
@@ -71,7 +71,7 @@ export function ConnectWallet() {
   }
 
   return (
-    <div style={{ display: 'flex', gap: 8 }}>
+    <div className='flex gap-2'>
       {!address ?
         <button
           onClick={openView}

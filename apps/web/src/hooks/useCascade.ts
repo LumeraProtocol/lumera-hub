@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 
 import { useSelector } from '@/redux/hooks';
 import * as instance from '@/utils/api';
-import { isValidIPv4, delay } from '@/utils/helpers';
+import { delay } from '@/utils/helpers';
 import {
   formatBytes,
   formatTokenDisplay,
@@ -400,11 +400,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       if (!supernodes?.length) {
         return [];
       }
-      const newSupernodeData = supernodes.filter((supernode) => {
-        const address = supernode.ip_address;
-        const ip = address.split(':')[0];
-        return isValidIPv4(ip.trim())
-      }).map((supernode) => ({
+      const newSupernodeData = supernodes.map((supernode) => ({
         supernode_account: supernode.supernode_account,
         validator_address: supernode.validator_address,
         validator_moniker: supernode.validator_moniker,
@@ -425,29 +421,27 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       for (const item of items) {
         const address = item.ip_address;
         const ip = address.split(':')[0];
-        if (isValidIPv4(ip)) {
-          const supernode = supernodeData?.find((s) => s.address.trim() === address.trim());
-          if (!supernode) {
-            const data = await fetchLocationForIP(ip);
-            if (data?.latitude && data?.longitude) {
-              results.push({
-                latLng: [data.latitude, data.longitude],
-                name: data?.city || '',
-                continent: data?.continent || '',
-                country: data?.country || '',
-                country_code: data?.country_code || '',
-                subdivision: data?.subdivision || '',
-                city: data?.city || '',
-                supernodeAccount: item.supernode_account,
-                validatorAddress: item.validator_address,
-                validatorMoniker: item.validator_moniker,
-                address,
-                p2pPort: item.p2p_port.toString(),
-              });
-            }
-          } else {
-            results.push(supernode);
+        const supernode = supernodeData?.find((s) => s.address.trim() === address.trim());
+        if (!supernode) {
+          const data = await fetchLocationForIP(ip);
+          if (data?.latitude && data?.longitude) {
+            results.push({
+              latLng: [data.latitude, data.longitude],
+              name: data?.city || '',
+              continent: data?.continent || '',
+              country: data?.country || '',
+              country_code: data?.country_code || '',
+              subdivision: data?.subdivision || '',
+              city: data?.city || '',
+              supernodeAccount: item.supernode_account,
+              validatorAddress: item.validator_address,
+              validatorMoniker: item.validator_moniker,
+              address,
+              p2pPort: item.p2p_port.toString(),
+            });
           }
+        } else {
+          results.push(supernode);
         }
       }
       setMarkers(results);

@@ -2,11 +2,16 @@
 import { NextResponse, NextRequest } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import dns from 'dns';
+import util from 'util';
 import { z } from 'zod';
 
 import * as instance from '@/utils/api';
+import { isValidIPv4 } from '@/utils/helpers';
 import { IMarker } from '@/hooks/useCascade';
 import { supernodeListSchema, SupernodeItem } from '@/app/api/supernode/validators';
+
+const resolveDns = util.promisify(dns.resolve4);
 
 const bodySchema = z.object({
   supernodes: supernodeListSchema,
@@ -101,7 +106,17 @@ async function readAndUpdateSupernode(supernodes: SupernodeItem[]) {
         if (!supernode) {
           const address = item.ip_address;
           const ip = address.split(':')[0];
-          const data = await fetchLocationFromIpWho(ip);
+          let data = null;
+          if (isValidIPv4(ip)) {
+            data = await fetchLocationFromIpWho(ip);
+          } else {
+            try {
+              const ips = await resolveDns(address);
+              data = await fetchLocationFromIpWho(ips[0]);
+            } catch (error) {
+              console.error(error)
+            }
+          }
           if (data?.latitude && data?.longitude) {
             results.push({
               latLng: [data.latitude, data.longitude],
@@ -122,7 +137,8 @@ async function readAndUpdateSupernode(supernodes: SupernodeItem[]) {
         } else {
           results.push(supernode);
         }
-      } catch {
+      } catch (error) {
+        console.log(error)
         // noop
       }
     }

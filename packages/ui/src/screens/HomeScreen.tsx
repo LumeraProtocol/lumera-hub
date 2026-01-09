@@ -47,7 +47,7 @@ import { DENOM } from '@/contants/network';
 
 dayjs.extend(relativeTime);
 
-const COLORS = ['#4d4adc', '#62bbf3'];
+const COLORS = ['#078A8A', '#47C78A'];
 
 interface IHomeScreen {
   address: string;
