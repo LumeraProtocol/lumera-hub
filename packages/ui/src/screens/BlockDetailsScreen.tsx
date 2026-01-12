@@ -7,6 +7,7 @@ import { decodeTxRaw } from '@cosmjs/proto-signing';
 
 import Loading from '@/components/Loading';
 import AppLink from '@/components/AppLink';
+import SectionTitle from '@/components/SectionTitle';
 import { IFullBlock } from '@/types';
 import { IValidator } from '@/types/validator';
 import { consensusPubkeyToHexAddress, hashTx, getMessages } from '@/utils/helpers';
@@ -205,7 +206,7 @@ export const BlockDetailsScreen = ({
       <Loading isLoading={isLoading} />
       <Card elevate size="$4" bordered className='w-full'>
         <Card.Header padded>
-          <H3 className='text-lumera-label'>#{block?.block?.header?.height}</H3>
+          <SectionTitle className='mb-0'>#{block?.block?.header?.height}</SectionTitle>
           <div className='mt-3'>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
               <div className='w-full md:w-52 text-gray-500'>Hash</div>
@@ -228,7 +229,7 @@ export const BlockDetailsScreen = ({
 
       <Card elevate size="$4" bordered className='w-full mt-5'>
         <Card.Header padded>
-          <H3 className='text-lumera-label'>Block Header</H3>
+          <SectionTitle className='mb-0'>Block Header</SectionTitle>
           <div className='mt-3'>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
               <div className='w-full md:w-52 text-gray-500'>Version</div>
@@ -326,7 +327,7 @@ export const BlockDetailsScreen = ({
 
       <Card elevate size="$4" bordered className='w-full mt-5'>
         <Card.Header padded>
-          <H3 className='text-lumera-label'>Transactions</H3>
+          <SectionTitle className='mb-0'>Transactions</SectionTitle>
           <div className='mt-3'>
             <div className="overflow-x-auto">
               {block?.block?.data?.txs?.length ?
@@ -370,7 +371,7 @@ export const BlockDetailsScreen = ({
 
       <Card elevate size="$4" bordered className='w-full mt-5'>
         <Card.Header padded>
-          <H3 className='text-lumera-label'>Last Commit</H3>
+          <SectionTitle className='mb-0'>Last Commit</SectionTitle>
           <div className='mt-3'>
             <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
               <div className='w-full md:w-52 text-gray-500'>Height</div>

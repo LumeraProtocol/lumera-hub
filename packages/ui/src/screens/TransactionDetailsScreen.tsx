@@ -1,11 +1,13 @@
 import { H3, Card } from 'tamagui';
 import dayjs from 'dayjs';
-import ReactJson from 'react-json-view'
+import ReactJson from 'react-json-view';
+import { Fragment } from 'react';
 
 import Loading from '@/components/Loading';
 import AppLink from '@/components/AppLink';
+import SectionTitle from '@/components/SectionTitle';
 import { formatTokens, formatNumber } from '@/utils/format';
-import { ITransaction } from '@/hooks/useTransactionDetails';
+import { ITransaction, TxMessages } from '@/hooks/useTransactionDetails';
 
 interface ITransactionDetailsScreen {
   transaction: ITransaction | null;
@@ -26,14 +28,44 @@ export const TransactionDetailsScreen = ({
   }
   const messages = transaction?.tx?.body?.messages || [];
 
+  const renderMsgValue = (msg: any) => {
+    if (typeof msg !== 'object') {
+      return <>{msg}</>;
+    }
+
+    if (Array.isArray(msg)) {
+      return msg.map((item: any, idx: number) => (
+        <Fragment key={idx}>
+          {Object.entries(item).map(([key, value], idx) => (
+            <div className={`flex items-center flex-col md:flex-row py-3 px-4 ${idx < Object.entries(msg).length - 1 ? 'border-b border-lumera-navy' : ''}`} key={key}>
+              <div className='w-full md:w-48 capitalize'>{key.replaceAll('_', ' ').replaceAll('-', ' ')}</div>
+              <div className='w-full break-all'>
+                {renderMsgValue(value)}
+              </div>
+            </div>
+          ))}
+        </Fragment>
+      ));
+    }
+
+    return Object.entries(msg).map(([key, value], idx) => (
+      <div className={`flex items-center flex-col md:flex-row py-3 px-4 ${idx < Object.entries(msg).length - 1 ? 'border-b border-lumera-navy' : ''}`} key={key}>
+        <div className='w-full md:w-48 capitalize'>{key.replaceAll('_', ' ').replaceAll('-', ' ')}</div>
+        <div className='w-full break-all'>
+          {renderMsgValue(value)}
+        </div>
+      </div>
+    ));
+  }
+
   return (
     <div className="space-y-8 relative">
       <Loading isLoading={isLoading} />
       <Card elevate size="$4" bordered className='w-full'>
         <Card.Header padded>
-          <H3 className='text-lumera-label'>Summary</H3>
+          <SectionTitle className='mb-0'>Summary</SectionTitle>
         </Card.Header>
-        <div className='p-5 pt-0 text-lumera-label'>
+        <div className='p-5 pt-0 text-lumera-label text-base'>
           <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
             <div className='w-full md:w-32'>Tx Hash</div>
             <div className='w-full truncate'>{transaction?.tx_response?.txhash}</div>
@@ -96,9 +128,9 @@ export const TransactionDetailsScreen = ({
       </Card>
       <Card elevate size="$4" bordered className='w-full mt-5'>
         <Card.Header padded>
-          <H3>Messages: ({messages.length})</H3>
+          <SectionTitle className='mb-0'>Messages: ({messages.length})</SectionTitle>
         </Card.Header>
-        <div className='p-5 pt-0'>
+        <div className='p-5 pt-0 text-base'>
           {!messages.length ?
             <H3 className='text-lumera-label'>No messages</H3> :
             <>
@@ -108,7 +140,7 @@ export const TransactionDetailsScreen = ({
                     <div className={`flex items-center flex-col md:flex-row py-3 px-4 ${idx < Object.entries(msg).length - 1 ? 'border-b border-lumera-navy' : ''}`} key={key}>
                       <div className='w-full md:w-48 capitalize'>{key.replaceAll('_', ' ').replaceAll('-', ' ')}</div>
                       <div className='w-full break-all'>
-                        {value as string}
+                        {renderMsgValue(value)}
                       </div>
                     </div>
                   ))}
@@ -120,9 +152,9 @@ export const TransactionDetailsScreen = ({
       </Card>
       <Card elevate size="$4" bordered className='w-full mt-5'>
         <Card.Header padded>
-          <H3 className='text-lumera-label'>JSON</H3>
+          <SectionTitle className='mb-0'>JSON</SectionTitle>
         </Card.Header>
-        <div className='p-5 pt-0'>
+        <div className='p-5 pt-0 text-base'>
           {transaction ?
             <div>
               <ReactJson

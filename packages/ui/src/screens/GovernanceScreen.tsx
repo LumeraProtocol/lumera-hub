@@ -165,15 +165,15 @@ export const GovernanceScreen = ({
     switch (status) {
       case 'PROPOSAL_STATUS_PASSED':
         return (
-          <div className='btn-green'>
-            <Button>
+          <div className='btn-green not-button'>
+            <Button className=''>
               <CheckCircle /> <span>Passed</span>
             </Button>
           </div>
         )
       case 'PROPOSAL_STATUS_DEPOSIT_PERIOD':
         return (
-          <div className='btn-yellow'>
+          <div className='btn-yellow not-button'>
             <Button>
               <Coins /> <span>Deposit</span>
             </Button>
@@ -181,7 +181,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_VOTING_PERIOD':
         return (
-          <div className='btn-emerald'>
+          <div className='btn-emerald not-button'>
             <Button>
               <Timer /> <span>Voting</span>
             </Button>
@@ -189,7 +189,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_UNSPECIFIED':
         return (
-          <div className='btn-purple'>
+          <div className='btn-purple not-button'>
             <Button>
               <Activity /> <span>Unspecified</span>
             </Button>
@@ -197,7 +197,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_REJECTED':
         return (
-          <div className='btn-red'>
+          <div className='btn-red not-button'>
             <Button>
               <Activity /> <span>Rejected</span>
             </Button>
@@ -205,7 +205,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_FAILED':
         return (
-          <div className='btn-red'>
+          <div className='btn-red not-button'>
             <Button>
               <Activity /> <span>Failed</span>
             </Button>
@@ -439,7 +439,7 @@ export const GovernanceScreen = ({
                       </div>
                       {getStatus(item.status)}
                     </div>
-                    <div className='mt-5 min-h-12'>
+                    <div className='mt-5 min-h-12 text-base'>
                       {item.summary}
                     </div>
                     <div className='mt-5'>
@@ -449,7 +449,7 @@ export const GovernanceScreen = ({
                         <div className='status-bar-no-with-veto' style={{ width: `${noWithVetoPercent}%` }}></div>
                         <div className='status-bar-abstain' style={{ width: `${abstainPercent}%` }}></div>
                       </div>
-                      <div className='flex justify-between gap-3 mt-2 status-bar-label'>
+                      <div className='flex justify-between gap-3 mt-2 status-bar-label text-base'>
                         <div className='text-lumera-label'>
                           <span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(1)}%
                         </div>

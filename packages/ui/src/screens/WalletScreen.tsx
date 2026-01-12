@@ -30,6 +30,7 @@ import DelegateModal from '@/components/DelegateModal';
 import SendModal from '@/components/SendModal';
 import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
+import SectionTitle from '@/components/SectionTitle';
 import { AccountInfoData } from '@/hooks/useAccountInfo';
 import { RATE_VALUE } from '@/contants';
 import { ITransaction } from '@/hooks/useTransaction';
@@ -315,7 +316,7 @@ export const WalletScreen = ({
         />
         <div className="flex justify-between gap-8 flex-col lg:flex-row">
           <Card className='w-full lg:w-2/3'>
-            <h3 className="font-semibold text-gray-400">Total Wallet Balance</h3>
+            <SectionTitle className="mb-0">Total Wallet Balance</SectionTitle>
             <div className='w-full flex justify-between'>
               <p className="text-3xl sm:text-4xl xl:text-5xl font-bold text-white mt-2">
                 {isLoading ?
@@ -387,45 +388,45 @@ export const WalletScreen = ({
             </div>
           </Card>
           <Card className='w-full lg:w-1/3'>
-            <h3 className="font-semibold text-gray-400 mb-2">Your Address</h3>
-              <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg">
-                <span className="font-mono text-sm text-gray-300 truncate cursor-pointer" onClick={handleCopyAddress2}>{walletAddress}</span>
-                <button onClick={handleCopyAddress} className="ml-auto p-1 text-gray-400 hover:text-white transition-colors">
-                  {!isCopied ?
-                    <Copy className="w-4 h-4"/> :
-                    <Check className="w-4 h-4"/>
-                  }
-                </button>
+            <SectionTitle className="mb-2">Your Address</SectionTitle>
+            <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg">
+              <span className="font-mono text-sm text-gray-300 truncate cursor-pointer" onClick={handleCopyAddress2}>{walletAddress}</span>
+              <button onClick={handleCopyAddress} className="ml-auto p-1 text-gray-400 hover:text-white transition-colors">
+                {!isCopied ?
+                  <Copy className="w-4 h-4"/> :
+                  <Check className="w-4 h-4"/>
+                }
+              </button>
             </div>
             <p className="text-xs text-gray-500 mt-2">This is your unique address. Use it to receive LUME and other assets.</p>
           </Card>
         </div>
 
         <Card>
-          <h2 className="text-xl font-semibold text-white mb-4">Transaction History</h2>
+          <SectionTitle className="mb-4">Transaction History</SectionTitle>
           <div className="space-y-2 relative w-full">
             <Loading isLoading={isLoading} />
             <div className='w-full overflow-x-auto'>
               <div className='w-full md:min-w-[968px] text-base'>
-                <div className="hidden md:grid grid-cols-12 gap-4 items-center p-4">
-                  <div className="col-span-2 flex items-center text-gray-500">
+                <div className="hidden md:grid grid-cols-12 gap-4 items-center p-4 text-gray-400 text-sm">
+                  <div className="col-span-2 flex items-center">
                     Block Height
                   </div>
-                  <div className="col-span-2 text-gray-500">
+                  <div className="col-span-2">
                     TX Hash
                   </div>
-                  <div className="col-span-3 text-gray-500 text-left whitespace-nowrap">
+                  <div className="col-span-3 text-left whitespace-nowrap">
                     Transaction Type
                   </div>
-                  <div className="col-span-2 text-gray-500 text-left whitespace-nowrap">
+                  <div className="col-span-2 text-left whitespace-nowrap">
                     Transaction Status
                   </div>
-                  <div className="col-span-3 text-gray-500 flex justify-end">
+                  <div className="col-span-3 flex justify-end">
                     Time
                   </div>
                 </div>
                 {transactions.map((tx) => (
-                  <div key={tx.txhash} className="md:grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors mb-3 md:mb-0">
+                  <div key={tx.txhash} className="md:grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors mb-3 md:mb-0 text-base">
                     <div className="w-full md:col-span-2">
                       <div className="md:hidden font-semibold text-gray-500 mr-2">Block Height: </div>
                       <div className='flex items-center mt-1 md:mt-0'>

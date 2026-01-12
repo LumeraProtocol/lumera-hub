@@ -8,6 +8,7 @@ import ReactPaginate from 'react-paginate';
 import Loading from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import DelegateModal from '@/components/DelegateModal';
+import SectionTitle from '@/components/SectionTitle';
 import useAppRouter from '@/hooks/useAppRouter';
 import { IValidator } from '@/types/validator';
 import { RATE_VALUE } from '@/contants';
@@ -307,7 +308,7 @@ export const StakingDetailsScreen = ({
           <Button
             onPress={() => delegateOptions.onOpenModal(validator?.operator_address || '', validator?.description?.moniker ? `Delegate for the ${validator?.description?.moniker}` : '')}
           >
-            <span className='font-bold whitespace-nowrap'>Delegate</span>
+            <span className='whitespace-nowrap'>Delegate</span>
           </Button>
         </div>
       </div>
@@ -315,7 +316,7 @@ export const StakingDetailsScreen = ({
         <div className='w-full 2lg:w-2/3'>
           <Card bordered className='w-full portfolio-overview'>
             <Card.Header padded>
-              <H3>Description</H3>
+              <SectionTitle className='mb-0'>Description</SectionTitle>
               <div className='mt-3 text-lumera-label text-base'>
                 {validator?.description?.details}
               </div>
@@ -326,20 +327,24 @@ export const StakingDetailsScreen = ({
         <div className='w-full 2lg:w-1/3'>
           <Card bordered className='w-full portfolio-overview'>
             <Card.Header padded>
-            <H3>Details</H3>
+            <SectionTitle className='mb-0'>Details</SectionTitle>
             <div className='mt-3 text-base'>
-              <div className='flex justify-between items-center gap-4 w-full'>
-                <span className='text-lumera-label'>Website</span>
-                <a href={validator?.description?.website} target='_blank' rel='noopener noreferrer' className='text-lumera-label hover:text-lumera-teal flex gap-0.5 items-center truncate'>
-                  <span>{validator?.description?.website?.split('://')[1]}</span> <ArrowUpRight className="w-3 h-3"/>
-                </a>
-              </div>
-              <div className='flex justify-between items-center gap-4 w-full mt-4'>
-                <span className='text-lumera-label'>Security Contact</span>
-                <a href={`mailto:${validator?.description?.security_contact}`} className='text-lumera-label hover:text-lumera-teal flex gap-0.5 items-center'>
-                  {validator?.description?.security_contact}
-                </a>
-              </div>
+              {validator?.description?.website ?
+                <div className='flex justify-between items-center gap-4 w-full'>
+                  <span className='text-lumera-label'>Website</span>
+                  <a href={validator?.description?.website} target='_blank' rel='noopener noreferrer' className='text-lumera-label hover:text-lumera-teal flex gap-0.5 items-center truncate'>
+                    <span>{validator?.description?.website?.split('://')[1]}</span> <ArrowUpRight className="w-3 h-3"/>
+                  </a>
+                </div> : null
+              }
+              {validator?.description?.security_contact ?
+                <div className='flex justify-between items-center gap-4 w-full mt-4'>
+                  <span className='text-lumera-label'>Security Contact</span>
+                  <a href={`mailto:${validator?.description?.security_contact}`} className='text-lumera-label hover:text-lumera-teal flex gap-0.5 items-center'>
+                    {validator?.description?.security_contact}
+                  </a>
+                </div> : null
+              }
               <div className='w-full mt-4'>
                 <span className='text-lumera-label'>Wallet Address</span>
                 <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg mt-2">
@@ -357,7 +362,7 @@ export const StakingDetailsScreen = ({
           </Card>
           <Card bordered className='w-full portfolio-overview mt-5'>
             <Card.Header padded>
-              <H3>Statistics</H3>
+              <SectionTitle className='mb-0'>Statistics</SectionTitle>
               <div className='mt-3 text-base'>
                 <div className='flex justify-between items-center gap-4 w-full'>
                   <span className='text-lumera-label'>Total Staked</span>
@@ -399,7 +404,7 @@ export const StakingDetailsScreen = ({
       </div>
       <Card elevate size="$4" bordered className='w-full'>
         <Card.Header padded>
-          <H3>Delegators ({ totalDelegators })</H3>
+          <SectionTitle className='mb-0'>Delegators ({ totalDelegators })</SectionTitle>
           <div className='mt-3 relative'>
             <Loading isLoading={isFetchDelegatorsLoading} />
             <div className="overflow-x-auto">

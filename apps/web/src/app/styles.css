@@ -228,11 +228,11 @@
 .btn-purple .is_Button path {
   stroke: #d2b6f9;
 }
-.btn-purple .is_Button:hover {
+.btn-purple:not(.not-button) .is_Button:hover {
   color: #373057;
   background-color: #d2b6f9 !important;
 }
-.btn-purple .is_Button:hover path {
+.btn-purple:not(.not-button) .is_Button:hover path {
   stroke: #373057;
 }
 .btn-yellow .is_Button {
@@ -244,7 +244,7 @@
 .btn-yellow .is_Button circle {
   stroke: #f8e064;
 }
-.btn-yellow .is_Button:hover {
+.btn-yellow:not(.not-button) .is_Button:hover {
   background-color: #736437 !important;
 }
 .btn-emerald .is_Button {
@@ -256,7 +256,7 @@
 .btn-emerald .is_Button circle {
   stroke: #86e7d4;
 }
-.btn-emerald .is_Button:hover {
+.btn-emerald:not(.not-button) .is_Button:hover {
   background-color: #366464 !important;
 }
 .btn-green .is_Button {
@@ -268,7 +268,7 @@
 .btn-green .is_Button circle {
   stroke: #a0ecb1;
 }
-.btn-green .is_Button:hover {
+.btn-green:not(.not-button) .is_Button:hover {
   background-color: #39694a !important;
 }
 .btn-blue .is_Button,
@@ -276,8 +276,8 @@
   color: #fff;
   background-color: #4d4adc !important;
 }
-.btn-blue .is_Button:hover,
-.btn-blue .is_Button:hover .is_Button {
+.btn-blue:not(.not-button) .is_Button:hover,
+.btn-blue:not(.not-button) .is_Button:hover .is_Button {
   background-color: #001432 !important;
 }
 .btn-red .is_Button {
@@ -289,7 +289,7 @@
 .btn-red .is_Button circle {
   stroke: #fff;
 }
-.btn-red .is_Button:hover {
+.btn-red:not(.not-button) .is_Button:hover {
   background-color: #fe6a6a !important;
 }
 .dropzone-wrapper {
@@ -439,7 +439,7 @@
   cursor: default !important;
   border: 0 !important;
 }
-.btn-jailed .is_Button:hover {
+.btn-jailed:not(.not-button) .is_Button:hover {
   background-color: #f87272;
   color: #fff;
 }

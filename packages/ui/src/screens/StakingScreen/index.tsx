@@ -14,6 +14,7 @@ import RedelegateModal from '@/components/RedelegateModal';
 import Skeleton from '@/components/Skeleton';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import AppButton from '@/components/AppButton';
+import SectionTitle from '@/components/SectionTitle';
 import { RATE_VALUE } from '@/contants';
 import { DelegationResponse } from '@/hooks/useAccountInfo';
 import {
@@ -347,7 +348,7 @@ export const StakingScreen = ({
             <div className='grid grid-cols-1 md:grid-cols-2 w-full gap-6 mt-6 staking-summary-wrapper relative'>
               <Card elevate size="$4" bordered className='w-full'>
                 <Card.Header padded>
-                  <H3 className='text-lumera-label'>Total Staked LUME</H3>
+                  <SectionTitle className='mb-0'>Total Staked LUME</SectionTitle>
                   <div className='text-[40px] font-bold text-white !leading-11'>
                     {staking.isLoading ?
                       <Skeleton /> : <>
@@ -362,7 +363,7 @@ export const StakingScreen = ({
               </Card>
               <Card elevate size="$4" bordered className='w-full'>
                 <Card.Header padded>
-                  <H3 className='text-lumera-label'>Staking Rewards APR</H3>
+                  <SectionTitle className='mb-0'>Staking Rewards APR</SectionTitle>
                   <div className='!text-lumera-green font-bold text-[40px] !leading-11'>
                     {staking.isAPRLoading ?
                       <Skeleton /> : <>

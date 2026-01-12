@@ -86,23 +86,6 @@
   },
   {
     "latLng": [
-      49.0068901,
-      8.4036527
-    ],
-    "name": "Karlsruhe",
-    "continent": "Europe",
-    "country": "Germany",
-    "country_code": "DE",
-    "subdivision": "Berlin",
-    "city": "Karlsruhe",
-    "supernodeAccount": "lumera1awpsvxpx09wqpuywefh23trwxzwhhva78pst95",
-    "validatorAddress": "lumeravaloper1awpsvxpx09wqpuywefh23trwxzwhhva7gmrhrh",
-    "validatorMoniker": "Divinzzo",
-    "address": "152.53.145.35:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
       49.4254092,
       11.0796553
     ],

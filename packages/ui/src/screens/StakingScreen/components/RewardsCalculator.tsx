@@ -12,6 +12,7 @@ import { Calculator } from '@tamagui/lucide-icons';
 import {  RefreshCcw } from 'lucide-react';
 
 import Skeleton from '@/components/Skeleton';
+import SectionTitle from '@/components/SectionTitle';
 import { RATE_VALUE } from '@/contants';
 import { DENOM } from '@/contants/network';
 import { formatTokenDisplay } from '@/utils/format';
@@ -74,7 +75,7 @@ export default function RewardsCalculator({
       <Card.Header padded>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6 w-full rewards-calculator-wrapper'>
           <div className='w-full'>
-            <H3 className='!flex gap-2 items-center rewards-calculator-icon'><Calculator /> <span>Stake LUME</span></H3>
+            <SectionTitle className='rewards-calculator-icon'><Calculator /> <span>Stake LUME</span></SectionTitle>
             <Text className='text-lumera-label text-base'>Estimate your potential rewards based on current network APR</Text>
             <div className='mt-5'>
               <div className='flex justify-between items-center gap-3'>
@@ -128,7 +129,7 @@ export default function RewardsCalculator({
           </div>
           <Card elevate size="$4" bordered className='w-full estimated-rewards-card'>
             <Card.Header padded>
-              <H3>Estimated Staking Rewards</H3>
+              <SectionTitle className='mb-0'>Estimated Staking Rewards</SectionTitle>
               <div className='mt-3 grid grid-cols-2 gap-2 estimated-rewards-results'>
                 <div className='flex flex-col'>
                   <SizableText className='text-lumera-label'>1 Day</SizableText>

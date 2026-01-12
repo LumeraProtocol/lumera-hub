@@ -43,6 +43,7 @@ import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity';
 import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/useProposals';
 import { formatToken, formatTokenDisplay } from '@/utils/format';
 import { NAV_ITEMS } from '@/components/layout/AppShell';
+import SectionTitle from '@/components/SectionTitle';
 import { DENOM } from '@/contants/network';
 
 dayjs.extend(relativeTime);
@@ -148,7 +149,7 @@ const getOption = (data: IPortfolioOverviewChart) => {
       {
         name: 'Portfolio Overview',
         type: 'pie',
-        radius: ['50%', '70%'],
+        radius: ['90%', '55%'],
         label: {
           show: false,
           position: 'center'
@@ -329,7 +330,7 @@ export const VoteModal = ({
             <div className='vote-main-content relative'>
               <Loading isLoading={isVoteLoading} />
               <div className='flex justify-between items-center'>
-                <H3 className='text-lumera-label text-[32px]'>Vote</H3>
+                <h3 className='text-2xl font-bold text-white'>Vote</h3>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
               </div>
               <div className='mt-1'>
@@ -525,7 +526,7 @@ export const ClaimableRewardsModal = ({
             </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
               <div className='flex justify-between items-center'>
-                <H3 className='text-lumera-label text-[32px]'>Claim Rewards</H3>
+                <h3 className='text-2xl font-bold text-white'>Claim Rewards</h3>
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
               </div>
               <div className='mt-2 text-center'>
@@ -603,7 +604,7 @@ export const ClaimableRewardsModal = ({
             <div className='withdraw-main-content relative max-w-[450px]'>
               <Loading isLoading={isVoteLoading} />
               <div className='flex justify-between items-center'>
-                <H3 className='text-lumera-label text-[32px]'>Withdraw</H3>
+                <h3 className='text-2xl font-bold text-white'>Withdraw</h3>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
               </div>
               <div className='mt-1 hidden'>
@@ -834,7 +835,7 @@ export const HomeScreen = ({
             <div className='grid grid-cols-2 gap-6 w-full overview-wrapper'>
               <Card bordered className='w-full portfolio-overview'>
                 <Card.Header padded>
-                  <H3>Portfolio Overview</H3>
+                  <SectionTitle className='mb-2'>Portfolio Overview</SectionTitle>
                   <div className='mt-5 flex justify-between items-center chart-wrapper'>
                     <div className='w-1/2 relative'>
                       <Loading isLoading={loading} />
@@ -890,7 +891,7 @@ export const HomeScreen = ({
               <div className='grid grid-cols-2 gap-6 w-full balance-rewards-overview'>
                 <Card elevate size="$4" bordered className='w-full total-balance'>
                   <Card.Header padded>
-                    <H3 className='text-lumera-label'>Total Balance</H3>
+                    <SectionTitle className='mb-2'>Total Balance</SectionTitle>
                     <div>
                       <H4 className='!text-white !font-bold !text-3xl'>
                         {loading ?
@@ -908,7 +909,7 @@ export const HomeScreen = ({
                 </Card>
                 <Card elevate size="$4" bordered className='w-full claimable-rewards'>
                   <Card.Header padded>
-                    <H3 className='text-lumera-label'>Claimable Rewards</H3>
+                    <SectionTitle className='mb-2'>Claimable Rewards</SectionTitle>
                     <div>
                       <H4 className='!text-lumera-green !font-bold !text-3xl'>
                         {loading ? <Skeleton /> :
@@ -933,7 +934,7 @@ export const HomeScreen = ({
                 <Card elevate size="$4" bordered>
                   <Card.Header padded>
                     <div className='flex justify-between items-center'>
-                      <H3 className='proposals-title'>Active Governance Proposals</H3>
+                      <SectionTitle className='mb-2'>Active Governance Proposals</SectionTitle>
                       <span
                         onClick={handleViewAllProposalsClick}
                         className='text-link text-sm whitespace-nowrap cursor-pointer'
@@ -975,7 +976,7 @@ export const HomeScreen = ({
               <div className='w-1/3 recent-activity'>
                 <Card elevate size="$4" bordered>
                   <Card.Header padded>
-                    <H3>Recent Activity</H3>
+                    <SectionTitle className='mb-2'>Recent Activity</SectionTitle>
                     <div className='mt-5'>
                       {isRecentActivityLoading ?
                         <Skeleton /> :

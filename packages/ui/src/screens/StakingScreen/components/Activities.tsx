@@ -148,7 +148,7 @@ export default function Activities({
             </div>
           ) : null}
           {activityData.activities.sort((a, b) => sortFunc(a, b)).map((tx) => (
-            <div key={tx.txhash} className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-sm">
+            <div key={tx.txhash} className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-base">
               <div className="col-span-12 md:col-span-1 text-gray-300">
                 <div className="md:hidden text-gray-500 mr-2">Block: </div>
                 <AppLink
