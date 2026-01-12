@@ -159,7 +159,7 @@ export default function DelegateModal({
           <div className='withdraw-main-content relative'>
             <Loading isLoading={isVoteLoading} />
             <div className='flex justify-between items-center'>
-              <H3 className='text-lumera-label text-[32px]'>Stake</H3>
+              <h3 className='text-2xl font-bold text-white'>Stake</h3>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseDailogChange}><CircleX /></button>
             </div>
             <div className='mt-1'>

@@ -21,7 +21,7 @@ const ReceiveModal = ({ onClose, walletAddress, isOpen }: IReceiveModal) => {
     if (!isOpen) {
         return null;
     }
-    
+
     const handleCopy = () => {
         navigator.clipboard.writeText(walletAddress);
         setCopied(true);
@@ -69,8 +69,8 @@ const ReceiveModal = ({ onClose, walletAddress, isOpen }: IReceiveModal) => {
                   <Dialog.Title></Dialog.Title>
                 </VisuallyHidden>
                 <div className="flex justify-between items-start">
-                    <h2 className="text-2xl font-bold text-white">Receive LUME</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white"><X/></button>
+                  <h3 className="text-2xl font-bold text-white">Receive LUME</h3>
+                  <button onClick={onClose} className="text-gray-400 hover:text-white cursor-pointer"><X/></button>
                 </div>
                 <div className="mt-6 flex flex-col items-center">
                     <div className="p-4 bg-white rounded-lg">

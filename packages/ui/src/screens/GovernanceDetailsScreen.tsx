@@ -17,6 +17,7 @@ import DepositModal from '@/components/DepositModal';
 import CountDown from '@/components/CountDown';
 import PastTime from '@/components/PastTime';
 import AppLink from '@/components/AppLink';
+import SectionTitle from '@/components/SectionTitle';
 import { IProposal } from '@/hooks/useProposals';
 import { VOTE_LIMIT } from '@/hooks/useGovernanceDetails';
 import { IBlock, IVote } from '@/hooks/useGovernanceDetails';
@@ -113,7 +114,7 @@ export const GovernanceDetailsScreen = ({
     }
     return (
       <div>
-        <H3 className='text-lumera-label'>Description</H3>
+        <SectionTitle>Description</SectionTitle>
         <div className='w-full'>
             {governance.summary}
         </div>
@@ -260,48 +261,48 @@ export const GovernanceDetailsScreen = ({
     switch (status) {
       case 'PROPOSAL_STATUS_PASSED':
         return (
-          <div className='btn-green'>
-            <span className='is_Button rounded-2xl px-3 py-1'>
+          <div className='btn-green not-button'>
+            <span className='is_Button rounded-2xl px-3 py-1.5'>
               <span>Passed</span>
             </span>
           </div>
         )
       case 'PROPOSAL_STATUS_DEPOSIT_PERIOD':
         return (
-          <div className='btn-yellow'>
-            <span className='is_Button rounded-2xl px-3 py-1'>
+          <div className='btn-yellow not-button'>
+            <span className='is_Button rounded-2xl px-3 py-1.5'>
               <span>Deposit</span>
             </span>
           </div>
         )
       case 'PROPOSAL_STATUS_VOTING_PERIOD':
         return (
-          <div className='btn-emerald'>
-            <span className='is_Button rounded-2xl px-3 py-1'>
+          <div className='btn-emerald not-button'>
+            <span className='is_Button rounded-2xl px-3 py-1.5'>
               <span>Voting</span>
             </span>
           </div>
         )
       case 'PROPOSAL_STATUS_UNSPECIFIED':
         return (
-          <div className='btn-purple'>
-            <span className='is_Button rounded-2xl px-3 py-1'>
+          <div className='btn-purple not-button'>
+            <span className='is_Button rounded-2xl px-3 py-1.5'>
               <span>Unspecified</span>
             </span>
           </div>
         )
       case 'PROPOSAL_STATUS_REJECTED':
         return (
-          <div className='btn-black'>
-            <span className='is_Button rounded-2xl px-3 py-1'>
+          <div className='btn-black not-button'>
+            <span className='is_Button rounded-2xl px-3 py-1.5'>
               <span>Rejected</span>
             </span>
           </div>
         )
       case 'PROPOSAL_STATUS_FAILED':
         return (
-          <div className='btn-red'>
-            <span className='is_Button rounded-2xl px-3 py-1'>
+          <div className='btn-red not-button'>
+            <span className='is_Button rounded-2xl px-3 py-1.5'>
               <span>Failed</span>
             </span>
           </div>
@@ -458,7 +459,7 @@ export const GovernanceDetailsScreen = ({
         <AppLink href='/governance' className="flex items-start gap-2 text-gray-400 hover:text-white transition-colors mb-4 text-sm"><ChevronLeft className="w-5 h-5"/>Back to Proposals</AppLink>
       </div>
       <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
-        <H2 className='!font-bold text-white !text-[32px] sm:!text-[42px] !leading-[1.2]'>
+        <H2 className='!font-bold text-white !text-[32px] !leading-[1.2]'>
           {governance?.title}
         </H2>
         {getStatus(governance?.status || '')}
@@ -469,7 +470,7 @@ export const GovernanceDetailsScreen = ({
           {getMessage()}
         </Card>
         <Card elevate size="$4" bordered className='p-5 w-full mt-5'>
-          <H3>Results</H3>
+          <SectionTitle className='mb-0'>Results</SectionTitle>
           <div className='mt-5'>
             <div className='status-bar-wrapper'>
               <div className='status-bar-yes' style={{ width: `${turnout}%` }}></div>
@@ -515,7 +516,7 @@ export const GovernanceDetailsScreen = ({
         </Card>
         {governance ?
           <Card elevate size="$4" bordered className='p-5 w-full mt-5'>
-            <H3>Timeline</H3>
+            <SectionTitle className='mb-0'>Timeline</SectionTitle>
             <div className='mt-3'>
               <div className="flex items-start justify-between flex-col sm:flex-row">
                 <div>
@@ -568,7 +569,7 @@ export const GovernanceDetailsScreen = ({
           </Card> : null
         }
         <Card elevate size="$4" bordered className='p-5 w-full mt-5'>
-            <H3>Votes & Voters</H3>
+            <SectionTitle className='mb-0'>Votes & Voters</SectionTitle>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full mt-3">
               <div className="w-full">
                 <div>

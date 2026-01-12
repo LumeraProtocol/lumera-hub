@@ -16,6 +16,7 @@ import {
 
 import AppLink from '@/components/AppLink';
 import Loading from '@/components/Loading';
+import SectionTitle from '@/components/SectionTitle';
 import useAppRouter from '@/hooks/useAppRouter';
 import { IValidator } from '@/types';
 import {
@@ -151,7 +152,7 @@ export default function AllValidators({
       <Card.Header padded>
         <div className='flex justify-between flex-col md:flex-row gap-4 w-full validators-control'>
           <div className='flex flex-col'>
-            <H3 className='leading-none'>All Validators</H3>
+            <SectionTitle className='mb-0'>All Validators</SectionTitle>
             <SizableText className='text-lumera-label'>Delegate your stake to a validator to earn rewards.</SizableText>
           </div>
           <div className='w-full sm:w-80'>
@@ -245,7 +246,7 @@ export default function AllValidators({
                         const uptime = getUptime(validator);
                         const uptimePercent = percent(uptime);
                         return (
-                          <tr key={validator.operator_address} className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col md:table-row`}>
+                          <tr key={validator.operator_address} className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col md:table-row text-base`}>
                             <td
                               onClick={() => handleValidatorClick(validator.operator_address)}
                               className='cursor-pointer text-left !pb-1'

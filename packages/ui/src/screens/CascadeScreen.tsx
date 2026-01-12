@@ -43,6 +43,7 @@ import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
+import SectionTitle from '@/components/SectionTitle';
 import useCascade, {
   FILES_TYPE,
   TFileTypeKey,
@@ -370,7 +371,7 @@ const ActionFeeModal = ({
           </VisuallyHidden>
           <div className="relative p-3">
             <div className='mx-auto max-w-[550px] sm:w-[550px]'>
-              <h3 className='mb-4'>Upload Files - {uploadedFiles.length} file(s)</h3>
+              <h3 className='text-2xl font-bold text-white mb-4'>Upload Files - {uploadedFiles.length} file(s)</h3>
               <div className='max-h-[56vh] overflow-y-auto overflow-x-hidden max-w-[92vw] sm:max-w-full'>
                 {uploadedFiles?.map((file) => (
                   <Card key={file.fileName} className='mb-2 px-3 py-2'>
@@ -685,7 +686,7 @@ const NetworkStorage = ({
   return (
     <Card elevate size="$4" bordered className='w-full'>
       <Card.Header padded>
-        <h2 className="text-xl font-semibold text-white whitespace-nowrap">Network Storage</h2>
+        <SectionTitle className="mb-0">Network Storage</SectionTitle>
         <div className='mt-2.5 h-36'>
           <ReactECharts option={option} style={{ height: '144px', width: '100%' }} />
         </div>
@@ -859,7 +860,7 @@ const YourUsage = ({
   return (
     <Card elevate size="$4" bordered className='w-full'>
       <Card.Header padded className='h-full'>
-        <h2 className="text-xl font-semibold text-white whitespace-nowrap mb-5">Your Usage</h2>
+        <SectionTitle>Your Usage</SectionTitle>
         {address ?
           <>
             {
@@ -973,9 +974,9 @@ export const CascadeContent = React.memo(({
         />
         <Card elevate size="$4" bordered className='w-full'>
           <Card.Header padded>
-            <h2 className="text-xl font-semibold text-white whitespace-nowrap">
+            <SectionTitle className="mb-0">
               {networkStorage.totalSupernode} Supernodes
-            </h2>
+            </SectionTitle>
             <div className='mt-4'>
               {isMarkerLoading ?
                 <div className='min-h-[200px]'>
@@ -1017,7 +1018,7 @@ export const CascadeContent = React.memo(({
         <div className='mt-6 w-full relative'>
           <Card elevate size="$4" bordered className='w-full !p-[18px]'>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-              <h2 className="text-xl font-semibold text-white whitespace-nowrap">My Files</h2>
+              <SectionTitle className="mb-0">My Files</SectionTitle>
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <div className="flex items-center w-auto">
                   {isMyFilesLoadMore ? (
@@ -1120,8 +1121,8 @@ export const CascadeContent = React.memo(({
             }
             <div className='md:overflow-x-auto '>
               <div className="space-y-2 md:w-[1130px]">
-                <table className='w-full border-separate border-spacing-y-2 text-sm'>
-                  <thead className='hidden md:table-header-group'>
+                <table className='w-full border-separate border-spacing-y-2'>
+                  <thead className='hidden md:table-header-group text-gray-400 text-sm'>
                     <tr>
                       <th className='px-2 py-3'>
                         <div className='flex items-start'>
@@ -1172,7 +1173,7 @@ export const CascadeContent = React.memo(({
                       const fee = file.fee;
                       const isExpired = file.state === 'ACTION_STATE_EXPIRED';
                       return (
-                        <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row'>
+                        <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row text-base'>
                           <td className='px-2 pt-3 pb-1 md:py-3'>
                             <div className='flex items-start w-full gap-2'>
                               <div className='w-7'>
@@ -1307,12 +1308,12 @@ export const CascadeContent = React.memo(({
           <div className='mt-6 w-full relative'>
           <Card elevate size="$4" bordered className='w-full !p-[18px]'>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-              <h2 className="text-xl font-semibold text-white whitespace-nowrap">Recently Uploaded</h2>
+              <SectionTitle className="mb-0">Recently Uploaded</SectionTitle>
             </div>
             <div className='md:overflow-x-auto '>
               <div className="space-y-2 md:max-w-[1130px] md:min-w-[900px] md:w-full">
-                <table className='w-full border-separate border-spacing-y-2 text-sm'>
-                  <thead className='hidden md:table-header-group'>
+                <table className='w-full border-separate border-spacing-y-2'>
+                  <thead className='hidden md:table-header-group text-gray-400 text-sm'>
                     <tr>
                       <th className='px-2 py-3'>
                         <div className='flex items-start'>
@@ -1347,7 +1348,7 @@ export const CascadeContent = React.memo(({
                       const fee = file.fee;
                       const isExpired = file.state === 'ACTION_STATE_EXPIRED';
                       return (
-                        <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row'>
+                        <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row text-base'>
                           <td className='px-2 pt-3 pb-1 md:py-3'>
                             <div className='flex items-start w-full gap-2'>
                               <div className='w-auto'>

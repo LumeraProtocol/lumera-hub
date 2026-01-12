@@ -118,7 +118,7 @@ export default function CreateProposalModal({
             </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
               <div className='flex justify-between items-center'>
-                <H3 className='text-lumera-label text-[32px]'>Create Proposal</H3>
+                <h3 className='text-2xl font-bold text-white'>Create Proposal</h3>
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseModal}><CircleX /></button>
               </div>
               <div className='mt-2 text-center'>

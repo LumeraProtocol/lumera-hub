@@ -73,7 +73,7 @@ export default function ConfirmModal({
           <div className={`relative p-3 ${className}`}>
             {title ?
               <div className='mb-5'>
-                <H3>title</H3>
+                <h3 className='text-2xl font-bold text-white'>{title}</h3>
               </div>: null
             }
             <div>{content}</div>

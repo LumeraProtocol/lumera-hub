@@ -104,7 +104,7 @@ export default function StakeModal({
             </VisuallyHidden>
             <div className='withdraw-main-content relative p-5'>
               <div className='flex justify-between items-center mb-4'>
-                <H3 className='text-lumera-label text-[32px]'>Stake {info?.description?.moniker}</H3>
+                <h3 className='text-2xl font-bold text-white'>Stake {info?.description?.moniker}</h3>
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseContinueToStakingModal}><CircleX /></button>
               </div>
               <div className='mt-2 text-center'>
@@ -179,7 +179,7 @@ export default function StakeModal({
           <div className='withdraw-main-content relative p-5'>
             <Loading isLoading={isLoading} />
             <div className='flex justify-between items-center mb-4'>
-              <H3 className='text-lumera-label text-[32px]'>Stake LUME</H3>
+              <h3 className='text-2xl font-bold text-white'>Stake LUME</h3>
               <button className='btn-close-modal cursor-pointer' onClick={onClose}><CircleX /></button>
             </div>
             <div className='mt-5 relative'>

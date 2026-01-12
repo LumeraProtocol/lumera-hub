@@ -232,7 +232,7 @@ export default memo(function Unstake({
             return (
               <div
                 key={`${delegation.type}-${delegation.delegator_address}-${delegation.validator_address}-${delegation.validator_src_address}-${delegation.validator_dst_address}`}
-                className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg"
+                className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-base"
               >
                 <div className="col-span-12 md:col-span-2 text-white hover:text-lumera-teal cursor-pointer">
                   <div className="md:hidden text-gray-500 mr-2">Validator: </div>

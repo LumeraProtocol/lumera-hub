@@ -152,7 +152,7 @@ export default function DepositModal({
             <div className='withdraw-main-content relative'>
               <Loading isLoading={isVoteLoading} />
               <div className='flex justify-between items-center'>
-                <H3 className='text-lumera-label text-[32px]'>Deposit</H3>
+                <h3 className='text-2xl font-bold text-white'>Deposit</h3>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
               </div>
               <div className='mt-1'>

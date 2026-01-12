@@ -240,7 +240,7 @@ export default function Staking({
             <div className="col-span-5"></div>
           </div>
           {!isAccountInfoLoading && !accountInfo?.delegations.length ? (
-            <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
+            <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-base">
               <div className='col-span-12'>
                 <H3>No data</H3>
               </div>
@@ -258,27 +258,27 @@ export default function Staking({
                 <div
                   className="col-span-12 md:col-span-2"
                 >
-                  <div className="md:hidden font-semibold text-gray-500 mr-2">Delegations: </div>
+                  <div className="md:hidden text-gray-500 mr-2">Delegations: </div>
                   <AppLink
                     href={`/staking/${delegation.delegation.validator_address}`}
-                    className="font-semibold text-white hover:text-lumera-teal cursor-pointer"
+                    className="text-white hover:text-lumera-teal cursor-pointer"
                   >
                     {validator?.description?.moniker || formatAddress(delegation.delegation.validator_address, 10, -5)}
                   </AppLink>
                 </div>
                 <div className="col-span-12 md:col-span-2 md:text-right font-mono text-white">
-                  <div className="md:hidden font-semibold text-gray-500 mr-2">Staked: </div>
+                  <div className="md:hidden text-gray-500 mr-2">Staked: </div>
                   {formatToken({
                     amount: delegation.balance.amount,
                     denom: delegation.balance.denom,
                   }, true, '0,0.[000000]')}
                 </div>
                 <div className='col-span-12 md:col-span-1 md:text-right'>
-                  <div className="md:hidden font-semibold text-gray-500 mr-2">Commission: </div>
+                  <div className="md:hidden text-gray-500 mr-2">Commission: </div>
                   {formatCommissionRate(validator?.commission?.commission_rates?.rate)}
                 </div>
                 <div className="col-span-12 md:col-span-2 md:text-right font-mono text-teal-400">
-                  <div className="md:hidden font-semibold text-gray-500 mr-2">Claimable: </div>
+                  <div className="md:hidden text-gray-500 mr-2">Claimable: </div>
                   {validator?.jailed ?
                     <span className='text-red-600'>Jailed</span> : <>
                       {formatTokens(reward?.reward)}
@@ -287,13 +287,13 @@ export default function Staking({
                 </div>
                 <div className="col-span-12 md:col-span-5 flex justify-start md:justify-end gap-1 mt-2 md:mt-0">
                   <AppButton
-                    className="!py-1.5 !px-4 !text-sm"
+                    className="!py-1.5 !px-4 !text-sm !font-normal"
                     onClick={() => delegateOptions.onSelectValidator(delegation.delegation.validator_address)}
                   >
                     Stake
                   </AppButton>
                   <AppButton
-                    className={`!py-1.5 !px-4 !text-sm ${validator?.jailed || !reward || getReward(reward) <= 0 ? 'opacity-50 !cursor-not-allowed' : ''}`}
+                    className={`!py-1.5 !px-4 !text-sm !font-normal ${validator?.jailed || !reward || getReward(reward) <= 0 ? 'opacity-50 !cursor-not-allowed' : ''}`}
                     variant='secondary'
                     onClick={() => claim.handleToggleClaimItemModal(true, delegation)}
                     disabled={validator?.jailed || !reward || getReward(reward) <= 0}
@@ -301,7 +301,7 @@ export default function Staking({
                     Claim
                   </AppButton>
                   <AppButton
-                    className="!py-1.5 !px-4 !text-sm"
+                    className="!py-1.5 !px-4 !text-sm !font-normal"
                     onClick={() => redelegateOptions.onOpenModal(
                       delegation.delegation.validator_address,
                       formatToken({
@@ -314,7 +314,7 @@ export default function Staking({
                     Restake
                   </AppButton>
                   <AppButton
-                    className="!py-1.5 !px-4 !text-sm"
+                    className="!py-1.5 !px-4 !text-sm !font-normal"
                     onClick={() => unbondOptions.onOpenModal(
                       delegation.delegation.validator_address,
                       formatToken({
