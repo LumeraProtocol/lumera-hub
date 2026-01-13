@@ -291,6 +291,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const [totalBalance, setTotalBalance] = useState(0);
   const [recentlyUploaded, setRecentlyUploaded] = useState<IMyFile[]>([]);
   const [isRecentlyUploadedLoading, setRecentlyUploadedLoading] = useState(false);
+  const [currentTab, setCurrentTab] = useState('myFiles');
 
   const filteredFiles = useMemo(() => {
     setOffset(0);
@@ -1208,6 +1209,13 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     setUploadCascadeInfo(newUploadCascadeInfo);
   }
 
+  const handleTabChange = (tab: string) => {
+    setCurrentTab(tab);
+    if (tab === 'recentlyUploaded') {
+      getRecentlyUploaded();
+    }
+  }
+
   return {
     isUploading,
     error,
@@ -1234,6 +1242,8 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     recentlyUploaded,
     isRecentlyUploadedLoading,
     fileSizes,
+    currentTab,
+    handleTabChange,
     handlePublicFile,
     handleCloseUploadCascadeSuccessModal,
     handlePageClick,
