@@ -267,8 +267,8 @@ export const WalletScreen = ({
               <div className="w-20 h-20 rounded-full grid place-items-center staking-icon wallet">
                 <Wallet size="$3" />
               </div>
-              <H2 className='font-bold text-white text-[32px] leading-none !mt-5 text-center'>Connect Your Wallet</H2>
-              <Paragraph className='text-base text-lumera-gray mx-auto max-w-[400px] text-center !mt-3'>Please connect your wallet to view this page and interact with the Lumera ecosystem.</Paragraph>
+              <h2 className='font-normal text-white text-[42px] leading-[52px] mt-5'>Connect Your Wallet</h2>
+              <p className='text-sm font-normal text-lumera-gray mt-3 mx-auto max-w-[400px] text-center'>Please connect your wallet to view this page and interact with the Lumera ecosystem.</p>
               <div className='text-center mt-4'>
                 <ConnectWalletButton />
               </div>

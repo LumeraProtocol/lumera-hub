@@ -21,6 +21,7 @@ import {
   Coins,
   Workflow,
 } from 'lucide-react';
+import Image from 'next/image';
 
 import Skeleton from '@/components/Skeleton';
 import useStaking from '@/hooks/useStaking';
@@ -93,6 +94,57 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
             </div>
           </Card>
         </div>
+      </div>
+    </>,
+    <>
+      <h2 className='text-xl md:text-3xl font-bold'>Create a Wallet</h2>
+      <div className='text-sm text-lumera-label mt-1.5'>Create your wallet from one of the wallet service providers below.</div>
+      <div className='flex flex-col gap-2 mt-10 get-started'>
+        <Card elevate size="$4" bordered className='overflow-hidden'>
+          <Link href="https://www.keplr.app?utm_source=hub.testnet.lumera.io&utm_medium=website" target='_blank' rel='noopener noreferrer'>
+            <div className='flex gap-3 p-4 relative items-stretch keplr-wallet'>
+              <div className='relative z-30'>
+                <h3 className='text-base'>Keplr Wallet</h3>
+                <div className='text-lumera-label text-sm'>Introducing Keplr, the fast, simple, secure wallet connecting you to any blockchains and apps</div>
+                <div className='flex gap-2 items-center mt-1'>
+                  <Image src='/keplr.svg' width={18} height={18} alt='Keplr Wallet' className='rounded-xl' />
+                  <span className='text-lumera-label text-sm'>https://www.keplr.app/</span>
+                </div>
+              </div>
+              <div className='min-w-[150px] relative flex-auto h-full wallet-mark'>&nbsp;</div>
+            </div>
+          </Link>
+        </Card>
+        <Card elevate size="$4" bordered className='overflow-hidden'>
+          <Link href="https://www.leapwallet.io?utm_source=hub.testnet.lumera.io&utm_medium=website" target='_blank' rel='noopener noreferrer'>
+            <div className='flex gap-3 p-4 relative items-stretch leap-wallet'>
+              <div>
+                <h3 className='text-base'>Leap Wallet</h3>
+                <div className='text-lumera-label text-sm'>Meet the wallet that understands you, & the Cosmos.</div>
+                <div className='flex gap-2 items-center mt-1'>
+                  <Image src='/leap.svg' width={18} height={18} alt='Keplr Wallet' className='rounded-xl' />
+                  <span className='text-lumera-label text-sm'>https://www.leapwallet.io/</span>
+                </div>
+              </div>
+              <div className='min-w-[150px] relative flex-auto h-full wallet-mark'>&nbsp;</div>
+            </div>
+          </Link>
+        </Card>
+        <Card elevate size="$4" bordered className='overflow-hidden'>
+          <Link href="https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf?hl=en&utm_source=hub.testnet.lumera.io&utm_medium=website" target='_blank' rel='noopener noreferrer'>
+            <div className='flex gap-3 p-4 relative items-stretch cosmostation-wallet'>
+              <div className='min-w-0'>
+                <h3 className='text-base'>Cosmostation Wallet</h3>
+                <div className='text-lumera-label text-sm'>Non-custodial multi-chain extension wallet powered by Cosmostation, the interchain validator.</div>
+                <div className='flex gap-2 items-center mt-1'>
+                  <Image src='/cosmostation.svg' width={18} height={18} alt='Keplr Wallet' className='rounded-xl' />
+                  <span className='text-lumera-label text-sm truncate block min-w-0'>https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf?hl=en</span>
+                </div>
+              </div>
+              <div className='min-w-[150px] relative flex-auto h-full wallet-mark'>&nbsp;</div>
+            </div>
+          </Link>
+        </Card>
       </div>
     </>,
     <>

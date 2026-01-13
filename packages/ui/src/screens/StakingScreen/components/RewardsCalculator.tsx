@@ -75,7 +75,7 @@ export default function RewardsCalculator({
       <Card.Header padded>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6 w-full rewards-calculator-wrapper'>
           <div className='w-full'>
-            <SectionTitle className='rewards-calculator-icon'><Calculator /> <span>Stake LUME</span></SectionTitle>
+            <SectionTitle className='rewards-calculator-icon flex gap-2 items-center'><Calculator /> <span>Stake LUME</span></SectionTitle>
             <Text className='text-lumera-label text-base'>Estimate your potential rewards based on current network APR</Text>
             <div className='mt-5'>
               <div className='flex justify-between items-center gap-3'>

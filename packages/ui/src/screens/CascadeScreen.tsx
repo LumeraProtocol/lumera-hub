@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   YStack,
   Card,
@@ -904,121 +904,89 @@ const YourUsage = ({
   )
 }
 
-export const CascadeContent = React.memo(({
-  client,
-  maxFiles,
-}: ICascadeContent) => {
-  const memoizedClient = React.useMemo(() => client, [client]);
+interface IFiles {
+  address: string;
+  isMyFilesLoadMore: boolean;
+  isAllDownloading: boolean;
+  isMyFilesLoading: boolean;
+  fileSearch: string;
+  selectedFiles: ISelectedFile[];
+  memoizedFilteredFiles: IMyFile[];
+  currentOffset: number;
+  selectedFileDownload: string[];
+  totalPage: number;
+  recentlyUploaded: IMyFile[];
+  isRecentlyUploadedLoading: boolean;
+  fileCounts: Record<TFileTypeKey, number>;
+  fileTypeFilter: string[];
+  currentTab: string;
+  handleTabChange: (tab: string) => void;
+  getTypeFilter: () => string;
+  handleFileSearchChange: (keyword: string) => void;
+  handleDownloadAllFile: () => void;
+  handleSelectAll: (checked: boolean) => void;
+  handleSelectFile: (file: IMyFile) => void;
+  handleDownloadFile: (file: IMyFile) => void;
+  handlePageClick: ({ selected }: { selected: number }) => void;
+  handleFileTypeFilterChange: (type: string) => void;
+}
 
-  const {
-    isUploading,
-    error,
-    isFetchSummaryLoading,
-    networkStorage,
-    address,
-    fileCounts,
-    fileTypeFilter,
-    fileSearch,
-    selectedFiles,
-    filteredFiles,
-    markers,
-    isMyFilesLoading,
-    isMarkerLoading,
-    selectedModal,
-    uploadCascadeInfo,
-    myUsage,
-    totalPage,
-    isMyFilesLoadMore,
-    selectedFileDownload,
-    isAllDownloading,
-    currentOffset,
-    recentlyUploaded,
-    isRecentlyUploadedLoading,
-    fileSizes,
-    handlePublicFile,
-    openActionFeeModal,
-    closeActionFeeModal,
-    handleDownloadAllFile,
-    handleDownloadFile,
-    handleSelectFile,
-    handleSelectAll,
-    handleFileSearchChange,
-    handleFileTypeFilterChange,
-    handleUploadCascade,
-    handlePageClick,
-    handleCloseUploadCascadeSuccessModal,
-    handleRemoveUploadFile,
-    handleDropRejected,
-  } = useCascade({ sdkjsReact: memoizedClient });
-
-  const memoizedFilteredFiles = React.useMemo(() => filteredFiles, [filteredFiles, fileSearch, fileTypeFilter]);
-
-  const getTypeFilter = () => {
-    const selectedFilter = FILES_TYPE.filter((file) => fileTypeFilter.some((value) => value === file.value));
-    return selectedFilter.map((f) => f.value).join(', ');
-  }
-
+const Files = ({
+  address,
+  isMyFilesLoadMore,
+  fileSearch,
+  selectedFiles,
+  isAllDownloading,
+  memoizedFilteredFiles,
+  isMyFilesLoading,
+  currentOffset,
+  selectedFileDownload,
+  totalPage,
+  recentlyUploaded,
+  isRecentlyUploadedLoading,
+  fileCounts,
+  fileTypeFilter,
+  currentTab,
+  handleTabChange,
+  handlePageClick,
+  handleDownloadFile,
+  getTypeFilter,
+  handleFileSearchChange,
+  handleDownloadAllFile,
+  handleSelectAll,
+  handleSelectFile,
+  handleFileTypeFilterChange,
+}: IFiles) => {
   return (
-    <YStack flex={1} alignItems="center" justifyContent="center">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full cascade-overview relative">
-        <YourUsage
-          address={address}
-          isMyFilesLoading={isMyFilesLoading}
-          isMyFilesLoadMore={isMyFilesLoadMore}
-          myUsage={myUsage}
-          fileSizes={fileSizes}
-        />
-        <NetworkStorage
-          isFetchSummaryLoading={isFetchSummaryLoading}
-          networkStorage={networkStorage}
-        />
-        <Card elevate size="$4" bordered className='w-full'>
-          <Card.Header padded>
-            <SectionTitle className="mb-0">
-              {networkStorage.totalSupernode} Supernodes
-            </SectionTitle>
-            <div className='mt-4'>
-              {isMarkerLoading ?
-                <div className='min-h-[200px]'>
-                  <Skeleton className='min-h-[190px] !mb-0' />
-                </div> : <SuperNodeMap markers={markers} />
-              }
-            </div>
-          </Card.Header>
-        </Card>
-      </div>
-      <div className='mt-6 w-full relative'>
-        <Loading isLoading={isUploading} />
-        <Dropzone onDrop={openActionFeeModal} multiple maxFiles={maxFiles} onDropRejected={handleDropRejected}>
-          {({getRootProps, getInputProps}) => (
-            <div
-              {...getRootProps()}
-              className='dropzone-wrapper flex flex-col justify-center items-center cursor-pointer'
-            >
-              <input {...getInputProps()} />
-              <div className='text-center'>
-                <div className='upload-icon flex justify-center'>
-                  <CloudUpload />
-                </div>
-                <div className='flex items-center gap-1.5'>
-                  <div>Drag & drop files here or</div>
-                  <div className='flex justify-center text-lumera-teal'>
-                    Browse
-                  </div>
-                </div>
-                {error ?
-                  <div className='mt-5 text-red-600'>{error}</div> : null
-                }
-              </div>
-            </div>
-          )}
-        </Dropzone>
-      </div>
-      {address ?
-        <div className='mt-6 w-full relative'>
-          <Card elevate size="$4" bordered className='w-full !p-[18px]'>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-              <SectionTitle className="mb-0">My Files</SectionTitle>
+    <div className='mt-6 w-full relative'>
+      <Card elevate size="$4" bordered className='w-full !p-[18px]'>
+        {address ?
+          <div className="w-full mb-6">
+            <ul className='flex gap-0 list-none tabs'>
+              <li className={`tab-item ${currentTab === 'myFiles' ? 'active' : ''}`}>
+                <button
+                  className='tab-button cursor-pointer px-3'
+                  onClick={() => handleTabChange('myFiles')}
+                >
+                  My Files
+                </button>
+              </li>
+              <li className={`tab-item ${currentTab === 'recentlyUploaded' ? 'active' : ''}`}>
+                <button
+                  className='tab-button cursor-pointer px-3'
+                  onClick={() => handleTabChange('recentlyUploaded')}
+                >
+                  Recently Uploaded
+                </button>
+              </li>
+            </ul>
+          </div> : <div className="w-full mb-6">
+            <SectionTitle className="mb-0">Recently Uploaded</SectionTitle>
+          </div>
+        }
+        {address && currentTab === 'myFiles' ? (
+          <>
+            <div className="flex items-center justify-end w-full gap-4 mb-6">
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <div className="flex items-center w-auto">
                   {isMyFilesLoadMore ? (
@@ -1125,7 +1093,7 @@ export const CascadeContent = React.memo(({
                   <thead className='hidden md:table-header-group text-gray-400 text-sm'>
                     <tr>
                       <th className='px-2 py-3'>
-                        <div className='flex items-start'>
+                        <div className='flex items-start gap-1'>
                           <div className='w-7'>
                             <Checkbox
                               id="checkAll"
@@ -1175,7 +1143,7 @@ export const CascadeContent = React.memo(({
                       return (
                         <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row text-base'>
                           <td className='px-2 pt-3 pb-1 md:py-3'>
-                            <div className='flex items-start w-full gap-2'>
+                            <div className='flex items-center w-full gap-1'>
                               <div className='w-7'>
                                 <Checkbox
                                   id="checkAll"
@@ -1191,7 +1159,7 @@ export const CascadeContent = React.memo(({
                               <div className='w-auto'>
                                 <Tooltip>
                                   <Tooltip.Trigger>
-                                    <div className='flex items-start gap-2 w-full'>
+                                    <div className='flex items-center gap-2 w-full'>
                                       {getFileIcon(getSimplifiedType(file.type))}
                                       <span className="font-medium text-white max-w-[180px] truncate">{file.name}</span>
                                     </div>
@@ -1261,7 +1229,7 @@ export const CascadeContent = React.memo(({
                           <td className='md:text-right px-2 pt-1 pb-3 md:py-3'>
                             <div className='flex md:justify-end w-full'>
                               <AppButton
-                                variant="secondary"
+                                variant="primary"
                                 className={`!px-4 !text-sm w-full md:w-auto max-w-40 !font-normal ${isDisabledButton ? 'cursor-default opacity-40' : ''}`}
                                 onClick={() => handleDownloadFile(file)}
                                 disabled={isDisabledButton}
@@ -1303,15 +1271,12 @@ export const CascadeContent = React.memo(({
                 />
               </div> : null
             }
-          </Card>
-        </div> : (
-          <div className='mt-6 w-full relative'>
-          <Card elevate size="$4" bordered className='w-full !p-[18px]'>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-              <SectionTitle className="mb-0">Recently Uploaded</SectionTitle>
-            </div>
+          </>
+        ) : null}
+        {!address || currentTab === 'recentlyUploaded' ?
+          <>
             <div className='md:overflow-x-auto '>
-              <div className="space-y-2 md:max-w-[1130px] md:min-w-[900px] md:w-full">
+              <div className="space-y-2 max-w-[1130px] md:max-w-full md:min-w-[900px] md:w-full">
                 <table className='w-full border-separate border-spacing-y-2'>
                   <thead className='hidden md:table-header-group text-gray-400 text-sm'>
                     <tr>
@@ -1334,7 +1299,7 @@ export const CascadeContent = React.memo(({
                           <H3 className='text-2xl'>No files</H3>
                         </td>
                       </tr>
-                     ) : null }
+                      ) : null }
                     {isRecentlyUploadedLoading ? (
                       <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
                         <td colSpan={9} className='px-2 py-3'>
@@ -1354,7 +1319,7 @@ export const CascadeContent = React.memo(({
                               <div className='w-auto'>
                                 <Tooltip>
                                   <Tooltip.Trigger>
-                                    <div className='flex items-start gap-2 w-full'>
+                                    <div className='flex items-center gap-2 w-full'>
                                       {getFileIcon(getSimplifiedType(file.type))}
                                       <span className="font-medium text-white max-w-[180px] truncate">{file.name}</span>
                                     </div>
@@ -1420,10 +1385,151 @@ export const CascadeContent = React.memo(({
                 </table>
               </div>
             </div>
-          </Card>
-        </div>
-        )
-      }
+          </> : null
+        }
+      </Card>
+    </div>
+  )
+}
+
+export const CascadeContent = React.memo(({
+  client,
+  maxFiles,
+}: ICascadeContent) => {
+  const memoizedClient = React.useMemo(() => client, [client]);
+
+  const {
+    isUploading,
+    error,
+    isFetchSummaryLoading,
+    networkStorage,
+    address,
+    fileCounts,
+    fileTypeFilter,
+    fileSearch,
+    selectedFiles,
+    filteredFiles,
+    markers,
+    isMyFilesLoading,
+    isMarkerLoading,
+    selectedModal,
+    uploadCascadeInfo,
+    myUsage,
+    totalPage,
+    isMyFilesLoadMore,
+    selectedFileDownload,
+    isAllDownloading,
+    currentOffset,
+    recentlyUploaded,
+    isRecentlyUploadedLoading,
+    fileSizes,
+    currentTab,
+    handleTabChange,
+    handlePublicFile,
+    openActionFeeModal,
+    closeActionFeeModal,
+    handleDownloadAllFile,
+    handleDownloadFile,
+    handleSelectFile,
+    handleSelectAll,
+    handleFileSearchChange,
+    handleFileTypeFilterChange,
+    handleUploadCascade,
+    handlePageClick,
+    handleCloseUploadCascadeSuccessModal,
+    handleRemoveUploadFile,
+    handleDropRejected,
+  } = useCascade({ sdkjsReact: memoizedClient });
+
+  const memoizedFilteredFiles = React.useMemo(() => filteredFiles, [filteredFiles, fileSearch, fileTypeFilter]);
+
+  const getTypeFilter = () => {
+    const selectedFilter = FILES_TYPE.filter((file) => fileTypeFilter.some((value) => value === file.value));
+    return selectedFilter.map((f) => f.value).join(', ');
+  }
+
+  return (
+    <YStack flex={1} alignItems="center" justifyContent="center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full cascade-overview relative">
+        <YourUsage
+          address={address}
+          isMyFilesLoading={isMyFilesLoading}
+          isMyFilesLoadMore={isMyFilesLoadMore}
+          myUsage={myUsage}
+          fileSizes={fileSizes}
+        />
+        <NetworkStorage
+          isFetchSummaryLoading={isFetchSummaryLoading}
+          networkStorage={networkStorage}
+        />
+        <Card elevate size="$4" bordered className='w-full'>
+          <Card.Header padded>
+            <SectionTitle className="mb-0">
+              {networkStorage.totalSupernode} Supernodes
+            </SectionTitle>
+            <div className='mt-4'>
+              {isMarkerLoading ?
+                <div className='min-h-[200px]'>
+                  <Skeleton className='min-h-[190px] !mb-0' />
+                </div> : <SuperNodeMap markers={markers} />
+              }
+            </div>
+          </Card.Header>
+        </Card>
+      </div>
+      <div className='mt-6 w-full relative'>
+        <Loading isLoading={isUploading} />
+        <Dropzone onDrop={openActionFeeModal} multiple maxFiles={maxFiles} onDropRejected={handleDropRejected}>
+          {({getRootProps, getInputProps}) => (
+            <div
+              {...getRootProps()}
+              className='dropzone-wrapper flex flex-col justify-center items-center cursor-pointer'
+            >
+              <input {...getInputProps()} />
+              <div className='text-center'>
+                <div className='upload-icon flex justify-center'>
+                  <CloudUpload />
+                </div>
+                <div className='flex items-center gap-1.5'>
+                  <div>Drag & drop files here or</div>
+                  <div className='flex justify-center text-lumera-teal'>
+                    Browse
+                  </div>
+                </div>
+                {error ?
+                  <div className='mt-5 text-red-600'>{error}</div> : null
+                }
+              </div>
+            </div>
+          )}
+        </Dropzone>
+      </div>
+      <Files
+        address={address}
+        isMyFilesLoadMore={isMyFilesLoadMore}
+        fileSearch={fileSearch}
+        selectedFiles={selectedFiles}
+        isAllDownloading={isAllDownloading}
+        memoizedFilteredFiles={memoizedFilteredFiles}
+        isMyFilesLoading={isMyFilesLoading}
+        currentOffset={currentOffset}
+        selectedFileDownload={selectedFileDownload}
+        totalPage={totalPage}
+        recentlyUploaded={recentlyUploaded}
+        isRecentlyUploadedLoading={isRecentlyUploadedLoading}
+        fileCounts={fileCounts}
+        fileTypeFilter={fileTypeFilter}
+        currentTab={currentTab}
+        handleTabChange={handleTabChange}
+        handlePageClick={handlePageClick}
+        handleDownloadFile={handleDownloadFile}
+        getTypeFilter={getTypeFilter}
+        handleFileSearchChange={handleFileSearchChange}
+        handleDownloadAllFile={handleDownloadAllFile}
+        handleSelectAll={handleSelectAll}
+        handleSelectFile={handleSelectFile}
+        handleFileTypeFilterChange={handleFileTypeFilterChange}
+      />
       <ActionFeeModal
         uploadedFiles={uploadCascadeInfo}
         address={address}

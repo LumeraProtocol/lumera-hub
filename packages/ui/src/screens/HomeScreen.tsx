@@ -818,12 +818,12 @@ export const HomeScreen = ({
       {!address ?
         <Card elevate size="$4" bordered className='w-full'>
           <div className='flex items-center justify-center h-[84vh]'>
-            <div className='flex flex-col gap-3 justify-between items-center max-w-[450px] text-center mt-10'>
+            <div className='flex flex-col gap-3 justify-between items-center max-w-[490px] text-center mt-10'>
               <div className="w-20 h-20 grid place-items-center">
                 <img src="/lumera-symbol.svg" alt="Lumera" />
               </div>
-              <H2 className='font-bold text-white text-[32px] leading-none'>Welcome to the Lumera Hub</H2>
-              <Paragraph className='text-base text-lumera-gray'>Connect your wallet to manage assets, participate in governance, and access the full suite of Lumera services.</Paragraph>
+              <h2 className='font-normal text-white text-[42px] leading-[52px]'>Welcome to the Lumera Hub</h2>
+              <p className='text-sm font-normal text-lumera-gray text-center'>Connect your wallet to manage assets, participate in governance, and access the full suite of Lumera services.</p>
               <div className='text-center'>
                 <ConnectWalletButton />
               </div>
