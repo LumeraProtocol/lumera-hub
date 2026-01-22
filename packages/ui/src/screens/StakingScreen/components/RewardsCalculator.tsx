@@ -11,7 +11,7 @@ import {
 import { Calculator } from '@tamagui/lucide-icons';
 import {  RefreshCcw } from 'lucide-react';
 
-import Skeleton from '@/components/Skeleton';
+import { AppLoading } from '@/components/Loading';
 import SectionTitle from '@/components/SectionTitle';
 import { RATE_VALUE } from '@/contants';
 import { DENOM } from '@/contants/network';
@@ -85,7 +85,16 @@ export default function RewardsCalculator({
                 {availableAmount ?
                   <div className='text-sm font-normal flex gap-2 items-center'>
                     {isLoading ?
-                      <Skeleton /> :
+                      <div className='relative min-h-9 w-9 mr-1'>
+                        <AppLoading
+                          isLoading
+                          hideOverlay
+                          className="w-8 h-8 !border-3"
+                          iconWidth={16}
+                          iconHeight={16}
+                          containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-8 h-8 z-50'
+                        />
+                      </div> :
                       <>
                         <button type="button" onClick={onRefreshBalance} className='cursor-pointer'>
                           <RefreshCcw className='w-4 h-4' />

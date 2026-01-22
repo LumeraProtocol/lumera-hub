@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import CountDown from '@/components/CountDown';
 import {
   TSigningInfos,
@@ -164,109 +164,119 @@ export default memo(function Unstake({
 
   return (
     <div className='relative'>
-      <Loading isLoading={unbonding.isLoading} />
-      <div className="overflow-x-auto">
-        <div className="md:min-w-[950px] space-y-2">
-          <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-400 uppercase">
-            <div className="col-span-2">
-              <button
-                type="button"
-                onClick={() => handleSort('validator')}
-                className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
-              >
-                Validator
-                {renderSortIcon('validator')}
-              </button>
-            </div>
-            <div className="col-span-2 text-right">
-              <button
-                type="button"
-                onClick={() => handleSort('initial')}
-                className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
-              >
-                Initial balance
-                {renderSortIcon('initial')}
-              </button>
-            </div>
-            <div className="col-span-2 text-right">
-              <button
-                type="button"
-                onClick={() => handleSort('balance')}
-                className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
-              >
-                Balance
-                {renderSortIcon('balance')}
-              </button>
-            </div>
-            <div className="col-span-2 text-right">
-              <button
-                type="button"
-                onClick={() => handleSort('action')}
-                className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
-              >
-                Action
-                {renderSortIcon('action')}
-              </button>
-            </div>
-            <div className="col-span-4 text-right">
-              <button
-                type="button"
-                onClick={() => handleSort('time')}
-                className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
-              >
-                Completion Time
-                {renderSortIcon('time')}
-              </button>
-            </div>
-          </div>
-          {!unbonding.isLoading && !unbonding.unbondingDelegations.length ? (
-            <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
-              <div className='col-span-12'>
-                <H3>No data</H3>
+      {unbonding.isLoading ?
+        <div className='min-h-44 relative'>
+          <AppLoading
+            isLoading
+            className="w-10 h-10 !border-2"
+            iconWidth={20}
+            iconHeight={20}
+            containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+          />
+        </div> :
+        <div className="overflow-x-auto">
+          <div className="md:min-w-[950px] space-y-2">
+            <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-400 uppercase">
+              <div className="col-span-2">
+                <button
+                  type="button"
+                  onClick={() => handleSort('validator')}
+                  className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
+                >
+                  Validator
+                  {renderSortIcon('validator')}
+                </button>
+              </div>
+              <div className="col-span-2 text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSort('initial')}
+                  className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
+                >
+                  Initial balance
+                  {renderSortIcon('initial')}
+                </button>
+              </div>
+              <div className="col-span-2 text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSort('balance')}
+                  className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
+                >
+                  Balance
+                  {renderSortIcon('balance')}
+                </button>
+              </div>
+              <div className="col-span-2 text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSort('action')}
+                  className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
+                >
+                  Action
+                  {renderSortIcon('action')}
+                </button>
+              </div>
+              <div className="col-span-4 text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSort('time')}
+                  className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
+                >
+                  Completion Time
+                  {renderSortIcon('time')}
+                </button>
               </div>
             </div>
-          ) : null}
-          {unbonding.unbondingDelegations.sort((a, b) => sortFunc(a, b)).map((delegation, i) => {
-            const validator = allValidators.find(v => v.operator_address === delegation.validator_address);
+            {!unbonding.isLoading && !unbonding.unbondingDelegations.length ? (
+              <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
+                <div className='col-span-12'>
+                  <H3>No data</H3>
+                </div>
+              </div>
+            ) : null}
+            {unbonding.unbondingDelegations.sort((a, b) => sortFunc(a, b)).map((delegation, i) => {
+              const validator = allValidators.find(v => v.operator_address === delegation.validator_address);
 
-            return (
-              <div
-                key={`${delegation.type}-${delegation.delegator_address}-${delegation.validator_address}-${delegation.validator_src_address}-${delegation.validator_dst_address}`}
-                className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-base"
-              >
-                <div className="col-span-12 md:col-span-2 text-white hover:text-lumera-teal cursor-pointer">
-                  <div className="md:hidden text-gray-500 mr-2">Validator: </div>
-                  <AppLink href={`/staking/${delegation.validator_address}`} className="text-lumera-teal hover:text-lumera-green">
-                    {getValidatorName(delegation, validator)}
-                  </AppLink>
+              return (
+                <div
+                  key={`${delegation.type}-${delegation.delegator_address}-${delegation.validator_address}-${delegation.validator_src_address}-${delegation.validator_dst_address}`}
+                  className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-base"
+                >
+                  <div className="col-span-12 md:col-span-2 text-white hover:text-lumera-teal cursor-pointer">
+                    <div className="md:hidden text-gray-500 mr-2">Validator: </div>
+                    <AppLink href={`/staking/${delegation.validator_address}`} className="text-lumera-teal hover:text-lumera-green">
+                      {getValidatorName(delegation, validator)}
+                    </AppLink>
+                  </div>
+                  <div className="col-span-12 md:col-span-2 md:text-right font-mono text-white">
+                    <div className="md:hidden text-gray-500 mr-2">Initial balance: </div>
+                    {formatToken({
+                      amount: delegation.entries[0].initial_balance,
+                      denom: staking.params.bond_denom,
+                    }, true, '0,0.[00]')}
+                  </div>
+                  <div className="col-span-12 md:col-span-2 md:text-right font-mono text-white">
+                    <div className="md:hidden text-gray-500 mr-2">Balance: </div>
+                    {formatToken({
+                      amount: delegation.entries[0].balance,
+                      denom: staking.params.bond_denom,
+                    }, true, '0,0.[00]')}
+                  </div>
+                  <div className="col-span-12 md:col-span-2 md:text-right font-mono text-white">
+                    <div className="md:hidden text-gray-500 mr-2">Action: </div>
+                    {delegation.type === 'redelegations' ? 'Redelegate' : 'Unstaking'}
+                  </div>
+                  <div className="col-span-12 md:col-span-4 md:text-right font-mono text-gray-300">
+                    <div className="md:hidden text-gray-500 mr-2">Completion Time: </div>
+                    <CountDown targetDate={new Date(delegation.entries[0].completion_time)} className="md:whitespace-nowrap" />
+                  </div>
                 </div>
-                <div className="col-span-12 md:col-span-2 md:text-right font-mono text-white">
-                  <div className="md:hidden text-gray-500 mr-2">Initial balance: </div>
-                  {formatToken({
-                    amount: delegation.entries[0].initial_balance,
-                    denom: staking.params.bond_denom,
-                  }, true, '0,0.[00]')}
-                </div>
-                <div className="col-span-12 md:col-span-2 md:text-right font-mono text-white">
-                  <div className="md:hidden text-gray-500 mr-2">Balance: </div>
-                  {formatToken({
-                    amount: delegation.entries[0].balance,
-                    denom: staking.params.bond_denom,
-                  }, true, '0,0.[00]')}
-                </div>
-                <div className="col-span-12 md:col-span-2 md:text-right font-mono text-white">
-                  <div className="md:hidden text-gray-500 mr-2">Action: </div>
-                  {delegation.type === 'redelegations' ? 'Redelegate' : 'Unstaking'}
-                </div>
-                <div className="col-span-12 md:col-span-4 md:text-right font-mono text-gray-300">
-                  <div className="md:hidden text-gray-500 mr-2">Completion Time: </div>
-                  <CountDown targetDate={new Date(delegation.entries[0].completion_time)} className="md:whitespace-nowrap" />
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      }
     </div>
   )
 })

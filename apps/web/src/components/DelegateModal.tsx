@@ -13,7 +13,7 @@ import {
 import { CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons';
 
 import { formatTokenDisplay } from '@/utils/format';
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import { IValidator } from '@/types/validator';
 import AppLink from '@/components/AppLink';
 import { DENOM } from '@/contants/network';
@@ -157,7 +157,13 @@ export default function DelegateModal({
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
           <div className='withdraw-main-content relative'>
-            <Loading isLoading={isVoteLoading} />
+            <AppLoading
+              isLoading={isVoteLoading}
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
             <div className='flex justify-between items-center'>
               <h3 className='text-2xl font-bold text-white'>Stake</h3>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseDailogChange}><CircleX /></button>

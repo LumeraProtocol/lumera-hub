@@ -1,23 +1,6 @@
 [
   {
     "latLng": [
-      50.4501,
-      30.5234
-    ],
-    "name": "Kyiv",
-    "continent": "Europe",
-    "country": "Ukraine",
-    "country_code": "UA",
-    "subdivision": "Kyiv",
-    "city": "Kyiv",
-    "supernodeAccount": "lumera13nwzm5dfd26ue74jr6sc39gyn3qze0rjlmsehc",
-    "validatorAddress": "lumeravaloper13nwzm5dfd26ue74jr6sc39gyn3qze0rjspr93m",
-    "validatorMoniker": "BonyNode💚",
-    "address": "37.17.244.207:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
       49.4254092,
       11.0796553
     ],
@@ -129,6 +112,23 @@
     "country_code": "PL",
     "subdivision": "Warsaw",
     "city": "Warsaw",
+    "supernodeAccount": "lumera1fkgj76q4w98hcseldveyrnlpklj0tp6khn7hag",
+    "validatorAddress": "lumeravaloper1jfl8rf4pmf9pwzfzckl6pv8jmz0fqp2t799nq0",
+    "validatorMoniker": "coinsspor",
+    "address": "149.50.116.116:4444",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
+      52.2296756,
+      21.0122287
+    ],
+    "name": "Warsaw",
+    "continent": "Europe",
+    "country": "Poland",
+    "country_code": "PL",
+    "subdivision": "Warsaw",
+    "city": "Warsaw",
     "supernodeAccount": "lumera1h0ljtgz7khx02lrv37pgwry5zk54uc3ztyacjq",
     "validatorAddress": "lumeravaloper1h0ljtgz7khx02lrv37pgwry5zk54uc3zy7wy5r",
     "validatorMoniker": "HusoNode",
@@ -205,23 +205,6 @@
   },
   {
     "latLng": [
-      48.974797,
-      8.176773
-    ],
-    "name": "Lauterbourg",
-    "continent": "Europe",
-    "country": "France",
-    "country_code": "FR",
-    "subdivision": "Paris",
-    "city": "Lauterbourg",
-    "supernodeAccount": "lumera1rqpde8600qhuyqds4wlp5mau46y7tdwgj2yqpc",
-    "validatorAddress": "lumeravaloper1jyhgnwq426am46w9t3ps0x4uadyemly7e8d73n",
-    "validatorMoniker": "CoreNode",
-    "address": "84.247.139.25:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
       39.9611755,
       -82.9987942
     ],
@@ -256,6 +239,23 @@
   },
   {
     "latLng": [
+      48.974797,
+      8.176773
+    ],
+    "name": "Lauterbourg",
+    "continent": "Europe",
+    "country": "France",
+    "country_code": "FR",
+    "subdivision": "Paris",
+    "city": "Lauterbourg",
+    "supernodeAccount": "lumera1uq7lylrf0mrvrfq5s5uzk5my2f4562w2qxxftw",
+    "validatorAddress": "lumeravaloper1kqwk00kpez2fctrmj4l836f827fxs6yahrfdzy",
+    "validatorMoniker": "MaouamNodelab",
+    "address": "185.197.195.18:4444",
+    "p2pPort": "4445"
+  },
+  {
+    "latLng": [
       60.1698557,
       24.938379
     ],
@@ -273,15 +273,15 @@
   },
   {
     "latLng": [
-      49.1200802,
-      10.7318864
+      50.4750046,
+      12.3649754
     ],
-    "name": "Gunzenhausen",
+    "name": "Falkenstein",
     "continent": "Europe",
     "country": "Germany",
     "country_code": "DE",
     "subdivision": "Berlin",
-    "city": "Gunzenhausen",
+    "city": "Falkenstein",
     "supernodeAccount": "lumera1wmq0wu60a63cnx5fhln0m0zv6u5rq6dw0dhvhn",
     "validatorAddress": "lumeravaloper1uj98474n68v52ycwu25chs6ldj77svrtqyddca",
     "validatorMoniker": "Encapsulate",

@@ -115,7 +115,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <AppLink href="/">
             <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800">
               <div className="w-[104px] h-6 grid place-items-center">
-                <Image src="logo.svg" alt="Lumera" width={104} height={24} />
+                <Image src="/logo.svg" alt="Lumera" width={104} height={24} />
               </div>
             </div>
           </AppLink>
@@ -160,7 +160,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <AppLink href="/" className="text-lumera-teal hover:text-lumera-green w-full">
                   <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800 w-full">
                     <div className="w-[104px] h-6 grid place-items-center">
-                      <Image src="logo.svg" alt="Lumera" width={104} height={24} />
+                      <Image src="/logo.svg" alt="Lumera" width={104} height={24} />
                     </div>
                   </div>
                 </AppLink>

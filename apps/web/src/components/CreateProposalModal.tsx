@@ -18,7 +18,7 @@ import { Check as CheckCircle, Info } from 'lucide-react';
 import AppButton from '@/components/AppButton';
 import Tooltip from '@/components/Tooltip';
 import AppLink from '@/components/AppLink';
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import { formatNumber } from '@/utils/format';
 import { STEPS, proposalTypes, GOVERNANCE_STATS } from '@/hooks/useGovernances';
 
@@ -332,6 +332,13 @@ export default function CreateProposalModal({
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
           <div className={`withdraw-main-content relative p-3 ${className}`}>
+            <AppLoading
+              isLoading={isLoading}
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
             <div className='flex justify-between items-center'>
               <H3 className='text-lumera-label text-[32px]'>Create Proposal</H3>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseModal}>
@@ -339,7 +346,6 @@ export default function CreateProposalModal({
               </button>
             </div>
             <div className='mt-5 relative'>
-              <Loading isLoading={isLoading} />
               <div className="mb-6 overflow-x-auto w-full max-w-[87vw] sm:max-w-full">
                 <div className='min-w-[420px]'>
                   <div className="flex justify-between mb-1">

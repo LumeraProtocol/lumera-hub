@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import Skeleton from '@/components/Skeleton';
 import { RATE_VALUE } from '@/contants';
 import { IValidator } from '@/types';
@@ -177,7 +177,13 @@ export default function StakeModal({
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
           <div className='withdraw-main-content relative p-5'>
-            <Loading isLoading={isLoading} />
+            <AppLoading
+              isLoading={isLoading}
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
             <div className='flex justify-between items-center mb-4'>
               <h3 className='text-2xl font-bold text-white'>Stake LUME</h3>
               <button className='btn-close-modal cursor-pointer' onClick={onClose}><CircleX /></button>

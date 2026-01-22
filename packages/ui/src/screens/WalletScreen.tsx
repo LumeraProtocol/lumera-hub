@@ -3,7 +3,6 @@ import {
   XCircle,
   ArrowUpRight,
   Copy,
-  Coins,
   Send,
   ArrowDown,
   ArrowLeftRight,
@@ -14,7 +13,7 @@ import {
   Unlink,
   Star,
 } from 'lucide-react';
-import { YStack, H2, Paragraph, Card as TamaguiCard, H3 } from 'tamagui';
+import { YStack, Card as TamaguiCard, H3 } from 'tamagui';
 import ReactPaginate from 'react-paginate';
 import dayjs from 'dayjs';
 import { Wallet } from '@tamagui/lucide-icons';
@@ -22,13 +21,12 @@ import { toast } from 'react-toastify';
 
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import PastTime from '@/components/PastTime';
 import Card from '@/components/Card';
 import ReceiveModal from '@/components/ReceiveModal';
 import DelegateModal from '@/components/DelegateModal';
 import SendModal from '@/components/SendModal';
-import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
 import SectionTitle from '@/components/SectionTitle';
 import { AccountInfoData } from '@/hooks/useAccountInfo';
@@ -317,169 +315,204 @@ export const WalletScreen = ({
         <div className="flex justify-between gap-8 flex-col lg:flex-row">
           <Card className='w-full lg:w-2/3'>
             <SectionTitle className="mb-0">Total Wallet Balance</SectionTitle>
-            <div className='w-full flex justify-between'>
-              <p className="text-3xl sm:text-4xl xl:text-5xl font-bold text-white mt-2">
-                {isLoading ?
-                  <Skeleton /> : <>
+            {isLoading ?
+              <div className='relative min-h-[144px] mt-4'>
+                <AppLoading
+                  isLoading
+                  className="w-10 h-10 !border-2"
+                  iconWidth={20}
+                  iconHeight={20}
+                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                />
+              </div> :
+              <div>
+                <div className='w-full flex justify-between'>
+                  <p className="text-3xl sm:text-4xl xl:text-5xl font-bold text-white mt-2">
                     {formatTokenDisplay({
-                    amount: `${getTotalBalances()}`,
-                    denom: DENOM,
-                    }, false, '0,0.[00000]')} <span className='text-xl sm:text-2xl'>LUME</span>
-                  </>
-                }
-              </p>
-            </div>
-            <ul className='text-sm flex justify-between flex-wrap gap-x-4 gap-y-1 text-lumera-label mt-2'>
-              <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
-                <span className='inline-block'></span> <span>Available: </span>
-                {formatTokenDisplay({
-                  amount: `${getAvailableBalances()}`,
-                  denom: DENOM,
-                  }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
-              </li>
-              <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
-                <span className='inline-block'></span> <span>Staking: </span>
-                  {formatTokenDisplay({
-                  amount: `${getDelegations()}`,
-                  denom: DENOM,
-                  }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
-              </li>
-              <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
-                <span className='inline-block'></span> <span>Rewards: </span>
-                {formatTokenDisplay({
-                  amount: `${getRewards()}`,
-                  denom: DENOM,
-                  }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
-              </li>
-              <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
-                <span className='inline-block'></span> <span>Unstaking: </span>
-                {formatTokenDisplay({
-                  amount: `${getUnbonding()}`,
-                  denom: DENOM,
-                  }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
-              </li>
-            </ul>
-            <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className='btn-primary'>
-                <AppButton
-                  className="w-full cursor-pointer"
-                  onClick={() => onOpenModal('send')}
-                  disabled={isLoading}
-                >
-                  <Send className="w-5 h-5"/> Send
-                </AppButton>
+                      amount: `${getTotalBalances()}`,
+                      denom: DENOM,
+                    }, false, '0,0.[00000]')}<span className='text-xl sm:text-2xl'> LUME</span>
+                  </p>
+                </div>
+                <ul className='text-sm flex justify-between flex-wrap gap-x-4 gap-y-1 text-lumera-label mt-2'>
+                  <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
+                    <span className='inline-block'></span> <span>Available: </span>
+                    {formatTokenDisplay({
+                      amount: `${getAvailableBalances()}`,
+                      denom: DENOM,
+                      }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
+                  </li>
+                  <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
+                    <span className='inline-block'></span> <span>Staking: </span>
+                      {formatTokenDisplay({
+                      amount: `${getDelegations()}`,
+                      denom: DENOM,
+                      }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
+                  </li>
+                  <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
+                    <span className='inline-block'></span> <span>Rewards: </span>
+                    {formatTokenDisplay({
+                      amount: `${getRewards()}`,
+                      denom: DENOM,
+                      }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
+                  </li>
+                  <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
+                    <span className='inline-block'></span> <span>Unstaking: </span>
+                    {formatTokenDisplay({
+                      amount: `${getUnbonding()}`,
+                      denom: DENOM,
+                      }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
+                  </li>
+                </ul>
+                <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className='btn-primary'>
+                    <AppButton
+                      className="w-full cursor-pointer"
+                      onClick={() => onOpenModal('send')}
+                      disabled={isLoading}
+                    >
+                      <Send className="w-5 h-5"/> Send
+                    </AppButton>
+                  </div>
+                    <AppButton
+                      variant="secondary"
+                      className="w-full cursor-pointer"
+                      onClick={() => onOpenModal('receive')}
+                      disabled={isLoading}
+                    >
+                      <ArrowDown className="w-5 h-5"/> Receive
+                    </AppButton>
+                    <AppButton
+                        variant="secondary"
+                      className="w-full cursor-pointer"
+                      onClick={() => onOpenModal('stake')}
+                      disabled={isLoading}
+                    >
+                      <Layers className="w-5 h-5"/> Stake
+                    </AppButton>
+                </div>
               </div>
-                <AppButton
-                  variant="secondary"
-                  className="w-full cursor-pointer"
-                  onClick={() => onOpenModal('receive')}
-                  disabled={isLoading}
-                >
-                  <ArrowDown className="w-5 h-5"/> Receive
-                </AppButton>
-                <AppButton
-                    variant="secondary"
-                  className="w-full cursor-pointer"
-                  onClick={() => onOpenModal('stake')}
-                  disabled={isLoading}
-                >
-                  <Layers className="w-5 h-5"/> Stake
-                </AppButton>
-            </div>
+            }
           </Card>
           <Card className='w-full lg:w-1/3'>
             <SectionTitle className="mb-2">Your Address</SectionTitle>
-            <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg">
-              <span className="font-mono text-sm text-gray-300 truncate cursor-pointer" onClick={handleCopyAddress2}>{walletAddress}</span>
-              <button onClick={handleCopyAddress} className="ml-auto p-1 text-gray-400 hover:text-white transition-colors">
-                {!isCopied ?
-                  <Copy className="w-4 h-4"/> :
-                  <Check className="w-4 h-4"/>
-                }
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-2">This is your unique address. Use it to receive LUME and other assets.</p>
+            {!walletAddress ?
+              <div className='relative min-h-[144px] mt-4'>
+                <AppLoading
+                  isLoading
+                  className="w-10 h-10 !border-2"
+                  iconWidth={20}
+                  iconHeight={20}
+                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                />
+              </div> :
+              <>
+                <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg">
+                  <span className="font-mono text-sm text-gray-300 truncate cursor-pointer" onClick={handleCopyAddress2}>{walletAddress}</span>
+                  <button onClick={handleCopyAddress} className="ml-auto p-1 text-gray-400 hover:text-white transition-colors">
+                    {!isCopied ?
+                      <Copy className="w-4 h-4"/> :
+                      <Check className="w-4 h-4"/>
+                    }
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">This is your unique address. Use it to receive LUME and other assets.</p>
+              </>
+            }
           </Card>
         </div>
 
         <Card>
           <SectionTitle className="mb-4">Transaction History</SectionTitle>
           <div className="space-y-2 relative w-full">
-            <Loading isLoading={isLoading} />
-            <div className='w-full overflow-x-auto'>
-              <div className='w-full md:min-w-[968px] text-base'>
-                <div className="hidden md:grid grid-cols-12 gap-4 items-center p-4 text-gray-400 text-sm">
-                  <div className="col-span-2 flex items-center">
-                    Block Height
-                  </div>
-                  <div className="col-span-2">
-                    TX Hash
-                  </div>
-                  <div className="col-span-3 text-left whitespace-nowrap">
-                    Transaction Type
-                  </div>
-                  <div className="col-span-2 text-left whitespace-nowrap">
-                    Transaction Status
-                  </div>
-                  <div className="col-span-3 flex justify-end">
-                    Time
-                  </div>
-                </div>
-                {transactions.map((tx) => (
-                  <div key={tx.txhash} className="md:grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors mb-3 md:mb-0 text-base">
-                    <div className="w-full md:col-span-2">
-                      <div className="md:hidden font-semibold text-gray-500 mr-2">Block Height: </div>
-                      <div className='flex items-center mt-1 md:mt-0'>
-                        <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
-                          {getTxIcon(getMessages(tx.tx.body.messages))}
-                        </div>
-                        <AppLink href={`/block/${tx.height}`} className="text-white ml-2 hover:text-lumera-green">{tx.height}</AppLink>
+            {isLoading ?
+              <div className='relative min-h-44'>
+                <AppLoading
+                  isLoading
+                  className="w-10 h-10 !border-2"
+                  iconWidth={20}
+                  iconHeight={20}
+                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                />
+              </div> :
+              <>
+                <div className='w-full overflow-x-auto'>
+                  <div className='w-full md:min-w-[968px] text-base'>
+                    <div className="hidden md:grid grid-cols-12 gap-4 items-center p-4 text-gray-400 text-sm">
+                      <div className="col-span-2 flex items-center">
+                        Block Height
+                      </div>
+                      <div className="col-span-2">
+                        TX Hash
+                      </div>
+                      <div className="col-span-3 text-left whitespace-nowrap">
+                        Transaction Type
+                      </div>
+                      <div className="col-span-2 text-left whitespace-nowrap">
+                        Transaction Status
+                      </div>
+                      <div className="col-span-3 flex justify-end">
+                        Time
                       </div>
                     </div>
-                    <div className="w-full md:col-span-2 mt-3 md:mt-0">
-                      <div className="md:hidden font-semibold text-gray-500 mr-2">TX Hash: </div>
-                      <AppLink href={`/tx/${tx.txhash}`} className="text-white whitespace-nowrap hover:text-lumera-green">
-                        {formatAddress(tx.txhash, 10, -4)}
-                      </AppLink>
-                    </div>
-                    <div className="w-full md:col-span-3 text-left whitespace-nowrap mt-3 md:mt-0">
-                      <div className="md:hidden font-semibold text-gray-500 mr-2">Transaction Type: </div>
-                      {getMessages(tx.tx.body.messages)}
-                    </div>
-                    <div className="w-full md:col-span-2 text-left whitespace-nowrap mt-3 md:mt-0">
-                      <div className="md:hidden font-semibold text-gray-500 mr-2">Transaction Status: </div>
-                      <span className={`truncate relative w-fit rounded ${tx?.code === 0 ? 'text-lumera-teal' : 'text-red-500'}`}>
-                        {tx?.code === 0 ? 'Success' : 'Failed'}
-                      </span>
-                    </div>
-                    <div className="w-full md:col-span-3 text-sm text-gray-500 md:flex justify-end mt-3 md:mt-0">
-                      <div className="md:hidden font-semibold text-gray-500 mr-2">Time: </div>
-                      <span className="text-white pr-1 whitespace-nowrap">{dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}</span>
-                      (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm whitespace-nowrap' />)
-                    </div>
+                    {transactions.map((tx) => (
+                      <div key={tx.txhash} className="md:grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors mb-3 md:mb-0 text-base">
+                        <div className="w-full md:col-span-2">
+                          <div className="md:hidden font-semibold text-gray-500 mr-2">Block Height: </div>
+                          <div className='flex items-center mt-1 md:mt-0'>
+                            <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
+                              {getTxIcon(getMessages(tx.tx.body.messages))}
+                            </div>
+                            <AppLink href={`/block/${tx.height}`} className="text-white ml-2 hover:text-lumera-green">{tx.height}</AppLink>
+                          </div>
+                        </div>
+                        <div className="w-full md:col-span-2 mt-3 md:mt-0">
+                          <div className="md:hidden font-semibold text-gray-500 mr-2">TX Hash: </div>
+                          <AppLink href={`/tx/${tx.txhash}`} className="text-white whitespace-nowrap hover:text-lumera-green">
+                            {formatAddress(tx.txhash, 10, -4)}
+                          </AppLink>
+                        </div>
+                        <div className="w-full md:col-span-3 text-left whitespace-nowrap mt-3 md:mt-0">
+                          <div className="md:hidden font-semibold text-gray-500 mr-2">Transaction Type: </div>
+                          {getMessages(tx.tx.body.messages)}
+                        </div>
+                        <div className="w-full md:col-span-2 text-left whitespace-nowrap mt-3 md:mt-0">
+                          <div className="md:hidden font-semibold text-gray-500 mr-2">Transaction Status: </div>
+                          <span className={`truncate relative w-fit rounded ${tx?.code === 0 ? 'text-lumera-teal' : 'text-red-500'}`}>
+                            {tx?.code === 0 ? 'Success' : 'Failed'}
+                          </span>
+                        </div>
+                        <div className="w-full md:col-span-3 text-sm text-gray-500 md:flex justify-end mt-3 md:mt-0">
+                          <div className="md:hidden font-semibold text-gray-500 mr-2">Time: </div>
+                          <span className="text-white pr-1 whitespace-nowrap">{dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}</span>
+                          (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm whitespace-nowrap' />)
+                        </div>
+                      </div>
+                    ))}
+                    {!transactions?.length && !isLoading ?
+                      <div className="block items-center">
+                        <H3>No Transactions</H3>
+                      </div> : null
+                    }
                   </div>
-                ))}
-                {!transactions?.length && !isLoading ?
-                  <div className="block items-center">
-                    <H3>No Transactions</H3>
+                </div>
+                {totalTransactions > 1 ?
+                  <div className="paginate-wrapper pt-3">
+                    <ReactPaginate
+                      breakLabel="..."
+                      nextLabel=">"
+                      onPageChange={handlePageClick}
+                      pageRangeDisplayed={3}
+                      pageCount={totalTransactions}
+                      previousLabel="<"
+                      renderOnZeroPageCount={null}
+                      className='react-paginate'
+                    />
                   </div> : null
                 }
-              </div>
-            </div>
-            {totalTransactions > 1 ?
-              <div className="paginate-wrapper pt-3">
-                <ReactPaginate
-                  breakLabel="..."
-                  nextLabel=">"
-                  onPageChange={handlePageClick}
-                  pageRangeDisplayed={3}
-                  pageCount={totalTransactions}
-                  previousLabel="<"
-                  renderOnZeroPageCount={null}
-                  className='react-paginate'
-                />
-              </div> : null
+              </>
             }
+
           </div>
         </Card>
       </div>

@@ -1,5 +1,4 @@
 import {
-  H3,
   Button,
   Dialog,
   Label,
@@ -14,7 +13,7 @@ import {
   Check as CheckCircle,
 } from 'lucide-react';
 
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import { IValidator } from '@/types/validator';
 import AppLink from '@/components/AppLink';
 
@@ -175,7 +174,13 @@ export default function RedelegateModal({
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
           <div className='withdraw-main-content relative'>
-            <Loading isLoading={isRedelegateLoading} />
+            <AppLoading
+              isLoading={isRedelegateLoading}
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
             <div className='flex justify-between items-center'>
               <h3 className='text-2xl font-bold text-white'>Redelegate from Validator</h3>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseDailogChange}><CircleX /></button>
