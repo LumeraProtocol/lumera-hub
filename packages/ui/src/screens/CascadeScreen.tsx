@@ -38,7 +38,7 @@ import dayjs from 'dayjs';
 import { NetworkOverview, NodeData, EdgeData } from 'earth-map-3d-react';
 import ReactECharts from 'echarts-for-react';
 
-import Loading from '@/components/Loading';
+import Loading, { AppLoading } from '@/components/Loading';
 import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
@@ -294,10 +294,14 @@ export const CascadeScreen = ({
     return (
       <div className='w-full h-full relative flex items-center justify-center min-h-[82vh]'>
         <div className='inline-flex items-center gap-3 w-auto'>
-          <div>
-            <Loading isLoading className='relative !top-0 !left-0 !transform-none' />
-          </div>
-          <span>Loading ...</span>
+          <AppLoading
+            isLoading
+            className="w-10 h-10 !border-2"
+            iconWidth={20}
+            iconHeight={20}
+            containerClassName='relative w-10 h-10 z-50'
+          />
+          <span>Downloading SDK ...</span>
         </div>
       </div>
     );
@@ -687,18 +691,29 @@ const NetworkStorage = ({
     <Card elevate size="$4" bordered className='w-full'>
       <Card.Header padded>
         <SectionTitle className="mb-0">Network Storage</SectionTitle>
-        <div className='mt-2.5 h-36'>
-          <ReactECharts option={option} style={{ height: '144px', width: '100%' }} />
-        </div>
-        <div className='text-center'>
-          <div className='font-bold leading-[1.1]'>
-            {
-              isFetchSummaryLoading ? <Skeleton className='h-10 !w-40' /> : <>
-                <span className='text-4xl'>{networkStorage.networkStorage}</span>
-              </>
-            }
-          </div>
-          <div className='text-lumera-label'>Total data stored across all supernodes.</div>
+        <div className='mt-2.5'>
+          {isFetchSummaryLoading ?
+            <div className='min-h-[176px] mt-[10px] relative'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <>
+              <div className='h-36'>
+                <ReactECharts option={option} className='w-full' style={{ height: '144px' }} />
+              </div>
+              <div className='text-center'>
+                <div className='font-bold leading-[1.1]'>
+                  <span className='text-4xl'>{networkStorage.networkStorage}</span>
+                </div>
+                <div className='text-lumera-label'>Total data stored across all supernodes.</div>
+              </div>
+            </>
+          }
         </div>
       </Card.Header>
     </Card>
@@ -854,9 +869,7 @@ const YourUsage = ({
   fileSizes,
 }: IYourUsage) => {
   const { option, labels, totalSize } = getYourUsageChartOption(fileSizes);
-  if (!totalSize) {
 
-  }
   return (
     <Card elevate size="$4" bordered className='w-full'>
       <Card.Header padded className='h-full'>
@@ -864,7 +877,17 @@ const YourUsage = ({
         {address ?
           <>
             {
-              isMyFilesLoading || isMyFilesLoadMore ? <Skeleton className='min-h-[176px]' /> : (
+              isMyFilesLoading || isMyFilesLoadMore ? (
+                <div className='min-h-[176px] relative'>
+                  <AppLoading
+                    isLoading
+                    className="w-10 h-10 !border-2"
+                    iconWidth={20}
+                    iconHeight={20}
+                    containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                  />
+                </div>
+              ) : (
                 <div className='h-full'>
                   {totalSize ?
                     <>
@@ -908,6 +931,7 @@ interface IFiles {
   address: string;
   isMyFilesLoadMore: boolean;
   isAllDownloading: boolean;
+  isDownloading: boolean;
   isMyFilesLoading: boolean;
   fileSearch: string;
   selectedFiles: ISelectedFile[];
@@ -937,6 +961,7 @@ const Files = ({
   fileSearch,
   selectedFiles,
   isAllDownloading,
+  isDownloading,
   memoizedFilteredFiles,
   isMyFilesLoading,
   currentOffset,
@@ -976,12 +1001,12 @@ const Files = ({
                   className='tab-button cursor-pointer px-3'
                   onClick={() => handleTabChange('recentlyUploaded')}
                 >
-                  Recently Uploaded
+                  Public Files
                 </button>
               </li>
             </ul>
           </div> : <div className="w-full mb-6">
-            <SectionTitle className="mb-0">Recently Uploaded</SectionTitle>
+            <SectionTitle className="mb-0">Public Files</SectionTitle>
           </div>
         }
         {address && currentTab === 'myFiles' ? (
@@ -990,7 +1015,15 @@ const Files = ({
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <div className="flex items-center w-auto">
                   {isMyFilesLoadMore ? (
-                    <Skeleton className='min-w-[180px] !mb-0 min-h-11' containerClassName="min-h-11" />
+                    <div className='min-w-[180px] relative min-h-11 rounded-lg overflow-hidden'>
+                      <AppLoading
+                        isLoading
+                        className="w-8 h-8 !border-2"
+                        iconWidth={16}
+                        iconHeight={16}
+                        containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-8 h-8 z-50'
+                      />
+                    </div>
                   ) : (
                     <Popover size="$5" allowFlip stayInFrame offset={5} resize>
                       <Popover.Trigger asChild>
@@ -1087,172 +1120,183 @@ const Files = ({
                 </AppButton>
               </div>
             }
-            <div className='md:overflow-x-auto '>
-              <div className="space-y-2 md:w-[1130px]">
-                <table className='w-full border-separate border-spacing-y-2'>
-                  <thead className='hidden md:table-header-group text-gray-400 text-sm'>
-                    <tr>
-                      <th className='px-2 py-3'>
-                        <div className='flex items-start gap-1'>
-                          <div className='w-7'>
-                            <Checkbox
-                              id="checkAll"
-                              size="$4"
-                              checked={selectedFiles.length === memoizedFilteredFiles.length && memoizedFilteredFiles.length > 0}
-                              onCheckedChange={handleSelectAll}
-                            >
-                              <Checkbox.Indicator>
-                                <CheckIcon />
-                              </Checkbox.Indicator>
-                            </Checkbox>
+            {isMyFilesLoading ?
+              <div className='relative min-h-60'>
+                <AppLoading
+                  isLoading
+                  className="w-10 h-10 !border-2"
+                  iconWidth={20}
+                  iconHeight={20}
+                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                />
+              </div> :
+              <div className='md:overflow-x-auto '>
+                <div className="space-y-2 md:min-w-[1130px]">
+                  <table className='w-full border-separate border-spacing-y-2'>
+                    <thead className='hidden md:table-header-group text-gray-400 text-sm'>
+                      <tr>
+                        <th className='px-2 py-3'>
+                          <div className='flex items-start gap-1'>
+                            <div className='w-7'>
+                              <Checkbox
+                                id="checkAll"
+                                size="$4"
+                                checked={selectedFiles.length === memoizedFilteredFiles.length && memoizedFilteredFiles.length > 0}
+                                onCheckedChange={handleSelectAll}
+                              >
+                                <Checkbox.Indicator>
+                                  <CheckIcon />
+                                </Checkbox.Indicator>
+                              </Checkbox>
+                            </div>
+                            <span>Name</span>
                           </div>
-                          <span>Name</span>
-                        </div>
-                      </th>
-                      <th align='left' className='px-2 py-3'>Public</th>
-                      <th align='left' className='px-2 py-3'>Status</th>
-                      <th align='left' className='px-2 py-3'>TX ID</th>
-                      <th align='right' className='px-2 py-3'>Price</th>
-                      <th align='right' className='px-2 py-3'>Fee</th>
-                      <th align='right' className='px-2 py-3'>Size</th>
-                      <th align='left' className='px-2 py-3'>Last Modified</th>
-                      <th align='right' className='px-2 py-3'>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {!memoizedFilteredFiles?.length && !isMyFilesLoading && !isMyFilesLoadMore ? (
-                      <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
-                        <td colSpan={9} className='px-2 py-3'>
-                          <H3 className='text-2xl'>No files</H3>
-                        </td>
+                        </th>
+                        <th align='left' className='px-2 py-3'>Public</th>
+                        <th align='left' className='px-2 py-3'>Status</th>
+                        <th align='left' className='px-2 py-3'>TX ID</th>
+                        <th align='right' className='px-2 py-3'>Price</th>
+                        <th align='right' className='px-2 py-3'>Fee</th>
+                        <th align='right' className='px-2 py-3'>Size</th>
+                        <th align='left' className='px-2 py-3'>Last Modified</th>
+                        <th align='right' className='px-2 py-3'>Action</th>
                       </tr>
-                     ) : null }
-                    {isMyFilesLoading ? (
-                      <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
-                        <td colSpan={9} className='px-2 py-3'>
-                          <Skeleton type='list' className='min-h-8' count={3} />
-                        </td>
-                      </tr>
-                    ) : null }
-                    {!isMyFilesLoading && memoizedFilteredFiles.slice(currentOffset, currentOffset + ITEM_PER_PAGE).map((file, index) => {
-                      const isDisabledButton = selectedFileDownload.includes(file.actionID) || file.state !== 'ACTION_STATE_DONE' || file.size <= 0;
-                      const txId = file.txId;
-                      const lastModified = file.lastModified;
-                      const fee = file.fee;
-                      const isExpired = file.state === 'ACTION_STATE_EXPIRED';
-                      return (
-                        <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row text-base'>
-                          <td className='px-2 pt-3 pb-1 md:py-3'>
-                            <div className='flex items-center w-full gap-1'>
-                              <div className='w-7'>
-                                <Checkbox
-                                  id="checkAll"
-                                  size="$4"
-                                  checked={checkSelectedFile(selectedFiles, file)}
-                                  onCheckedChange={() => handleSelectFile(file)}
-                                >
-                                  <Checkbox.Indicator>
-                                    <CheckIcon />
-                                  </Checkbox.Indicator>
-                                </Checkbox>
-                              </div>
-                              <div className='w-auto'>
-                                <Tooltip>
-                                  <Tooltip.Trigger>
-                                    <div className='flex items-center gap-2 w-full'>
-                                      {getFileIcon(getSimplifiedType(file.type))}
-                                      <span className="font-medium text-white max-w-[180px] truncate">{file.name}</span>
-                                    </div>
-                                  </Tooltip.Trigger>
-                                  <Tooltip.Content
-                                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
-                                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
-                                    scale={1}
-                                    x={0}
-                                    y={0}
-                                    opacity={1}
-                                    animation={[
-                                      'quick',
-                                      {
-                                        opacity: {
-                                          overshootClamping: true,
-                                        },
-                                      },
-                                    ]}
-                                  >
-                                    <div className='text-white'>
-                                      {file.name}
-                                    </div>
-                                  </Tooltip.Content>
-                                </Tooltip>
-                              </div>
-                            </div>
-                          </td>
-                          <td className='px-2 py-1 md:py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2">Public: </span>
-                            <span>{file.isPublic ? 'Yes' : 'No'}</span>
-                          </td>
-                          <td className='px-2 py-1 md:py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2">Status: </span>
-                            <span className={`capitalize ${getStatusColor(file.state)}`}>{getFileStatus(file.state)}</span>
-                          </td>
-                          <td className='px-2 py-1 md:py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
-                            {txId && !isExpired ?
-                              <AppLink
-                                href={`/tx/${txId}`}
-                                className="font-mono text-lumera-teal hover:text-lumera-green truncate inline-flex items-center gap-1.5"
-                              >
-                                {formatAddress(txId, 6, -4)}
-                              </AppLink> : '--'
-                            }
-                          </td>
-                          <td className='md:text-right px-2 py-1 md:py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2">Price: </span>
-                            <span className=' whitespace-nowrap'>{!isExpired ? file.price : '0 LUME'}</span>
-                          </td>
-                          <td className='md:text-right px-2 py-1 md:py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2">Fee: </span>
-                            <span className=' whitespace-nowrap'>{!isExpired ? fee : '0 LUME'}</span>
-                          </td>
-                          <td className='md:text-right px-2 py-1 md:py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                            <span className=' whitespace-nowrap'>{formatBytes(!isExpired ? file.size : 0)}</span>
-                          </td>
-                          <td className='px-2 py-1 md:py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2 whitespace-nowrap">Last Modified: </span>
-                            {lastModified ?
-                            <span className='whitespace-nowrap'>
-                              {dayjs(lastModified).format('MM/DD/YYYY')} at {dayjs(lastModified).format('HH:mm:ss')}
-                            </span> : '--'}
-                          </td>
-                          <td className='md:text-right px-2 pt-1 pb-3 md:py-3'>
-                            <div className='flex md:justify-end w-full'>
-                              <AppButton
-                                variant="primary"
-                                className={`!px-4 !text-sm w-full md:w-auto max-w-40 !font-normal ${isDisabledButton ? 'cursor-default opacity-40' : ''}`}
-                                onClick={() => handleDownloadFile(file)}
-                                disabled={isDisabledButton}
-                              >
-                                <Download className="w-3 h-3"/>
-                              </AppButton>
-                            </div>
+                    </thead>
+                    <tbody>
+                      {!memoizedFilteredFiles?.length && !isMyFilesLoadMore ? (
+                        <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
+                          <td colSpan={9} className='px-2 py-3'>
+                            <H3 className='text-2xl'>No files</H3>
                           </td>
                         </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                      ) : null }
+                      {memoizedFilteredFiles.slice(currentOffset, currentOffset + ITEM_PER_PAGE).map((file, index) => {
+                        const isDisabledButton = selectedFileDownload.includes(file.actionID) || file.state !== 'ACTION_STATE_DONE' || file.size <= 0;
+                        const txId = file.txId;
+                        const lastModified = file.lastModified;
+                        const fee = file.fee;
+                        const isExpired = file.state === 'ACTION_STATE_EXPIRED';
+                        return (
+                          <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row text-base'>
+                            <td className='px-2 pt-3 pb-1 md:py-3'>
+                              <div className='flex items-center w-full gap-1'>
+                                <div className='w-7'>
+                                  <Checkbox
+                                    id="checkAll"
+                                    size="$4"
+                                    checked={checkSelectedFile(selectedFiles, file)}
+                                    onCheckedChange={() => handleSelectFile(file)}
+                                  >
+                                    <Checkbox.Indicator>
+                                      <CheckIcon />
+                                    </Checkbox.Indicator>
+                                  </Checkbox>
+                                </div>
+                                <div className='w-auto'>
+                                  <Tooltip>
+                                    <Tooltip.Trigger>
+                                      <div className='flex items-center gap-2 w-full'>
+                                        {getFileIcon(getSimplifiedType(file.type))}
+                                        <span className="font-medium text-white max-w-[180px] truncate">{file.name}</span>
+                                      </div>
+                                    </Tooltip.Trigger>
+                                    <Tooltip.Content
+                                      enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                      exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                      scale={1}
+                                      x={0}
+                                      y={0}
+                                      opacity={1}
+                                      animation={[
+                                        'quick',
+                                        {
+                                          opacity: {
+                                            overshootClamping: true,
+                                          },
+                                        },
+                                      ]}
+                                    >
+                                      <div className='text-white'>
+                                        {file.name}
+                                      </div>
+                                    </Tooltip.Content>
+                                  </Tooltip>
+                                </div>
+                              </div>
+                            </td>
+                            <td className='px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Public: </span>
+                              <span>{file.isPublic ? 'Yes' : 'No'}</span>
+                            </td>
+                            <td className='px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Status: </span>
+                              <span className={`capitalize ${getStatusColor(file.state)}`}>{getFileStatus(file.state)}</span>
+                            </td>
+                            <td className='px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
+                              {txId && !isExpired ?
+                                <AppLink
+                                  href={`/tx/${txId}`}
+                                  className="font-mono text-lumera-teal hover:text-lumera-green truncate inline-flex items-center gap-1.5"
+                                >
+                                  {formatAddress(txId, 6, -4)}
+                                </AppLink> : '--'
+                              }
+                            </td>
+                            <td className='md:text-right px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Price: </span>
+                              <span className=' whitespace-nowrap'>{!isExpired ? file.price : '0 LUME'}</span>
+                            </td>
+                            <td className='md:text-right px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Fee: </span>
+                              <span className=' whitespace-nowrap'>{!isExpired ? fee : '0 LUME'}</span>
+                            </td>
+                            <td className='md:text-right px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
+                              <span className=' whitespace-nowrap'>{formatBytes(!isExpired ? file.size : 0)}</span>
+                            </td>
+                            <td className='px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2 whitespace-nowrap">Last Modified: </span>
+                              {lastModified ?
+                              <span className='whitespace-nowrap'>
+                                {dayjs(lastModified).format('MM/DD/YYYY')} at {dayjs(lastModified).format('HH:mm:ss')}
+                              </span> : '--'}
+                            </td>
+                            <td className='md:text-right px-2 pt-1 pb-3 md:py-3'>
+                              <div className='flex md:justify-end w-full'>
+                                <AppButton
+                                  variant="primary"
+                                  className={`!px-4 !text-sm w-full md:w-auto max-w-40 !font-normal ${isDisabledButton ? 'cursor-default opacity-30 !bg-gray-700 hover:!bg-gray-700' : ''}`}
+                                  onClick={() => handleDownloadFile(file)}
+                                  disabled={isDisabledButton}
+                                >
+                                  <Download className="w-3 h-3"/>
+                                </AppButton>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            }
             {isMyFilesLoadMore && !isMyFilesLoading ?
               <div className='my-3'>Searching for more data</div> : null
             }
-            {isAllDownloading ?
+            {isAllDownloading || isDownloading ?
               <div className='fixed right-2 bottom-2 z-50'>
                 <Card elevate bordered className='w-full !overflow-hidden'>
                   <div className='px-5 py-3 flex items-center gap-2'>
-                    <Loading isLoading className='relative !top-0 !left-0 !transform-none' /> Downloading ....
+                    <AppLoading
+                      isLoading
+                      hideOverlay
+                      className="w-8 h-8 !border-2"
+                      iconWidth={18}
+                      iconHeight={18}
+                      containerClassName='relative w-8 h-8 z-50'
+                    /> Downloading ....
                   </div>
                 </Card>
               </div> : null
@@ -1275,116 +1319,120 @@ const Files = ({
         ) : null}
         {!address || currentTab === 'recentlyUploaded' ?
           <>
-            <div className='md:overflow-x-auto '>
-              <div className="space-y-2 max-w-[1130px] md:max-w-full md:min-w-[900px] md:w-full">
-                <table className='w-full border-separate border-spacing-y-2'>
-                  <thead className='hidden md:table-header-group text-gray-400 text-sm'>
-                    <tr>
-                      <th className='px-2 py-3'>
-                        <div className='flex items-start'>
-                          <span>Name</span>
-                        </div>
-                      </th>
-                      <th align='left' className='px-2 py-3'>TX ID</th>
-                      <th align='right' className='px-2 py-3'>Price</th>
-                      <th align='right' className='px-2 py-3'>Fee</th>
-                      <th align='right' className='px-2 py-3'>Size</th>
-                      <th align='left' className='px-2 py-3'>Last Modified</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {!recentlyUploaded?.length && !isRecentlyUploadedLoading ? (
-                      <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
-                        <td colSpan={9} className='px-2 py-3'>
-                          <H3 className='text-2xl'>No files</H3>
-                        </td>
+            {isRecentlyUploadedLoading ?
+              <div className='relative min-h-60'>
+                <AppLoading
+                  isLoading
+                  className="w-10 h-10 !border-2"
+                  iconWidth={20}
+                  iconHeight={20}
+                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                />
+              </div> :
+              <div className='md:overflow-x-auto '>
+                <div className="space-y-2 max-w-[1130px] md:max-w-full md:min-w-[900px] md:w-full">
+                  <table className='w-full border-separate border-spacing-y-2'>
+                    <thead className='hidden md:table-header-group text-gray-400 text-sm'>
+                      <tr>
+                        <th className='px-2 py-3'>
+                          <div className='flex items-start'>
+                            <span>Name</span>
+                          </div>
+                        </th>
+                        <th align='left' className='px-2 py-3'>TX ID</th>
+                        <th align='right' className='px-2 py-3'>Price</th>
+                        <th align='right' className='px-2 py-3'>Fee</th>
+                        <th align='right' className='px-2 py-3'>Size</th>
+                        <th align='left' className='px-2 py-3'>Last Modified</th>
                       </tr>
-                      ) : null }
-                    {isRecentlyUploadedLoading ? (
-                      <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
-                        <td colSpan={9} className='px-2 py-3'>
-                          <Skeleton type='list' className='min-h-8' count={3} />
-                        </td>
-                      </tr>
-                    ) : null }
-                    {!isRecentlyUploadedLoading && recentlyUploaded.map((file, index) => {
-                      const txId = file.txId;
-                      const lastModified = file.lastModified;
-                      const fee = file.fee;
-                      const isExpired = file.state === 'ACTION_STATE_EXPIRED';
-                      return (
-                        <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row text-base'>
-                          <td className='px-2 pt-3 pb-1 md:py-3'>
-                            <div className='flex items-start w-full gap-2'>
-                              <div className='w-auto'>
-                                <Tooltip>
-                                  <Tooltip.Trigger>
-                                    <div className='flex items-center gap-2 w-full'>
-                                      {getFileIcon(getSimplifiedType(file.type))}
-                                      <span className="font-medium text-white max-w-[180px] truncate">{file.name}</span>
-                                    </div>
-                                  </Tooltip.Trigger>
-                                  <Tooltip.Content
-                                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
-                                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
-                                    scale={1}
-                                    x={0}
-                                    y={0}
-                                    opacity={1}
-                                    animation={[
-                                      'quick',
-                                      {
-                                        opacity: {
-                                          overshootClamping: true,
-                                        },
-                                      },
-                                    ]}
-                                  >
-                                    <div className='text-white'>
-                                      {file.name}
-                                    </div>
-                                  </Tooltip.Content>
-                                </Tooltip>
-                              </div>
-                            </div>
-                          </td>
-                          <td className='px-2 py-1 md:py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
-                            {txId && !isExpired ?
-                              <AppLink
-                                href={`/tx/${txId}`}
-                                className="font-mono text-lumera-teal hover:text-lumera-green truncate inline-flex items-center gap-1.5"
-                              >
-                                {formatAddress(txId, 6, -4)}
-                              </AppLink> : '--'
-                            }
-                          </td>
-                          <td className='md:text-right px-2 py-1 md:py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2">Price: </span>
-                            <span className=' whitespace-nowrap'>{!isExpired ? file.price : '0 LUME'}</span>
-                          </td>
-                          <td className='md:text-right px-2 py-1 md:py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2">Fee: </span>
-                            <span className=' whitespace-nowrap'>{!isExpired ? fee : '0 LUME'}</span>
-                          </td>
-                          <td className='md:text-right px-2 py-1 md:py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                            <span className=' whitespace-nowrap'>{formatBytes(!isExpired ? file.size : 0)}</span>
-                          </td>
-                          <td className='px-2 py-1 md:py-3'>
-                            <span className="md:hidden font-semibold text-gray-500 mr-2 whitespace-nowrap">Last Modified: </span>
-                            {lastModified ?
-                            <span className='whitespace-nowrap'>
-                              {dayjs(lastModified).format('MM/DD/YYYY')} at {dayjs(lastModified).format('HH:mm:ss')}
-                            </span> : '--'}
+                    </thead>
+                    <tbody>
+                      {!recentlyUploaded?.length ? (
+                        <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
+                          <td colSpan={9} className='px-2 py-3'>
+                            <H3 className='text-2xl'>No files</H3>
                           </td>
                         </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                        ) : null }
+                      {recentlyUploaded.map((file, index) => {
+                        const txId = file.txId;
+                        const lastModified = file.lastModified;
+                        const fee = file.fee;
+                        const isExpired = file.state === 'ACTION_STATE_EXPIRED';
+                        return (
+                          <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row text-base'>
+                            <td className='px-2 pt-3 pb-1 md:py-3'>
+                              <div className='flex items-start w-full gap-2'>
+                                <div className='w-auto'>
+                                  <Tooltip>
+                                    <Tooltip.Trigger>
+                                      <div className='flex items-center gap-2 w-full'>
+                                        {getFileIcon(getSimplifiedType(file.type))}
+                                        <span className="font-medium text-white max-w-[180px] truncate">{file.name}</span>
+                                      </div>
+                                    </Tooltip.Trigger>
+                                    <Tooltip.Content
+                                      enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                      exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                      scale={1}
+                                      x={0}
+                                      y={0}
+                                      opacity={1}
+                                      animation={[
+                                        'quick',
+                                        {
+                                          opacity: {
+                                            overshootClamping: true,
+                                          },
+                                        },
+                                      ]}
+                                    >
+                                      <div className='text-white'>
+                                        {file.name}
+                                      </div>
+                                    </Tooltip.Content>
+                                  </Tooltip>
+                                </div>
+                              </div>
+                            </td>
+                            <td className='px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
+                              {txId && !isExpired ?
+                                <AppLink
+                                  href={`/tx/${txId}`}
+                                  className="font-mono text-lumera-teal hover:text-lumera-green truncate inline-flex items-center gap-1.5"
+                                >
+                                  {formatAddress(txId, 6, -4)}
+                                </AppLink> : '--'
+                              }
+                            </td>
+                            <td className='md:text-right px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Price: </span>
+                              <span className=' whitespace-nowrap'>{!isExpired ? file.price : '0 LUME'}</span>
+                            </td>
+                            <td className='md:text-right px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Fee: </span>
+                              <span className=' whitespace-nowrap'>{!isExpired ? fee : '0 LUME'}</span>
+                            </td>
+                            <td className='md:text-right px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
+                              <span className=' whitespace-nowrap'>{formatBytes(!isExpired ? file.size : 0)}</span>
+                            </td>
+                            <td className='px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2 whitespace-nowrap">Last Modified: </span>
+                              {lastModified ?
+                              <span className='whitespace-nowrap'>
+                                {dayjs(lastModified).format('MM/DD/YYYY')} at {dayjs(lastModified).format('HH:mm:ss')}
+                              </span> : '--'}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            }
           </> : null
         }
       </Card>
@@ -1419,6 +1467,7 @@ export const CascadeContent = React.memo(({
     isMyFilesLoadMore,
     selectedFileDownload,
     isAllDownloading,
+    isDownloading,
     currentOffset,
     recentlyUploaded,
     isRecentlyUploadedLoading,
@@ -1464,13 +1513,31 @@ export const CascadeContent = React.memo(({
         />
         <Card elevate size="$4" bordered className='w-full'>
           <Card.Header padded>
-            <SectionTitle className="mb-0">
-              {networkStorage.totalSupernode} Supernodes
+            <SectionTitle className="mb-0 flex gap-2">
+              <>
+                {isFetchSummaryLoading ?
+                <div className='relative w-6'>
+                  <AppLoading
+                    isLoading
+                    hideOverlay
+                    className="w-6 h-6 !border-2"
+                    iconWidth={10}
+                    iconHeight={10}
+                    containerClassName='w-6 h-6 z-50'
+                  />
+                </div> : networkStorage.totalSupernode}
+              </> Supernodes
             </SectionTitle>
             <div className='mt-4'>
               {isMarkerLoading ?
-                <div className='min-h-[200px]'>
-                  <Skeleton className='min-h-[190px] !mb-0' />
+                <div className='min-h-[176px] relative mt-1'>
+                  <AppLoading
+                    isLoading
+                    className="w-10 h-10 !border-2"
+                    iconWidth={20}
+                    iconHeight={20}
+                    containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                  />
                 </div> : <SuperNodeMap markers={markers} />
               }
             </div>
@@ -1478,7 +1545,14 @@ export const CascadeContent = React.memo(({
         </Card>
       </div>
       <div className='mt-6 w-full relative'>
-        <Loading isLoading={isUploading} />
+        <AppLoading
+          isLoading={isUploading}
+          className="w-10 h-10 !border-2"
+          iconWidth={20}
+          iconHeight={20}
+          containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+          overlayClassName='rounded-[9px]'
+        />
         <Dropzone onDrop={openActionFeeModal} multiple maxFiles={maxFiles} onDropRejected={handleDropRejected}>
           {({getRootProps, getInputProps}) => (
             <div
@@ -1510,6 +1584,7 @@ export const CascadeContent = React.memo(({
         fileSearch={fileSearch}
         selectedFiles={selectedFiles}
         isAllDownloading={isAllDownloading}
+        isDownloading={isDownloading}
         memoizedFilteredFiles={memoizedFilteredFiles}
         isMyFilesLoading={isMyFilesLoading}
         currentOffset={currentOffset}

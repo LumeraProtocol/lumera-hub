@@ -11,7 +11,7 @@ import { Coins } from 'lucide-react';
 
 import UnbondModal from '@/components/UnbondModal';
 import RedelegateModal from '@/components/RedelegateModal';
-import Skeleton from '@/components/Skeleton';
+import { AppLoading } from '@/components/Loading';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import AppButton from '@/components/AppButton';
 import SectionTitle from '@/components/SectionTitle';
@@ -349,9 +349,17 @@ export const StakingScreen = ({
               <Card elevate size="$4" bordered className='w-full'>
                 <Card.Header padded>
                   <SectionTitle className='mb-0'>Total Staked LUME</SectionTitle>
-                  <div className='text-[40px] font-bold text-white !leading-11'>
+                  <div className='text-[40px] font-bold text-white !leading-11 mt-2'>
                     {staking.isLoading ?
-                      <Skeleton /> : <>
+                      <div className='relative min-h-11'>
+                        <AppLoading
+                          isLoading
+                          className="w-10 h-10 !border-2"
+                          iconWidth={20}
+                          iconHeight={20}
+                          containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                        />
+                      </div> : <>
                         {staking.bondedTokens ? formatToken({
                           amount: `${staking.bondedTokens}`,
                           denom: staking.params.bond_denom,
@@ -364,9 +372,17 @@ export const StakingScreen = ({
               <Card elevate size="$4" bordered className='w-full'>
                 <Card.Header padded>
                   <SectionTitle className='mb-0'>Staking Rewards APR</SectionTitle>
-                  <div className='!text-lumera-green font-bold text-[40px] !leading-11'>
+                  <div className='!text-lumera-green font-bold text-[40px] !leading-11 mt-2'>
                     {staking.isAPRLoading ?
-                      <Skeleton /> : <>
+                      <div className='relative min-h-11'>
+                        <AppLoading
+                          isLoading
+                          className="w-10 h-10 !border-2"
+                          iconWidth={20}
+                          iconHeight={20}
+                          containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                        />
+                      </div> : <>
                         {staking.apr ? staking.apr.toFixed(2) : 0}%
                       </>
                     }
@@ -407,30 +423,44 @@ export const StakingScreen = ({
                   <div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6 mt-6 ">
                       <div>
-                        <p className="text-sm text-gray-400">My Staking Amount</p>
-                        <p className="text-2xl sm:text-3xl font-bold text-white">
-                            {staking.isLoading || isAccountInfoLoading ?
-                              <Skeleton /> : <>
-                                  {formatToken({
-                                  amount: `${getMyTotalStaked()}`,
-                                  denom: staking.params.bond_denom,
-                                }, true, '0,0.[000000]')}
-                              </>
-                            }
-                        </p>
+                        <p className="text-sm text-gray-400 mb-2">My Staking Amount</p>
+                        {staking.isLoading || isAccountInfoLoading ?
+                          <div className='relative min-h-9'>
+                            <AppLoading
+                              isLoading
+                              className="w-8 h-8 !border-3"
+                              iconWidth={16}
+                              iconHeight={16}
+                              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-8 h-8 z-50'
+                            />
+                          </div> :
+                          <p className="text-2xl sm:text-3xl font-bold text-white">
+                            {formatToken({
+                              amount: `${getMyTotalStaked()}`,
+                              denom: staking.params.bond_denom,
+                            }, true, '0,0.[000000]')}
+                          </p>
+                        }
                       </div>
                       <div>
-                        <p className="text-sm text-gray-400">Claimable Rewards</p>
-                        <p className="text-2xl sm:text-3xl font-bold text-teal-400">
+                        <p className="text-sm text-gray-400 mb-2">Claimable Rewards</p>
                           {staking.isLoading || isAccountInfoLoading ?
-                            <Skeleton /> : <>
+                            <div className='relative min-h-9'>
+                              <AppLoading
+                                isLoading
+                                className="w-8 h-8 !border-3"
+                                iconWidth={16}
+                                iconHeight={16}
+                                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-8 h-8 z-50'
+                              />
+                            </div> :
+                            <p className="text-2xl sm:text-3xl font-bold text-teal-400">
                               {formatToken({
                                 amount: `${getTotalRewards()}`,
                                 denom: staking.params.bond_denom,
                               }, true, '0,0.[000000]')}
-                            </>
+                            </p>
                           }
-                        </p>
                       </div>
                     </div>
                     <AppButton

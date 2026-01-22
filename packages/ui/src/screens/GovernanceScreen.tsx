@@ -19,7 +19,7 @@ import dayjs from 'dayjs';
 import { LandmarkIcon, Hourglass, BadgeCheck, List } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
 import CreateProposalModal from '@/components/CreateProposalModal';
 import Skeleton from '@/components/Skeleton';
@@ -165,7 +165,7 @@ export const GovernanceScreen = ({
     switch (status) {
       case 'PROPOSAL_STATUS_PASSED':
         return (
-          <div className='btn-green not-button'>
+          <div className='btn-green not-button cursor-default'>
             <Button className=''>
               <CheckCircle /> <span>Passed</span>
             </Button>
@@ -173,7 +173,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_DEPOSIT_PERIOD':
         return (
-          <div className='btn-yellow not-button'>
+          <div className='btn-yellow not-button cursor-default'>
             <Button>
               <Coins /> <span>Deposit</span>
             </Button>
@@ -181,7 +181,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_VOTING_PERIOD':
         return (
-          <div className='btn-emerald not-button'>
+          <div className='btn-emerald not-button cursor-default'>
             <Button>
               <Timer /> <span>Voting</span>
             </Button>
@@ -189,7 +189,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_UNSPECIFIED':
         return (
-          <div className='btn-purple not-button'>
+          <div className='btn-purple not-button cursor-default'>
             <Button>
               <Activity /> <span>Unspecified</span>
             </Button>
@@ -197,7 +197,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_REJECTED':
         return (
-          <div className='btn-red not-button'>
+          <div className='btn-red not-button cursor-default'>
             <Button>
               <Activity /> <span>Rejected</span>
             </Button>
@@ -205,7 +205,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_FAILED':
         return (
-          <div className='btn-red not-button'>
+          <div className='btn-red not-button cursor-default'>
             <Button>
               <Activity /> <span>Failed</span>
             </Button>
@@ -278,14 +278,19 @@ export const GovernanceScreen = ({
                 </div>
                 <div>
                   <H3 className='text-sm text-lumera-label !leading-none'>Total Proposals</H3>
-                  <div className='leading-none mt-1'>
-                    <span className='text-3xl font-bold text-white'>
-                      {isSumaryLoading ?
-                        <Skeleton /> : <>
-                          {formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })}
-                        </>
-                      }
-                    </span>
+                  <div className='leading-none mt-1 relative min-h-9'>
+                    {isSumaryLoading ?
+                      <AppLoading
+                        isLoading
+                        hideOverlay
+                        className="w-8 h-8 !border-2"
+                        iconWidth={18}
+                        iconHeight={18}
+                        containerClassName='relative w-8 h-8 z-50'
+                      /> :  <span className='text-3xl font-bold text-white'>
+                        {formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })}
+                      </span>
+                    }
                   </div>
                 </div>
               </div>
@@ -299,14 +304,19 @@ export const GovernanceScreen = ({
                 </div>
                 <div>
                   <H3 className='text-sm text-lumera-label !leading-none'>Passed</H3>
-                  <div className='leading-none mt-1'>
-                    <span className='text-3xl font-bold text-white'>
-                      {isSumaryLoading ?
-                        <Skeleton /> : <>
-                          {formatNumber(sumary?.passed || 0, { decimalsLength: 0 })}
-                        </>
-                      }
-                    </span>
+                  <div className='leading-none mt-1 relative min-h-9'>
+                    {isSumaryLoading ?
+                      <AppLoading
+                        isLoading
+                        hideOverlay
+                        className="w-8 h-8 !border-2"
+                        iconWidth={18}
+                        iconHeight={18}
+                        containerClassName='relative w-8 h-8 z-50'
+                      /> :  <span className='text-3xl font-bold text-white'>
+                        {formatNumber(sumary?.passed || 0, { decimalsLength: 0 })}
+                      </span>
+                    }
                   </div>
                 </div>
               </div>
@@ -320,14 +330,19 @@ export const GovernanceScreen = ({
                 </div>
                 <div>
                   <H3 className='text-sm text-lumera-label !leading-none'>Voting Period</H3>
-                  <div className='leading-none mt-1'>
-                    <span className='text-3xl font-bold text-white'>
-                      {isSumaryLoading ?
-                        <Skeleton /> : <>
-                          {formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days
-                        </>
-                      }
-                    </span>
+                  <div className='leading-none mt-1 relative min-h-9'>
+                    {isSumaryLoading ?
+                      <AppLoading
+                        isLoading
+                        hideOverlay
+                        className="w-8 h-8 !border-2"
+                        iconWidth={18}
+                        iconHeight={18}
+                        containerClassName='relative w-8 h-8 z-50'
+                      /> :  <span className='text-3xl font-bold text-white'>
+                        {formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days
+                      </span>
+                    }
                   </div>
                 </div>
               </div>
@@ -341,18 +356,22 @@ export const GovernanceScreen = ({
                 </div>
                 <div>
                   <H3 className='text-sm text-lumera-label !leading-none !whitespace-nowrap'>Deposit Required</H3>
-                  <div className='leading-none mt-1'>
+                  <div className='leading-none mt-1 relative min-h-9'>
                     {isSumaryLoading ?
-                      <Skeleton /> : <>
-                        <span className='text-3xl font-bold text-white'>
-                          {formatToken({
+                      <AppLoading
+                        isLoading
+                        hideOverlay
+                        className="w-8 h-8 !border-2"
+                        iconWidth={18}
+                        iconHeight={18}
+                        containerClassName='relative w-8 h-8 z-50'
+                      /> :  <span className='text-3xl font-bold text-white'>
+                        {formatToken({
                             amount: sumary.depositRequiredParam.amount,
                             denom: sumary.depositRequiredParam.denom,
                           }, false, '0,0')}<span className='text-xl ml-1'>LUME</span>
-                        </span>
-                      </>
+                      </span>
                     }
-
                   </div>
                 </div>
               </div>
@@ -361,115 +380,138 @@ export const GovernanceScreen = ({
         </div>
         <Card elevate size="$4" bordered className='w-full p-5 mt-4'>
           <div className='flex justify-between items-center governance-control relative'>
-            <Loading isLoading={isSumaryLoading} />
-            <div className='overflow-x-auto w-full'>
-              <ul className='tabs-secondary flex-nowrap min-w-[670px]'>
-                <li className={`tab-item ${!currentTab ? 'active' : ''}`}>
-                  <button
-                    className='tab-button whitespace-nowrap'
-                    onClick={() => onTabChange('')}
-                  >
-                    All ({formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })})
-                  </button>
-                </li>
-                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? 'active' : ''}`}>
-                  <button
-                    className='tab-button whitespace-nowrap'
-                    onClick={() => onTabChange('PROPOSAL_STATUS_DEPOSIT_PERIOD')}
-                  >
-                    Deposit ({formatNumber(sumary?.depositRequired || 0, { decimalsLength: 0 })})
-                  </button>
-                </li>
-                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_VOTING_PERIOD' ? 'active' : ''}`}>
-                  <button
-                    className='tab-button whitespace-nowrap'
-                    onClick={() => onTabChange('PROPOSAL_STATUS_VOTING_PERIOD')}
-                  >
-                    Voting ({formatNumber(sumary?.votingPeriod || 0, { decimalsLength: 0 })})
-                  </button>
-                </li>
-                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_PASSED' ? 'active' : ''}`}>
-                  <button
-                    className='tab-button whitespace-nowrap'
-                    onClick={() => onTabChange('PROPOSAL_STATUS_PASSED')}
-                  >
-                    Passed ({formatNumber(sumary?.passed || 0, { decimalsLength: 0 })})
-                  </button>
-                </li>
-                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_REJECTED' ? 'active' : ''}`}>
-                  <button
-                    className='tab-button whitespace-nowrap'
-                    onClick={() => onTabChange('PROPOSAL_STATUS_REJECTED')}
-                  >
-                    Rejected ({formatNumber(sumary?.rejected || 0, { decimalsLength: 0 })})
-                  </button>
-                </li>
-                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_FAILED' ? 'active' : ''}`}>
-                  <button
-                    className='tab-button whitespace-nowrap'
-                    onClick={() => onTabChange('PROPOSAL_STATUS_FAILED')}
-                  >
-                    Failed ({formatNumber(sumary?.failed || 0, { decimalsLength: 0 })})
-                  </button>
-                </li>
-              </ul>
-            </div>
-            <div className='input-wrapper hidden'>
-              <Input id="amount" placeholder="Search validator" className='input has-symbol' />
-              <span className='input-symbol'>
-                <Search />
-              </span>
-            </div>
-          </div>
-          <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 governance-card-wrapper relative'>
-            <Loading isLoading={isLoading} />
-            {!governances?.length && !isLoading ?
-              <div><H3 className='!leading-6'>No data</H3></div> : null
+            {isSumaryLoading ?
+              <div className='tabs-secondary flex-nowrap min-w-[670px] min-h-[48px] relative overflow-hidden'>
+                <AppLoading
+                  isLoading
+                  className="w-9 h-9 !border-2"
+                  iconWidth={18}
+                  iconHeight={18}
+                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-9 h-9 z-50'
+                />
+              </div> :
+              <>
+                <div className='overflow-x-auto w-full'>
+                  <ul className='tabs-secondary flex-nowrap min-w-[670px]'>
+                    <li className={`tab-item ${!currentTab ? 'active' : ''}`}>
+                      <button
+                        className='tab-button whitespace-nowrap'
+                        onClick={() => onTabChange('')}
+                      >
+                        All ({formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })})
+                      </button>
+                    </li>
+                    <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? 'active' : ''}`}>
+                      <button
+                        className='tab-button whitespace-nowrap'
+                        onClick={() => onTabChange('PROPOSAL_STATUS_DEPOSIT_PERIOD')}
+                      >
+                        Deposit ({formatNumber(sumary?.depositRequired || 0, { decimalsLength: 0 })})
+                      </button>
+                    </li>
+                    <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_VOTING_PERIOD' ? 'active' : ''}`}>
+                      <button
+                        className='tab-button whitespace-nowrap'
+                        onClick={() => onTabChange('PROPOSAL_STATUS_VOTING_PERIOD')}
+                      >
+                        Voting ({formatNumber(sumary?.votingPeriod || 0, { decimalsLength: 0 })})
+                      </button>
+                    </li>
+                    <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_PASSED' ? 'active' : ''}`}>
+                      <button
+                        className='tab-button whitespace-nowrap'
+                        onClick={() => onTabChange('PROPOSAL_STATUS_PASSED')}
+                      >
+                        Passed ({formatNumber(sumary?.passed || 0, { decimalsLength: 0 })})
+                      </button>
+                    </li>
+                    <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_REJECTED' ? 'active' : ''}`}>
+                      <button
+                        className='tab-button whitespace-nowrap'
+                        onClick={() => onTabChange('PROPOSAL_STATUS_REJECTED')}
+                      >
+                        Rejected ({formatNumber(sumary?.rejected || 0, { decimalsLength: 0 })})
+                      </button>
+                    </li>
+                    <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_FAILED' ? 'active' : ''}`}>
+                      <button
+                        className='tab-button whitespace-nowrap'
+                        onClick={() => onTabChange('PROPOSAL_STATUS_FAILED')}
+                      >
+                        Failed ({formatNumber(sumary?.failed || 0, { decimalsLength: 0 })})
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+                <div className='input-wrapper hidden'>
+                  <Input id="amount" placeholder="Search validator" className='input has-symbol' />
+                  <span className='input-symbol'>
+                    <Search />
+                  </span>
+                </div>
+              </>
             }
-            {governances?.map((item) => {
-              const { yesPercent, noPercent, noWithVetoPercent, abstainPercent } = getPoolPercent(item);
-              return (
-                <Card elevate size="$4" bordered className='w-full' key={item.id}>
-                  <div className='p-5'>
-                    <div className='flex justify-between items-start gap-6 governance-card-header'>
-                      <div className='flex flex-col'>
-                        <AppLink href={`/governance/${item.id}`}>
-                          <H3 className='!leading-6'>{item.title}</H3>
-                        </AppLink>
-                      </div>
-                      {getStatus(item.status)}
-                    </div>
-                    <div className='mt-5 min-h-12 text-base'>
-                      {item.summary}
-                    </div>
-                    <div className='mt-5'>
-                      <div className='status-bar-wrapper'>
-                        <div className='status-bar-yes' style={{ width: `${yesPercent}%` }}></div>
-                        <div className='status-bar-no' style={{ width: `${noPercent}%` }}></div>
-                        <div className='status-bar-no-with-veto' style={{ width: `${noWithVetoPercent}%` }}></div>
-                        <div className='status-bar-abstain' style={{ width: `${abstainPercent}%` }}></div>
-                      </div>
-                      <div className='flex justify-between gap-3 mt-2 status-bar-label text-base'>
-                        <div className='text-lumera-label'>
-                          <span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(1)}%
-                        </div>
-                        <div className='text-lumera-label'>
-                          <span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(1)}%
-                        </div>
-                        <div className='text-lumera-label'>
-                          <span className='text-lumera-red-light'>No With Veto</span>: {noWithVetoPercent.toFixed(1)}%
-                        </div>
-                        <div className='text-lumera-label'>
-                          <span className='text-lumera-sub-label'>Abstain</span>: {abstainPercent.toFixed(1)}%
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {getControls(item)}
-                </Card>
-              )
-            })}
           </div>
+
+          {isLoading ?
+            <div className='mt-6 min-h-52 relative'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 governance-card-wrapper relative'>
+              {!governances?.length && !isLoading ?
+                <div><H3 className='!leading-6'>No data</H3></div> : null
+              }
+              {governances?.map((item) => {
+                const { yesPercent, noPercent, noWithVetoPercent, abstainPercent } = getPoolPercent(item);
+                return (
+                  <Card elevate size="$4" bordered className='w-full' key={item.id}>
+                    <div className='p-5'>
+                      <div className='flex justify-between items-start gap-6 governance-card-header'>
+                        <div className='flex flex-col'>
+                          <AppLink href={`/governance/${item.id}`}>
+                            <H3 className='!leading-6'>{item.title}</H3>
+                          </AppLink>
+                        </div>
+                        {getStatus(item.status)}
+                      </div>
+                      <div className='mt-5 min-h-12 text-base'>
+                        {item.summary}
+                      </div>
+                      <div className='mt-5'>
+                        <div className='status-bar-wrapper'>
+                          <div className='status-bar-yes' style={{ width: `${yesPercent}%` }}></div>
+                          <div className='status-bar-no' style={{ width: `${noPercent}%` }}></div>
+                          <div className='status-bar-no-with-veto' style={{ width: `${noWithVetoPercent}%` }}></div>
+                          <div className='status-bar-abstain' style={{ width: `${abstainPercent}%` }}></div>
+                        </div>
+                        <div className='flex justify-between gap-3 mt-2 status-bar-label text-base'>
+                          <div className='text-lumera-label'>
+                            <span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(1)}%
+                          </div>
+                          <div className='text-lumera-label'>
+                            <span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(1)}%
+                          </div>
+                          <div className='text-lumera-label'>
+                            <span className='text-lumera-red-light'>No With Veto</span>: {noWithVetoPercent.toFixed(1)}%
+                          </div>
+                          <div className='text-lumera-label'>
+                            <span className='text-lumera-sub-label'>Abstain</span>: {abstainPercent.toFixed(1)}%
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {getControls(item)}
+                  </Card>
+                )
+              })}
+            </div>
+          }
           {nextKey ?
             (
               <div className='w-full flex justify-end mt-2'>

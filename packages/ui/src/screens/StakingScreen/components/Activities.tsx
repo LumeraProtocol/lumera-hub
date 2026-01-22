@@ -9,7 +9,7 @@ import {
 
 import AppLink from '@/components/AppLink';
 import PastTime from '@/components/PastTime';
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import { IRecentActivity } from '@/types';
 import { formatAddress } from '@/utils/format';
 import {
@@ -85,105 +85,115 @@ export default function Activities({
 
   return (
     <div className='relative'>
-      <Loading isLoading={activityData.isActivitiesLoading} />
-      <div className="overflow-x-auto">
-        <div className="min:min-w-5xl space-y-2">
-          <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-400 uppercase">
-            <div className="col-span-1">
-              <button
-                type="button"
-                onClick={() => handleSort('block')}
-                className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
-              >
-                Block
-                {renderSortIcon('block')}
-              </button>
+      {activityData.isActivitiesLoading ?
+        <div className='min-h-44 relative'>
+          <AppLoading
+            isLoading
+            className="w-10 h-10 !border-2"
+            iconWidth={20}
+            iconHeight={20}
+            containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+          />
+        </div> :
+        <div className="overflow-x-auto">
+          <div className="min:min-w-5xl space-y-2">
+            <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-400 uppercase">
+              <div className="col-span-1">
+                <button
+                  type="button"
+                  onClick={() => handleSort('block')}
+                  className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
+                >
+                  Block
+                  {renderSortIcon('block')}
+                </button>
+              </div>
+              <div className="col-span-3">
+                <button
+                  type="button"
+                  onClick={() => handleSort('hash')}
+                  className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
+                >
+                  TX Hash
+                  {renderSortIcon('hash')}
+                </button>
+              </div>
+              <div className="col-span-2">
+                <button
+                  type="button"
+                  onClick={() => handleSort('messages')}
+                  className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
+                >
+                  Messages
+                  {renderSortIcon('messages')}
+                </button>
+              </div>
+              <div className="col-span-2 text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSort('amount')}
+                  className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
+                >
+                  Amount
+                  {renderSortIcon('amount')}
+                </button>
+              </div>
+              <div className="col-span-4 text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSort('time')}
+                  className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
+                >
+                  Time
+                  {renderSortIcon('time')}
+                </button>
+              </div>
             </div>
-            <div className="col-span-3">
-              <button
-                type="button"
-                onClick={() => handleSort('hash')}
-                className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
-              >
-                TX Hash
-                {renderSortIcon('hash')}
-              </button>
-            </div>
-            <div className="col-span-2">
-              <button
-                type="button"
-                onClick={() => handleSort('messages')}
-                className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
-              >
-                Messages
-                {renderSortIcon('messages')}
-              </button>
-            </div>
-            <div className="col-span-2 text-right">
-              <button
-                type="button"
-                onClick={() => handleSort('amount')}
-                className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
-              >
-                Amount
-                {renderSortIcon('amount')}
-              </button>
-            </div>
-            <div className="col-span-4 text-right">
-              <button
-                type="button"
-                onClick={() => handleSort('time')}
-                className='cursor-pointer inline-flex items-center gap-1 whitespace-nowrap'
-              >
-                Time
-                {renderSortIcon('time')}
-              </button>
-            </div>
+            {!activityData.isActivitiesLoading && !activityData.activities.length ? (
+              <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
+                <div className='col-span-12'>
+                  <H3>No data</H3>
+                </div>
+              </div>
+            ) : null}
+            {activityData.activities.sort((a, b) => sortFunc(a, b)).map((tx) => (
+              <div key={tx.txhash} className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-base">
+                <div className="col-span-12 md:col-span-1 text-gray-300">
+                  <div className="md:hidden text-gray-500 mr-2">Block: </div>
+                  <AppLink
+                    href={`/block/${tx.height}`}
+                    className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
+                  >
+                    {tx.height}<ArrowUpRight className="w-3 h-3"/>
+                  </AppLink>
+                </div>
+                <div className="col-span-12 md:col-span-3">
+                  <div className="md:hidden text-gray-500 mr-2">TX Hash: </div>
+                  <AppLink
+                    href={`/tx/${tx.txhash}`}
+                    className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
+                  >
+                    {formatAddress(tx.txhash, 12, -6)}<ArrowUpRight className="w-3 h-3"/>
+                  </AppLink>
+                </div>
+                <div className="col-span-12 md:col-span-2 font-medium text-white">
+                  <div className="md:hidden text-gray-500 mr-2">Messages: </div>
+                  {getMessages(tx.tx.body.messages)}
+                </div>
+                <div className="col-span-12 md:col-span-2 md:text-right text-white">
+                  <div className="md:hidden text-gray-500 mr-2">Amount: </div>
+                  {mapAmount(tx.events)?.join(", ")}
+                </div>
+                <div className="col-span-12 md:col-span-4 text-gray-400 md:flex md:justify-end whitespace-nowrap">
+                  <div className="md:hidden text-gray-500 mr-2">Time: </div>
+                  {dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}
+                  (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm md:whitespace-nowrap' />)
+                </div>
+              </div>
+            ))}
           </div>
-          {!activityData.isActivitiesLoading && !activityData.activities.length ? (
-            <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-sm">
-              <div className='col-span-12'>
-                <H3>No data</H3>
-              </div>
-            </div>
-          ) : null}
-          {activityData.activities.sort((a, b) => sortFunc(a, b)).map((tx) => (
-            <div key={tx.txhash} className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-base">
-              <div className="col-span-12 md:col-span-1 text-gray-300">
-                <div className="md:hidden text-gray-500 mr-2">Block: </div>
-                <AppLink
-                  href={`/block/${tx.height}`}
-                  className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
-                >
-                  {tx.height}<ArrowUpRight className="w-3 h-3"/>
-                </AppLink>
-              </div>
-              <div className="col-span-12 md:col-span-3">
-                <div className="md:hidden text-gray-500 mr-2">TX Hash: </div>
-                <AppLink
-                  href={`/tx/${tx.txhash}`}
-                  className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
-                >
-                  {formatAddress(tx.txhash, 12, -6)}<ArrowUpRight className="w-3 h-3"/>
-                </AppLink>
-              </div>
-              <div className="col-span-12 md:col-span-2 font-medium text-white">
-                <div className="md:hidden text-gray-500 mr-2">Messages: </div>
-                {getMessages(tx.tx.body.messages)}
-              </div>
-              <div className="col-span-12 md:col-span-2 md:text-right text-white">
-                <div className="md:hidden text-gray-500 mr-2">Amount: </div>
-                {mapAmount(tx.events)?.join(", ")}
-              </div>
-              <div className="col-span-12 md:col-span-4 text-gray-400 md:flex md:justify-end whitespace-nowrap">
-                <div className="md:hidden text-gray-500 mr-2">Time: </div>
-                {dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}
-                (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm md:whitespace-nowrap' />)
-              </div>
-            </div>
-          ))}
         </div>
-      </div>
+      }
     </div>
   )
 }

@@ -3,8 +3,6 @@ import dayjs from 'dayjs';
 import ReactECharts from 'echarts-for-react';
 import {
   YStack,
-  H2,
-  Paragraph,
   Card,
   H3,
   H4,
@@ -33,7 +31,7 @@ import {
   Check as CheckCircle,
 } from 'lucide-react';
 
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import Skeleton from '@/components/Skeleton';
@@ -328,7 +326,13 @@ export const VoteModal = ({
               <Dialog.Title></Dialog.Title>
             </VisuallyHidden>
             <div className='vote-main-content relative'>
-              <Loading isLoading={isVoteLoading} />
+              <AppLoading
+                isLoading={isVoteLoading}
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
               <div className='flex justify-between items-center'>
                 <h3 className='text-2xl font-bold text-white'>Vote</h3>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
@@ -602,7 +606,13 @@ export const ClaimableRewardsModal = ({
               <Dialog.Title></Dialog.Title>
             </VisuallyHidden>
             <div className='withdraw-main-content relative max-w-[450px]'>
-              <Loading isLoading={isVoteLoading} />
+              <AppLoading
+                isLoading={isVoteLoading}
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
               <div className='flex justify-between items-center'>
                 <h3 className='text-2xl font-bold text-white'>Withdraw</h3>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
@@ -836,55 +846,58 @@ export const HomeScreen = ({
               <Card bordered className='w-full portfolio-overview'>
                 <Card.Header padded>
                   <SectionTitle className='mb-2'>Portfolio Overview</SectionTitle>
-                  <div className='mt-5 flex justify-between items-center chart-wrapper'>
-                    <div className='w-1/2 relative'>
-                      <Loading isLoading={loading} />
-                      <ReactECharts option={getOption({
-                        stacked: Number(formatTokenDisplay({
-                                amount: `${stacked}`,
-                                denom: DENOM,
-                              }, false, '0,0.[000000]')),
-                        liquid: Number(formatTokenDisplay({
-                                amount: `${liquid}`,
-                                denom: DENOM,
-                              }, false, '0,0.[000000]'))
-                        })} style={{ height: '200px', width: '100%' }} />
-                    </div>
-                    <div className='w-1/2'>
-                      <div>
-                        <div className='flex gap-1 items-center'>
-                          <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[0] }}></span>
-                          <SizableText className='text-lumera-label !font-bold'>Staked</SizableText>
-                        </div>
-                        <div className='text-2xl font-bold'>
-                          {loading ?
-                           <Skeleton /> : <>
-                              {formatTokenDisplay({
-                                amount: `${stacked}`,
-                                denom: DENOM,
-                              }, false, '0,0.[000000]')} <span className='text-lg whitespace-nowrap'>LUME</span>
-                            </>
-                          }
+                  <div className='mt-5 flex justify-between items-center chart-wrapper relative min-h-[200px]'>
+                    {loading ?
+                      <AppLoading
+                        isLoading
+                        hideOverlay
+                        className="w-10 h-10 !border-2"
+                        iconWidth={20}
+                        iconHeight={20}
+                        containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                      /> : (
+                        <>
+                          <div className='w-1/2 relative'>
+                            <ReactECharts option={getOption({
+                              stacked: Number(formatTokenDisplay({
+                                      amount: `${stacked}`,
+                                      denom: DENOM,
+                                    }, false, '0,0.[000000]')),
+                              liquid: Number(formatTokenDisplay({
+                                      amount: `${liquid}`,
+                                      denom: DENOM,
+                                    }, false, '0,0.[000000]'))
+                              })} style={{ height: '200px', width: '100%' }} />
                           </div>
-                      </div>
-                      <div className='mt-4'>
-                        <div className='flex gap-1 items-center'>
-                          <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[1] }}></span>
-                          <SizableText className='text-lumera-label !font-bold'>Liquid</SizableText>
-                        </div>
-                        <div className='text-2xl font-bold'>
-                          {loading ?
-                            <Skeleton /> :
-                            <>
-                              {formatTokenDisplay({
-                                amount: `${liquid}`,
-                                denom: DENOM,
-                              }, false, '0,0.[000000]')} <span className='text-lg whitespace-nowrap'>LUME</span>
-                            </>
-                          }
-                        </div>
-                      </div>
-                    </div>
+                          <div className='w-1/2'>
+                            <div>
+                              <div className='flex gap-1 items-center'>
+                                <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[0] }}></span>
+                                <SizableText className='text-lumera-label !font-bold'>Staked</SizableText>
+                              </div>
+                              <div className='text-2xl font-bold'>
+                                {formatTokenDisplay({
+                                  amount: `${stacked}`,
+                                  denom: DENOM,
+                                }, false, '0,0.[000000]')} <span className='text-lg whitespace-nowrap'>LUME</span>
+                                </div>
+                            </div>
+                            <div className='mt-4'>
+                              <div className='flex gap-1 items-center'>
+                                <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[1] }}></span>
+                                <SizableText className='text-lumera-label !font-bold'>Liquid</SizableText>
+                              </div>
+                              <div className='text-2xl font-bold'>
+                                {formatTokenDisplay({
+                                  amount: `${liquid}`,
+                                  denom: DENOM,
+                                }, false, '0,0.[000000]')} <span className='text-lg whitespace-nowrap'>LUME</span>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )
+                    }
                   </div>
                 </Card.Header>
               </Card>
@@ -893,17 +906,29 @@ export const HomeScreen = ({
                   <Card.Header padded>
                     <SectionTitle className='mb-2'>Total Balance</SectionTitle>
                     <div>
-                      <H4 className='!text-white !font-bold !text-3xl'>
-                        {loading ?
-                          <Skeleton /> :
-                          <>
-                            {formatTokenDisplay({
-                              amount: `${stacked + liquid}`,
-                              denom: DENOM,
-                            })} <span className='text-xl whitespace-nowrap'>LUME</span>
-                          </>
-                        }
-                      </H4>
+                      {loading ?
+                        <div className='min-h-16 relative mt-5'>
+                          <AppLoading
+                            isLoading
+                            hideOverlay
+                            className="w-10 h-10 !border-2"
+                            iconWidth={20}
+                            iconHeight={20}
+                            containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                          />
+                        </div> :
+                        <H4 className='!text-white !font-bold !text-3xl'>
+                          {loading ?
+                            <Skeleton /> :
+                            <>
+                              {formatTokenDisplay({
+                                amount: `${stacked + liquid}`,
+                                denom: DENOM,
+                              })} <span className='text-xl whitespace-nowrap'>LUME</span>
+                            </>
+                          }
+                        </H4>
+                      }
                     </div>
                   </Card.Header>
                 </Card>
@@ -911,19 +936,29 @@ export const HomeScreen = ({
                   <Card.Header padded>
                     <SectionTitle className='mb-2'>Claimable Rewards</SectionTitle>
                     <div>
-                      <H4 className='!text-lumera-green !font-bold !text-3xl'>
-                        {loading ? <Skeleton /> :
-                          <>
-                          {formatTokenDisplay({
-                            amount: `${getTotalRewards(accountInfo)}`,
-                            denom: DENOM,
-                          }, false, '0,0.[0000]')} <span className='text-xl whitespace-nowrap'>LUME</span>
-                          </>
-                        }
-                      </H4>
-                      <div className='mt-4 btn-full btn-secondary'>
-                        <Button onPress={() => handleToggleClaimModal(true)} disabled={isClaimLoading || loading}>Claim All Rewards</Button>
-                      </div>
+                      {loading ?
+                        <div className='min-h-16 relative mt-5'>
+                          <AppLoading
+                            isLoading
+                            hideOverlay
+                            className="w-10 h-10 !border-2"
+                            iconWidth={20}
+                            iconHeight={20}
+                            containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                          />
+                        </div> :
+                        <>
+                           <H4 className='!text-lumera-green !font-bold !text-3xl'>
+                            {formatTokenDisplay({
+                              amount: `${getTotalRewards(accountInfo)}`,
+                              denom: DENOM,
+                            }, false, '0,0.[0000]')} <span className='text-xl whitespace-nowrap'>LUME</span>
+                          </H4>
+                          <div className='mt-4 btn-full btn-secondary'>
+                            <Button onPress={() => handleToggleClaimModal(true)} disabled={isClaimLoading || loading}>Claim All Rewards</Button>
+                          </div>
+                        </>
+                      }
                     </div>
                   </Card.Header>
                 </Card>
@@ -944,31 +979,40 @@ export const HomeScreen = ({
                     </div>
                     <div className='mt-5'>
                       {isProposalLoading ?
-                        <Skeleton /> :
+                        <div className='min-h-[284px] relative'>
+                          <AppLoading
+                            isLoading
+                            hideOverlay
+                            className="w-10 h-10 !border-2"
+                            iconWidth={20}
+                            iconHeight={20}
+                            containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                          />
+                        </div> :
                         <>
                           {!isProposalLoading && proposals?.length <= 0 ?
                             <div className='flex items-center justify-center min-h-28 md:min-h-[284px] my-2'>
                               <H3 className='text-2xl'>No active proposals</H3>
-                            </div> : null
-                          }
-                          {proposals?.map((item) => (
-                            <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
-                              <div className='flex flex-col'>
-                                <AppLink href={`/governance/${item.id}`}>
-                                  <Text>{item.title}</Text>
-                                </AppLink>
-                                <SizableText className='text-sm text-lumera-label'>{item.proposer}</SizableText>
-                              </div>
-                              {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
-                                <div className='btn-primary'>
-                                  <Button onPress={() => handleVotePress(item)}>Vote Now</Button>
-                                </div> : null
-                              }
+                            </div> : <div className='min-h-[284px]'>
+                              {proposals?.map((item) => (
+                                <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
+                                  <div className='flex flex-col'>
+                                    <AppLink href={`/governance/${item.id}`}>
+                                      <Text>{item.title}</Text>
+                                    </AppLink>
+                                    <SizableText className='text-sm text-lumera-label'>{item.proposer}</SizableText>
+                                  </div>
+                                  {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
+                                    <div className='btn-primary'>
+                                      <Button onPress={() => handleVotePress(item)}>Vote Now</Button>
+                                    </div> : null
+                                  }
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          }
                         </>
                       }
-
                     </div>
                   </Card.Header>
                 </Card>
@@ -979,7 +1023,16 @@ export const HomeScreen = ({
                     <SectionTitle className='mb-2'>Recent Activity</SectionTitle>
                     <div className='mt-5'>
                       {isRecentActivityLoading ?
-                        <Skeleton /> :
+                        <div className='min-h-[296px] relative'>
+                          <AppLoading
+                            isLoading
+                            hideOverlay
+                            className="w-10 h-10 !border-2"
+                            iconWidth={20}
+                            iconHeight={20}
+                            containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                          />
+                        </div> :
                         <>
                           {recentActivities.slice(0, 6)?.map((item) => getActivity(item))}
                         </>

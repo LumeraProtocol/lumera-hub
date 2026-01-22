@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
-import Loading from '@/components/Loading';
+import Loading, { AppLoading } from '@/components/Loading';
 import SectionTitle from '@/components/SectionTitle';
 import useAppRouter from '@/hooks/useAppRouter';
 import { IValidator } from '@/types';
@@ -172,8 +172,14 @@ export default function AllValidators({
         </div>
         <div className='mt-5 relative'>
           {staking.isLoading || !staking?.params?.bond_denom ? (
-              <div className='my-2 min-h-11'>
-                <Loading isLoading />
+              <div className='relative my-2 min-h-60'>
+                <AppLoading
+                  isLoading
+                  className="w-10 h-10 !border-2"
+                  iconWidth={20}
+                  iconHeight={20}
+                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                />
               </div>
             ) : (
               <>

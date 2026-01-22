@@ -101,7 +101,7 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
       <div className='text-sm text-lumera-label mt-1.5'>Create your wallet from one of the wallet service providers below.</div>
       <div className='flex flex-col gap-2 mt-10 get-started'>
         <Card elevate size="$4" bordered className='overflow-hidden'>
-          <Link href="https://www.keplr.app?utm_source=hub.testnet.lumera.io&utm_medium=website" target='_blank' rel='noopener noreferrer'>
+          <Link href="https://www.keplr.app?referrer=hub.testnet.lumera.io" target='_blank'>
             <div className='flex gap-3 p-4 relative items-stretch keplr-wallet'>
               <div className='relative z-30'>
                 <h3 className='text-base'>Keplr Wallet</h3>
@@ -116,7 +116,7 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
           </Link>
         </Card>
         <Card elevate size="$4" bordered className='overflow-hidden'>
-          <Link href="https://www.leapwallet.io?utm_source=hub.testnet.lumera.io&utm_medium=website" target='_blank' rel='noopener noreferrer'>
+          <Link href="https://www.leapwallet.io?referrer=hub.testnet.lumera.io" target='_blank'>
             <div className='flex gap-3 p-4 relative items-stretch leap-wallet'>
               <div>
                 <h3 className='text-base'>Leap Wallet</h3>
@@ -131,7 +131,7 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
           </Link>
         </Card>
         <Card elevate size="$4" bordered className='overflow-hidden'>
-          <Link href="https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf?hl=en&utm_source=hub.testnet.lumera.io&utm_medium=website" target='_blank' rel='noopener noreferrer'>
+          <Link href="https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf?hl=en&referrer=hub.testnet.lumera.io" target='_blank'>
             <div className='flex gap-3 p-4 relative items-stretch cosmostation-wallet'>
               <div className='min-w-0'>
                 <h3 className='text-base'>Cosmostation Wallet</h3>

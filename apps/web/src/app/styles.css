@@ -479,6 +479,7 @@
 .get-started .cosmostation-wallet::after {
   background-image: url(../../public/img/cosmostation.jpg);
 }
+
 @keyframes slideBackForth {
   050% {
     width: 100%;

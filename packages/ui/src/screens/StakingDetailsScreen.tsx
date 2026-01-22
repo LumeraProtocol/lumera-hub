@@ -5,7 +5,7 @@ import { fromHex, toBase64, fromBase64, toHex, fromBech32 } from '@cosmjs/encodi
 import { decodeTxRaw } from '@cosmjs/proto-signing';
 import ReactPaginate from 'react-paginate';
 
-import Loading from '@/components/Loading';
+import Loading, { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import DelegateModal from '@/components/DelegateModal';
 import SectionTitle from '@/components/SectionTitle';
@@ -172,15 +172,26 @@ const LatestBlocks = () => {
             <span className='inline-block w-3.5 h-3.5 bg-red-600 rounded-full mr-1'></span> Missed: {missed}
           </li>
         </ul>
-        <div className="grid grid-cols-10 md:grid-cols-20 gap-1.5 mt-3 relative">
-          <Loading isLoading={isFetchBlockLoading} />
-          {blocks?.map((block) => (
-            <div
-              key={block.last_commit.height}
-              onClick={() => redirect(`/block/${block.last_commit.height}`)}
-              className={`h-6 rounded cursor-pointer ${getBlockStatus(block) === 'signed' ? 'bg-green-500' : getBlockStatus(block) === 'proposed' ? 'bg-sky-500' : 'bg-red-500'} transition-colors duration-500`} title={`Block ${block.last_commit.height}: ${getBlockStatus(block)}`} />
+        {isFetchBlockLoading ?
+          <div className="relative min-h-28 w-full mt-3">
+            <AppLoading
+              isLoading
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
+          </div> :
+          <div className="grid grid-cols-10 md:grid-cols-20 gap-1.5 mt-3 relative">
+            {blocks?.map((block) => (
+              <div
+                key={block.last_commit.height}
+                onClick={() => redirect(`/block/${block.last_commit.height}`)}
+                className={`h-6 rounded cursor-pointer ${getBlockStatus(block) === 'signed' ? 'bg-green-500' : getBlockStatus(block) === 'proposed' ? 'bg-sky-500' : 'bg-red-500'} transition-colors duration-500`} title={`Block ${block.last_commit.height}: ${getBlockStatus(block)}`}
+              />
             ))}
           </div>
+        }
       </div>
       </Card.Header>
     </Card>
@@ -317,9 +328,20 @@ export const StakingDetailsScreen = ({
           <Card bordered className='w-full portfolio-overview'>
             <Card.Header padded>
               <SectionTitle className='mb-0'>Description</SectionTitle>
-              <div className='mt-3 text-lumera-label text-base'>
-                {validator?.description?.details}
-              </div>
+              {isLoading ?
+                <div className="relative min-h-6 w-full mt-3">
+                  <AppLoading
+                    isLoading
+                    className="w-5 h-5 !border-2"
+                    iconWidth={12}
+                    iconHeight={12}
+                    containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-5 h-5 z-50'
+                  />
+                </div> :
+                <div className='mt-3 text-lumera-label text-base'>
+                  {validator?.description?.details}
+                </div>
+              }
             </Card.Header>
           </Card>
           <LatestBlocks />
@@ -328,76 +350,98 @@ export const StakingDetailsScreen = ({
           <Card bordered className='w-full portfolio-overview'>
             <Card.Header padded>
             <SectionTitle className='mb-0'>Details</SectionTitle>
-            <div className='mt-3 text-base'>
-              {validator?.description?.website ?
-                <div className='flex justify-between items-center gap-4 w-full'>
-                  <span className='text-lumera-label'>Website</span>
-                  <a href={validator?.description?.website} target='_blank' rel='noopener noreferrer' className='text-lumera-label hover:text-lumera-teal flex gap-0.5 items-center truncate'>
-                    <span>{validator?.description?.website?.split('://')[1]}</span> <ArrowUpRight className="w-3 h-3"/>
-                  </a>
-                </div> : null
-              }
-              {validator?.description?.security_contact ?
-                <div className='flex justify-between items-center gap-4 w-full mt-4'>
-                  <span className='text-lumera-label'>Security Contact</span>
-                  <a href={`mailto:${validator?.description?.security_contact}`} className='text-lumera-label hover:text-lumera-teal flex gap-0.5 items-center'>
-                    {validator?.description?.security_contact}
-                  </a>
-                </div> : null
-              }
-              <div className='w-full mt-4'>
-                <span className='text-lumera-label'>Wallet Address</span>
-                <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg mt-2">
-                  <span className="font-mono text-sm text-gray-300 truncate">{validatorAddress}</span>
-                  <button onClick={handleCopyAddress} className="ml-auto p-1 text-gray-400 hover:text-white transition-colors">
-                      {!isCopied ?
-                        <Copy className="w-4 h-4"/> :
-                        <Check className="w-4 h-4"/>
-                      }
-                  </button>
+            {isLoading ?
+              <div className="relative min-h-40 w-full mt-3">
+                <AppLoading
+                  isLoading
+                  className="w-10 h-10 !border-2"
+                  iconWidth={20}
+                  iconHeight={20}
+                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                />
+              </div> :
+              <div className='mt-3 text-base'>
+                {validator?.description?.website ?
+                  <div className='flex justify-between items-center gap-4 w-full'>
+                    <span className='text-lumera-label'>Website</span>
+                    <a href={validator?.description?.website} target='_blank' rel='noopener noreferrer' className='text-lumera-label hover:text-lumera-teal flex gap-0.5 items-center truncate'>
+                      <span>{validator?.description?.website?.split('://')[1]}</span> <ArrowUpRight className="w-3 h-3"/>
+                    </a>
+                  </div> : null
+                }
+                {validator?.description?.security_contact ?
+                  <div className='flex justify-between items-center gap-4 w-full mt-4'>
+                    <span className='text-lumera-label'>Security Contact</span>
+                    <a href={`mailto:${validator?.description?.security_contact}`} className='text-lumera-label hover:text-lumera-teal flex gap-0.5 items-center'>
+                      {validator?.description?.security_contact}
+                    </a>
+                  </div> : null
+                }
+                <div className='w-full mt-4'>
+                  <span className='text-lumera-label'>Wallet Address</span>
+                  <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg mt-2">
+                    <span className="font-mono text-sm text-gray-300 truncate">{validatorAddress}</span>
+                    <button onClick={handleCopyAddress} className="ml-auto p-1 text-gray-400 hover:text-white transition-colors">
+                        {!isCopied ?
+                          <Copy className="w-4 h-4"/> :
+                          <Check className="w-4 h-4"/>
+                        }
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            }
             </Card.Header>
           </Card>
           <Card bordered className='w-full portfolio-overview mt-5'>
             <Card.Header padded>
               <SectionTitle className='mb-0'>Statistics</SectionTitle>
-              <div className='mt-3 text-base'>
-                <div className='flex justify-between items-center gap-4 w-full'>
-                  <span className='text-lumera-label'>Total Staked</span>
-                  <a href='#' target='_blank' rel='noopener noreferrer' className='text-white flex gap-0.5 items-center'>
-                    {formatToken({
-                      amount: `${validator?.tokens}`,
-                      denom: DENOM,
-                    }, true, '0,0.[00]')}
-                  </a>
+              {isLoading ?
+                <div className="relative min-h-40 w-full mt-3">
+                  <AppLoading
+                    isLoading
+                    className="w-10 h-10 !border-2"
+                    iconWidth={20}
+                    iconHeight={20}
+                    containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                  />
+                </div> :
+                <div className='mt-3 text-base'>
+                  <div className='flex justify-between items-center gap-4 w-full'>
+                    <span className='text-lumera-label'>Total Staked</span>
+                    <a href='#' target='_blank' rel='noopener noreferrer' className='text-white flex gap-0.5 items-center'>
+                      {formatToken({
+                        amount: `${validator?.tokens}`,
+                        denom: DENOM,
+                      }, true, '0,0.[00]')}
+                    </a>
+                  </div>
+                  <div className='flex justify-between items-center gap-4 w-full mt-3'>
+                    <span className='text-lumera-label'>Commission</span>
+                    <span className='text-white flex gap-0.5 items-center'>
+                      {formatCommissionRate(validator?.commission?.commission_rates?.rate)}
+                    </span>
+                  </div>
+                  <div className='flex justify-between items-center gap-4 w-full mt-3'>
+                    <span className='text-lumera-label'>Voting Power</span>
+                    <span className='text-white flex gap-0.5 items-center'>
+                      {calculatePercent(validator?.delegator_shares, totalPower)}
+                    </span>
+                  </div>
+                  <div className='flex justify-between items-center gap-4 w-full mt-3'>
+                    <span className='text-lumera-label'>Uptime</span>
+                    <span className='text-lumera-green flex gap-0.5 items-center'>
+                      {uptimePercent}
+                    </span>
+                  </div>
+                  <div className='flex justify-between items-center gap-4 w-full mt-3'>
+                    <span className='text-lumera-label'>Status</span>
+                    <span className='text-lumera-green-light flex gap-0.5 items-center'>
+                      {validator?.status?.replace('BOND_STATUS_', '')}
+                    </span>
+                  </div>
                 </div>
-                <div className='flex justify-between items-center gap-4 w-full mt-3'>
-                  <span className='text-lumera-label'>Commission</span>
-                  <span className='text-white flex gap-0.5 items-center'>
-                    {formatCommissionRate(validator?.commission?.commission_rates?.rate)}
-                  </span>
-                </div>
-                <div className='flex justify-between items-center gap-4 w-full mt-3'>
-                  <span className='text-lumera-label'>Voting Power</span>
-                  <span className='text-white flex gap-0.5 items-center'>
-                    {calculatePercent(validator?.delegator_shares, totalPower)}
-                  </span>
-                </div>
-                <div className='flex justify-between items-center gap-4 w-full mt-3'>
-                  <span className='text-lumera-label'>Uptime</span>
-                  <span className='text-lumera-green flex gap-0.5 items-center'>
-                    {uptimePercent}
-                  </span>
-                </div>
-                <div className='flex justify-between items-center gap-4 w-full mt-3'>
-                  <span className='text-lumera-label'>Status</span>
-                  <span className='text-lumera-green-light flex gap-0.5 items-center'>
-                    {validator?.status?.replace('BOND_STATUS_', '')}
-                  </span>
-                </div>
-              </div>
+              }
             </Card.Header>
           </Card>
         </div>
@@ -406,57 +450,69 @@ export const StakingDetailsScreen = ({
         <Card.Header padded>
           <SectionTitle className='mb-0'>Delegators ({ totalDelegators })</SectionTitle>
           <div className='mt-3 relative'>
-            <Loading isLoading={isFetchDelegatorsLoading} />
-            <div className="overflow-x-auto">
-              <div className="md:min-w-[500px] space-y-2">
-                <div className="hidden md:grid grid-cols-10 gap-4 px-4 py-3 text-sm font-semibold text-gray-400">
-                  <div className="col-span-5">Delegator Address</div>
-                  <div className="col-span-2 text-right">Stake Share</div>
-                  <div className="col-span-3 text-right">Amount</div>
-                </div>
-                {delegators.map((item, i) => {
-                  const tx = decodeTxRaw(fromBase64(item.tx));
-                  return (
-                    <div key={i} className="flex flex-col md:grid grid-cols-10 gap-2 md:gap-4 p-3 bg-gray-900/40 rounded-lg text-sm">
-                      <div className="w-full md:col-span-5 font-mono text-gray-300 truncate">
-                        <div className="md:hidden font-semibold text-gray-500 mr-2">Delegator Address: </div>
-                        {mapDelegators(tx?.body?.messages).map((d) => (
-                          <AppLink href={`/account/${d}`} key={d}>
-                            {d}
-                          </AppLink>
-                        ))}
-                      </div>
-                      <div className="w-full md:col-span-2 md:text-right text-indigo-400">
-                        <div className="md:hidden font-semibold text-gray-500 mr-2">Stake Share: </div>
-                        <span>{getStakeShare(item)}</span>
-                      </div>
-                      <div className="w-full md:col-span-3 md:text-right font-mono text-white">
-                        <div className="md:hidden font-semibold text-gray-500 mr-2">Amount: </div>
-                        <span>{mapEvents(item.tx_result.events)}</span>
-                      </div>
-                    </div>
-                  )
-                })}
-                {delegators?.length <= 0 ?
-                  <div>No delegators</div> : null
-                }
-
-              </div>
-            </div>
-            {totalPages > 1 ?
-              <div className="flex justify-end w-full paginate-wrapper mt-3">
-                <ReactPaginate
-                  breakLabel="..."
-                  nextLabel=">"
-                  onPageChange={onPageClick}
-                  pageRangeDisplayed={2}
-                  marginPagesDisplayed={1}
-                  pageCount={totalPages}
-                  previousLabel="<"
-                  renderOnZeroPageCount={null}
-                  className='react-paginate'
+            {isFetchDelegatorsLoading ?
+              <div className="relative min-h-60 w-full mt-3">
+                <AppLoading
+                  isLoading
+                  className="w-10 h-10 !border-2"
+                  iconWidth={20}
+                  iconHeight={20}
+                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
                 />
-              </div> : null
+              </div> :
+              <>
+                <div className="overflow-x-auto">
+                  <div className="md:min-w-[500px] space-y-2">
+                    <div className="hidden md:grid grid-cols-10 gap-4 px-4 py-3 text-sm font-semibold text-gray-400">
+                      <div className="col-span-5">Delegator Address</div>
+                      <div className="col-span-2 text-right">Stake Share</div>
+                      <div className="col-span-3 text-right">Amount</div>
+                    </div>
+                    {delegators.map((item, i) => {
+                      const tx = decodeTxRaw(fromBase64(item.tx));
+                      return (
+                        <div key={i} className="flex flex-col md:grid grid-cols-10 gap-2 md:gap-4 p-3 bg-gray-900/40 rounded-lg text-sm">
+                          <div className="w-full md:col-span-5 font-mono text-gray-300 truncate">
+                            <div className="md:hidden font-semibold text-gray-500 mr-2">Delegator Address: </div>
+                            {mapDelegators(tx?.body?.messages).map((d) => (
+                              <AppLink href={`/account/${d}`} key={d}>
+                                {d}
+                              </AppLink>
+                            ))}
+                          </div>
+                          <div className="w-full md:col-span-2 md:text-right text-indigo-400">
+                            <div className="md:hidden font-semibold text-gray-500 mr-2">Stake Share: </div>
+                            <span>{getStakeShare(item)}</span>
+                          </div>
+                          <div className="w-full md:col-span-3 md:text-right font-mono text-white">
+                            <div className="md:hidden font-semibold text-gray-500 mr-2">Amount: </div>
+                            <span>{mapEvents(item.tx_result.events)}</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {delegators?.length <= 0 ?
+                      <div>No delegators</div> : null
+                    }
+
+                  </div>
+                </div>
+                {totalPages > 1 ?
+                  <div className="flex justify-end w-full paginate-wrapper mt-3">
+                    <ReactPaginate
+                      breakLabel="..."
+                      nextLabel=">"
+                      onPageChange={onPageClick}
+                      pageRangeDisplayed={2}
+                      marginPagesDisplayed={1}
+                      pageCount={totalPages}
+                      previousLabel="<"
+                      renderOnZeroPageCount={null}
+                      className='react-paginate'
+                    />
+                  </div> : null
+                }
+              </>
             }
           </div>
         </Card.Header>
