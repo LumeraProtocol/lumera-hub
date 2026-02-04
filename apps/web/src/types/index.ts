@@ -285,6 +285,7 @@ export type ViewId =
   | "nfts"
   | "wallet"
   | "block"
+  | "user"
 
 export interface IFullBlock {
   block: IBlock;

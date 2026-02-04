@@ -55,6 +55,7 @@ const VIEW_TITLES: Record<ViewId, string> = {
   nfts: "NFTs",
   wallet: "Wallet",
   block: "Block Details",
+  user: '',
 }
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -221,15 +222,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <h1 className="text-base sm:text-2xl font-bold">{viewTitle || VIEW_TITLES[activeView]}</h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6 gap-2">
+              {message ?
+                <Tooltip icon={<TriangleAlert className="text-yellow-400" />} content={<div className="text-white">Failed to fetch</div>} /> : null
+              }
               {!address ?
                 <div className="hidden sm:block">
                   <GetStarted />
                 </div> : null
               }
               {/* Placeholder for wallet actions */}
-              {message ?
-                <Tooltip icon={<TriangleAlert className="text-yellow-400" />} content={<div className="text-white">Failed to fetch</div>} /> : null
-              }
               <ConnectWallet />
               <WalletModalComponent />
             </div>

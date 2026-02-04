@@ -57,4 +57,5 @@ module.exports = withTamagui({
   experimental: {
     esmExternals: 'loose',
   },
+  serverExternalPackages: ["typeorm", "sqlite3"],
 })

@@ -1,3 +1,5 @@
+"use client";
+
 import axios from 'axios';
 
 import { REST_AI_URL } from '@/contants/network';

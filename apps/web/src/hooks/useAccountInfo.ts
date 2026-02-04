@@ -4,6 +4,8 @@ import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
+import useTracking from '@/hooks/useTracking';
+import { ActionType } from '@/types/ActionType';
 
 export interface Coin {
   denom: string;
@@ -62,6 +64,7 @@ export const getTotalRewards = (accountInfo: AccountInfoData | null) => {
 
 const useAccountInfo = () => {
   const { address, getClient } = useWalletConnect();
+  const { trackQualifyingAction } = useTracking();
 
   const [accountInfo, setAccountInfo] = useState<AccountInfoData | null>({
     balances: [],
@@ -184,6 +187,11 @@ const useAccountInfo = () => {
       const result = await client.signAndBroadcast(claimInfo.senderAddress, msgWithdraw, fee, claimInfo.memo);
       if (result?.transactionHash) {
         setTransactionHash(result.transactionHash);
+        trackQualifyingAction({
+          actionType: ActionType.CLAIM_ALL_REWARDS,
+          walletAdress: address,
+          txHash: result.transactionHash,
+        });
       }
     } catch (e) {
       // console.error('API Error:', e);
