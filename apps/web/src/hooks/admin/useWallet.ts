@@ -23,7 +23,7 @@ const useWallet = () => {
     setLoading(true);
     try {
       const param = val ? `&search=${val}` : '';
-      const { data } = await instance.getExternal(`/api/admin/wallets?page=${page}&limit=${ITEM_PER_PAGE}${param}`);
+      const { data } = await instance.getExternal(`/api/admin/trackings?page=${page}&limit=${ITEM_PER_PAGE}${param}`);
       setWallets(data.items);
       setTotalPages(data.pagination?.totalPages);
     } catch (error) {

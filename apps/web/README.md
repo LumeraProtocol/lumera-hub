@@ -4,7 +4,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 ## Database
 ### Run all pending migrations
 ```bash
-npm run migration:run
+pnpm run typeorm schema:sync
 ```
 
 ### Create a new migration

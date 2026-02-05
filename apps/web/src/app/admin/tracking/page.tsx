@@ -22,12 +22,12 @@ export default function AdminWallet() {
   } = useWallet();
 
   useEffect(() => {
-    document.title = 'Wallet Admin - Lumera Hub';
+    document.title = 'Active Hub Users - Lumera Hub';
     dispatch(setCurrentPath({
-      currentPath: '/admin//wallet',
+      currentPath: '/admin/tracking',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Wallet',
+      viewTitle: 'Active Hub Users',
     }));
   }, []);
 

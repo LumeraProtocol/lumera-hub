@@ -286,6 +286,7 @@ export type ViewId =
   | "wallet"
   | "block"
   | "user"
+  | "tracking"
 
 export interface IFullBlock {
   block: IBlock;
@@ -343,4 +344,18 @@ export interface IActionDetail {
   timestamp: string;
   transactions: ITransaction[];
   type: string;
+}
+
+export const VIEW_TITLES: Record<ViewId, string> = {
+  dashboard: "Dashboard",
+  staking: "Staking",
+  governance: "Governance",
+  cascade: "Cascade",
+  sense: "Sense",
+  inference: "Inference",
+  nfts: "NFTs",
+  wallet: "Wallet",
+  block: "Block Details",
+  user: 'Users',
+  tracking: "Active Hub Users",
 }

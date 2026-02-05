@@ -1,23 +1,24 @@
 // app/api/admin/wallets/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+// import jwt from 'jsonwebtoken';
 
 import { getDataSource } from '@/lib/data-source';
+import { ActionType } from '@/types/ActionType';
 
 export async function GET(req: NextRequest) {
-  // API protected
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-  }
+  // // API protected
+  // const authHeader = req.headers.get('authorization');
+  // if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  //   return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  // }
 
-  const token = authHeader.split(' ')[1];
-  try {
-    jwt.verify(token, process.env.JWT_SECRET!);
-  } catch {
-    return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
-  }
+  // const token = authHeader.split(' ')[1];
+  // try {
+  //   jwt.verify(token, process.env.JWT_SECRET!);
+  // } catch {
+  //   return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
+  // }
 
   try {
     const dataSource = await getDataSource();
@@ -45,7 +46,7 @@ export async function GET(req: NextRequest) {
           timestamp,
           tx_hash,
           ROW_NUMBER() OVER (PARTITION BY wallet_address ORDER BY timestamp DESC) AS rn
-        FROM action
+        FROM action WHERE action_type != '${ActionType.USER_LOGIN}'
       ) AS lastAction
         ON lastAction.wallet_address = wallet.address
         AND lastAction.rn = 1

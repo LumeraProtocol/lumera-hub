@@ -3,27 +3,14 @@ import Image from 'next/image';
 import {
   BarChart2,
   Wallet,
-  Contact
+  // Contact
 } from '@tamagui/lucide-icons';
 
 import AppLink from '@/components/AppLink';
 import AppButton from '@/components/AppButton';
 import { useSelector, useDispatch } from '@/redux/hooks';
 import { setActiveView } from '@/redux/app.slice';
-import { ViewId } from '@/types';
-
-export const VIEW_TITLES: Record<ViewId, string> = {
-  dashboard: "Dashboard",
-  staking: "Staking",
-  governance: "Governance",
-  cascade: "Cascade",
-  sense: "Sense",
-  inference: "Inference",
-  nfts: "NFTs",
-  wallet: "Wallet",
-  block: "Block Details",
-  user: '',
-}
+import { ViewId, VIEW_TITLES } from '@/types';
 
 export type TNaxItems = {
   id: ViewId;
@@ -38,8 +25,8 @@ interface IAdminLayout {
 
 export const NAV_ITEMS: TNaxItems[] = [
   { id: "dashboard", label: "Dashboard", url: "/admin", icon: <BarChart2 /> },
-  { id: "wallet", label: "Wallet", url: "/admin//wallet", icon: <Wallet /> },
-  { id: "user", label: "User", url: "/admin/user", icon: <Contact /> },
+  { id: "tracking", label: "Active Hub Users", url: "/admin/tracking", icon: <Wallet /> },
+  // { id: "user", label: "User", url: "/admin/user", icon: <Contact /> },
 ];
 
 export default function AdminLayout({ children }: IAdminLayout) {

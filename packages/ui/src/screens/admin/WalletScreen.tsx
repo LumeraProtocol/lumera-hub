@@ -35,7 +35,7 @@ export const WalletScreen = ({
       <Card elevate size="$4" bordered className='w-full'>
         <Card.Header padded>
           <div className='flex justify-between w-full'>
-            <SectionTitle className="mb-2">Wallet</SectionTitle>
+            <SectionTitle className="mb-2">Active Hub Users</SectionTitle>
             <div className="relative w-full sm:w-auto">
               <div className='input-wrapper'>
                 <Input
@@ -70,9 +70,9 @@ export const WalletScreen = ({
                     <th align='left' className='px-2 py-3'>No.</th>
                     <th align='left' className='px-2 py-3'>Wallet Address</th>
                     <th align='left' className='px-2 py-3'>First Connected</th>
-                    <th align='left' className='px-2 py-3'>Last connected</th>
+                    <th align='left' className='px-2 py-3'>Last Connected</th>
                     <th align='left' className='px-2 py-3'>Period</th>
-                    <th align='left' className='px-2 py-3'>Action</th>
+                    {/* <th align='left' className='px-2 py-3'>Action</th> */}
                   </tr>
                 </thead>
                 <tbody>
@@ -96,9 +96,9 @@ export const WalletScreen = ({
                           className='text-sm md:whitespace-nowrap'
                         />
                       </td>
-                      <td className='px-2 py-3'>
+                      {/* <td className='px-2 py-3'>
                         <AppLink href={`/admin/action/${wallet.address}`}>Details</AppLink>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                   {!wallets.length ?

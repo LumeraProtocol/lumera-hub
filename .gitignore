@@ -40,4 +40,6 @@ yarn-error.log*
 #.tamagui/
 
 # database file
-database.sqlite
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
