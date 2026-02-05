@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "update:block": "tsx src/scripts/sync-block.ts",
     "typeorm": "tsx -r dotenv/config ./node_modules/typeorm/cli.js --dataSource src/lib/data-source.ts",
     "migration:generate": "pnpm run typeorm migration:generate",
     "migration:run": "pnpm typeorm migration:run",
