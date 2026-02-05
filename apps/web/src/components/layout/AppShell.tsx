@@ -25,7 +25,7 @@ import { useSelector, useDispatch } from '@/redux/hooks';
 import { setActiveView, setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import { setError } from '@/redux/error.slice';
 
-import { ViewId } from '@/types';
+import { ViewId, VIEW_TITLES } from '@/types';
 
 type TNaxItems = {
   id: ViewId;
@@ -44,18 +44,6 @@ export const NAV_ITEMS: TNaxItems[] = [
   { id: "inference", label: "Inference", url: "/inference", icon: <BrainCircuit /> },
   // { id: "nfts", label: "NFTs", url: "/nfts", icon: <ImageIcon /> },
 ]
-
-const VIEW_TITLES: Record<ViewId, string> = {
-  dashboard: "Dashboard",
-  staking: "Staking",
-  governance: "Governance",
-  cascade: "Cascade",
-  sense: "Sense",
-  inference: "Inference",
-  nfts: "NFTs",
-  wallet: "Wallet",
-  block: "Block Details",
-}
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch();
@@ -221,15 +209,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <h1 className="text-base sm:text-2xl font-bold">{viewTitle || VIEW_TITLES[activeView]}</h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6 gap-2">
+              {message ?
+                <Tooltip icon={<TriangleAlert className="text-yellow-400" />} content={<div className="text-white">Failed to fetch</div>} /> : null
+              }
               {!address ?
                 <div className="hidden sm:block">
                   <GetStarted />
                 </div> : null
               }
               {/* Placeholder for wallet actions */}
-              {message ?
-                <Tooltip icon={<TriangleAlert className="text-yellow-400" />} content={<div className="text-white">Failed to fetch</div>} /> : null
-              }
               <ConnectWallet />
               <WalletModalComponent />
             </div>

@@ -1,57 +1,71 @@
 import React, { useState, useEffect } from 'react';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import duration from 'dayjs/plugin/duration';
+
+dayjs.extend(relativeTime);
+dayjs.extend(duration);
+dayjs.locale('vi');
 
 interface PastTimeProps {
-  pastDate: Date;
+  pastDate: Date | string;
   className?: string;
 }
 
 const PastTime: React.FC<PastTimeProps> = ({ pastDate, className = '' }) => {
-  const [relativeTime, setRelativeTime] = useState<string>('');
+  const [display, setDisplay] = useState('');
 
   useEffect(() => {
-    const updateTime = () => {
-      const now = new Date().getTime();
-      const diff = now - pastDate.getTime();
+    const target = dayjs(pastDate);
+    const now = dayjs();
 
-      let result = '';
-      if (diff < 0) {
-        const days = Math.ceil(diff * -1 / (1000 * 60 * 60 * 24));
-        if (days === 1) {
-          result = 'in a day';
-        } else {
-          result = 'in the future';
-        }
-      } else {
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        if (days > 0) {
-          result = `${days} day${days > 1 ? 's' : ''} ago`;
-        } else {
-          const hours = Math.floor(diff / (1000 * 60 * 60));
-          if (hours > 0) {
-            result = `${hours} hour${hours > 1 ? 's' : ''} ago`;
-          } else {
-            const minutes = Math.floor(diff / (1000 * 60));
-            if (minutes > 0) {
-              result = `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
-            } else {
-              result = 'a few seconds ago';
-            }
-          }
-        }
+    const update = () => {
+      const diffMs = now.diff(target);
+      const diffDays = now.diff(target, 'day');
+
+      if (diffMs < 0) {
+        setDisplay('in the future');
+        return;
       }
 
-      setRelativeTime(result);
+      if (diffDays < 30) {
+        setDisplay(target.fromNow());
+        return;
+      }
+
+      const diffMonths = now.diff(target, 'month');
+      const diffYears = now.diff(target, 'year');
+
+      let text = '';
+
+      if (diffYears >= 10) {
+        // ≥ 10 years → full date
+        text = target.format('DD/MM/YYYY');
+      } else if (diffYears >= 1) {
+        // 1–9 years
+        text = target.from(now, true) + ' ago';
+      } else if (diffMonths >= 1) {
+        text = target.from(now, true) + ' ago';
+      } else {
+        text = target.fromNow();
+      }
+
+      setDisplay(text);
     };
 
-    updateTime(); // Initial calculation
-
-    // Update every minute for accuracy
-    const interval = setInterval(updateTime, 60000);
+    update();
+    const interval = setInterval(update, 60000);
 
     return () => clearInterval(interval);
   }, [pastDate]);
 
-  return <span className={className} title={pastDate.toLocaleDateString()}>{relativeTime}</span>;
+  const fullDate = dayjs(pastDate).format('DD/MM/YYYY HH:mm:ss');
+
+  return (
+    <span className={className} title={fullDate}>
+      {display}
+    </span>
+  );
 };
 
 export default PastTime;

@@ -3,7 +3,7 @@ import './styles.css'
 import React from 'react'
 import Script from 'next/script'
 import ClientRoot from './providers/client-root'
-import AppShell from '@/components/layout/AppShell'
+import LayoutWrapper from '@/components/layout/LayoutWrapper'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const googleAnalysicsKey = process.env.NEXT_PUBLIC_GOOGLE_ANALYSICS_KEY;
@@ -59,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           height="0" width="0" style={{ display:'none', visibility:'hidden' }}></iframe></noscript> : null
         }
         <ClientRoot>
-          <AppShell>{children}</AppShell>
+          <LayoutWrapper>{children}</LayoutWrapper>
         </ClientRoot>
       </body>
     </html>

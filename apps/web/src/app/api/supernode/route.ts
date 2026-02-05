@@ -10,6 +10,7 @@ import * as instance from '@/utils/api';
 import { isValidIPv4 } from '@/utils/helpers';
 import { IMarker } from '@/hooks/useCascade';
 import { supernodeListSchema, SupernodeItem } from '@/app/api/supernode/validators';
+import { checkRateLimit, getClientIP, RATE_LIMIT_WINDOW_MS } from '@/lib/rate-limit';
 
 const resolveDns = util.promisify(dns.resolve4);
 
@@ -17,33 +18,7 @@ const bodySchema = z.object({
   supernodes: supernodeListSchema,
 });
 
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // ~ 1 minute
 const MAX_REQUESTS = Number(process.env.NEXT_PUBLIC_MAX_REQUESTS || 10); // ~ 10/minute
-
-function getClientIP(request: Request): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-         request.headers.get('x-real-ip') ||
-         '127.0.0.1';
-}
-
-function checkRateLimit(ip: string, maxRequests: number, windowMs: number): boolean {
-  const key = `${ip}:${windowMs}`;
-  const now = Date.now();
-  const userData = rateLimitMap.get(key) || { count: 0, resetTime: now + windowMs };
-
-  if (now > userData.resetTime) {
-    // Reset counter
-    userData.count = 1;
-    userData.resetTime = now + windowMs;
-  } else {
-    userData.count++;
-  }
-
-  rateLimitMap.set(key, userData);
-
-  return userData.count <= maxRequests;
-}
 
 const filePath = path.join(process.cwd(), 'data', 'supernodes.json');
 

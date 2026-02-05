@@ -38,7 +38,7 @@ import dayjs from 'dayjs';
 import { NetworkOverview, NodeData, EdgeData } from 'earth-map-3d-react';
 import ReactECharts from 'echarts-for-react';
 
-import Loading, { AppLoading } from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';

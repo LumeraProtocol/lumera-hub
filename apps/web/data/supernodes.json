@@ -120,23 +120,6 @@
   },
   {
     "latLng": [
-      52.2296756,
-      21.0122287
-    ],
-    "name": "Warsaw",
-    "continent": "Europe",
-    "country": "Poland",
-    "country_code": "PL",
-    "subdivision": "Warsaw",
-    "city": "Warsaw",
-    "supernodeAccount": "lumera1h0ljtgz7khx02lrv37pgwry5zk54uc3ztyacjq",
-    "validatorAddress": "lumeravaloper1h0ljtgz7khx02lrv37pgwry5zk54uc3zy7wy5r",
-    "validatorMoniker": "HusoNode",
-    "address": "149.50.96.58:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
       50.1109221,
       8.6821267
     ],
@@ -235,23 +218,6 @@
     "validatorAddress": "lumeravaloper1x7f7mhf9azwmpds2czcqkdv435uqudeg6xl4m0",
     "validatorMoniker": "Innovating Capital",
     "address": "18.216.80.56:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      48.974797,
-      8.176773
-    ],
-    "name": "Lauterbourg",
-    "continent": "Europe",
-    "country": "France",
-    "country_code": "FR",
-    "subdivision": "Paris",
-    "city": "Lauterbourg",
-    "supernodeAccount": "lumera1uq7lylrf0mrvrfq5s5uzk5my2f4562w2qxxftw",
-    "validatorAddress": "lumeravaloper1kqwk00kpez2fctrmj4l836f827fxs6yahrfdzy",
-    "validatorMoniker": "MaouamNodelab",
-    "address": "185.197.195.18:4444",
     "p2pPort": "4445"
   },
   {

@@ -10,11 +10,14 @@ import { useDispatch } from '@/redux/hooks';
 import { formatAddress } from '@/utils/format';
 import { CHAIN_NAME } from '@/contants/network';
 import { setAddress, setConnected } from '@/redux/wallet.slice';
+import useTracking from '@/hooks/useTracking';
+import { ActionType } from '@/types/ActionType';
 
 export function WalletModalComponent() {
   const dispatch = useDispatch();
   const { address } = useChain(CHAIN_NAME);
   const { close } = useWalletModal();
+  const { trackQualifyingAction } = useTracking();
 
   useEffect(() => {
     if (address) {
@@ -25,6 +28,14 @@ export function WalletModalComponent() {
       dispatch(setConnected({
         status: true,
       }));
+      const isNewConnect = sessionStorage.getItem('new_connect');
+      if (!isNewConnect) {
+        trackQualifyingAction({
+          actionType: ActionType.USER_LOGIN,
+          walletAdress: address
+        });
+        sessionStorage.setItem('new_connect', 'true');
+      }
     }
   }, [address])
 
@@ -36,6 +47,9 @@ export function WalletModalComponent() {
 }
 
 export function ConnectWallet() {
+  const dispatch = useDispatch();
+  const { address, disconnect, openView } = useChain(CHAIN_NAME);
+
   useEffect(() => {
     setTimeout(() => {
       const isNewSession = !sessionStorage.getItem('start_new_session');
@@ -48,9 +62,6 @@ export function ConnectWallet() {
       }
     }, 100)
   }, []);
-
-  const dispatch = useDispatch();
-  const { address, disconnect, openView } = useChain(CHAIN_NAME);
 
   const handleDesconnect = () => {
     disconnect();

@@ -23,6 +23,8 @@ import {
 } from '@/contants/network';
 import { UPLOAD_MAX_FILES } from '@/contants';
 import { IRecentActivity, IActionDetail } from '@/types';
+import useTracking from '@/hooks/useTracking';
+import { ActionType } from '@/types/ActionType';
 
 export interface ITask {
   taskId?: string | undefined;
@@ -254,6 +256,7 @@ export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
+  const { trackQualifyingAction } = useTracking();
   const { openView } = useChain(CHAIN_NAME);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { address } = useSelector((state) => state.wallet);
@@ -927,6 +930,11 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
                   txPrompter,
                 });
                 if (result?.task_id) {
+                  trackQualifyingAction({
+                    actionType: ActionType.CASCADE_STORE,
+                    walletAdress: address,
+                    taskID: result.task_id,
+                  });
                   updateCascadeStogre(result.task_id, file.name, isPublic);
                   setUploadCascadeInfo(prev => prev.map((f) => {
                     let status = f.status;
@@ -1104,7 +1112,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     toast.success(`File "${fileName}" downloaded successfully.`, {
       position: "bottom-right",
       theme: "dark",
-    })
+    });
   }
 
   const handleDownloadFile = async (file: IMyFile) => {
@@ -1127,6 +1135,11 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         const downloadedBytes = await getDownloadedBytes(stream);
         const blob1 = new Blob([downloadedBytes]);
         downloadFile(blob1, file.name);
+        trackQualifyingAction({
+          actionType: ActionType.CASCADE_DOWNLOAD,
+          walletAdress: address,
+          taskID: file.actionID,
+        });
       }
     } catch (error) {
       const errorMessage = (error as Error)?.message || (error as TError)?.statusText ||  'An unknown error occurred.';
@@ -1157,15 +1170,22 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         const files: FileToDownload[] = selectedFiles;
         const zipFileName = 'downloaded_files.zip';
         const zip = new JSZip();
+        const actionIDs = [];
         for (const file of files) {
-           const stream = await client.Cascade.downloader.download(file.actionID);
+          const stream = await client.Cascade.downloader.download(file.actionID);
           const downloadedBytes = await getDownloadedBytes(stream);
           const blob = new Blob([downloadedBytes]);
           zip.file(file.name, blob);
+          actionIDs.push(file.actionID);
         }
         const content = await zip.generateAsync({ type: 'blob' });
         downloadFile(content, zipFileName);
         setSelectedFiles([]);
+        trackQualifyingAction({
+          actionType: ActionType.CASCADE_MULTI_DOWNLOAD,
+          walletAdress: address,
+          taskID: JSON.stringify(actionIDs),
+        });
       }
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
