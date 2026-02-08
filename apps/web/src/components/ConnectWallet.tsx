@@ -10,14 +10,11 @@ import { useDispatch } from '@/redux/hooks';
 import { formatAddress } from '@/utils/format';
 import { CHAIN_NAME } from '@/contants/network';
 import { setAddress, setConnected } from '@/redux/wallet.slice';
-import useTracking from '@/hooks/useTracking';
-import { ActionType } from '@/types/ActionType';
 
 export function WalletModalComponent() {
   const dispatch = useDispatch();
   const { address } = useChain(CHAIN_NAME);
   const { close } = useWalletModal();
-  const { trackQualifyingAction } = useTracking();
 
   useEffect(() => {
     if (address) {
@@ -30,10 +27,6 @@ export function WalletModalComponent() {
       }));
       const isNewConnect = sessionStorage.getItem('new_connect');
       if (!isNewConnect) {
-        trackQualifyingAction({
-          actionType: ActionType.USER_LOGIN,
-          walletAdress: address
-        });
         sessionStorage.setItem('new_connect', 'true');
       }
     }

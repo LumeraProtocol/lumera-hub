@@ -24,7 +24,7 @@ interface IAdminLayout {
 }
 
 export const NAV_ITEMS: TNaxItems[] = [
-  { id: "dashboard", label: "Dashboard", url: "/admin", icon: <BarChart2 /> },
+  // { id: "dashboard", label: "Dashboard", url: "/admin", icon: <BarChart2 /> },
   { id: "tracking", label: "Active Hub Users", url: "/admin/tracking", icon: <Wallet /> },
   // { id: "user", label: "User", url: "/admin/user", icon: <Contact /> },
 ];
@@ -94,7 +94,7 @@ export default function AdminLayout({ children }: IAdminLayout) {
             <div className="flex items-center">
               <h1 className="text-base sm:text-2xl font-bold">{viewTitle || VIEW_TITLES[activeView]}</h1>
             </div>
-            <div className="ml-4 flex items-center md:ml-6 gap-2">
+            <div className="ml-4 flex items-center md:ml-6 gap-2 hidden">
               <AppButton>Login</AppButton>
             </div>
           </div>

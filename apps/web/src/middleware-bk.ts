@@ -5,13 +5,11 @@ import jwt from 'jsonwebtoken';
 const protectedPaths = [
   '/api/admin/users',
   '/api/admin/wallets',
-  // Thêm các route admin khác cần bảo vệ
 ];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Chỉ bảo vệ các route bắt đầu bằng /api/admin/
   if (!pathname.startsWith('/api/admin/')) {
     return NextResponse.next();
   }

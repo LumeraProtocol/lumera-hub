@@ -6,17 +6,19 @@ import { combineReducers } from 'redux';
 import walletSlice from '@/redux/wallet.slice';
 import appSlice from '@/redux/app.slice';
 import errorSlice from '@/redux/error.slice';
+import adminSlice from '@/redux/admin.slice';
 
 const rootReducer = combineReducers({
   wallet: walletSlice,
   app: appSlice,
   error: errorSlice,
+  admin: adminSlice,
 });
 
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['wallet', 'app', 'error'],
+  whitelist: ['wallet', 'app', 'error', 'admin'],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

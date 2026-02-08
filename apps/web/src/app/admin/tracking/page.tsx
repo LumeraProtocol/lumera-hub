@@ -4,22 +4,11 @@
 import { useEffect } from "react";
 
 import { useDispatch } from '@/redux/hooks';
-import useWallet from '@/hooks/admin/useWallet';
 import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
-import { WalletScreen } from '@lumera-hub/ui/src/screens/admin/WalletScreen';
+import TrackingScreen from '@lumera-hub/ui/src/screens/admin/TrackingScreen';
 
 export default function AdminWallet() {
   const dispatch = useDispatch();
-  const {
-    isLoading,
-    wallets,
-    currentPage,
-    totalPages,
-    keyword,
-    pageSize,
-    handlePageClick,
-    handleSearchChange,
-  } = useWallet();
 
   useEffect(() => {
     document.title = 'Active Hub Users - Lumera Hub';
@@ -33,16 +22,7 @@ export default function AdminWallet() {
 
   return (
     <div>
-      <WalletScreen
-        isLoading={isLoading}
-        wallets={wallets}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        keyword={keyword}
-        pageSize={pageSize}
-        handlePageClick={handlePageClick}
-        handleSearchChange={handleSearchChange}
-      />
+      <TrackingScreen />
     </div>
   );
 }

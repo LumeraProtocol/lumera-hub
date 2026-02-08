@@ -1,15 +1,21 @@
 // src/entities/Wallet.ts
-import { Entity, PrimaryGeneratedColumn, Column, Index } from "typeorm";
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from "typeorm";
 
 @Entity()
-@Index(["address"], { unique: true })
+@Index(["date"], { unique: true })
 export class Wallet {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn({ type: "varchar", length: 20 })
+  date: string;
 
-  @Column({ type: "text", unique: true })
-  address: string;
+  @Column({ type: 'int', default: 0, nullable: true })
+  total_address?: number;
 
-  @Column({ type: "integer" })
-  first_connected: number;
+  @Column({ type: 'int', default: 0, nullable: true })
+  new_address?: number;
+
+  @CreateDateColumn()
+  created_at!: Date;
+
+  @UpdateDateColumn()
+  updated_at!: Date;
 }

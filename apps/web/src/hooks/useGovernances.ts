@@ -11,8 +11,6 @@ import { RATE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 import { IProposal } from '@/hooks/useProposals';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { extractValidNumber } from '@/utils/helpers';
-import useTracking from '@/hooks/useTracking';
-import { ActionType } from '@/types/ActionType';
 
 const LIMIT = 20;
 
@@ -68,7 +66,6 @@ export const GOVERNANCE_STATS = {
 const EXPEDITED_DEPOSIT_REQUIRED = GOVERNANCE_STATS.expeditedDepositRequired;
 
 const useGovernances = () => {
-  const { trackQualifyingAction } = useTracking();
   const { address, getClient } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [governances, setGovernances] = useState<IProposal[]>([]);
@@ -550,11 +547,6 @@ const useGovernances = () => {
         });
         setTransactionHash(result.transactionHash);
         fetchData();
-        trackQualifyingAction({
-          actionType: ActionType.CREATE_PROPOSAL,
-          walletAdress: address,
-          txHash: result.transactionHash,
-        });
       } else {
         setMsg({
           type: 'error',

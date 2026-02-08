@@ -1,11 +1,14 @@
-// src/entities/Wallet.ts
-import { Entity, PrimaryColumn, CreateDateColumn, UpdateDateColumn, Index } from "typeorm";
+// src/entities/Address.ts
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from "typeorm";
 
 @Entity()
 @Index(["address"], { unique: true })
 export class Address {
   @PrimaryColumn({ type: "text" })
   address: string;
+
+  @Column({ type: 'varchar', length: 30, nullable: true })
+  timestamp?: string;
 
   @CreateDateColumn()
   created_at!: Date;

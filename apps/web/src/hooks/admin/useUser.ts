@@ -30,10 +30,6 @@ const useUser = () => {
       setTotalPages(data.pagination?.totalPages);
     } catch (error) {
       console.error(error)
-      // toast.error((error as Error)?.message ||  'An unknown error occurred.', {
-      //   position: "bottom-right",
-      //   theme: "dark",
-      // });
     }
     setLoading(false);
   }

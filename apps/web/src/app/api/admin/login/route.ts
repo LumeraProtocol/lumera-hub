@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       success: true,
       message: 'Login successful',
       user: safeUser,
-      token,  // trả token về client
+      token,
     });
   } catch (error) {
     console.error('Login error:', error);

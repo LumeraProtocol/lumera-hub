@@ -1,25 +1,18 @@
 // src/entities/Action.ts
-import { Entity, PrimaryGeneratedColumn, Column, Index } from "typeorm";
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from "typeorm";
 
 @Entity()
-@Index(["wallet_address", "timestamp"])
-@Index(["timestamp"])
+@Index(["date"], { unique: true })
 export class Action {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn({ type: "varchar", length: 20 })
+  date: string;
 
-  @Column({ type: "text" })
-  wallet_address: string;
+  @Column({ type: 'bigint', default: 0, nullable: true })
+  total?: number;
 
-  @Column({ type: "smallint" })
-  action_type: number;
+  @CreateDateColumn()
+  created_at!: Date;
 
-  @Column({ type: "integer" })
-  timestamp: number;
-
-  @Column({ type: "text", nullable: true })
-  tx_hash?: string;
-
-  @Column({ type: "text", nullable: true })
-  task_id?: string;
+  @UpdateDateColumn()
+  updated_at!: Date;
 }
