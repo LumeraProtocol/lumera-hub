@@ -9,8 +9,6 @@ import { REST_AI_URL, DENOM } from '@/contants/network';
 import { Coin } from '@/hooks/useAccountInfo'
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
-import useTracking from '@/hooks/useTracking';
-import { ActionType } from '@/types/ActionType';
 
 type TMessage = {
   '@type': string;
@@ -78,7 +76,6 @@ interface UseDepositOptions {
 }
 
 const useProposals = (options: UseDepositOptions = {}) => {
-  const { trackQualifyingAction } = useTracking();
   const { address, getClient } = useWalletConnect();
   const [proposalsInfo, setProposalsInfo] = useState<IProposal[]>([]);
   const [loading, setLoading] = useState(false);
@@ -182,11 +179,6 @@ const useProposals = (options: UseDepositOptions = {}) => {
         if (options?.callback) {
           options.callback();
         }
-        trackQualifyingAction({
-          actionType: ActionType.VOTE_PROPOSAL,
-          walletAdress: address,
-          txHash: result.transactionHash,
-        });
       }
     } catch (error) {
       setErrorVote((error as Error)?.message ||  'An unknown error occurred.')

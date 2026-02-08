@@ -1,4 +1,5 @@
 import numeral from 'numeral';
+import dayjs from 'dayjs';
 
 import { CHAIN_NAME } from '@/contants/network';
 import { getChains } from '@/utils/helpers';
@@ -202,3 +203,10 @@ export const formatKb = (bytes: number) => {
   }
   return toTruncPrecision3(result) + ' ' + sizes[i];
 };
+
+export const convertDateToTracking = (date: string | null) => {
+  if (!date) {
+    return '';
+  }
+  return dayjs(date).format('YYYY-MM-DD')
+}

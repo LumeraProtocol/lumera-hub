@@ -479,7 +479,38 @@
 .get-started .cosmostation-wallet::after {
   background-image: url(../../public/img/cosmostation.jpg);
 }
-
+.datepicker-wrapper .react-datepicker {
+  border: 1px solid #2a323f;
+  background: #1a212e;
+}
+.datepicker-wrapper .react-datepicker__day,
+.datepicker-wrapper .react-datepicker__day-name,
+.datepicker-wrapper .react-datepicker__current-month {
+  color: #9da3ae;
+}
+.datepicker-wrapper .react-datepicker__day--outside-month {
+  color: #4f4f4f;
+}
+.datepicker-wrapper .react-datepicker .react-datepicker__day--selected,
+.datepicker-wrapper .react-datepicker .react-datepicker__day:hover,
+.datepicker-wrapper .react-datepicker .react-datepicker__day--in-range,
+.datepicker-wrapper .react-datepicker .react-datepicker__day--keyboard-selected {
+  color: #fff;
+  background: #078A8A;
+  transition: background 0.3s ease;
+}
+.datepicker-wrapper .react-datepicker__header {
+  background: transparent;
+  border: 0;
+}
+.datepicker-wrapper .react-datepicker__navigation-icon::before {
+  border-width: 2px 2px 0 0;
+}
+.datepicker-wrapper .react-datepicker-popper[data-placement^=bottom] .react-datepicker__triangle {
+  fill: #1a212e;
+  color: #2a323f;
+  stroke: transparent;
+}
 @keyframes slideBackForth {
   050% {
     width: 100%;

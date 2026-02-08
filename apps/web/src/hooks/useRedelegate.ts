@@ -11,8 +11,6 @@ import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contan
 import {
   IValidator,
 } from '@/types';
-import useTracking from '@/hooks/useTracking';
-import { ActionType } from '@/types/ActionType';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -20,7 +18,6 @@ interface UseDepositOptions {
 }
 
 const useRedelegate = (options: UseDepositOptions = {}) => {
-  const { trackQualifyingAction } = useTracking();
   const { address, getClient } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [optionsAdvanced, setOptionsAdvanced] = useState({
@@ -201,11 +198,6 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
         const result = await client.signAndBroadcast(optionsAdvanced.senderAddress, [msg], fee, memo);
         if (result?.transactionHash) {
           setTransactionHash(result.transactionHash);
-          trackQualifyingAction({
-            actionType: ActionType.RESTAKE,
-            walletAdress: address,
-            txHash: result.transactionHash,
-          });
           if (options?.callback) {
             options.callback();
           }

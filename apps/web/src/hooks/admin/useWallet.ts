@@ -1,37 +1,32 @@
 import { useState, useEffect } from 'react';
-// import { toast } from 'react-toastify';
 
 import * as instance from '@/utils/api';
+import { useSelector } from '@/redux/hooks';
+import { convertDateToTracking } from '@/utils/format';
 
 export interface IWallet {
-  id: number;
-  address: string;
-  first_connected: number;
-  last_action_timestamp: number;
+  total: number;
+  new: number;
 }
 
-export const ITEM_PER_PAGE = 20;
-
 const useWallet = () => {
+  const { startDate, endDate } = useSelector((state) => state.admin);
   const [isLoading, setLoading] = useState(false);
-  const [wallets, setWallets] = useState<IWallet[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [keyword, setKeyword] = useState('');
+  const [wallets, setWallets] = useState<IWallet>({
+    total: 0,
+    new: 0,
+  });
 
-  const fetchWallets = async (page = 1, val = '') => {
+  const fetchWallets = async () => {
     setLoading(true);
     try {
-      const param = val ? `&search=${val}` : '';
-      const { data } = await instance.getExternal(`/api/admin/trackings?page=${page}&limit=${ITEM_PER_PAGE}${param}`);
-      setWallets(data.items);
-      setTotalPages(data.pagination?.totalPages);
+      const { data } = await instance.getExternal(`/api/admin/summary/wallet?startDate=${convertDateToTracking(startDate)}&endDate=${convertDateToTracking(endDate)}`);
+      setWallets({
+        total: data?.total || 0,
+        new: data?.new || 0,
+      });
     } catch (error) {
       console.error(error)
-      // toast.error((error as Error)?.message ||  'An unknown error occurred.', {
-      //   position: "bottom-right",
-      //   theme: "dark",
-      // });
     }
     setLoading(false);
   }
@@ -39,26 +34,9 @@ const useWallet = () => {
   useEffect(() => {
     fetchWallets();
   }, []);
-
-  const handlePageClick = ({ selected }: { selected: number }) => {
-    setCurrentPage(selected + 1);
-    fetchWallets(selected + 1);
-  }
-
-  const handleSearchChange = (value: string) => {
-    setKeyword(value);
-    fetchWallets(1, value);
-  }
-
   return {
     isLoading,
     wallets,
-    currentPage,
-    totalPages,
-    keyword,
-    pageSize: ITEM_PER_PAGE,
-    handlePageClick,
-    handleSearchChange,
   }
 }
 

@@ -35,9 +35,9 @@ export class Transaction {
   @Index()
   message_type!: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   @Index()
-  creator!: string;
+  creator?: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   action_type?: string;

@@ -3,7 +3,6 @@ import { Search, } from 'lucide-react';
 import dayjs from 'dayjs';
 import ReactPaginate from 'react-paginate';
 
-import SectionTitle from '@/components/SectionTitle';
 import AppLink from '@/components/AppLink';
 import { AppLoading } from '@/components/Loading';
 import PastTime from '@/components/PastTime';
@@ -16,8 +15,10 @@ interface IWalletScreen {
   totalPages: number;
   pageSize: number;
   keyword: string;
+  selectedTab: string;
   handlePageClick: ({ selected }: { selected: number }) => void;
   handleSearchChange: (val: string) => void;
+  handleTabChange: (val: string) => void;
 }
 
 export const WalletScreen = ({
@@ -27,6 +28,8 @@ export const WalletScreen = ({
   totalPages,
   keyword,
   pageSize,
+  selectedTab,
+  handleTabChange,
   handlePageClick,
   handleSearchChange,
 }: IWalletScreen) => {
@@ -35,7 +38,26 @@ export const WalletScreen = ({
       <Card elevate size="$4" bordered className='w-full'>
         <Card.Header padded>
           <div className='flex justify-between w-full'>
-            <SectionTitle className="mb-2">Active Hub Users</SectionTitle>
+            <div className='min-w-3xs'>
+              <ul className='flex gap-0 list-none tabs'>
+                <li className={`tab-item ${selectedTab === '7' ? 'active' : ''}`}>
+                  <button
+                    className='tab-button cursor-pointer px-3'
+                    onClick={() => handleTabChange('7')}
+                  >
+                    Weekly
+                  </button>
+                </li>
+                <li className={`tab-item ${selectedTab === '30' ? 'active' : ''}`}>
+                  <button
+                    className='tab-button cursor-pointer px-3'
+                    onClick={() => handleTabChange('30')}
+                  >
+                    Monthly
+                  </button>
+                </li>
+              </ul>
+            </div>
             <div className="relative w-full sm:w-auto">
               <div className='input-wrapper'>
                 <Input
@@ -68,37 +90,33 @@ export const WalletScreen = ({
                 <thead className='hidden md:table-header-group text-gray-400 text-sm'>
                   <tr>
                     <th align='left' className='px-2 py-3'>No.</th>
-                    <th align='left' className='px-2 py-3'>Wallet Address</th>
-                    <th align='left' className='px-2 py-3'>First Connected</th>
-                    <th align='left' className='px-2 py-3'>Last Connected</th>
+                    <th align='left' className='px-2 py-3'>Wallet address</th>
+                    <th align='left' className='px-2 py-3'>First action</th>
+                    <th align='left' className='px-2 py-3'>Last action</th>
                     <th align='left' className='px-2 py-3'>Period</th>
-                    {/* <th align='left' className='px-2 py-3'>Action</th> */}
                   </tr>
                 </thead>
                 <tbody>
                   {wallets.map((wallet, index) => (
-                    <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg' key={wallet.id}>
+                    <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg' key={wallet.address}>
                       <td className='px-2 py-3'>
                         {(currentPage - 1) * pageSize + (index + 1)}
                       </td>
                       <td className='px-2 py-3'>
-                        {wallet.address}
+                        <AppLink href="#">{wallet.address}</AppLink>
                       </td>
                       <td className='px-2 py-3'>
-                        {dayjs(wallet.first_connected * 1000).format('HH:mm MM/DD/YYYY')}
+                        {dayjs(wallet.first_connected).format('HH:mm MM/DD/YYYY')}
                       </td>
                       <td className='px-2 py-3'>
-                        {dayjs((wallet.last_action_timestamp || wallet.first_connected) * 1000).format('HH:mm MM/DD/YYYY')}
+                        {dayjs((wallet.last_action_timestamp || wallet.first_connected)).format('HH:mm MM/DD/YYYY')}
                       </td>
                       <td className='px-2 py-3'>
                         <PastTime
-                          pastDate={new Date((wallet.last_action_timestamp || wallet.first_connected) * 1000)}
+                          pastDate={new Date((wallet.last_action_timestamp || wallet.first_connected))}
                           className='text-sm md:whitespace-nowrap'
                         />
                       </td>
-                      {/* <td className='px-2 py-3'>
-                        <AppLink href={`/admin/action/${wallet.address}`}>Details</AppLink>
-                      </td> */}
                     </tr>
                   ))}
                   {!wallets.length ?

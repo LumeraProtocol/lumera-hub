@@ -37,7 +37,7 @@ const syncAndSaveTransaction = async (
       const creator = tx.body.messages[0].creator || tx.body.messages[0].delegator_address;
       const entity: any = {
         tx_hash: response.txhash,
-        height: response.height,
+        height: blockHeight,
         code: response.code,
         codespace: response.codespace,
         gas_wanted: Number(response.gas_wanted),
@@ -93,16 +93,21 @@ const syncAndSaveTransaction = async (
       }
 
       await transactionRepo.save(entity);
-      await addressRepo.save({
-        address: creator,
-      });
-      await delay(1000);
+      if (creator) {
+        const address = await addressRepo.createQueryBuilder().select('address').where('address = :creator', { creator }).getRawOne();
+        if (!address) {
+          await addressRepo.save({
+            address: creator,
+            timestamp: response.timestamp
+          });
+        }
+      }
+      await delay(300);
     }
   } catch (error) {
     console.error('syncAndSaveTransaction error: ', error);
   }
 }
-
 
 const saveBlockData = async (blockRepo: Repository<Block>, data: any) => {
   if (!data) {
@@ -110,6 +115,7 @@ const saveBlockData = async (blockRepo: Repository<Block>, data: any) => {
   }
   const txs: string[] = data?.sdk_block?.data?.txs?.map((tx: string) => getTxHashFromBase64(tx)) || [];
   const height = data.block.header.height;
+  blockRepo.createQueryBuilder().delete().where('height = :height', { height }).execute();
   const payload = {
     height,
     chain_id: data.block.header.chain_id,
@@ -139,6 +145,7 @@ const saveBlockData = async (blockRepo: Repository<Block>, data: any) => {
     last_commit_part_hash: data.block.last_commit.block_id.part_set_header.hash,
   };
   await blockRepo.save(payload);
+
   return {
     txs,
     height,
@@ -177,7 +184,6 @@ const syncBlock = async () => {
           await syncAndSaveTransaction(transactionRepo, addressRepo, result.txs, result.height);
         }
         startingBlock++;
-        await delay(2000);
       } catch (error) {
         console.error('blocks error: ', error);
         break;

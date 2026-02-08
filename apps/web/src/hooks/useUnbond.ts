@@ -7,8 +7,6 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
 import { extractValidNumber } from '@/utils/helpers';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contants';
-import useTracking from '@/hooks/useTracking';
-import { ActionType } from '@/types/ActionType';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -16,7 +14,6 @@ interface UseDepositOptions {
 }
 
 const useUnbond = (options: UseDepositOptions = {}) => {
-  const { trackQualifyingAction } = useTracking();
   const { address, getClient } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [optionsAdvanced, setOptionsAdvanced] = useState({
@@ -158,11 +155,6 @@ const useUnbond = (options: UseDepositOptions = {}) => {
         const result = await client.signAndBroadcast(optionsAdvanced.senderAddress, [msg], fee, memo);
         if (result?.transactionHash) {
           setTransactionHash(result.transactionHash);
-          trackQualifyingAction({
-            actionType: ActionType.UNBOND,
-            walletAdress: address,
-            txHash: result.transactionHash,
-          });
           if (options?.callback) {
               options.callback();
           }
