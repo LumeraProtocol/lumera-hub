@@ -33,7 +33,7 @@ const useWallet = () => {
 
   useEffect(() => {
     fetchWallets();
-  }, []);
+  }, [startDate, endDate]);
   return {
     isLoading,
     wallets,

@@ -411,7 +411,7 @@ export const StakingScreen = ({
                   <div className="w-20 h-20 rounded-full grid place-items-center staking-icon wallet">
                     <Wallet size="$3" />
                   </div>
-                  <H2 className='font-bold text-white text-[32px] leading-none !mt-5 text-center'>Connect Your Wallet</H2>
+                  <H2 className='font-bold text-white text-[32px] leading-none !mt-5 text-center'>No Wallet Connected</H2>
                   <Paragraph className='text-base text-lumera-gray mx-auto max-w-[400px] text-center !mt-3'>Please connect your wallet to view this page and interact with the Lumera ecosystem.</Paragraph>
                   <div className='text-center mt-4'>
                     <ConnectWalletButton />

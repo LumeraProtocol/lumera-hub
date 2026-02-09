@@ -1,21 +1,27 @@
 import { Card } from 'tamagui';
 import ReactECharts from 'echarts-for-react';
-import * as echarts from 'echarts';
 
 import SectionTitle from '@/components/SectionTitle';
 import { AppLoading } from '@/components/Loading';
-import useChartCascade from '@/hooks/admin/useChartCascade';
+import { ITracking } from '@/hooks/admin/useTracking';
 
-export default function CascadeChart() {
-  const { isLoading, cascades } = useChartCascade();
+interface ICascadeChart {
+  isLoading: boolean;
+  trackings: ITracking[];
+}
+
+export default function CascadeChart({
+  isLoading,
+  trackings,
+}: ICascadeChart) {
 
   const getOption = () => {
     let dates: string[] = [];
     let data: number[] = [];
-    for (const item of cascades) {
+    for (const item of trackings) {
       const date = item.date.split('-');
       dates.push(`${date[1]}/${date[2]}/${date[0]}`);
-      data.push(item.upload);
+      data.push(item.cascade_upload);
     }
 
     return {
@@ -47,24 +53,11 @@ export default function CascadeChart() {
       },
       series: [
         {
-          name: 'Cascade Store',
+          name: 'Cascade upload',
           type: 'line',
           symbol: 'none',
-          sampling: 'lttb',
           itemStyle: {
             color: '#e77975'
-          },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              {
-                offset: 0,
-                color: '#e77975'
-              },
-              {
-                offset: 1,
-                color: '#F5F5FA'
-              }
-            ])
           },
           data,
         }
@@ -75,7 +68,7 @@ export default function CascadeChart() {
   return (
     <Card elevate size="$4" bordered className='w-full'>
       <Card.Header padded>
-        <SectionTitle className="mb-0">Cascade</SectionTitle>
+        <SectionTitle className="mb-0">Cascade upload</SectionTitle>
       </Card.Header>
       <div className='p-5'>
         {isLoading ?
@@ -89,7 +82,7 @@ export default function CascadeChart() {
             />
           </div> :
           <>
-            {cascades?.length ?
+            {trackings?.length ?
               <ReactECharts option={getOption()} className='w-full' style={{ height: '160px' }} /> :
               <div className='text-lg flex items-center justify-center w-full h-full min-h-40'>No data</div>
             }

@@ -17,12 +17,12 @@ const DateTimePicker = () => {
     const [start, end] = dates;
     setStartDate(start);
     setEndDate(end);
-    dispatch(admin.setStartDate({
-      startDate: `${start}`,
-    }));
-    dispatch(admin.setEndDate({
-      endDate: `${end}`,
-    }));
+    if (end) {
+      dispatch(admin.setDate({
+        startDate: `${start}`,
+        endDate: `${end}`,
+      }));
+    }
   };
 
   return (

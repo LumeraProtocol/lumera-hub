@@ -29,6 +29,12 @@ import {
   ClockPlus,
   Layers,
   Check as CheckCircle,
+  Blocks,
+  Landmark,
+  ChartNoAxesCombined,
+  LockKeyhole,
+  DollarSign,
+  Users,
 } from 'lucide-react';
 
 import { AppLoading } from '@/components/Loading';
@@ -645,6 +651,91 @@ export const ClaimableRewardsModal = ({
   )
 }
 
+const Stats = () => {
+  return (
+    <div className='grid grid-cols-6 gap-6'>
+      <Card elevate size="$4" bordered className='w-full'>
+        <div className='p-[18px]'>
+          <div className='flex items-center gap-2 flex-col justify-center'>
+            <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+              <Blocks className='w-5 h-5 text-blue-400' />
+            </div>
+            <div className="text-center">
+              <div className='text-lg font-bold'>3362985</div>
+              <div className='text-sm text-lumera-label'>Block Height</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+      <Card elevate size="$4" bordered className='w-full'>
+        <div className='p-[18px]'>
+          <div className='flex items-center gap-2 flex-col justify-center'>
+            <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+              <Users className='w-5 h-5 text-lumera-red-light' />
+            </div>
+            <div className="text-center">
+              <div className='text-lg font-bold'>50</div>
+              <div className='text-sm text-lumera-label'>Validators</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+      <Card elevate size="$4" bordered className='w-full'>
+        <div className='p-[18px]'>
+          <div className='flex items-center gap-2 flex-col justify-center'>
+            <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+              <DollarSign className='w-5 h-5 text-teal-400' />
+            </div>
+            <div className="text-center">
+              <div className='text-lg font-bold'>268,995,133.3</div>
+              <div className='text-sm text-lumera-label'>Supply</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+      <Card elevate size="$4" bordered className='w-full'>
+        <div className='p-[18px]'>
+          <div className='flex items-center gap-2 flex-col justify-center'>
+            <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+              <LockKeyhole className='w-5 h-5 text-amber-600' />
+            </div>
+            <div className="text-center">
+              <div className='text-lg font-bold'>27,908,155.5</div>
+              <div className='text-sm text-lumera-label'>Bonded Tokens</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+      <Card elevate size="$4" bordered className='w-full'>
+        <div className='p-[18px]'>
+          <div className='flex items-center gap-2 flex-col justify-center'>
+            <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+              <ChartNoAxesCombined className='w-5 h-5 text-blue-800' />
+            </div>
+            <div className="text-center">
+              <div className='text-lg font-bold'>19.76%</div>
+              <div className='text-sm text-lumera-label'>Inflation</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+      <Card elevate size="$4" bordered className='w-full'>
+        <div className='p-[18px]'>
+          <div className='flex items-center gap-2 flex-col justify-center'>
+            <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+              <Landmark className='w-5 h-5 text-amber-400' />
+            </div>
+            <div className="text-center">
+              <div className='text-lg font-bold'>753.7k LUME</div>
+              <div className='text-sm text-lumera-label'>Community Pool</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
 export const HomeScreen = ({
   address,
   loading,
@@ -842,6 +933,7 @@ export const HomeScreen = ({
         </Card> :
         <>
           <div className='w-full flex flex-col gap-6'>
+            <Stats />
             <div className='grid grid-cols-2 gap-6 w-full overview-wrapper'>
               <Card bordered className='w-full portfolio-overview'>
                 <Card.Header padded>

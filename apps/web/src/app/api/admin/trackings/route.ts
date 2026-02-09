@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
         ON lastAction.creator = address.address
         AND lastAction.rn = 1 WHERE 1 = 1 ${targetSql}
     `;
-    console.log(sql, dayjs(startDate).toISOString(), dayjs(endDate).toISOString())
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const params: any[] = [];
 

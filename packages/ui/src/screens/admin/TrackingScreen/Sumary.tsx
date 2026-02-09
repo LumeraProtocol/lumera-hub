@@ -2,26 +2,31 @@ import { Card } from 'tamagui';
 
 import SectionTitle from '@/components/SectionTitle';
 import { AppLoading } from '@/components/Loading';
-import useWallet from '@/hooks/admin/useWallet';
-import useStaking from '@/hooks/admin/useStaking';
-import useCascade from '@/hooks/admin/useCascade';
 import { DENOM } from '@/contants/network';
 import { formatNumber, formatTokenDisplay } from '@/utils/format';
+import { ITracking } from '@/hooks/admin/useTracking';
 
-export default function Sumary() {
-  const wallet = useWallet();
-  const stacking = useStaking();
-  const cascade = useCascade();
+interface ISumary {
+  isLoading: boolean;
+  trackings: ITracking[];
+}
+
+export default function Sumary({
+  isLoading,
+  trackings,
+}: ISumary) {
+  const lastestTracking = trackings[trackings.length - 1];
 
   return (
     <div className='grid grid-cols-3 gap-3'>
       <Card elevate size="$4" bordered className='w-full !items-start'>
         <div className='p-5 w-full'>
-          <SectionTitle className="mb-5">Cascade</SectionTitle>
-          {cascade.isLoading ?
+          <SectionTitle className="mb-5">Cascade overview</SectionTitle>
+          {isLoading ?
             <div className='min-h-[240px] relative w-full'>
               <AppLoading
                 isLoading
+                hideOverlay
                 className="w-10 h-10 !border-2"
                 iconWidth={20}
                 iconHeight={20}
@@ -30,56 +35,56 @@ export default function Sumary() {
             </div> :
             <div className='text-sm'>
               <div className='grid grid-cols-1 gap-x-4 gap-y-2'>
-                <span><span>Total LUME</span>: <span className='font-bold'>
+                <span><span>Total price</span>: <span className='font-bold'>
                   {formatTokenDisplay({
-                    amount: cascade.cascade.total_price.toString(),
+                    amount: lastestTracking?.cascade_total_price?.toString() || '0',
                     denom: DENOM,
-                  }, true)}
+                  })} LUME
                 </span></span>
               </div>
               <div className='grid grid-cols-1 gap-x-4 gap-y-2 mt-2'>
-                <span><span>Total Fee</span>: <span className='font-bold'>
+                <span><span>Total fee</span>: <span className='font-bold'>
                   {formatTokenDisplay({
-                    amount: cascade.cascade.total_fee.toString(),
+                    amount: lastestTracking?.cascade_total_fee?.toString() || '0',
                     denom: DENOM,
-                  })}</span></span>
+                  })} LUME</span></span>
               </div>
               <div className='mt-2'>
                 <div>
                   <span>Upload</span>: <span className='font-bold'>
-                    {formatNumber(cascade.cascade.upload, { decimalsLength: 0 })} files
+                    {formatNumber(lastestTracking?.cascade_upload || '0', { decimalsLength: 0 })} files
                   </span>
                 </div>
               </div>
               <ul className='grid grid-cols-2 gap-x-4 gap-y-2 mt-2'>
                 <li>
                   <span>Images</span>: <span className='font-bold'>
-                    {formatNumber(cascade.cascade.image, { decimalsLength: 0 })} files
+                    {formatNumber(lastestTracking?.cascade_image || '0', { decimalsLength: 0 })} files
                   </span>
                 </li>
                 <li>
                   <span>Videos</span>: <span className='font-bold'>
-                    {formatNumber(cascade.cascade.video, { decimalsLength: 0 })} files
+                    {formatNumber(lastestTracking?.cascade_video || '0', { decimalsLength: 0 })} files
                   </span>
                 </li>
                 <li>
                   <span>Programs</span>: <span className='font-bold'>
-                    {formatNumber(cascade.cascade.program, { decimalsLength: 0 })} files
+                    {formatNumber(lastestTracking?.cascade_program || '0', { decimalsLength: 0 })} files
                   </span>
                 </li>
                 <li>
                   <span>Archives</span>: <span className='font-bold'>
-                    {formatNumber(cascade.cascade.archive, { decimalsLength: 0 })} files
+                    {formatNumber(lastestTracking?.cascade_archive || '0', { decimalsLength: 0 })} files
                   </span>
                 </li>
                 <li>
                   <span>Docs</span>: <span className='font-bold'>
-                    {formatNumber(cascade.cascade.document, { decimalsLength: 0 })} files
+                    {formatNumber(lastestTracking?.cascade_document || '0', { decimalsLength: 0 })} files
                   </span>
                 </li>
                 <li>
                   <span>Other</span>: <span className='font-bold'>
-                    {formatNumber(cascade.cascade.other, { decimalsLength: 0 })} files
+                    {formatNumber(lastestTracking?.cascade_other || '0', { decimalsLength: 0 })} files
                   </span>
                 </li>
               </ul>
@@ -89,8 +94,8 @@ export default function Sumary() {
       </Card>
       <Card elevate size="$4" bordered className='w-full !items-start'>
         <div className='p-5 w-full'>
-          <SectionTitle className="mb-5">Staking</SectionTitle>
-          {stacking.isLoading ?
+          <SectionTitle className="mb-5">Staking overview</SectionTitle>
+          {isLoading ?
             <div className='min-h-[240px] relative w-full'>
               <AppLoading
                 isLoading
@@ -103,17 +108,41 @@ export default function Sumary() {
             <div className='text-sm'>
               <div>
                 <span>Delegate</span>: <span className='font-bold'>
-                  {formatNumber(stacking.staking.delegate, { decimalsLength: 0 })}
+                  {lastestTracking?.delegate_lume ?
+                    <>
+                      {formatTokenDisplay({
+                        amount: lastestTracking?.delegate_lume.toString(),
+                        denom: DENOM,
+                      })} LUME <span className="font-normal">({formatNumber(lastestTracking?.delegate, { decimalsLength: 0 })} transactions)</span>
+                    </> :
+                    <>0</>
+                  }
                 </span>
               </div>
               <div className='mt-1'>
                 <span>Redelegate</span>: <span className='font-bold'>
-                  {formatNumber(stacking.staking.redelegate, { decimalsLength: 0 })}
+                  {lastestTracking?.redelegate_lume ?
+                    <>
+                      {formatTokenDisplay({
+                        amount: lastestTracking?.redelegate_lume.toString(),
+                        denom: DENOM,
+                      })} LUME <span className="font-normal">({formatNumber(lastestTracking?.redelegate || 0, { decimalsLength: 0 })} transactions)</span>
+                    </> :
+                    <>0</>
+                  }
                 </span>
               </div>
               <div className='mt-1'>
                 <span>Unstaking</span>: <span className='font-bold'>
-                  {formatNumber(stacking.staking.unstaking, { decimalsLength: 0 })}
+                  {lastestTracking?.unstaking_lume ?
+                    <>
+                      {formatTokenDisplay({
+                        amount: lastestTracking.unstaking_lume.toString(),
+                        denom: DENOM,
+                      })} LUME <span className="font-normal">({formatNumber(lastestTracking?.unstaking || 0, { decimalsLength: 0 })} transactions)</span>
+                    </> :
+                    <>0</>
+                  }
                 </span>
               </div>
             </div>
@@ -122,8 +151,8 @@ export default function Sumary() {
       </Card>
       <Card elevate size="$4" bordered className='w-full !items-start'>
         <div className='p-5 w-full'>
-          <SectionTitle className="mb-5">Wallet</SectionTitle>
-           {wallet.isLoading ?
+          <SectionTitle className="mb-5">Wallet overview</SectionTitle>
+           {isLoading ?
             <div className='min-h-[240px] relative w-full'>
               <AppLoading
                 isLoading
@@ -135,13 +164,14 @@ export default function Sumary() {
             </div> :
             <div className='text-sm'>
               <div>
-                <span>Total</span>: <span className='font-bold'>
-                  {formatNumber(wallet.wallets.total, { decimalsLength: 0 })}
+                <span>Total address</span>: <span className='font-bold'>
+
+                  {formatNumber(lastestTracking?.total_address || 0, { decimalsLength: 0 })}
                 </span>
               </div>
               <div className='mt-1'>
-                <span>New</span>: <span className='font-bold'>
-                  {formatNumber(wallet.wallets.new, { decimalsLength: 0 })}
+                <span>New address</span>: <span className='font-bold'>
+                  {formatNumber(lastestTracking?.new_address || 0, { decimalsLength: 0 })}
                 </span>
               </div>
             </div>

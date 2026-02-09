@@ -48,7 +48,7 @@ export function AppLoading({
   iconHeight = 100,
   iconClassName = '',
   overlayClassName = '',
-  hideOverlay = false,
+  hideOverlay = true,
 }: IAppLoading) {
   if (!isLoading) {
     return null;
@@ -58,11 +58,9 @@ export function AppLoading({
     <>
       <div className={containerClassName}>
         <div className={`${className} rounded-full aspect-[1] border-6 border-solid border-transparent border-t-lumera-teal border-r-lumera-teal border-b-lumera-teal animate-spin duration-1000`}></div>
-        <Image src="/lumera-symbol.svg" alt="Lumera" width={iconWidth} height={iconHeight} className={`absolute top-1/2 left-1/2 -translate-1/2 rounded-full ${iconClassName}`} />
+        <Image src="/lumera-symbol.svg" alt="Lumera" width={iconWidth} height={iconHeight} className={`absolute top-1/2 left-1/2 -translate-1/2 ${iconClassName}`} />
       </div>
-      {!hideOverlay ?
-        <div className={`absolute top-0 left-0 right-0 bottom-0 block bg-black/35 z-10 ${overlayClassName}`}></div> : null
-      }
+      <div className={`absolute top-0 left-0 right-0 bottom-0 block ${hideOverlay ? 'bg-transparent' : 'bg-black/35'}  z-10 ${overlayClassName}`}></div>
     </>
   );
 }
