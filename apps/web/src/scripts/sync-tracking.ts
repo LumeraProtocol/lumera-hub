@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { getDataSource } from '@/lib/data-source';
 import { Transaction } from '@/entities/Transaction';
 import { Tracking } from '@/entities/Tracking';
-import { IMAGE_EXT, DOCUMENT_EXT, VIDEO_EXT, ARCHIVE_EXT, PROGRAM_EXT } from '@/hooks/useCascade';
+import { IMAGE_EXT, DOCUMENT_EXT, VIDEO_EXT, ARCHIVE_EXT, PROGRAM_EXT } from '@/contants';
 
 let isSyncing = false;
 
