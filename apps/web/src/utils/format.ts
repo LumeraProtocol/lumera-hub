@@ -210,3 +210,18 @@ export const convertDateToTracking = (date: string | null) => {
   }
   return dayjs(date).format('YYYY-MM-DD')
 }
+
+export const formatMessageType = (type: string) => {
+  const parts = type.split('.');
+  const methodName = parts[parts.length - 1];
+
+  const cleanName = methodName.startsWith('Msg')
+    ? methodName.slice(3)
+    : methodName;
+
+  const words = cleanName
+    .replace(/([A-Z])/g, ' $1')
+    .trim();
+
+  return words;
+}

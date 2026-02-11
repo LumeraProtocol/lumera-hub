@@ -56,7 +56,7 @@ export default function UsersChart({
       },
       series: [
         {
-          name: "Total",
+          name: "Total users",
           data: totalUsers,
           type: 'line',
           itemStyle: {

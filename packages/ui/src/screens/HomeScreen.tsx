@@ -35,18 +35,20 @@ import {
   LockKeyhole,
   DollarSign,
   Users,
+  Upload,
 } from 'lucide-react';
 
 import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
-import { ConnectWalletButton } from '@/components/ConnectWallet';
 import Skeleton from '@/components/Skeleton';
+import { NAV_ITEMS } from '@/components/layout/AppShell';
+import NoWalletConnected from '@/components/NoWalletConnected';
 import { AccountInfoData, getTotalRewards } from '@/hooks/useAccountInfo';
 import useAppRouter from '@/hooks/useAppRouter';
 import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity';
 import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/useProposals';
+import useStats from '@/hooks/useStats';
 import { formatToken, formatTokenDisplay } from '@/utils/format';
-import { NAV_ITEMS } from '@/components/layout/AppShell';
 import SectionTitle from '@/components/SectionTitle';
 import { DENOM } from '@/contants/network';
 
@@ -652,84 +654,152 @@ export const ClaimableRewardsModal = ({
 }
 
 const Stats = () => {
+  const { isLoading, isLatestBlockLoading, stats, latestBlock } = useStats();
+
   return (
-    <div className='grid grid-cols-6 gap-6'>
+    <div className='grid grid-cols-2 sm:grid-cols-3 1-5xl:grid-cols-6 gap-6'>
       <Card elevate size="$4" bordered className='w-full'>
         <div className='p-[18px]'>
-          <div className='flex items-center gap-2 flex-col justify-center'>
-            <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
-              <Blocks className='w-5 h-5 text-blue-400' />
+          {isLatestBlockLoading ?
+            <div className='relative min-h-[100px] block w-full'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='flex items-center gap-2 flex-col justify-center'>
+              <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+                <Blocks className='w-5 h-5 text-blue-400' />
+              </div>
+              <div className="text-center">
+                <div className='text-lg font-bold'>{latestBlock.height}</div>
+                <div className='text-sm text-lumera-label'>Block Height</div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className='text-lg font-bold'>3362985</div>
-              <div className='text-sm text-lumera-label'>Block Height</div>
-            </div>
-          </div>
+          }
         </div>
       </Card>
       <Card elevate size="$4" bordered className='w-full'>
         <div className='p-[18px]'>
-          <div className='flex items-center gap-2 flex-col justify-center'>
-            <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
-              <Users className='w-5 h-5 text-lumera-red-light' />
+          {isLatestBlockLoading ?
+            <div className='relative min-h-[100px] block w-full'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='flex items-center gap-2 flex-col justify-center'>
+              <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+                <Users className='w-5 h-5 text-lumera-red-light' />
+              </div>
+              <div className="text-center">
+                <div className='text-lg font-bold'>{latestBlock.validators}</div>
+                <div className='text-sm text-lumera-label'>Validators</div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className='text-lg font-bold'>50</div>
-              <div className='text-sm text-lumera-label'>Validators</div>
-            </div>
-          </div>
+          }
         </div>
       </Card>
       <Card elevate size="$4" bordered className='w-full'>
         <div className='p-[18px]'>
-          <div className='flex items-center gap-2 flex-col justify-center'>
-            <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
-              <DollarSign className='w-5 h-5 text-teal-400' />
+          {isLoading ?
+            <div className='relative min-h-[100px] block w-full'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='flex items-center gap-2 flex-col justify-center'>
+              <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+                <DollarSign className='w-5 h-5 text-teal-400' />
+              </div>
+              <div className="text-center">
+                <div className='text-lg font-bold'>{stats.supply}</div>
+                <div className='text-sm text-lumera-label'>Supply</div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className='text-lg font-bold'>268,995,133.3</div>
-              <div className='text-sm text-lumera-label'>Supply</div>
-            </div>
-          </div>
+          }
         </div>
       </Card>
       <Card elevate size="$4" bordered className='w-full'>
         <div className='p-[18px]'>
-          <div className='flex items-center gap-2 flex-col justify-center'>
-            <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
-              <LockKeyhole className='w-5 h-5 text-amber-600' />
+          {isLoading ?
+            <div className='relative min-h-[100px] block w-full'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='flex items-center gap-2 flex-col justify-center'>
+              <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+                <LockKeyhole className='w-5 h-5 text-amber-600' />
+              </div>
+              <div className="text-center">
+                <div className='text-lg font-bold'>{stats.bondedTokens}</div>
+                <div className='text-sm text-lumera-label'>Bonded Tokens</div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className='text-lg font-bold'>27,908,155.5</div>
-              <div className='text-sm text-lumera-label'>Bonded Tokens</div>
-            </div>
-          </div>
+          }
         </div>
       </Card>
       <Card elevate size="$4" bordered className='w-full'>
         <div className='p-[18px]'>
-          <div className='flex items-center gap-2 flex-col justify-center'>
-            <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
-              <ChartNoAxesCombined className='w-5 h-5 text-blue-800' />
+          {isLoading ?
+            <div className='relative min-h-[100px] block w-full'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='flex items-center gap-2 flex-col justify-center'>
+              <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+                <ChartNoAxesCombined className='w-5 h-5 text-blue-800' />
+              </div>
+              <div className="text-center">
+                <div className='text-lg font-bold'>{stats.inflation}</div>
+                <div className='text-sm text-lumera-label'>Inflation</div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className='text-lg font-bold'>19.76%</div>
-              <div className='text-sm text-lumera-label'>Inflation</div>
-            </div>
-          </div>
+          }
         </div>
       </Card>
       <Card elevate size="$4" bordered className='w-full'>
         <div className='p-[18px]'>
-          <div className='flex items-center gap-2 flex-col justify-center'>
-            <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
-              <Landmark className='w-5 h-5 text-amber-400' />
+          {isLoading ?
+            <div className='relative min-h-[100px] block w-full'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='flex items-center gap-2 flex-col justify-center'>
+              <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+                <Landmark className='w-5 h-5 text-amber-400' />
+              </div>
+              <div className="text-center">
+                <div className='text-lg font-bold'>{stats.communityPool} <span className='text-sm'>LUME</span></div>
+                <div className='text-sm text-lumera-label'>Community Pool</div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className='text-lg font-bold'>753.7k LUME</div>
-              <div className='text-sm text-lumera-label'>Community Pool</div>
-            </div>
-          </div>
+          }
         </div>
       </Card>
     </div>
@@ -774,6 +844,25 @@ export const HomeScreen = ({
     const message = formatMessage(messages)?.toLowerCase();
 
     switch (message) {
+      case 'requestaction':
+        return (
+          <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
+            <div className="rounded-full grid place-items-center recent-activity-icon">
+              <Upload className='w-5 h-5 text-teal-400' />
+            </div>
+            <div className='w-full flex flex-col'>
+              <Text>
+                Cascade upload {formatToken({
+                  amount: `${parseInt((messages[0] as any)?.price)}`,
+                  denom: DENOM,
+                }, true, '0,0.[000000]')}
+              </Text>
+              <SizableText className='!text-sm text-lumera-label leading-none'>
+                {dayjs(item.timestamp).fromNow()}
+              </SizableText>
+            </div>
+          </div>
+        )
       case 'delegate':
         return (
           <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
@@ -915,23 +1004,15 @@ export const HomeScreen = ({
   }
 
   return (
-    <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
+    <>
       {!address ?
-        <Card elevate size="$4" bordered className='w-full'>
-          <div className='flex items-center justify-center h-[84vh]'>
-            <div className='flex flex-col gap-3 justify-between items-center max-w-[490px] text-center mt-10'>
-              <div className="w-20 h-20 grid place-items-center">
-                <img src="/lumera-symbol.svg" alt="Lumera" />
-              </div>
-              <h2 className='font-normal text-white text-[42px] leading-[52px]'>Welcome to the Lumera Hub</h2>
-              <p className='text-sm font-normal text-lumera-gray text-center'>Connect your wallet to manage assets, participate in governance, and access the full suite of Lumera services.</p>
-              <div className='text-center'>
-                <ConnectWalletButton />
-              </div>
-            </div>
-          </div>
-        </Card> :
         <>
+          <Stats />
+          <div className='mt-6'>
+            <NoWalletConnected variant='home' />
+          </div>
+        </> :
+        <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
           <div className='w-full flex flex-col gap-6'>
             <Stats />
             <div className='grid grid-cols-2 gap-6 w-full overview-wrapper'>
@@ -1060,11 +1141,11 @@ export const HomeScreen = ({
               <div className='w-2/3 active-governance-proposals'>
                 <Card elevate size="$4" bordered>
                   <Card.Header padded>
-                    <div className='flex justify-between items-center'>
+                    <div className='flex justify-between sm:items-center flex-col sm:flex-row'>
                       <SectionTitle className='mb-2'>Active Governance Proposals</SectionTitle>
                       <span
                         onClick={handleViewAllProposalsClick}
-                        className='text-link text-sm whitespace-nowrap cursor-pointer'
+                        className='text-link text-sm whitespace-nowrap cursor-pointer text-right'
                       >
                         View All
                       </span>
@@ -1087,7 +1168,7 @@ export const HomeScreen = ({
                               <H3 className='text-2xl'>No active proposals</H3>
                             </div> : <div className='min-h-[284px]'>
                               {proposals?.map((item) => (
-                                <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
+                                <div className='mt-3 flex justify-between flex-col sm:flex-row gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
                                   <div className='flex flex-col'>
                                     <AppLink href={`/governance/${item.id}`}>
                                       <Text>{item.title}</Text>
@@ -1169,8 +1250,8 @@ export const HomeScreen = ({
             }}
             backButtonText="Back to Dashboard"
           />
-        </>
+        </YStack>
       }
-    </YStack>
+    </>
   )
 }

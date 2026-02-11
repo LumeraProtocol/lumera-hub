@@ -1,18 +1,14 @@
 import {
   YStack,
-  H2,
-  Paragraph,
   Card,
-  H3,
 } from 'tamagui';
-import { Wallet } from '@tamagui/lucide-icons';
 import { fromHex, toBase64 } from '@cosmjs/encoding';
 import { Coins } from 'lucide-react';
 
 import UnbondModal from '@/components/UnbondModal';
 import RedelegateModal from '@/components/RedelegateModal';
 import { AppLoading } from '@/components/Loading';
-import { ConnectWalletButton } from '@/components/ConnectWallet';
+import NoWalletConnected from '@/components/NoWalletConnected';
 import AppButton from '@/components/AppButton';
 import SectionTitle from '@/components/SectionTitle';
 import { RATE_VALUE } from '@/contants';
@@ -406,18 +402,7 @@ export const StakingScreen = ({
           </> :
           <div className='mt-6'>
             {!address ?
-              <Card elevate size="$4" bordered className='w-full'>
-                <div className='flex flex-col items-center justify-center min-h-[80vh]'>
-                  <div className="w-20 h-20 rounded-full grid place-items-center staking-icon wallet">
-                    <Wallet size="$3" />
-                  </div>
-                  <H2 className='font-bold text-white text-[32px] leading-none !mt-5 text-center'>No Wallet Connected</H2>
-                  <Paragraph className='text-base text-lumera-gray mx-auto max-w-[400px] text-center !mt-3'>Please connect your wallet to view this page and interact with the Lumera ecosystem.</Paragraph>
-                  <div className='text-center mt-4'>
-                    <ConnectWalletButton />
-                  </div>
-                </div>
-              </Card> :
+              <NoWalletConnected /> :
               <Card elevate size="$4" bordered className='w-full'>
                 <Card.Header padded>
                   <div>

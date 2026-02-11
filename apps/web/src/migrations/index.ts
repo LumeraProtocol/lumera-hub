@@ -5,3 +5,6 @@ export * from "./1770351540883-Transaction";
 export * from "./1770352887776-Address";
 export * from "./1770616451009-SyncState";
 export * from "./1770619499666-Tracking";
+export * from "./1770709259463-AlterTracking";
+export * from "./1770713087014-CascadeDownload";
+export * from "./1770717360981-AlterTracking";

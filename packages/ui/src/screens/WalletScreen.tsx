@@ -13,14 +13,14 @@ import {
   Unlink,
   Star,
 } from 'lucide-react';
-import { YStack, Card as TamaguiCard, H3 } from 'tamagui';
+import {  H3 } from 'tamagui';
 import ReactPaginate from 'react-paginate';
 import dayjs from 'dayjs';
-import { Wallet } from '@tamagui/lucide-icons';
 import { toast } from 'react-toastify';
 
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
+import NoWalletConnected from '@/components/NoWalletConnected';
 import { AppLoading } from '@/components/Loading';
 import PastTime from '@/components/PastTime';
 import Card from '@/components/Card';
@@ -40,71 +40,70 @@ import { DENOM } from '@/contants/network';
 import 'react-paginate/theme/basic/react-paginate.css';
 
 interface IWalletScreen {
-    walletAddress: string;
-    accountInfo: AccountInfoData | null;
-    isLoading: boolean;
-    error: string;
-    transactions: ITransaction[];
-    totalTransactions: number;
-    selectedModal: string;
-    handlePageClick: ({ selected }: { selected: number }) => void;
-    onOpenModal: (modal: string) => void;
-    onCloseModal: () => void;
-    sendOptions: {
-        isVoteLoading: boolean;
-        error: string | null;
-        optionsAdvanced: {
-            fees: string;
-            gas: string;
-            memo: string;
-            senderAddress: string;
-            amount: string;
-            recipient: string;
-            balances: string;
-        };
-        showAdvanced: boolean;
-        transactionHash?: string;
-        onCloseCongratulationsModal?: () => void;
-        onCloseDailogChange: () => void;
-        onSendClick: () => void;
-        onInputChange: (name: string, value: string) => void;
-        onAdvancedCheckedChange: (checked: boolean) => void;
+  walletAddress: string;
+  accountInfo: AccountInfoData | null;
+  isLoading: boolean;
+  error: string;
+  transactions: ITransaction[];
+  totalTransactions: number;
+  selectedModal: string;
+  handlePageClick: ({ selected }: { selected: number }) => void;
+  onOpenModal: (modal: string) => void;
+  onCloseModal: () => void;
+  sendOptions: {
+    isVoteLoading: boolean;
+    error: string | null;
+    optionsAdvanced: {
+      fees: string;
+      gas: string;
+      memo: string;
+      senderAddress: string;
+      amount: string;
+      recipient: string;
+      balances: string;
     };
-    delegateOptions: {
-        isVoteLoading: boolean;
-        error: string | null;
-        optionsAdvanced: {
-           fees: string;
-            gas: string;
-            memo: string;
-            senderAddress: string;
-            amount: string;
-            validator: string;
-        };
-        showAdvanced: boolean;
-        validators: IValidator[];
-        transactionHash?: string;
-        onCloseCongratulationsModal?: () => void;
-        onCloseDailogChange: () => void;
-        onSendClick: () => void;
-        onInputChange: (name: string, value: string) => void;
-        onAdvancedCheckedChange: (checked: boolean) => void;
-    }
+    showAdvanced: boolean;
+    transactionHash?: string;
+    onCloseCongratulationsModal?: () => void;
+    onCloseDailogChange: () => void;
+    onSendClick: () => void;
+    onInputChange: (name: string, value: string) => void;
+    onAdvancedCheckedChange: (checked: boolean) => void;
+  };
+  delegateOptions: {
+    isVoteLoading: boolean;
+    error: string | null;
+    optionsAdvanced: {
+      fees: string;
+      gas: string;
+      memo: string;
+      senderAddress: string;
+      amount: string;
+      validator: string;
+    };
+    showAdvanced: boolean;
+    validators: IValidator[];
+    transactionHash?: string;
+    onCloseCongratulationsModal?: () => void;
+    onCloseDailogChange: () => void;
+    onSendClick: () => void;
+    onInputChange: (name: string, value: string) => void;
+    onAdvancedCheckedChange: (checked: boolean) => void;
+}
 }
 
 export const WalletScreen = ({
-    walletAddress,
-    accountInfo,
-    isLoading,
-    error,
-    transactions,
-    totalTransactions,
-    selectedModal,
-    sendOptions,
-    delegateOptions,
-    handlePageClick,
-    onOpenModal,
-    onCloseModal,
+  walletAddress,
+  accountInfo,
+  isLoading,
+  transactions,
+  totalTransactions,
+  selectedModal,
+  sendOptions,
+  delegateOptions,
+  handlePageClick,
+  onOpenModal,
+  onCloseModal,
 }: IWalletScreen) => {
   const [isCopied, setCopied] = useState(false);
 
@@ -259,20 +258,7 @@ export const WalletScreen = ({
 
     if (!walletAddress) {
       return (
-        <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
-          <TamaguiCard elevate size="$4" bordered className='w-full'>
-            <div className='flex flex-col items-center justify-center min-h-[80vh]'>
-              <div className="w-20 h-20 rounded-full grid place-items-center staking-icon wallet">
-                <Wallet size="$3" />
-              </div>
-              <h2 className='font-normal text-white text-[42px] leading-[52px] mt-5'>No Wallet Connected</h2>
-              <p className='text-sm font-normal text-lumera-gray mt-3 mx-auto max-w-[400px] text-center'>Please connect your wallet to view this page and interact with the Lumera ecosystem.</p>
-              <div className='text-center mt-4'>
-                <ConnectWalletButton />
-              </div>
-          </div>
-          </TamaguiCard>
-        </YStack>
+        <NoWalletConnected />
       );
     }
 

@@ -32,6 +32,9 @@ export class Tracking {
   claim_lume?: number;
 
   @Column({ type: 'bigint', default: 0, nullable: true })
+  cascade_download?: number;
+
+  @Column({ type: 'bigint', default: 0, nullable: true })
   cascade_upload?: number;
 
   @Column({ type: 'bigint', default: 0, nullable: true })
@@ -69,6 +72,9 @@ export class Tracking {
 
   @Column({ type: 'text', nullable: true })
   transaction_extra?: string;
+
+  @Column({ type: 'text', nullable: true })
+  cascade_download_extra?: string;
 
   @CreateDateColumn()
   created_at!: Date;

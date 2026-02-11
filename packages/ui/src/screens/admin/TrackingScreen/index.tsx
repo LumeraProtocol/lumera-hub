@@ -8,13 +8,19 @@ import TransactionChart from './TransactionChart';
 import Sumary from './Sumary';
 
 export default function Tracking() {
-  const { isLoading, trackings } = useTracking();
+  const { isLoading, trackings, isSummaryLoading, summary } = useTracking();
   return (
     <div>
       <div className='w-full flex justify-end'>
         <DateTimePicker />
       </div>
-      <div className='grid grid-cols-3 gap-3 mt-5'>
+      <div className="mt-5">
+        <Sumary
+          isLoading={isSummaryLoading}
+          tracking={summary}
+        />
+      </div>
+      <div className='grid grid-cols-3 gap-5 mt-5'>
         <TransactionChart
           isLoading={isLoading}
           trackings={trackings}
@@ -24,12 +30,6 @@ export default function Tracking() {
           trackings={trackings}
         />
         <UsersChart
-          isLoading={isLoading}
-          trackings={trackings}
-        />
-      </div>
-      <div className="mt-5">
-        <Sumary
           isLoading={isLoading}
           trackings={trackings}
         />

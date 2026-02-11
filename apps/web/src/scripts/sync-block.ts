@@ -78,6 +78,7 @@ const syncAndSaveTransaction = async (
       if (
         entity.message_type.indexOf('MsgRequestAction') !== -1 ||
         entity.message_type.indexOf('MsgDelegate') !== -1 ||
+        entity.message_type.indexOf('MsgUndelegate') !== -1 ||
         entity.message_type.indexOf('MsgBeginRedelegate') !== -1
       ) {
         const msg = tx.body.messages[0];

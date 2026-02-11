@@ -1,10 +1,10 @@
 import { Card } from 'tamagui';
 import ReactECharts from 'echarts-for-react';
-import * as echarts from 'echarts';
 
 import SectionTitle from '@/components/SectionTitle';
 import { AppLoading } from '@/components/Loading';
 import { ITracking } from '@/hooks/admin/useTracking';
+import { formatMessageType } from '@/utils/format';
 
 interface ITransactionChart {
   isLoading: boolean;
@@ -25,19 +25,19 @@ export default function TransactionChart({
     }
     return {
       tooltip: {
-        trigger: 'axis',
-        formatter: function (params: any) {
-          const param = params[0];
+        position: 'right',
+        trigger: 'item',
+        formatter: function (param: any) {
           const tracking = trackings[param.dataIndex];
           let html = '';
           if (tracking && tracking?.transaction_extra) {
             const parseTransactions = JSON.parse(tracking.transaction_extra);
-            html += '<ul class="mt-1 pl-2 list-inside list-disc">';
+            html += '<ul class="mt-1 pl-3 list-inside list-disc">';
             for (const item of parseTransactions) {
-              const messageType = item.message_type.split('.');
+              const messageType = formatMessageType(item.message_type);
               html += `
-                <li class="flex justify-between gap-4">
-                  <span>${messageType[messageType.length - 1]}:</span>
+                <li class="flex justify-between gap-6">
+                  <span>- ${messageType}:</span>
                   <span class="font-bold">${item.total}</span>
                 </li>`;
             }
@@ -45,7 +45,7 @@ export default function TransactionChart({
           }
           return `
             <div>
-              <div class="text-sm">${param.axisValue}</div>
+              <div class="text-sm">${param.name}</div>
               <div class="text-sm mt-1">${param.marker} <span>Total transactions</span>: <span class="font-bold">${param.value}</span></div>
               ${html}
             </div>`;

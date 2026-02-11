@@ -4,3 +4,4 @@ export * from "./Transaction";
 export * from "./Address";
 export * from "./SyncState";
 export * from "./Tracking";
+export * from "./CascadeDownload";
