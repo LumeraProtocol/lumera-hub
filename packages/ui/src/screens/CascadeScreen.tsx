@@ -44,6 +44,7 @@ import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import SectionTitle from '@/components/SectionTitle';
+import NoWalletConnected from '@/components/NoWalletConnected';
 import useCascade, {
   FILES_TYPE,
   TFileTypeKey,
@@ -911,15 +912,7 @@ const YourUsage = ({
               )
             }
           </> : (
-            <div className='flex items-center justify-center flex-col gap-0 text-center h-full'>
-              <H3 className='!leading-[1.2]'>No Wallet Connected</H3>
-              <Paragraph className='text-base text-lumera-gray'>
-                Get started by connecting your wallet.
-              </Paragraph>
-              <div className='mt-3'>
-                <ConnectWalletButton />
-              </div>
-            </div>
+            <NoWalletConnected variant='small' />
           )
         }
       </Card.Header>

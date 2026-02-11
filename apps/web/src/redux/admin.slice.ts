@@ -12,11 +12,8 @@ const initialState: IAdminState = {
   endDate: `${new Date()}`,
 };
 
-type TStartDateAction = {
+type TDateAction = {
   startDate: string | null;
-};
-
-type TEndDateAction = {
   endDate: string | null;
 };
 
@@ -24,14 +21,12 @@ export const adminSlice = createSlice({
   name: 'admin',
   initialState,
   reducers: {
-    setStartDate: (state, { payload }: PayloadAction<TStartDateAction>) => {
+    setDate: (state, { payload }: PayloadAction<TDateAction>) => {
       state.startDate = payload.startDate;
-    },
-    setEndDate: (state, { payload }: PayloadAction<TEndDateAction>) => {
       state.endDate = payload.endDate;
     },
   },
 });
 
-export const { setStartDate, setEndDate } = adminSlice.actions;
+export const { setDate } = adminSlice.actions;
 export default adminSlice.reducer;

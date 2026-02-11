@@ -1,21 +1,28 @@
 import { Card } from 'tamagui';
 import ReactECharts from 'echarts-for-react';
+import * as echarts from 'echarts';
 
 import SectionTitle from '@/components/SectionTitle';
 import { AppLoading } from '@/components/Loading';
-import useChartUser from '@/hooks/admin/useChartUser';
+import { ITracking } from '@/hooks/admin/useTracking';
 
-export default function UsersChart() {
-  const { isLoading, users } = useChartUser();
+interface IUsersChart {
+  isLoading: boolean;
+  trackings: ITracking[];
+}
+
+export default function UsersChart({
+  isLoading,
+  trackings,
+}: IUsersChart) {
 
   const getOption = () => {
     const dates: string[] = [];
     const newUsers: number[] = [];
     const totalUsers: number[] = [];
-    for (const user of users) {
+    for (const user of trackings) {
       const date = user.date.split('-');
       dates.push(`${date[1]}/${date[2]}/${date[0]}`);
-      newUsers.push(user.new_address);
       totalUsers.push(user.total_address);
     }
 
@@ -33,7 +40,11 @@ export default function UsersChart() {
       },
       xAxis: {
         type: 'category',
-        data: dates
+        data: dates,
+        boundaryGap: false,
+        splitLine: {
+          show: false,
+        },
       },
       yAxis: {
         type: 'value',
@@ -45,19 +56,23 @@ export default function UsersChart() {
       },
       series: [
         {
-          name: "New",
-          data: newUsers,
-          type: 'line',
-          itemStyle: {
-            color: '#47C78A',
-          },
-        },
-        {
-          name: "Total",
+          name: "Total users",
           data: totalUsers,
           type: 'line',
           itemStyle: {
-            color: '#e77975',
+            color: '#47C78A'
+          },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              {
+                offset: 0,
+                color: '#47C78A'
+              },
+              {
+                offset: 1,
+                color: '#F5F5FA'
+              }
+            ])
           },
         }
       ]
@@ -81,7 +96,7 @@ export default function UsersChart() {
             />
           </div> :
           <>
-            {users?.length ?
+            {trackings?.length ?
               <ReactECharts option={getOption()} className='w-full' style={{ height: '160px' }} /> :
               <div className='text-lg flex items-center justify-center w-full h-full min-h-40'>No data</div>
             }

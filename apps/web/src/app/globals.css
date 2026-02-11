@@ -19,7 +19,10 @@
   --color-lumera-green-light: #68d1bf;
   --color-lumera-blue-light: #838df1;
   --color-lumera-warning: #ffc107;
+  --color-lumera-popover: #1a212e;
+  --color-lumera-icon-bg: #29313e;
   --breakpoint-2lg: 71.875rem;
+  --breakpoint-1-5xl: 83rem;
 }
 
 @theme inline {

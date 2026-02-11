@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/scripts/sync-block.ts
+import 'dotenv/config'
+
 import { Repository } from "typeorm";
 import { sha256 } from "@cosmjs/crypto";
 import { toHex } from "@cosmjs/encoding";
@@ -49,13 +51,12 @@ const syncAndSaveTransaction = async (
         creator,
       };
 
-      if (entity.message_type.includes('MsgRequestAction')) {
+      if (entity.message_type.indexOf('MsgRequestAction') !== -1) {
         const msg = tx.body.messages[0];
         entity.action_type = msg.actionType;
-        entity.price = msg.price;
         entity.expiration_time = msg.expirationTime;
         entity.file_size_kbs = Number(msg.fileSizeKbs);
-        entity.rq_ids_ic = Number(msg.rq_ids_ic);
+        entity.rq_ids_ic = msg?.rq_ids_ic ? Number(msg.rq_ids_ic) : 0;
 
         if (msg.metadata) {
           entity.metadata_json = msg.metadata;
@@ -69,14 +70,45 @@ const syncAndSaveTransaction = async (
         }
       }
 
-      if (entity.message_type.includes('MsgDelegate')) {
+      if (entity.message_type.indexOf('MsgDelegate') !== -1) {
         const msg = tx.body.messages[0];
         entity.validator_address = msg.validator_address;
       }
 
-      if (entity.message_type.includes('MsgWithdrawDelegatorReward')) {
+      if (
+        entity.message_type.indexOf('MsgRequestAction') !== -1 ||
+        entity.message_type.indexOf('MsgDelegate') !== -1 ||
+        entity.message_type.indexOf('MsgUndelegate') !== -1 ||
+        entity.message_type.indexOf('MsgBeginRedelegate') !== -1
+      ) {
+        const msg = tx.body.messages[0];
+        entity.price = msg?.amount?.amount;
+      }
+
+      if (entity.message_type.indexOf('MsgDelegate') !== -1) {
         const msg = tx.body.messages[0];
         entity.validator_address = msg.validator_address;
+      }
+
+      if (entity.message_type.indexOf('MsgWithdrawDelegatorReward') !== -1) {
+        const msg = tx.body.messages[0];
+        entity.validator_address = msg.validator_address;
+
+        const events: any = response.events;
+        const rewardEvents = events.filter((e: any) => e.type === "withdraw_rewards");
+        let totalReward = 0;
+        rewardEvents.forEach((event: any) => {
+          const amountAttr = event.attributes.find((attr: any) => attr.key === "amount");
+          if (amountAttr && amountAttr.value) {
+            const amountStr = amountAttr.value.replace("ulume", "").trim();
+            const amountNum = Number(amountStr);
+            if (!isNaN(amountNum)) {
+              totalReward += amountNum;
+            }
+          }
+        });
+
+        entity.price = totalReward;
       }
 
       if (tx.auth_info?.signer_infos?.[0]) {

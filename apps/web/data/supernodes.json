@@ -137,23 +137,6 @@
   },
   {
     "latLng": [
-      60.1698557,
-      24.938379
-    ],
-    "name": "Helsinki",
-    "continent": "Europe",
-    "country": "Finland",
-    "country_code": "FI",
-    "subdivision": "Helsinki",
-    "city": "Helsinki",
-    "supernodeAccount": "lumera1ljg7cvxwshma9t0ll5hv372yzvq4em0ngl9mkr",
-    "validatorAddress": "lumeravaloper18r2hdxu3awwa0tzgtp60ufqs8srdr4lnpqrynq",
-    "validatorMoniker": "Fertal",
-    "address": "95.216.70.180:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
       39.9611755,
       -82.9987942
     ],

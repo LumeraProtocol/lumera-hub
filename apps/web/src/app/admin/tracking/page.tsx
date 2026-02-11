@@ -11,6 +11,11 @@ export default function AdminWallet() {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex';
+    document.head.appendChild(meta);
+
     document.title = 'Active Hub Users - Lumera Hub';
     dispatch(setCurrentPath({
       currentPath: '/admin/tracking',
@@ -18,6 +23,10 @@ export default function AdminWallet() {
     dispatch(setViewTitle({
       viewTitle: 'Active Hub Users',
     }));
+
+    return () => {
+      document.head.removeChild(meta);
+    };
   }, []);
 
   return (

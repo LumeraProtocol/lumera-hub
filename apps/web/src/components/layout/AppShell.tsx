@@ -113,7 +113,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.id}
                 id={item.id}
                 href={item?.url || '#'}
-                className="text-lumera-teal hover:text-lumera-green text-base font-medium"
+                className="text-lumera-teal hover:text-lumera-green text-base font-medium block mb-1"
               >
                 <span
                   onClick={() => handleMenuItemClick(item)}
@@ -160,7 +160,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     <AppLink
                       key={item.id}
                       href={item?.url || '#'}
-                      className="text-lumera-teal hover:text-lumera-green text-base font-medium">
+                      className="text-lumera-teal hover:text-lumera-green text-base font-medium block mb-1">
                       <span
                         onClick={() => handleMenuItemClick(item)}
                         className={`flex items-center gap-3 px-4 py-3  transition-colors duration-200 rounded-lg w-full ${

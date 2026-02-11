@@ -7,6 +7,7 @@ import { useChain } from '@interchain-kit/react';
 import dayjs from 'dayjs';
 
 import { useSelector } from '@/redux/hooks';
+import useTrackingCascadeDownload from '@/hooks/useTrackingCascadeDownload';
 import * as instance from '@/utils/api';
 import { delay } from '@/utils/helpers';
 import {
@@ -21,7 +22,14 @@ import {
   CHAIN_NAME,
   DENOM,
 } from '@/contants/network';
-import { UPLOAD_MAX_FILES } from '@/contants';
+import {
+  UPLOAD_MAX_FILES,
+  IMAGE_EXT,
+  DOCUMENT_EXT,
+  VIDEO_EXT,
+  ARCHIVE_EXT,
+  PROGRAM_EXT,
+} from '@/contants';
 import { IRecentActivity, IActionDetail } from '@/types';
 
 export interface ITask {
@@ -184,12 +192,6 @@ export type TUploadCascadeInfo = {
   isPublic?: boolean;
 }
 
-export const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
-export const DOCUMENT_EXT = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'ppt', 'pptx'];
-export const VIDEO_EXT = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
-export const ARCHIVE_EXT = ['zip', 'rar', '7z'];
-export const PROGRAM_EXT = ['exe', 'bat', 'sh', 'dll', 'app'];
-
 export const FILES_TYPE: FileTypeOption[] = [
   {
     value: 'all',
@@ -254,6 +256,7 @@ export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
+  const { trackingCascadeDownload } = useTrackingCascadeDownload();
   const { openView } = useChain(CHAIN_NAME);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { address } = useSelector((state) => state.wallet);
@@ -1127,6 +1130,11 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         const downloadedBytes = await getDownloadedBytes(stream);
         const blob1 = new Blob([downloadedBytes]);
         downloadFile(blob1, file.name);
+        const parseFile = file.name.split('.');
+        trackingCascadeDownload({
+          actionID: file.actionID,
+          fileType: parseFile[parseFile.length - 1],
+        });
       }
     } catch (error) {
       const errorMessage = (error as Error)?.message || (error as TError)?.statusText ||  'An unknown error occurred.';
@@ -1164,6 +1172,11 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
           const blob = new Blob([downloadedBytes]);
           zip.file(file.name, blob);
           actionIDs.push(file.actionID);
+          const parseFile = file.name.split('.');
+          trackingCascadeDownload({
+            actionID: file.actionID,
+            fileType: parseFile[parseFile.length - 1],
+          });
         }
         const content = await zip.generateAsync({ type: 'blob' });
         downloadFile(content, zipFileName);

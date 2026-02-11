@@ -480,8 +480,8 @@
   background-image: url(../../public/img/cosmostation.jpg);
 }
 .datepicker-wrapper .react-datepicker {
-  border: 1px solid #2a323f;
-  background: #1a212e;
+  border: 1px solid transparent;
+  background: transparent;
 }
 .datepicker-wrapper .react-datepicker__day,
 .datepicker-wrapper .react-datepicker__day-name,
@@ -510,6 +510,9 @@
   fill: #1a212e;
   color: #2a323f;
   stroke: transparent;
+}
+.welcome-section {
+  min-height: calc(100vh - 276px);
 }
 @keyframes slideBackForth {
   050% {

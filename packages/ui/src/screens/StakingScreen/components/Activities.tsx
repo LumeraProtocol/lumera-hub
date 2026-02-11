@@ -156,41 +156,45 @@ export default function Activities({
                 </div>
               </div>
             ) : null}
-            {activityData.activities.sort((a, b) => sortFunc(a, b)).map((tx) => (
-              <div key={tx.txhash} className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-base">
-                <div className="col-span-12 md:col-span-1 text-gray-300">
-                  <div className="md:hidden text-gray-500 mr-2">Block: </div>
-                  <AppLink
-                    href={`/block/${tx.height}`}
-                    className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
-                  >
-                    {tx.height}<ArrowUpRight className="w-3 h-3"/>
-                  </AppLink>
-                </div>
-                <div className="col-span-12 md:col-span-3">
-                  <div className="md:hidden text-gray-500 mr-2">TX Hash: </div>
-                  <AppLink
-                    href={`/tx/${tx.txhash}`}
-                    className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
-                  >
-                    {formatAddress(tx.txhash, 12, -6)}<ArrowUpRight className="w-3 h-3"/>
-                  </AppLink>
-                </div>
-                <div className="col-span-12 md:col-span-2 font-medium text-white">
-                  <div className="md:hidden text-gray-500 mr-2">Messages: </div>
-                  {getMessages(tx.tx.body.messages)}
-                </div>
-                <div className="col-span-12 md:col-span-2 md:text-right text-white">
-                  <div className="md:hidden text-gray-500 mr-2">Amount: </div>
-                  {mapAmount(tx.events)?.join(", ")}
-                </div>
-                <div className="col-span-12 md:col-span-4 text-gray-400 md:flex md:justify-end whitespace-nowrap">
-                  <div className="md:hidden text-gray-500 mr-2">Time: </div>
-                  {dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}
-                  (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm md:whitespace-nowrap' />)
-                </div>
-              </div>
-            ))}
+            {activityData?.activities?.length ?
+              <>
+                {activityData.activities.sort((a, b) => sortFunc(a, b)).map((tx) => (
+                  <div key={tx.txhash} className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-base">
+                    <div className="col-span-12 md:col-span-1 text-gray-300">
+                      <div className="md:hidden text-gray-500 mr-2">Block: </div>
+                      <AppLink
+                        href={`/block/${tx.height}`}
+                        className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
+                      >
+                        {tx.height}<ArrowUpRight className="w-3 h-3"/>
+                      </AppLink>
+                    </div>
+                    <div className="col-span-12 md:col-span-3">
+                      <div className="md:hidden text-gray-500 mr-2">TX Hash: </div>
+                      <AppLink
+                        href={`/tx/${tx.txhash}`}
+                        className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
+                      >
+                        {formatAddress(tx.txhash, 12, -6)}<ArrowUpRight className="w-3 h-3"/>
+                      </AppLink>
+                    </div>
+                    <div className="col-span-12 md:col-span-2 font-medium text-white">
+                      <div className="md:hidden text-gray-500 mr-2">Messages: </div>
+                      {getMessages(tx.tx.body.messages)}
+                    </div>
+                    <div className="col-span-12 md:col-span-2 md:text-right text-white">
+                      <div className="md:hidden text-gray-500 mr-2">Amount: </div>
+                      {mapAmount(tx.events)?.join(", ")}
+                    </div>
+                    <div className="col-span-12 md:col-span-4 text-gray-400 md:flex md:justify-end whitespace-nowrap">
+                      <div className="md:hidden text-gray-500 mr-2">Time: </div>
+                      {dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}
+                      (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm md:whitespace-nowrap' />)
+                    </div>
+                  </div>
+                ))}
+              </> : null
+            }
           </div>
         </div>
       }

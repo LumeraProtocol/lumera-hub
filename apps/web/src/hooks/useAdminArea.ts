@@ -9,7 +9,7 @@ const useAdminArea = () => {
 
   useEffect(() => {
     setAdminPage(pathname?.includes('/admin'));
-  }, []);
+  }, [pathname]);
 
   return {
     isAdminPage,

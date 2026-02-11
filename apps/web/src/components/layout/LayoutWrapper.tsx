@@ -1,4 +1,4 @@
-'use client'; // Quan trọng nhất là dòng này
+'use client';
 
 import AppShell from '@/components/layout/AppShell'
 import AdminLayout from '@/components/layout/AdminLayout'
@@ -13,7 +13,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     )
   }
 
-  // Bạn có thể dùng isAdminPage ở đây để thay đổi UI
   return (
     <AdminLayout>{children}</AdminLayout>
   );

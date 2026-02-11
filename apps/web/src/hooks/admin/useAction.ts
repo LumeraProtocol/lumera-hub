@@ -11,6 +11,7 @@ export interface IWallet {
   last_action_timestamp: number;
   last_action_type: string;
   last_tx_hash: string;
+  cascade_upload: number;
 }
 
 export const ITEM_PER_PAGE = 20;
