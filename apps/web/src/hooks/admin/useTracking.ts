@@ -86,6 +86,7 @@ const useTracking = () => {
     fetchTrachkingForChart();
     fetchTrackingSumrary();
   }, [startDate, endDate]);
+
   return {
     isLoading,
     trackings,

@@ -6,6 +6,7 @@ import UsersChart from './UsersChart';
 import CascadeChart from './CascadeChart';
 import TransactionChart from './TransactionChart';
 import Sumary from './Sumary';
+import ActivationRate from './ActivationRate';
 
 export default function Tracking() {
   const { isLoading, trackings, isSummaryLoading, summary } = useTracking();
@@ -18,6 +19,12 @@ export default function Tracking() {
         <Sumary
           isLoading={isSummaryLoading}
           tracking={summary}
+        />
+      </div>
+      <div className="mt-5">
+        <ActivationRate
+          isLoading={isSummaryLoading}
+          trackings={trackings}
         />
       </div>
       <div className='grid grid-cols-3 gap-5 mt-5'>

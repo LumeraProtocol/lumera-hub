@@ -4,6 +4,9 @@ import dayjs from 'dayjs';
 import { getDataSource } from '@/lib/data-source';
 import { Transaction } from '@/entities/Transaction';
 import { Tracking } from '@/entities/Tracking';
+import { TrackingHubAddress } from '@/entities/TrackingHubAddress';
+import { HubAddress } from '@/entities/HubAddress';
+import { HubAddressConnectedLog } from '@/entities/HubAddressConnectedLog';
 import { IMAGE_EXT, DOCUMENT_EXT, VIDEO_EXT, ARCHIVE_EXT, PROGRAM_EXT } from '@/contants';
 
 let isSyncing = false;
@@ -18,6 +21,9 @@ const updateTracking = async () => {
     const dataSource = await getDataSource();
     const transactionRepo = dataSource.getRepository(Transaction);
     const trackingRepo = dataSource.getRepository(Tracking);
+    const trackingHubAddressRepo = dataSource.getRepository(TrackingHubAddress);
+    const hubAddressRepo = dataSource.getRepository(HubAddress);
+    const addressLogRepo = dataSource.getRepository(HubAddressConnectedLog);
 
     const dates = await transactionRepo.createQueryBuilder()
       .select("strftime('%Y-%m-%d', timestamp)", 'day')
@@ -131,7 +137,7 @@ const updateTracking = async () => {
           totalPrice += Number(item.price);
           totalFee   += Number(item.file_size_kbs);
 
-          const ext = item.file.split('.').pop()?.toLowerCase() || '';
+          const ext = item?.file?.split('.')?.pop()?.toLowerCase() || '';
           if (IMAGE_EXT.includes(ext)) {
             results.images++;
           } else if (PROGRAM_EXT.includes(ext)) {
@@ -188,29 +194,72 @@ const updateTracking = async () => {
       }
 
       // wallet
-      const startDate = dayjs(currentDate).set('hour', 0).set('minute', 0).set('second', 1).toISOString();
-      const endDate = dayjs(currentDate).add(1, 'day').set('hour', 0).set('minute', 0).set('second', 1).toISOString();
-      const walletTransactions = await transactionRepo.createQueryBuilder('tx')
-        .select('creator')
-        .addSelect(`EXISTS (SELECT 1 FROM address addr WHERE addr.address = tx.creator AND timestamp < '${startDate}')`, 'existsInAddresses')
-        .addSelect(`(SELECT COUNT(1) FROM transactions WHERE creator IS NOT NULL AND timestamp < '${endDate}')`, 'total')
-        .where('timestamp LIKE :date', { date: `%${currentDate}%` })
-        .andWhere('creator IS NOT NULL')
-        .groupBy('creator')
-        .getRawMany();
-      if (walletTransactions?.length) {
-        const newAddresses = walletTransactions.filter((tx) => !tx.existsInAddresses);
+      const endDate = dayjs(currentDate)
+        .add(1, 'day')
+        .set('hour', 0)
+        .set('minute', 0)
+        .set('second', 1)
+        .toISOString();
+
+      const total = await dataSource.query(`
+        SELECT COUNT(DISTINCT address) as total
+        FROM (
+          SELECT creator as address FROM "transactions" WHERE creator IS NOT NULL AND timestamp < '${endDate}'
+          UNION
+          SELECT address FROM "hub_address" WHERE first_connected < '${endDate}'
+        )
+      `);
+
+      const newAddresses = await dataSource.query(`
+        SELECT COUNT(DISTINCT address) as total
+        FROM (
+          SELECT creator as address FROM "transactions" WHERE creator IS NOT NULL AND timestamp LIKE '%${currentDate}%'
+          UNION
+          SELECT address FROM "hub_address" WHERE first_connected LIKE '%${currentDate}%'
+        )
+      `);
+
+      if (newAddresses?.length) {
         payload = {
           ...payload,
-          total_address: walletTransactions[0].total || newAddresses.length,
-          new_address: newAddresses.length,
+          total_address: total[0].total || newAddresses[0].total,
+          new_address: newAddresses[0].total,
         };
       }
-
       await trackingRepo.save(payload);
+
+      // Hub user
+      const addresses = await hubAddressRepo.createQueryBuilder().select('address').getRawMany();
+      for (const item of addresses) {
+        const address = item.address;
+        const transactions = await transactionRepo.createQueryBuilder()
+          .select('COUNT(message_type)', 'total')
+          .addSelect('message_type')
+          .where('timestamp LIKE :date', { date: `%${currentDate}%` })
+          .andWhere('creator = :address', { address })
+          .groupBy('message_type')
+          .getRawMany();
+        const connectedLogs = await addressLogRepo.createQueryBuilder()
+          .select('COUNT(1)', 'total')
+          .where('address = :address', { address })
+          .andWhere('created_at LIKE :createdAt', { createdAt: `%${currentDate}%` })
+          .getRawOne();
+
+        const totalTransactions = transactions.reduce((total, item) => total + Number(item.total), 0);
+        await trackingHubAddressRepo.save({
+          code: `${currentDate}-${address}`,
+          address: address,
+          date: currentDate,
+          total_transaction: totalTransactions,
+          total_connected: connectedLogs?.total || 0,
+          extra_info: JSON.stringify({
+            transactions,
+          }),
+        });
+      }
     }
   } catch (error) {
-    console.error('syncBlock error: ', error);
+    console.error('updateTracking error: ', error);
   }
   isSyncing = false;
   console.log(

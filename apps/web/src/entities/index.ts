@@ -5,3 +5,6 @@ export * from "./Address";
 export * from "./SyncState";
 export * from "./Tracking";
 export * from "./CascadeDownload";
+export * from "./HubAddress";
+export * from "./HubAddressConnectedLog";
+export * from "./TrackingHubAddress";

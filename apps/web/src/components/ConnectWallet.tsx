@@ -10,11 +10,13 @@ import { useDispatch } from '@/redux/hooks';
 import { formatAddress } from '@/utils/format';
 import { CHAIN_NAME } from '@/contants/network';
 import { setAddress, setConnected } from '@/redux/wallet.slice';
+import useTrackingUser from '@/hooks/useTrackingUser';
 
 export function WalletModalComponent() {
   const dispatch = useDispatch();
   const { address } = useChain(CHAIN_NAME);
   const { close } = useWalletModal();
+  const { trackingUser } = useTrackingUser();
 
   useEffect(() => {
     if (address) {
@@ -27,6 +29,7 @@ export function WalletModalComponent() {
       }));
       const isNewConnect = sessionStorage.getItem('new_connect');
       if (!isNewConnect) {
+        trackingUser({ address });
         sessionStorage.setItem('new_connect', 'true');
       }
     }
@@ -64,6 +67,7 @@ export function ConnectWallet() {
     dispatch(setConnected({
       status: false,
     }));
+    sessionStorage.removeItem('new_connect');
   }
 
   const handleCopyAddress = () => {
