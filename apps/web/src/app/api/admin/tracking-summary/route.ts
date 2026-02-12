@@ -5,11 +5,14 @@ import dayjs from 'dayjs';
 
 import { getDataSource } from '@/lib/data-source';
 import { Tracking } from '@/entities/Tracking';
+import { Address } from '@/entities/Address';
+import { HubAddress } from '@/entities/HubAddress';
 
 export async function GET(req: NextRequest) {
   try {
     const dataSource = await getDataSource();
     const trackingRepo = dataSource.getRepository(Tracking);
+    const hubAddressRepo = dataSource.getRepository(HubAddress);
 
     const searchParams = req.nextUrl.searchParams;
     const startDate = searchParams.get("startDate") || dayjs().format('YYYY-MM-DD');
@@ -42,7 +45,7 @@ export async function GET(req: NextRequest) {
       .andWhere('date <= :endDate', { endDate })
       .orderBy('date', 'DESC')
       .getRawOne();
-    console.log('tracking', tracking);
+
     return NextResponse.json({
       success: true,
       item: {

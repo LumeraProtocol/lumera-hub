@@ -1,4 +1,4 @@
-// src/entities/Staking.ts
+// src/entities/Tracking.ts
 import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from "typeorm";
 
 @Entity()

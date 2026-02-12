@@ -1,4 +1,4 @@
-// src/entities/AdminUser.ts
+// src/entities/SyncState.ts
 import { Entity, PrimaryGeneratedColumn, Column, Index } from "typeorm";
 
 @Entity({ name: "sync_state" })

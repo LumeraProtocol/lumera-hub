@@ -10,6 +10,9 @@ export class Address {
   @Column({ type: 'varchar', length: 30, nullable: true })
   timestamp?: string;
 
+  @Column({ type: 'varchar', length: 10, nullable: true, default: 'tx' })
+  type?: string;
+
   @CreateDateColumn()
   created_at!: Date;
 
