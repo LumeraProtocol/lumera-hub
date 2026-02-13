@@ -6,8 +6,7 @@ export class SeedAdminUser1769425962389 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     const email = process.env.NEXT_PUBLIC_ADMIN_EMAIL || '';
     const plainPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || '';
-    console.log('email', email);
-    console.log('plainPassword', plainPassword);
+
     if (!plainPassword || !email) {
       console.warn('Missing ADMIN_EMAIL or ADMIN_PASSWORD in env → skip seeding admin user');
       return;

@@ -74,7 +74,6 @@ const syncAndSaveTransaction = async (
         const msg = tx.body.messages[0];
         entity.validator_address = msg.validator_address;
       }
-
       if (
         entity.message_type.indexOf('MsgRequestAction') !== -1 ||
         entity.message_type.indexOf('MsgDelegate') !== -1 ||
@@ -82,7 +81,7 @@ const syncAndSaveTransaction = async (
         entity.message_type.indexOf('MsgBeginRedelegate') !== -1
       ) {
         const msg = tx.body.messages[0];
-        entity.price = msg?.amount?.amount;
+        entity.price = parseInt(msg?.price) || parseInt(msg?.amount?.amount) || 0;
       }
 
       if (entity.message_type.indexOf('MsgDelegate') !== -1) {
@@ -184,7 +183,7 @@ const saveBlockData = async (blockRepo: Repository<Block>, data: any) => {
   };
 }
 
-const syncBlock = async () => {
+export const syncBlock = async () => {
   if (isSyncing) {
     return;
   }
@@ -231,5 +230,3 @@ const syncBlock = async () => {
     }ms`,
   );
 }
-
-syncBlock();

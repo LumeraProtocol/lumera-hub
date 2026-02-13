@@ -21,4 +21,10 @@ export class HubAddress {
 
   @Column({ type: 'varchar', length: 30, nullable: true })
   last_connected?: string;
+
+  @Column({ type: 'varchar', length: 30, nullable: true })
+  first_action_timestamp?: string;
+
+  @Column({ type: 'varchar', length: 150, nullable: true, default: 'Direct' })
+  acquisition_source?: string;
 }

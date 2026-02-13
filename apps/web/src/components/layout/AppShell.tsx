@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from 'next/navigation';
 import {
   X,
   BarChart2,
@@ -46,6 +47,7 @@ export const NAV_ITEMS: TNaxItems[] = [
 ]
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const { address } = useChain(CHAIN_NAME);
   const { activeView, currentPath, viewTitle } = useSelector((state) => state.app);
@@ -66,7 +68,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         activeView: navItem?.id || "dashboard",
       }));
     }
-  }, [])
+    const referrer = sessionStorage.getItem('acquisitionSource');
+    if (!referrer) {
+      sessionStorage.setItem('acquisitionSource', searchParams.get('utm_source') || document.referrer);
+    }
+  }, []);
 
   const onNavClick = (id: ViewId) => {
     dispatch(setActiveView({

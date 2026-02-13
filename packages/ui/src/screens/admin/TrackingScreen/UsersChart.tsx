@@ -30,9 +30,8 @@ export default function UsersChart({
       grid: {
         top: 8,
         bottom: 2,
-        left: 10,
-        right: 10,
-        containLabel: false,
+        left: 14,
+        right: 14,
       },
       colors: ['#078A8A'],
       tooltip: {
@@ -44,6 +43,11 @@ export default function UsersChart({
         boundaryGap: false,
         splitLine: {
           show: false,
+        },
+        axisLabel: {
+          showMinLabel: true,
+          showMaxLabel: true,
+          interval: Math.floor((totalUsers.length - 1) / 2),
         },
       },
       yAxis: {

@@ -8,8 +8,10 @@ const useTrackingUser = () => {
   const trackingUser = async ({ address }: { address: string }) => {
     setLoading(true);
     try {
-      await instance.postExternal(`/api/admin/tracking-hub-user-connect`, {
+      const referrer = sessionStorage.getItem('acquisitionSource');
+      await instance.postExternal(`/api/admin/trackings/save-wallet-connect`, {
         address,
+        acquisitionSource: referrer || 'Direct',
       });
     } catch (error) {
       console.error(error);

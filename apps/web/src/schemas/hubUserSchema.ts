@@ -7,6 +7,10 @@ export const hubUserSchema = z.object({
     .trim()
     .min(20, { message: 'Address is required' })
     .max(50, { message: 'Invalid address' }),
+  acquisitionSource: z
+    .string()
+    .trim()
+    .max(20, { message: 'Invalid acquisitionSource' }),
 });
 
 export type TrackActionInput = z.infer<typeof hubUserSchema>;

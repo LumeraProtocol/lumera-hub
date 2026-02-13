@@ -19,6 +19,9 @@ export class HubAddressConnectedLog {
   @Column({ type: 'text', nullable: true })
   other_info?: string;
 
+  @Column({ type: 'varchar', length: 150, nullable: true, default: 'Direct' })
+  acquisition_source?: string;
+
   @Index()
   @Column({ type: "varchar", length: 25 })
   created_at: string;

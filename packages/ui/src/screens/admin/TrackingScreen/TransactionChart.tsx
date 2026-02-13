@@ -26,8 +26,9 @@ export default function TransactionChart({
     return {
       tooltip: {
         position: 'right',
-        trigger: 'item',
-        formatter: function (param: any) {
+        trigger: 'axis',
+        formatter: function (params: any) {
+          const param = params[0];
           const tracking = trackings[param.dataIndex];
           let html = '';
           if (tracking && tracking?.transaction_extra) {
@@ -54,9 +55,8 @@ export default function TransactionChart({
       grid: {
         top: 8,
         bottom: 2,
-        left: 10,
-        right: 10,
-        containLabel: false,
+        left: 14,
+        right: 14,
       },
       xAxis: {
         type: 'category',
@@ -65,6 +65,11 @@ export default function TransactionChart({
           show: false,
         },
         data: dates,
+        axisLabel: {
+          showMinLabel: true,
+          showMaxLabel: true,
+          interval: Math.floor((data.length - 1) / 2),
+        },
       },
       yAxis: {
         type: 'value',
@@ -81,7 +86,7 @@ export default function TransactionChart({
           itemStyle: {
             color: '#47C78A'
           },
-          data: data
+          data,
         }
       ]
     };
