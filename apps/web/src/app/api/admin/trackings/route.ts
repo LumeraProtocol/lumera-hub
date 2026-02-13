@@ -25,7 +25,8 @@ export async function GET(req: NextRequest) {
         address.timestamp AS first_connected,
         lastAction.message_type AS last_action_type,
         lastAction.timestamp AS last_action_timestamp,
-        lastAction.tx_hash AS last_tx_hash
+        lastAction.tx_hash AS last_tx_hash,
+        (SELECT COUNT(1) FROM transactions WHERE message_type LIKE '%MsgRequestAction%' AND action_type  = 'cascade' AND creator = address.address AND timestamp >= '${dayjs(startDate).toISOString()}' AND timestamp <= '${dayjs(endDate).toISOString()}') AS cascade_upload
       FROM address
       LEFT JOIN (
         SELECT

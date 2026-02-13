@@ -118,7 +118,7 @@ const updateTracking = async () => {
         .where('timestamp LIKE :date', { date: `%${currentDate}%` })
         .andWhere('creator IS NOT NULL')
         .andWhere("message_type LIKE '%MsgRequestAction%'")
-        .andWhere("action_type  = 'cascade'")
+        .andWhere("action_type = 'cascade'")
         .groupBy('creator')
         .getRawMany();
       if (cascadeTransactions?.length) {
@@ -137,7 +137,7 @@ const updateTracking = async () => {
           totalPrice += Number(item.price);
           totalFee   += Number(item.file_size_kbs);
 
-          const ext = item?.file?.split('.')?.pop()?.toLowerCase() || '';
+          const ext = item?.file_name?.split('.')?.pop()?.toLowerCase() || '';
           if (IMAGE_EXT.includes(ext)) {
             results.images++;
           } else if (PROGRAM_EXT.includes(ext)) {
@@ -256,6 +256,21 @@ const updateTracking = async () => {
             transactions,
           }),
         });
+      }
+
+      // update first action timestamp
+      const hubAddresses = await hubAddressRepo.createQueryBuilder('adr')
+        .select('address')
+        .addSelect('(SELECT timestamp FROM transactions WHERE creator = adr.address AND timestamp >= adr.first_connected ORDER BY timestamp ASC LIMIT 1)', 'first_action')
+        .where('first_action_timestamp IS NULL')
+        .getRawMany();
+      for (const item of hubAddresses) {
+        if (item.first_action) {
+          hubAddressRepo.save({
+            address: item.address,
+            first_action_timestamp: item.first_action,
+          });
+        }
       }
     }
   } catch (error) {

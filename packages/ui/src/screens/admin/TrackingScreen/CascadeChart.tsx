@@ -118,7 +118,6 @@ export default function CascadeChart({
         bottom: 2,
         left: 10,
         right: 10,
-        containLabel: false,
       },
       xAxis: {
         type: 'category',
@@ -127,6 +126,11 @@ export default function CascadeChart({
           show: false,
         },
         data: dates,
+        axisLabel: {
+          showMinLabel: true,
+          showMaxLabel: true,
+          interval: Math.floor((data1.length - 1) / 2),
+        },
       },
       yAxis: {
         type: 'value',

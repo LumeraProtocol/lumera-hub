@@ -10,7 +10,7 @@ const useTrackingCascadeDownload = () => {
   const trackingCascadeDownload = async ({ actionID, fileType }: { actionID: string; fileType: string }) => {
     setLoading(true);
     try {
-      await instance.postExternal(`/api/admin/tracking-cascade-download`, {
+      await instance.postExternal(`/api/admin/trackings/save-cascade-download`, {
         address,
         action_id: actionID,
         file_type: fileType,

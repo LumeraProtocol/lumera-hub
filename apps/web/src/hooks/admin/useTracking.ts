@@ -63,7 +63,7 @@ const useTracking = () => {
   const fetchTrachkingForChart = async () => {
     setLoading(true);
     try {
-      const { data } = await instance.getExternal(`/api/admin/tracking-info?startDate=${convertDateToTracking(startDate)}&endDate=${convertDateToTracking(endDate)}`);
+      const { data } = await instance.getExternal(`/api/admin/trackings/get-transactions?startDate=${convertDateToTracking(startDate)}&endDate=${convertDateToTracking(endDate)}`);
       setTrackings(data.items);
     } catch (error) {
       console.error(error)
@@ -74,7 +74,7 @@ const useTracking = () => {
   const fetchTrackingSumrary = async () => {
     setSummaryLoading(true);
     try {
-      const { data } = await instance.getExternal(`/api/admin/tracking-summary?startDate=${convertDateToTracking(startDate)}&endDate=${convertDateToTracking(endDate)}`);
+      const { data } = await instance.getExternal(`/api/admin/trackings/get-summary?startDate=${convertDateToTracking(startDate)}&endDate=${convertDateToTracking(endDate)}`);
       setSummary(data.item);
     } catch (error) {
       console.error(error)
