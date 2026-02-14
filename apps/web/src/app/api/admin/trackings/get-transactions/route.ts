@@ -1,33 +1,34 @@
-// app/api/admin/tracking/get-transactions/route.ts
+// app/api/admin/trackings/get-transactions/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
 
 import { getDataSource } from '@/lib/data-source';
-import { Tracking } from '@/entities/Tracking';
 
 export async function GET(req: NextRequest) {
   try {
     const dataSource = await getDataSource();
-    const trackingRepo = dataSource.getRepository(Tracking);
 
     const searchParams = req.nextUrl.searchParams;
-    const startDate = searchParams.get("startDate") || dayjs().format('YYYY-MM-DD');
-    const endDate = searchParams.get("endDate") || dayjs().format('YYYY-MM-DD');
+    const startDate = searchParams.get('startDate') || dayjs().format('YYYY-MM-DD');
+    const endDate = searchParams.get('endDate') || dayjs().format('YYYY-MM-DD');
 
-    const items = await trackingRepo.createQueryBuilder()
-      .select('*')
-      .where('date >= :startDate', { startDate })
-      .andWhere('date <= :endDate', { endDate })
-      .orderBy('date', 'ASC')
-      .getRawMany();
+    const items = await dataSource.query(
+      `
+      SELECT *
+      FROM tracking
+      WHERE date >= ? AND date <= ?
+      ORDER BY date ASC
+      `,
+      [startDate, endDate]
+    );
 
     return NextResponse.json({
       success: true,
       items,
     });
   } catch (error) {
-    console.error('Error fetching wallets:', error);
+    console.error('Error fetching transactions:', error);
     return NextResponse.json(
       {
         success: false,
