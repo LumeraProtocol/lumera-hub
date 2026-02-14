@@ -8,3 +8,5 @@ export * from "./CascadeDownload";
 export * from "./HubAddress";
 export * from "./HubAddressConnectedLog";
 export * from "./TrackingHubAddress";
+export * from "./RetentionRateWeek";
+export * from "./RetentionRateWeekDetail";
