@@ -40,6 +40,25 @@ export const syncRetentionRate = async () => {
       .getRawMany();
 
     if (addresses?.length) {
+      await retentionRateWeekDetailsRepo.createQueryBuilder()
+        .delete()
+        .where({
+          year,
+        })
+        .andWhere({
+          week: weekStart.isoWeek(),
+        })
+        .execute();
+      await retentionRateWeekDetailsRepo.createQueryBuilder()
+        .delete()
+        .where({
+          year,
+        })
+        .andWhere({
+          week: weekStart.isoWeek(),
+        })
+        .execute();
+
       const arrAddresses = addresses.map((adr) => adr.address);
         await retentionRateWeekRepo.save({
         hash: hash({
@@ -96,18 +115,6 @@ export const syncRetentionRate = async () => {
             entity.total_activation = totalActivation;
           }
 
-          await retentionRateWeekDetailsRepo.createQueryBuilder()
-            .delete()
-            .where({
-              week_hash: item.hash,
-            })
-            .andWhere({
-              year,
-            })
-            .andWhere({
-              week: weekStart.isoWeek(),
-            })
-            .execute();
           await retentionRateWeekDetailsRepo.save(entity);
       }
     }
