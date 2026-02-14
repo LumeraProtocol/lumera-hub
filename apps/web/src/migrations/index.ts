@@ -15,3 +15,4 @@ export * from "./1770972813802-HubAddress";
 export * from "./1770975800229-AlterHubAddress";
 export * from "./1770978109390-AlterHubAddressConnectedLog";
 export * from "./1770982581056-AlterHubAddress";
+export * from "./1771064088892-RetentionRateWeek";

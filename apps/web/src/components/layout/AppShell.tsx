@@ -70,7 +70,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
     const referrer = sessionStorage.getItem('acquisitionSource');
     if (!referrer) {
-      sessionStorage.setItem('acquisitionSource', searchParams.get('utm_source') || document.referrer);
+      sessionStorage.setItem('acquisitionSource', searchParams.get('utm_source') || document.referrer || 'Direct');
     }
   }, []);
 

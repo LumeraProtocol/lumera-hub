@@ -1,4 +1,4 @@
-// app/api/admin/wallets/route.ts
+// app/api/admin/trackings/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';

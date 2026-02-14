@@ -1,58 +1,71 @@
-// app/api/admin/tracking/get-summary/route.ts
+// app/api/admin/trackings/get-summary/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
 
 import { getDataSource } from '@/lib/data-source';
-import { Tracking } from '@/entities/Tracking';
 
 export async function GET(req: NextRequest) {
   try {
     const dataSource = await getDataSource();
-    const trackingRepo = dataSource.getRepository(Tracking);
 
     const searchParams = req.nextUrl.searchParams;
-    const startDate = searchParams.get("startDate") || dayjs().format('YYYY-MM-DD');
-    const endDate = searchParams.get("endDate") || dayjs().format('YYYY-MM-DD');
+    const startDate = searchParams.get('startDate') || dayjs().format('YYYY-MM-DD');
+    const endDate = searchParams.get('endDate') || dayjs().format('YYYY-MM-DD');
 
-    const item = await trackingRepo.createQueryBuilder()
-      .select('SUM(delegate)', 'delegate')
-      .addSelect('SUM(delegate_lume)', 'delegate_lume')
-      .addSelect('SUM(redelegate)', 'redelegate')
-      .addSelect('SUM(redelegate_lume)', 'redelegate_lume')
-      .addSelect('SUM(unstaking)', 'unstaking')
-      .addSelect('SUM(unstaking_lume)', 'unstaking_lume')
-      .addSelect('SUM(cascade_upload)', 'cascade_upload')
-      .addSelect('SUM(cascade_download)', 'cascade_download')
-      .addSelect('SUM(cascade_image)', 'cascade_image')
-      .addSelect('SUM(cascade_video)', 'cascade_video')
-      .addSelect('SUM(cascade_program)', 'cascade_program')
-      .addSelect('SUM(cascade_archive)', 'cascade_archive')
-      .addSelect('SUM(cascade_document)', 'cascade_document')
-      .addSelect('SUM(cascade_other)', 'cascade_other')
-      .addSelect('SUM(cascade_total_price)', 'cascade_total_price')
-      .addSelect('SUM(cascade_total_fee)', 'cascade_total_fee')
-      .where('date >= :startDate', { startDate })
-      .andWhere('date <= :endDate', { endDate })
-      .getRawOne();
+    const sumResult = await dataSource.query(
+      `
+      SELECT
+        SUM(delegate)           AS "delegate",
+        SUM(delegate_lume)      AS "delegate_lume",
+        SUM(redelegate)         AS "redelegate",
+        SUM(redelegate_lume)    AS "redelegate_lume",
+        SUM(unstaking)          AS "unstaking",
+        SUM(unstaking_lume)     AS "unstaking_lume",
+        SUM(cascade_upload)     AS "cascade_upload",
+        SUM(cascade_download)   AS "cascade_download",
+        SUM(cascade_image)      AS "cascade_image",
+        SUM(cascade_video)      AS "cascade_video",
+        SUM(cascade_program)    AS "cascade_program",
+        SUM(cascade_archive)    AS "cascade_archive",
+        SUM(cascade_document)   AS "cascade_document",
+        SUM(cascade_other)      AS "cascade_other",
+        SUM(cascade_total_price) AS "cascade_total_price",
+        SUM(cascade_total_fee)  AS "cascade_total_fee"
+      FROM tracking
+      WHERE date >= ? AND date <= ?
+      `,
+      [startDate, endDate]
+    );
 
-    const tracking = await trackingRepo.createQueryBuilder()
-      .select('total_address')
-      .addSelect('cascade_download_extra')
-      .andWhere('date <= :endDate', { endDate })
-      .orderBy('date', 'DESC')
-      .getRawOne();
+    const item = sumResult[0] || {};
+
+    const latestResult = await dataSource.query(
+      `
+      SELECT total_address, cascade_download_extra
+      FROM tracking
+      WHERE date <= ?
+      ORDER BY date DESC
+      LIMIT 1
+      `,
+      [endDate]
+    );
+
+    const latest = latestResult[0] || {
+      total_address: 0,
+      cascade_download_extra: null,
+    };
 
     return NextResponse.json({
       success: true,
       item: {
         ...item,
-        total_address: tracking?.total_address,
-        cascade_download_extra: tracking?.cascade_download_extra,
+        total_address: latest.total_address ?? 0,
+        cascade_download_extra: latest.cascade_download_extra ?? null,
       },
     });
   } catch (error) {
-    console.error('Error fetching wallets:', error);
+    console.error('Error fetching summary:', error);
     return NextResponse.json(
       {
         success: false,

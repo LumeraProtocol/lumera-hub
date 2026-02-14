@@ -1,54 +1,75 @@
-// app/api/admin/tracking-summary/route.ts
+// app/api/admin/trackings/get-wallet-connect/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
 
 import { getDataSource } from '@/lib/data-source';
-import { HubAddress } from '@/entities/HubAddress';
 
 export async function GET(req: NextRequest) {
   try {
     const dataSource = await getDataSource();
-    const hubAddressRepo = dataSource.getRepository(HubAddress);
 
     const searchParams = req.nextUrl.searchParams;
-    const startDate = searchParams.get("startDate") || dayjs().toISOString();
-    const endDate = searchParams.get("endDate") || dayjs().toISOString();
+    const startDate = searchParams.get('startDate') || dayjs().toISOString();
+    const endDate = searchParams.get('endDate') || dayjs().toISOString();
 
-    const totalNewAddress = await hubAddressRepo.createQueryBuilder()
-      .select('1')
-      .where('first_connected >= :startDate', { startDate })
-      .andWhere('first_connected <= :endDate', { endDate })
-      .getCount();
+    const [newAddressRow] = await dataSource.query(
+      `
+      SELECT COUNT(*) AS count
+      FROM hub_address
+      WHERE first_connected >= ?
+        AND first_connected <= ?
+      `,
+      [startDate, endDate]
+    );
+    const totalNewAddress = newAddressRow?.count || 0;
 
-    const activatedWallets = await hubAddressRepo.createQueryBuilder('adr')
-      .select('1')
-      .where('first_connected <= :endDate', { endDate })
-      .andWhere('first_connected >= :startDate', { startDate })
-      .andWhere('EXISTS (SELECT 1 FROM transactions WHERE creator = adr.address AND timestamp <= :end AND timestamp >= :start)', { end: endDate, start: startDate })
-      .getCount();
+    const [activatedRow] = await dataSource.query(
+      `
+      SELECT COUNT(DISTINCT ha.address) AS count
+      FROM hub_address ha
+      WHERE ha.first_connected <= ?
+        AND ha.first_connected >= ?
+        AND EXISTS (
+          SELECT 1
+          FROM transactions t
+          WHERE t.creator = ha.address
+            AND t.timestamp >= ?
+            AND t.timestamp <= ?
+        )
+      `,
+      [endDate, startDate, startDate, endDate]
+    );
+    const activatedWallets = activatedRow?.count || 0;
 
+    const items = await dataSource.query(
+      `
+      SELECT
+        COUNT(*) AS total,
+        strftime('%Y-%m-%d', first_action_timestamp) AS date
+      FROM hub_address
+      WHERE first_connected >= ?
+        AND first_connected <= ?
+        AND first_action_timestamp <= ?
+      GROUP BY strftime('%Y-%m-%d', first_action_timestamp)
+      ORDER BY first_action_timestamp ASC
+      `,
+      [startDate, endDate, endDate]
+    );
 
-    const items = await hubAddressRepo.createQueryBuilder('adr')
-      .select('COUNT(1)', 'total')
-      .addSelect("strftime('%Y-%m-%d', first_action_timestamp)", 'date')
-      .where('first_connected <= :endDate', { endDate })
-      .andWhere('first_connected >= :startDate', { startDate })
-      .andWhere('first_action_timestamp <= :endDate', { endDate })
-      .groupBy("strftime('%Y-%m-%d', first_action_timestamp)")
-      .orderBy('first_action_timestamp', 'ASC')
-      .getRawMany();
-
-
-    const acquisitionSources = await hubAddressRepo.createQueryBuilder()
-      .select('acquisition_source', 'refer')
-      .addSelect("COUNT(acquisition_source)", 'total')
-      .where('first_connected >= :startDate', { startDate })
-      .andWhere('first_connected <= :endDate', { endDate })
-      .groupBy('acquisition_source')
-      .orderBy('first_connected', 'ASC')
-      .getRawMany();
-
+    const acquisitionSources = await dataSource.query(
+      `
+      SELECT
+        acquisition_source AS refer,
+        COUNT(*) AS total
+      FROM hub_address
+      WHERE first_connected >= ?
+        AND first_connected <= ?
+      GROUP BY acquisition_source
+      ORDER BY first_connected ASC
+      `,
+      [startDate, endDate]
+    );
 
     return NextResponse.json({
       success: true,
@@ -58,7 +79,7 @@ export async function GET(req: NextRequest) {
       acquisitionSources,
     });
   } catch (error) {
-    console.error('Error fetching wallets:', error);
+    console.error('Error fetching wallet connect stats:', error);
     return NextResponse.json(
       {
         success: false,

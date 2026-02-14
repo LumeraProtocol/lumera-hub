@@ -8,6 +8,7 @@ import CascadeChart from './CascadeChart';
 import TransactionChart from './TransactionChart';
 import Sumary from './Sumary';
 import WalletConnect from './WalletConnect';
+import RetentionRate from './RetentionRate';
 
 export default function Tracking() {
   const { isLoading, trackings, isSummaryLoading, summary } = useTracking();
@@ -52,6 +53,9 @@ export default function Tracking() {
           isLoading={isLoading}
           trackings={trackings}
         />
+      </div>
+      <div className="mt-5">
+        <RetentionRate />
       </div>
       <div className="mt-5">
         <Activities />

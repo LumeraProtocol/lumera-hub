@@ -1,10 +1,9 @@
 // app/api/admin/tracking/save-cascade-download/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
 
 import { getDataSource } from '@/lib/data-source';
-import { CascadeDownload } from '@/entities/CascadeDownload';
-import { Tracking } from '@/entities/Tracking';
 import { cascadeDownloadSchema } from '@/schemas/cascadeDownloadSchema';
 import {
   IMAGE_EXT,
@@ -28,29 +27,37 @@ export async function POST(req: NextRequest) {
 
     const data = validation.data;
     const dataSource = await getDataSource();
-    const cascadeDownloadRepo = dataSource.getRepository(CascadeDownload);
-    const trackingRepo = dataSource.getRepository(Tracking);
 
-    await cascadeDownloadRepo.save({
-      date: dayjs().toISOString(),
-      address: data.address,
-      action_id: data.action_id,
-      file_type: data.file_type,
-    });
     const currentDate = dayjs().format('YYYY-MM-DD');
-    const items = await cascadeDownloadRepo.createQueryBuilder()
-      .select('file_type')
-      .where('date LIKE :currentDate', { currentDate: `%${currentDate}%` })
-      .getRawMany();
+    const currentIso = dayjs().toISOString();
+
+    await dataSource.query(
+      `
+      INSERT INTO cascade_download (date, address, action_id, file_type)
+      VALUES (?, ?, ?, ?)
+      `,
+      [currentIso, data.address, data.action_id, data.file_type]
+    );
+
+    const items = await dataSource.query(
+      `
+      SELECT file_type
+      FROM cascade_download
+      WHERE date LIKE ?
+      `,
+      [`%${currentDate}%`]
+    );
+
     const sizes = {
-        image: 0,
-        program: 0,
-        document: 0,
-        video: 0,
-        archive: 0,
-        other: 0,
+      image: 0,
+      program: 0,
+      document: 0,
+      video: 0,
+      archive: 0,
+      other: 0,
     };
-    items.forEach(item => {
+
+    items.forEach((item: { file_type: string }) => {
       if (IMAGE_EXT.includes(item.file_type)) {
         sizes.image++;
       } else if (DOCUMENT_EXT.includes(item.file_type)) {
@@ -66,11 +73,43 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    await trackingRepo.save({
-      cascade_download: items.length,
-      date: currentDate,
-      cascade_download_extra: JSON.stringify(sizes),
-    });
+    const [existing] = await dataSource.query(
+      `
+      SELECT 1
+      FROM tracking
+      WHERE date = ?
+      LIMIT 1
+      `,
+      [currentDate]
+    );
+
+    if (existing) {
+      await dataSource.query(
+        `
+        UPDATE tracking
+        SET
+          cascade_download = ?,
+          cascade_download_extra = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE date = ?
+        `,
+        [items.length, JSON.stringify(sizes), currentDate]
+      );
+    } else {
+      await dataSource.query(
+        `
+        INSERT INTO tracking (
+          date,
+          cascade_download,
+          cascade_download_extra,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `,
+        [currentDate, items.length, JSON.stringify(sizes)]
+      );
+    }
+
     return NextResponse.json(
       { success: true, message: 'Tracking cascade download successfully' },
       { status: 201 }
