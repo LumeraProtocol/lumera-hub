@@ -5,8 +5,6 @@ import { DataSource } from "typeorm";
 import * as entities from "@/entities";
 import * as migrations from "@/migrations";
 
-const isProduction = process.env.NODE_ENV === "production";
-
 export const AppDataSource = new DataSource({
   type: "sqlite",
   database: "./database.sqlite",
@@ -16,7 +14,7 @@ export const AppDataSource = new DataSource({
   entities: Object.values(entities),
   migrations: Object.values(migrations),
   migrationsTableName: "migrations",
-  migrationsRun: isProduction,
+  migrationsRun: false,
 });
 
 let initPromise: Promise<DataSource> | null = null;

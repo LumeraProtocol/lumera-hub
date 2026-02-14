@@ -208,7 +208,10 @@ const FirstActionTimestampChart = ({
             />
           </div> :
           <div className='text-sm'>
-            <ReactECharts option={getOption()} className='w-full' style={{ height: '160px' }} />
+            {items?.length ?
+              <ReactECharts option={getOption()} className='w-full' style={{ height: '160px' }} /> :
+              <div className='text-lg flex items-center justify-center w-full h-full min-h-40'>No data</div>
+            }
           </div>
         }
       </div>
@@ -216,12 +219,17 @@ const FirstActionTimestampChart = ({
   )
 }
 
+interface ISeriesData {
+  value: number;
+  name: string;
+}
+
 const AcquisitionSourceChart = ({
   isLoading,
   acquisitionSources,
 }: IAcquisitionSourceChart) => {
   const getOption = () => {
-    const data = [];
+    const data: ISeriesData[]  = [];
     for (const item of acquisitionSources) {
       data.push({
         value: item.total,
@@ -269,7 +277,10 @@ const AcquisitionSourceChart = ({
             />
           </div> :
           <div className='text-sm'>
-            <ReactECharts option={getOption()} className='w-full' style={{ height: '160px' }} />
+            {acquisitionSources?.length ?
+              <ReactECharts option={getOption()} className='w-full' style={{ height: '160px' }} /> :
+              <div className='text-lg flex items-center justify-center w-full h-full min-h-40'>No data</div>
+            }
           </div>
         }
       </div>
