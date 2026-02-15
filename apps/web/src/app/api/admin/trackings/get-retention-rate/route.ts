@@ -34,7 +34,6 @@ export async function GET(req: NextRequest) {
       [startDate, endDate]
     );
     const weekHash = weekResult?.map((item: IWeek) => item.hash).join("', '");
-    console.log('weekHash', weekHash)
     const weekDetailsResult = await dataSource.query(
       `
       SELECT

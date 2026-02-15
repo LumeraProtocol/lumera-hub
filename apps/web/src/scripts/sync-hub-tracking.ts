@@ -50,8 +50,13 @@ export const syncHubTracking = async () => {
       .select('message_type')
       .addSelect('COUNT(message_type)', 'total')
       .addSelect('SUM(price)', 'price')
-      .where("(message_type LIKE :staking OR message_type LIKE :claim)", { staking: `%cosmos.staking.v1beta1%`, claim: `%MsgWithdrawDelegatorReward%` })
-      .andWhere("tx_hash IN (SELECT hash FROM hub_transaction WHERE timestamp LIKE :date)", { date: `%${currentDate}%` })
+      .where("(message_type LIKE :staking OR message_type LIKE :claim)", {
+        staking: `%cosmos.staking.v1beta1%`,
+        claim: `%MsgWithdrawDelegatorReward%`,
+      })
+      .andWhere("tx_hash IN (SELECT hash FROM hub_transaction WHERE timestamp LIKE :date)", {
+        date: `%${currentDate}%`,
+      })
       .groupBy('message_type')
       .getRawMany();
 
@@ -156,7 +161,9 @@ export const syncHubTracking = async () => {
     const activitiesTransaction = await transactionRepo.createQueryBuilder('tx')
       .select('count(1)', 'total')
       .addSelect('message_type')
-      .where("tx_hash IN (SELECT hash FROM hub_transaction WHERE timestamp LIKE :date)", { date: `%${currentDate}%` })
+      .where("tx_hash IN (SELECT hash FROM hub_transaction WHERE timestamp LIKE :date)", {
+        date: `%${currentDate}%`,
+      })
       .groupBy('message_type')
       .getRawMany();
 
