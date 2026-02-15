@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/api/admin/trackings/get-hub-transactions/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,9 +24,39 @@ export async function GET(req: NextRequest) {
       [startDate, endDate]
     );
 
+    const cascadeTransactions = await dataSource.query(
+      `
+      SELECT message_type, COUNT(message_type) as total, strftime('%Y-%m-%d', timestamp) AS date
+      FROM transactions
+      WHERE timestamp >= ? AND timestamp <= ?
+      AND message_type LIKE '%MsgRequestAction%'
+      AND action_type  = 'cascade'
+      AND creator IS NOT NULL
+      GROUP BY strftime('%Y-%m-%d', timestamp)
+      ORDER BY timestamp ASC
+      `,
+      [startDate, endDate]
+    );
+    const newItems = items;
+    for (let i = 0; i < items.length; i++) {
+      const item = cascadeTransactions.find((tx: any) => tx.date === tx.date);
+      if (item) {
+        const currentItem = items[i];
+        const parseData = JSON.parse(currentItem.transaction_extra);
+        parseData.push({
+          message_type: item.message_type,
+          total: item.total,
+        });
+        newItems[i] = {
+          ...items[i],
+          transaction_extra: JSON.stringify(parseData),
+          total_transaction: items[i].total_transaction + item.total,
+        }
+      }
+    }
     return NextResponse.json({
       success: true,
-      items,
+      items: newItems,
     });
   } catch (error) {
     console.error('Error fetching transactions:', error);
