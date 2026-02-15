@@ -6,7 +6,7 @@ export const hubTransactionSchema = z.object({
     .string()
     .trim()
     .min(20, { message: 'Hash is required' })
-    .max(50, { message: 'Invalid hash' }),
+    .max(120, { message: 'Invalid hash' }),
 
   message_type: z
     .string()
@@ -18,7 +18,7 @@ export const hubTransactionSchema = z.object({
     .string()
     .trim()
     .min(20, { message: 'Address is required' })
-    .max(50, { message: 'Invalid address' }),
+    .max(120, { message: 'Invalid address' }),
 
   price: z
     .number(),
