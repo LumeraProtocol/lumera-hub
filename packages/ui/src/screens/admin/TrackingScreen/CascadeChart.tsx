@@ -164,7 +164,7 @@ export default function CascadeChart({
   }
 
   return (
-    <Card elevate size="$4" bordered className='w-full'>
+    <Card elevate size="$4" bordered className='!flex-1 !basis-1/3 !min-w-0'>
       <Card.Header padded>
         <SectionTitle className="mb-0">Cascade upload & download</SectionTitle>
       </Card.Header>

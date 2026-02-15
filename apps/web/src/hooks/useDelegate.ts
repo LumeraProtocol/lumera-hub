@@ -11,6 +11,7 @@ import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contan
 import {
   IValidator,
 } from '@/types';
+import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -19,6 +20,7 @@ interface UseDepositOptions {
 }
 
 const useDelegate = (options: UseDepositOptions = {}) => {
+  const { trackingHubTransaction } = useTrackingHubTransaction();
   const { address, getClient } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [optionsAdvanced, setOptionsAdvanced] = useState({
@@ -159,6 +161,12 @@ const useDelegate = (options: UseDepositOptions = {}) => {
         if (options?.callback) {
           options.callback();
         }
+        await trackingHubTransaction({
+          hash: result.transactionHash,
+          creator: address,
+          message_type: 'cosmos.staking.v1beta1.MsgDelegate',
+          price: Number(optionsAdvanced.amount) * RATE_VALUE,
+        });
       }
     } catch (error) {
       setError((error as Error)?.message ||  'An unknown error occurred.');

@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
+import updateLocale from 'dayjs/plugin/updateLocale';
+
+dayjs.extend(updateLocale);
+
+dayjs.updateLocale('en', {
+  weekStart: 1
+});
 
 import * as instance from '@/utils/api';
 import { useSelector } from '@/redux/hooks';
@@ -29,7 +36,8 @@ const useRetentionRate = () => {
   const fetcData = async () => {
     setLoading(true);
     try {
-      const { data } = await instance.getExternal(`/api/admin/trackings/get-retention-rate?startDate=${dayjs(startDate).format('YYYY-MM-DD')}&endDate=${dayjs(endDate || startDate).format('YYYY-MM-DD')}`);
+      console.log('startDate', startDate, dayjs(startDate).startOf('week'))
+      const { data } = await instance.getExternal(`/api/admin/trackings/get-retention-rate?startDate=${dayjs(startDate).startOf('week').format('YYYY-MM-DD')}&endDate=${dayjs(endDate || startDate).endOf('week').format('YYYY-MM-DD')}`);
       setItems(data.items);
       setDetails(data.details);
     } catch (error) {

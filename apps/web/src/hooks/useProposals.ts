@@ -9,6 +9,7 @@ import { REST_AI_URL, DENOM } from '@/contants/network';
 import { Coin } from '@/hooks/useAccountInfo'
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
+import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 
 type TMessage = {
   '@type': string;
@@ -76,6 +77,7 @@ interface UseDepositOptions {
 }
 
 const useProposals = (options: UseDepositOptions = {}) => {
+  const { trackingHubTransaction } = useTrackingHubTransaction();
   const { address, getClient } = useWalletConnect();
   const [proposalsInfo, setProposalsInfo] = useState<IProposal[]>([]);
   const [loading, setLoading] = useState(false);
@@ -179,6 +181,12 @@ const useProposals = (options: UseDepositOptions = {}) => {
         if (options?.callback) {
           options.callback();
         }
+        await trackingHubTransaction({
+          hash: result.transactionHash,
+          creator: address,
+          message_type: 'cosmos.gov.v1.MsgVote',
+          price: 0,
+        });
       }
     } catch (error) {
       setErrorVote((error as Error)?.message ||  'An unknown error occurred.')

@@ -31,9 +31,14 @@ interface IFirstActionTimestampChart {
   items: IWallet[];
 }
 
+interface ISeriesData {
+  value: number;
+  name: string;
+}
+
 const COLORS = ['#078A8A', '#47C78A'];
 
-const ActivationRateChart = ({
+export const ActivationRateChart = ({
   isLoading,
   newWalletConnect,
   activatedWallets,
@@ -78,16 +83,16 @@ const ActivationRateChart = ({
   }
 
   return (
-    <Card elevate size="$4" bordered className='w-full !items-start'>
+    <Card elevate size="$4" bordered className='!flex-1 !basis-1/3 !min-w-0 !items-start'>
       <div className='p-5 w-full'>
-        <SectionTitle className="mb-5">Wallet Connections Overview</SectionTitle>
+        <SectionTitle className="mb-5">New wallet connections</SectionTitle>
         {isLoading ?
           <div className='min-h-[160px] relative w-full'>
             <AppLoading
               isLoading
               className="w-10 h-10 !border-2"
-              iconWidth={12}
-              iconHeight={12}
+              iconWidth={20}
+              iconHeight={20}
               containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-10'
             />
           </div> :
@@ -122,7 +127,7 @@ const ActivationRateChart = ({
   )
 }
 
-const FirstActionTimestampChart = ({
+export const FirstActionTimestampChart = ({
   isLoading,
   items,
 }: IFirstActionTimestampChart) => {
@@ -177,7 +182,9 @@ const FirstActionTimestampChart = ({
       yAxis: {
         type: 'value',
         splitLine: {
-          show: false,
+          lineStyle: {
+            color: '#2a323f',
+          },
         },
       },
       series: [
@@ -194,16 +201,16 @@ const FirstActionTimestampChart = ({
   }
 
   return (
-    <Card elevate size="$4" bordered className='w-full !items-start'>
+    <Card elevate size="$4" bordered className='!flex-1 !basis-1/3 !min-w-0 !items-start'>
       <div className='p-5 w-full'>
-        <SectionTitle className="mb-5">First Qualifying Action Time</SectionTitle>
+        <SectionTitle className="mb-5">First qualifying action</SectionTitle>
         {isLoading ?
           <div className='min-h-[160px] relative w-full'>
             <AppLoading
               isLoading
               className="w-10 h-10 !border-2"
-              iconWidth={12}
-              iconHeight={12}
+              iconWidth={20}
+              iconHeight={20}
               containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-10'
             />
           </div> :
@@ -219,12 +226,7 @@ const FirstActionTimestampChart = ({
   )
 }
 
-interface ISeriesData {
-  value: number;
-  name: string;
-}
-
-const AcquisitionSourceChart = ({
+export const AcquisitionSourceChart = ({
   isLoading,
   acquisitionSources,
 }: IAcquisitionSourceChart) => {
@@ -263,16 +265,16 @@ const AcquisitionSourceChart = ({
   }
 
   return (
-    <Card elevate size="$4" bordered className='w-full !items-start'>
+    <Card elevate size="$4" bordered className='!flex-1 !basis-1/3 !min-w-0 !items-start'>
       <div className='p-5 w-full'>
-        <SectionTitle className="mb-5">Segmented by Acquisition Source</SectionTitle>
+        <SectionTitle className="mb-5">Acquisition source</SectionTitle>
         {isLoading ?
           <div className='min-h-[160px] relative w-full'>
             <AppLoading
               isLoading
               className="w-10 h-10 !border-2"
-              iconWidth={12}
-              iconHeight={12}
+              iconWidth={20}
+              iconHeight={20}
               containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-10'
             />
           </div> :
@@ -286,31 +288,4 @@ const AcquisitionSourceChart = ({
       </div>
     </Card>
   );
-}
-
-export default function WalletConnect({
-  isLoading,
-  walletConnectSummary,
-  newWalletConnect,
-  activatedWallets,
-  acquisitionSources,
-}: IWalletConnect) {
-
-  return (
-    <div className='grid grid-cols-3 gap-5 mt-5'>
-      <ActivationRateChart
-        isLoading={isLoading}
-        newWalletConnect={newWalletConnect}
-        activatedWallets={activatedWallets}
-      />
-      <FirstActionTimestampChart
-        isLoading={isLoading}
-        items={walletConnectSummary}
-      />
-      <AcquisitionSourceChart
-        isLoading={isLoading}
-        acquisitionSources={acquisitionSources}
-      />
-    </div>
-  )
 }

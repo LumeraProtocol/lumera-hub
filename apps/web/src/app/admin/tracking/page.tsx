@@ -16,12 +16,12 @@ export default function AdminWallet() {
     meta.content = 'noindex';
     document.head.appendChild(meta);
 
-    document.title = 'Active Hub Users - Lumera Hub';
+    document.title = 'Admin dashboard - Lumera Hub';
     dispatch(setCurrentPath({
       currentPath: '/admin/tracking',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Active Hub Users',
+      viewTitle: 'Admin dashboard',
     }));
 
     return () => {

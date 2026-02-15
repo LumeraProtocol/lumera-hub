@@ -488,7 +488,8 @@
 .datepicker-wrapper .react-datepicker__current-month {
   color: #9da3ae;
 }
-.datepicker-wrapper .react-datepicker__day--outside-month {
+.datepicker-wrapper .react-datepicker__day--outside-month,
+.datepicker-wrapper .react-datepicker__day--disabled {
   color: #4f4f4f;
 }
 .datepicker-wrapper .react-datepicker .react-datepicker__day--selected,
@@ -498,6 +499,10 @@
   color: #fff;
   background: #078A8A;
   transition: background 0.3s ease;
+}
+.datepicker-wrapper .react-datepicker .react-datepicker__day--disabled:hover {
+  background: transparent !important;
+  color: #4f4f4f;
 }
 .datepicker-wrapper .react-datepicker__header {
   background: transparent;

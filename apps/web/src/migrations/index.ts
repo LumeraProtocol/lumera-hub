@@ -16,3 +16,5 @@ export * from "./1770975800229-AlterHubAddress";
 export * from "./1770978109390-AlterHubAddressConnectedLog";
 export * from "./1770982581056-AlterHubAddress";
 export * from "./1771064088892-RetentionRateWeek";
+export * from "./1771140097640-HubTransaction";
+export * from "./1771144176689-HubTracking";

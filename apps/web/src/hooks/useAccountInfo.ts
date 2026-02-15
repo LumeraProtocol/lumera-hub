@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
+import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 import { DENOM } from '@/contants/network';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 
@@ -61,6 +62,7 @@ export const getTotalRewards = (accountInfo: AccountInfoData | null) => {
 }
 
 const useAccountInfo = () => {
+  const { trackingHubTransaction } = useTrackingHubTransaction();
   const { address, getClient } = useWalletConnect();
 
   const [accountInfo, setAccountInfo] = useState<AccountInfoData | null>({
@@ -184,6 +186,12 @@ const useAccountInfo = () => {
       const result = await client.signAndBroadcast(claimInfo.senderAddress, msgWithdraw, fee, claimInfo.memo);
       if (result?.transactionHash) {
         setTransactionHash(result.transactionHash);
+        await trackingHubTransaction({
+          hash: result.transactionHash,
+          creator: address,
+          message_type: 'cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
+          price: 0,
+        });
       }
     } catch (e) {
       // console.error('API Error:', e);

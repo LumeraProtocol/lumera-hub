@@ -60,10 +60,8 @@ export async function POST(req: NextRequest) {
           first_connected,
           last_connected,
           total_connected,
-          acquisition_source,
-          created_at,
-          updated_at
-        ) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          acquisition_source
+        ) VALUES (?, ?, ?, ?, ?)
         `,
         [data.address, nowIso, nowIso, 1, acquisitionSource]
       );

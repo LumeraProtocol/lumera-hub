@@ -120,23 +120,6 @@
   },
   {
     "latLng": [
-      50.1109221,
-      8.6821267
-    ],
-    "name": "Frankfurt",
-    "continent": "Europe",
-    "country": "Germany",
-    "country_code": "DE",
-    "subdivision": "Berlin",
-    "city": "Frankfurt",
-    "supernodeAccount": "lumera1k3wuph3f695uugf7k46m6jzqmc308sy20m0k63",
-    "validatorAddress": "lumeravaloper1k3wuph3f695uugf7k46m6jzqmc308sy2qpu2uj",
-    "validatorMoniker": "nagagininode",
-    "address": "185.207.105.80:4444 ",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
       39.9611755,
       -82.9987942
     ],
@@ -188,23 +171,6 @@
   },
   {
     "latLng": [
-      40.0992294,
-      -83.1140771
-    ],
-    "name": "Dublin",
-    "continent": "North America",
-    "country": "United States",
-    "country_code": "US",
-    "subdivision": "Washington D.C.",
-    "city": "Dublin",
-    "supernodeAccount": "lumera1s55nzsyqsuwxsl3es0v7rxux7rypsa7zpzlqg5",
-    "validatorAddress": "lumeravaloper1x7f7mhf9azwmpds2czcqkdv435uqudeg6xl4m0",
-    "validatorMoniker": "Innovating Capital",
-    "address": "18.216.80.56:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
       60.1698557,
       24.938379
     ],
@@ -235,23 +201,6 @@
     "validatorAddress": "lumeravaloper1uj98474n68v52ycwu25chs6ldj77svrtqyddca",
     "validatorMoniker": "Encapsulate",
     "address": "176.9.8.81:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      39.9611755,
-      -82.9987942
-    ],
-    "name": "Columbus",
-    "continent": "North America",
-    "country": "United States",
-    "country_code": "US",
-    "subdivision": "Washington D.C.",
-    "city": "Columbus",
-    "supernodeAccount": "lumera1x6e45rudg37fxeaq58a9h883xcrxs4alzy3jq3",
-    "validatorAddress": "lumeravaloper1772e2pq56mzz972te69yhhnvew0eyc5d3vxrj8",
-    "validatorMoniker": "Aurora Staking",
-    "address": "3.146.151.198:4444",
     "p2pPort": "4445"
   }
 ]
