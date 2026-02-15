@@ -8,6 +8,7 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
 import { RATE_VALUE, GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 import { extractValidNumber } from '@/utils/helpers';
+import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -15,6 +16,7 @@ interface UseDepositOptions {
 }
 
 const useDeposit = (options: UseDepositOptions = {}) => {
+  const { trackingHubTransaction } = useTrackingHubTransaction();
   const { address, getClient } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [depositAdvanced, setDepositAdvanced] = useState({
@@ -144,6 +146,12 @@ const useDeposit = (options: UseDepositOptions = {}) => {
         if (options?.callback) {
             options.callback();
         }
+        await trackingHubTransaction({
+          hash: result.transactionHash,
+          creator: address,
+          message_type: 'cosmos.gov.v1.MsgDeposit',
+          price: Number(depositAdvanced.depositAmount) * RATE_VALUE,
+        });
       }
     } catch (error) {
         setError((error as Error)?.message ||  'An unknown error occurred.');

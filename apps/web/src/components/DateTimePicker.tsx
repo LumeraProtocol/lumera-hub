@@ -32,12 +32,18 @@ const DateTimePicker = () => {
   const handleQuickSelect = (type: string) => {
     const end = new Date();
     let start = new Date();
-    if (type === 'monthly') {
+    if (type === '30') {
       start = new Date(dayjs().subtract(30, 'day').valueOf());
-      setSelectedPredefined('monthly');
-    } else if (type === 'weekly') {
+      setSelectedPredefined('30');
+    } else if (type === '7') {
       start = new Date(dayjs().subtract(7, 'day').valueOf());
-      setSelectedPredefined('weekly');
+      setSelectedPredefined('7');
+    } else if (type === '60') {
+      start = new Date(dayjs().subtract(60, 'day').valueOf());
+      setSelectedPredefined('60');
+    } else if (type === '90') {
+      start = new Date(dayjs().subtract(90, 'day').valueOf());
+      setSelectedPredefined('90');
     }
     setStartDate(start);
     setEndDate(end);
@@ -81,6 +87,7 @@ const DateTimePicker = () => {
                 selectsRange
                 className="border border-gray-700 rounded-lg px-4 py-2"
                 inline
+                maxDate={new Date()}
               />
             </div>
             <div className="mt-1 text-sm text-lumera-label pl-2 ">Predefined dates</div>
@@ -89,8 +96,8 @@ const DateTimePicker = () => {
                 <Popover.Close asChild>
                   <button
                     type="button"
-                    className={`w-full py-1 px-2 hover:text-lumera-green cursor-pointer text-left ${selectedPredefined === 'weekly' ? 'text-lumera-green' : 'text-lumera-teal'}`}
-                    onClick={() => handleQuickSelect('weekly')}
+                    className={`w-full py-1 px-2 hover:text-lumera-green cursor-pointer text-left ${selectedPredefined === '7' ? 'text-lumera-green' : 'text-lumera-teal'}`}
+                    onClick={() => handleQuickSelect('7')}
                   >
                     Last 7 days
                   </button>
@@ -100,10 +107,32 @@ const DateTimePicker = () => {
                 <Popover.Close asChild>
                   <button
                     type="button"
-                    className={`w-full py-1 px-2 hover:text-lumera-green cursor-pointer text-left ${selectedPredefined === 'monthly' ? 'text-lumera-green' : 'text-lumera-teal'}`}
-                    onClick={() => handleQuickSelect('monthly')}
+                    className={`w-full py-1 px-2 hover:text-lumera-green cursor-pointer text-left ${selectedPredefined === '30' ? 'text-lumera-green' : 'text-lumera-teal'}`}
+                    onClick={() => handleQuickSelect('30')}
                   >
                     Last 30 days
+                  </button>
+                </Popover.Close>
+              </li>
+              <li>
+                <Popover.Close asChild>
+                  <button
+                    type="button"
+                    className={`w-full py-1 px-2 hover:text-lumera-green cursor-pointer text-left ${selectedPredefined === '60' ? 'text-lumera-green' : 'text-lumera-teal'}`}
+                    onClick={() => handleQuickSelect('60')}
+                  >
+                    Last 60 days
+                  </button>
+                </Popover.Close>
+              </li>
+              <li>
+                <Popover.Close asChild>
+                  <button
+                    type="button"
+                    className={`w-full py-1 px-2 hover:text-lumera-green cursor-pointer text-left ${selectedPredefined === '90' ? 'text-lumera-green' : 'text-lumera-teal'}`}
+                    onClick={() => handleQuickSelect('90')}
+                  >
+                    Last 90 days
                   </button>
                 </Popover.Close>
               </li>

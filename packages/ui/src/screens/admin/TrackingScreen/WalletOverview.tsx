@@ -4,17 +4,21 @@ import * as echarts from 'echarts';
 
 import SectionTitle from '@/components/SectionTitle';
 import { AppLoading } from '@/components/Loading';
-import { ITracking } from '@/hooks/admin/useTracking';
+import { formatNumber } from '@/utils/format';
+import { ISummary, ITracking } from '@/hooks/admin/useTracking';
 
-interface IUsersChart {
+interface IWalletOverview {
   isLoading: boolean;
+  tracking: ISummary | null;
   trackings: ITracking[];
 }
 
-export default function UsersChart({
+export default function WalletOverview({
   isLoading,
+  tracking,
   trackings,
-}: IUsersChart) {
+}: IWalletOverview) {
+  const newTrackings = trackings.filter((t) => t.total_address > 0);
 
   const getOption = () => {
     const dates: string[] = [];
@@ -84,13 +88,11 @@ export default function UsersChart({
   }
 
   return (
-    <Card elevate size="$4" bordered className='w-full'>
-      <Card.Header padded>
-        <SectionTitle className="mb-0">Users</SectionTitle>
-      </Card.Header>
-      <div className='p-5'>
+    <Card elevate size="$4" bordered className='!flex-1 !basis-1/3 !min-w-0 !items-start'>
+      <div className='p-5 w-full'>
+        <SectionTitle className="mb-5">Wallet Overview</SectionTitle>
         {isLoading ?
-          <div className='min-h-40 relative w-full'>
+          <div className='min-h-[188px] relative w-full'>
             <AppLoading
               isLoading
               className="w-10 h-10 !border-2"
@@ -99,12 +101,18 @@ export default function UsersChart({
               containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
             />
           </div> :
-          <>
-            {trackings?.length ?
-              <ReactECharts option={getOption()} className='w-full' style={{ height: '160px' }} /> :
-              <div className='text-lg flex items-center justify-center w-full h-full min-h-40'>No data</div>
-            }
-          </>
+          <div className='text-sm'>
+            <div>
+              <span>Total Wallets</span>: <span className='font-bold'>
+                {formatNumber(tracking?.total_address || newTrackings[newTrackings.length - 1]?.total_address || 0, { decimalsLength: 0 })}
+              </span>
+            </div>
+             {trackings?.length ?
+              <div className="mt-2">
+                <ReactECharts option={getOption()} className='w-full' style={{ height: '160px' }} />
+              </div>: null
+              }
+          </div>
         }
       </div>
     </Card>

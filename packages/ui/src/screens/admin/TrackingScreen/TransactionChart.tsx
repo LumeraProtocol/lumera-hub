@@ -93,13 +93,13 @@ export default function TransactionChart({
   }
 
   return (
-    <Card elevate size="$4" bordered className='w-full'>
+    <Card elevate size="$4" bordered className='!flex-1 !basis-1/3 !min-w-0'>
       <Card.Header padded>
         <SectionTitle className="mb-0">Transactions</SectionTitle>
       </Card.Header>
       <div className='p-5'>
         {isLoading ?
-          <div className='min-h-40 relative w-full'>
+          <div className='min-h-[188px] relative w-full'>
             <AppLoading
               isLoading
               className="w-10 h-10 !border-2"

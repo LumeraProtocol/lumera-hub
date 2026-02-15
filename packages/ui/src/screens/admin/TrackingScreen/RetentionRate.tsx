@@ -6,7 +6,8 @@ import {
 
 import SectionTitle from '@/components/SectionTitle';
 import { AppLoading } from '@/components/Loading';
-import useRetentionRate, { IData, IDetail } from '@/hooks/admin/useRetentionRate';
+import useRetentionRate, { IData } from '@/hooks/admin/useRetentionRate';
+import { formatNumber } from '@/utils/format';
 
 export default function RetentionRate() {
   const {
@@ -28,16 +29,27 @@ export default function RetentionRate() {
     const nextWeek = selectedItems[index + 1];
     if (nextWeek) {
       const totalActivation = firstItem.total_activation;
-      return `${(nextWeek.total_activation / totalActivation * 100).toFixed(0)}%`;
+      return (
+        <>
+          {(nextWeek.total_activation / totalActivation * 100).toFixed(0)}%{nextWeek.total_activation ? `(${formatNumber(nextWeek.total_activation, { decimalsLength: 0 })} txs)` : ''}
+        </>
+      );
     }
     return '0%';
+  }
+
+  const getFirstData = (item: IData) => {
+    const firstItem = details.find((d) => d.week_hash === item.hash && d.week === item.week && d.year === item.year);
+     if (firstItem) {
+      return formatNumber(firstItem.total_activation, { decimalsLength: 0 });
+    }
   }
 
   return (
     <div className="space-y-8">
       <Card elevate size="$4" bordered className='w-full'>
         <Card.Header padded>
-          <SectionTitle className="mb-0">Retention Rate</SectionTitle>
+          <SectionTitle className="mb-0">Cohort Retention</SectionTitle>
         </Card.Header>
         <div className='p-5 pt-0'>
           {isLoading ?
@@ -57,11 +69,11 @@ export default function RetentionRate() {
                     <th align='left' className='px-2 py-3'>
                       <div className='flex gap-2'>
                         <span className='inline-flex gap-1 items-center'>
-                          Cohort
+                          Time
                           <MoveDown className='w-3 h-3' />
                         </span>
                         <span className='inline-flex gap-1 items-center'>
-                          Elapsed
+                          Week
                           <MoveRight className='w-3 h-3' />
                         </span>
                       </div>
@@ -77,7 +89,7 @@ export default function RetentionRate() {
                       <th align='left' className='px-2 py-3'>
                         {getDate(tx.start_date)} - {getDate(tx.end_date)}
                       </th>
-                      <th align='left' className='px-2 py-3'>100%</th>
+                      <th align='left' className='px-2 py-3'>100%({getFirstData(tx)} txs)</th>
                       {Array.from({ length: 12 }, (_, index) => (
                         <th align='left' className='px-2 py-3' key={index}>
                           {getData(tx, index)}

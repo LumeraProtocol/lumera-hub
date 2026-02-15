@@ -11,6 +11,7 @@ import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contan
 import {
   IValidator,
 } from '@/types';
+import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -18,6 +19,7 @@ interface UseDepositOptions {
 }
 
 const useRedelegate = (options: UseDepositOptions = {}) => {
+  const { trackingHubTransaction } = useTrackingHubTransaction();
   const { address, getClient } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [optionsAdvanced, setOptionsAdvanced] = useState({
@@ -167,8 +169,14 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
         fee,
         memo,
       );
-
-      if (result?.transactionHash) {
+      const hash = result?.transactionHash;
+      if (hash) {
+        await trackingHubTransaction({
+          hash,
+          creator: address,
+          message_type: 'cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
+          price: 0,
+        });
         const msg = {
           typeUrl: '/cosmos.staking.v1beta1.MsgBeginRedelegate',
           value: MsgBeginRedelegate.fromPartial({
@@ -201,6 +209,12 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
           if (options?.callback) {
             options.callback();
           }
+          await trackingHubTransaction({
+            hash: result.transactionHash,
+            creator: address,
+            message_type: 'cosmos.staking.v1beta1.MsgBeginRedelegate',
+            price: 0,
+          });
         }
       }
     } catch (error) {

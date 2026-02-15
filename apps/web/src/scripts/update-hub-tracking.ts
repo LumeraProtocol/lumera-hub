@@ -3,30 +3,24 @@ import dayjs from 'dayjs';
 
 import { getDataSource } from '@/lib/data-source';
 import { Transaction } from '@/entities/Transaction';
-import { Tracking } from '@/entities/Tracking';
-import { TrackingHubAddress } from '@/entities/TrackingHubAddress';
-import { HubAddress } from '@/entities/HubAddress';
-import { HubAddressConnectedLog } from '@/entities/HubAddressConnectedLog';
+import { HubTracking } from '@/entities/HubTracking';
+import { HubTransaction } from '@/entities/HubTransaction';
 import { IMAGE_EXT, DOCUMENT_EXT, VIDEO_EXT, ARCHIVE_EXT, PROGRAM_EXT } from '@/contants';
-import { updateHubTracking } from './update-hub-tracking';
 
 let isSyncing = false;
 
-const updateTracking = async () => {
+export const updateHubTracking = async () => {
   if (isSyncing) {
     return;
   }
-  const processingTimeStart = Date.now();
   isSyncing = true;
   try {
     const dataSource = await getDataSource();
     const transactionRepo = dataSource.getRepository(Transaction);
-    const trackingRepo = dataSource.getRepository(Tracking);
-    const trackingHubAddressRepo = dataSource.getRepository(TrackingHubAddress);
-    const hubAddressRepo = dataSource.getRepository(HubAddress);
-    const addressLogRepo = dataSource.getRepository(HubAddressConnectedLog);
+    const hubTrackingRepo = dataSource.getRepository(HubTracking);
+    const hubTransactionRepo = dataSource.getRepository(HubTransaction);
 
-    const dates = await transactionRepo.createQueryBuilder()
+    const dates = await hubTransactionRepo.createQueryBuilder()
       .select("strftime('%Y-%m-%d', timestamp)", 'day')
       .where("(message_type LIKE :staking OR message_type LIKE :claim)", { staking: `%cosmos.staking.v1beta1%`, claim: `%MsgWithdrawDelegatorReward%` })
       .groupBy("strftime('%Y-%m-%d', timestamp)")
@@ -66,8 +60,8 @@ const updateTracking = async () => {
         .select('message_type')
         .addSelect('COUNT(message_type)', 'total')
         .addSelect('SUM(price)', 'price')
-        .where('timestamp LIKE :date', { date: `%${currentDate}%` })
-        .andWhere("(message_type LIKE :staking OR message_type LIKE :claim)", { staking: `%cosmos.staking.v1beta1%`, claim: `%MsgWithdrawDelegatorReward%` })
+        .where("(message_type LIKE :staking OR message_type LIKE :claim)", { staking: `%cosmos.staking.v1beta1%`, claim: `%MsgWithdrawDelegatorReward%` })
+        .andWhere("tx_hash IN (SELECT hash FROM hub_transaction WHERE timestamp LIKE :date)", { date: `%${currentDate}%` })
         .groupBy('message_type')
         .getRawMany();
 
@@ -172,7 +166,7 @@ const updateTracking = async () => {
       const activitiesTransaction = await transactionRepo.createQueryBuilder('tx')
         .select('count(1)', 'total')
         .addSelect('message_type')
-        .where('timestamp LIKE :date', { date: `%${currentDate}%` })
+        .where("tx_hash IN (SELECT hash FROM hub_transaction WHERE timestamp LIKE :date)", { date: `%${currentDate}%` })
         .groupBy('message_type')
         .getRawMany();
 
@@ -203,21 +197,11 @@ const updateTracking = async () => {
         .toISOString();
 
       const total = await dataSource.query(`
-        SELECT COUNT(DISTINCT address) as total
-        FROM (
-          SELECT creator as address FROM "transactions" WHERE creator IS NOT NULL AND timestamp < '${endDate}'
-          UNION
-          SELECT address FROM "hub_address" WHERE first_connected < '${endDate}'
-        )
+        SELECT COUNT(DISTINCT address) as total FROM "hub_address" WHERE first_connected < '${endDate}'
       `);
 
       const newAddresses = await dataSource.query(`
-        SELECT COUNT(DISTINCT address) as total
-        FROM (
-          SELECT creator as address FROM "transactions" WHERE creator IS NOT NULL AND timestamp LIKE '%${currentDate}%'
-          UNION
-          SELECT address FROM "hub_address" WHERE first_connected LIKE '%${currentDate}%'
-        )
+        SELECT COUNT(DISTINCT address) as total FROM "hub_address" WHERE first_connected LIKE '%${currentDate}%'
       `);
 
       if (newAddresses?.length) {
@@ -227,64 +211,10 @@ const updateTracking = async () => {
           new_address: newAddresses[0].total,
         };
       }
-      await trackingRepo.save(payload);
-
-      // Hub user
-      const addresses = await hubAddressRepo.createQueryBuilder().select('address').getRawMany();
-      for (const item of addresses) {
-        const address = item.address;
-        const transactions = await transactionRepo.createQueryBuilder()
-          .select('COUNT(message_type)', 'total')
-          .addSelect('message_type')
-          .where('timestamp LIKE :date', { date: `%${currentDate}%` })
-          .andWhere('creator = :address', { address })
-          .groupBy('message_type')
-          .getRawMany();
-        const connectedLogs = await addressLogRepo.createQueryBuilder()
-          .select('COUNT(1)', 'total')
-          .where('address = :address', { address })
-          .andWhere('created_at LIKE :createdAt', { createdAt: `%${currentDate}%` })
-          .getRawOne();
-
-        const totalTransactions = transactions.reduce((total, item) => total + Number(item.total), 0);
-        await trackingHubAddressRepo.save({
-          code: `${currentDate}-${address}`,
-          address: address,
-          date: currentDate,
-          total_transaction: totalTransactions,
-          total_connected: connectedLogs?.total || 0,
-          extra_info: JSON.stringify({
-            transactions,
-          }),
-        });
-      }
-
-      // update first action timestamp
-      const hubAddresses = await hubAddressRepo.createQueryBuilder('adr')
-        .select('address')
-        .addSelect('(SELECT timestamp FROM transactions WHERE creator = adr.address AND timestamp >= adr.first_connected ORDER BY timestamp ASC LIMIT 1)', 'first_action')
-        .where('first_action_timestamp IS NULL')
-        .getRawMany();
-      for (const item of hubAddresses) {
-        if (item.first_action) {
-          hubAddressRepo.save({
-            address: item.address,
-            first_action_timestamp: item.first_action,
-          });
-        }
-      }
+      await hubTrackingRepo.save(payload);
     }
-
-    await updateHubTracking();
   } catch (error) {
     console.error('updateTracking error: ', error);
   }
   isSyncing = false;
-  console.log(
-    `Processing update staking finished in ${
-      Date.now() - processingTimeStart
-    }ms`,
-  );
 }
-
-updateTracking();

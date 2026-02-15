@@ -7,6 +7,7 @@ import { DENOM } from '@/contants/network';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contants';
 import { Coin } from '@/hooks/useAccountInfo';
 import { extractValidNumber } from '@/utils/helpers';
+import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -14,6 +15,7 @@ interface UseDepositOptions {
 }
 
 const useSend = (options: UseDepositOptions = {}) => {
+  const { trackingHubTransaction } = useTrackingHubTransaction();
   const { address, getClient, isConnected } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [optionsAdvanced, setOptionsAdvanced] = useState({
@@ -127,6 +129,12 @@ const useSend = (options: UseDepositOptions = {}) => {
         if (options?.callback) {
           options.callback();
         }
+        await trackingHubTransaction({
+          hash: result.transactionHash,
+          creator: address,
+          message_type: 'cosmos.bank.v1beta1.MsgSend',
+          price: Number(optionsAdvanced.amount) * RATE_VALUE,
+        });
       }
     } catch (error) {
         setError((error as Error)?.message ||  'An unknown error occurred.');

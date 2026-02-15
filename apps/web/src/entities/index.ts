@@ -10,3 +10,5 @@ export * from "./HubAddressConnectedLog";
 export * from "./TrackingHubAddress";
 export * from "./RetentionRateWeek";
 export * from "./RetentionRateWeekDetail";
+export * from "./HubTransaction";
+export * from "./HubTracking";

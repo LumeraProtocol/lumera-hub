@@ -7,6 +7,7 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
 import { extractValidNumber } from '@/utils/helpers';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contants';
+import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -14,6 +15,7 @@ interface UseDepositOptions {
 }
 
 const useUnbond = (options: UseDepositOptions = {}) => {
+  const { trackingHubTransaction } = useTrackingHubTransaction();
   const { address, getClient } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [optionsAdvanced, setOptionsAdvanced] = useState({
@@ -124,8 +126,14 @@ const useUnbond = (options: UseDepositOptions = {}) => {
         fee,
         memo,
       );
-
+      const hash = result?.transactionHash;
       if (result?.transactionHash) {
+        await trackingHubTransaction({
+          hash,
+          creator: address,
+          message_type: 'cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
+          price: 0,
+        });
         const msg = {
           typeUrl: '/cosmos.staking.v1beta1.MsgUndelegate',
           value: MsgUndelegate.fromPartial({
@@ -155,6 +163,12 @@ const useUnbond = (options: UseDepositOptions = {}) => {
         const result = await client.signAndBroadcast(optionsAdvanced.senderAddress, [msg], fee, memo);
         if (result?.transactionHash) {
           setTransactionHash(result.transactionHash);
+          await trackingHubTransaction({
+            hash: result.transactionHash,
+            creator: address,
+            message_type: 'cosmos.staking.v1beta1.MsgUndelegate',
+            price: Number(optionsAdvanced.amount) * RATE_VALUE,
+          });
           if (options?.callback) {
               options.callback();
           }

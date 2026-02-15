@@ -146,7 +146,7 @@ const saveBlockData = async (blockRepo: Repository<Block>, data: any) => {
   }
   const txs: string[] = data?.sdk_block?.data?.txs?.map((tx: string) => getTxHashFromBase64(tx)) || [];
   const height = data.block.header.height;
-  blockRepo.createQueryBuilder().delete().where('height = :height', { height }).execute();
+  await blockRepo.createQueryBuilder().delete().where('height = :height', { height }).execute();
   const payload = {
     height,
     chain_id: data.block.header.chain_id,
