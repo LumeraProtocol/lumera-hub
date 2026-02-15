@@ -197,7 +197,10 @@ const updateBlock = async () => {
 
     let startingBlock = 1
     if (!process.argv[2]) {
-      const latestDBBlock = await blockRepo.createQueryBuilder().select('height').orderBy('height', 'DESC').getRawOne();
+      const latestDBBlock = await blockRepo.createQueryBuilder()
+        .select('height')
+        .orderBy('height', 'DESC')
+        .getRawOne();
       startingBlock = Number(latestDBBlock?.height || 0) + 1;
     } else {
       startingBlock = Number(process.argv[2]);

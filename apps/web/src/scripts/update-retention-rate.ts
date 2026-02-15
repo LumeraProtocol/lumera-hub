@@ -78,48 +78,48 @@ const updateRetentionRate = async () => {
             .getRawMany();
 
           for (const item of groupAddress) {
-              const parseAddress = JSON.parse(item.address);
-              const startDate = weekStart.startOf('day').toISOString();
-              const endDate = weekEnd.endOf('day').toISOString();
+            const parseAddress = JSON.parse(item.address);
+            const startDate = weekStart.startOf('day').toISOString();
+            const endDate = weekEnd.endOf('day').toISOString();
 
-              const transactions = await transactionRepo.createQueryBuilder()
-                .select('message_type')
-                .addSelect('COUNT(message_type)', 'total')
-                .where('creator IN (:...addresses)', { addresses: parseAddress })
-                .andWhere('timestamp >= :startDate', { startDate })
-                .andWhere('timestamp <= :endDate', { endDate })
-                .groupBy('message_type')
-                .orderBy('creator')
-                .getRawMany();
-              console.log('startDate', weekStart.isoWeek(), startDate, endDate)
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const entity: any = {
+            const transactions = await transactionRepo.createQueryBuilder()
+              .select('message_type')
+              .addSelect('COUNT(message_type)', 'total')
+              .where('creator IN (:...addresses)', { addresses: parseAddress })
+              .andWhere('timestamp >= :startDate', { startDate })
+              .andWhere('timestamp <= :endDate', { endDate })
+              .groupBy('message_type')
+              .orderBy('creator')
+              .getRawMany();
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const entity: any = {
+              week_hash: item.hash,
+              week: weekStart.isoWeek(),
+              year,
+            }
+            let totalActivation = 0;
+            if (transactions?.length) {
+              for (const tx of transactions) {
+                entity[`${tx.message_type.replace('/', '').replaceAll('.', '_')}`] = tx.total;
+                totalActivation += Number(tx.total);
+              }
+              entity.total_activation = totalActivation;
+            }
+
+            await retentionRateWeekDetailsRepo.createQueryBuilder()
+              .delete()
+              .where({
                 week_hash: item.hash,
-                week: weekStart.isoWeek(),
+              })
+              .andWhere({
                 year,
-              }
-              let totalActivation = 0;
-              if (transactions?.length) {
-                for (const tx of transactions) {
-                  entity[`${tx.message_type.replace('/', '').replaceAll('.', '_')}`] = tx.total;
-                  totalActivation += Number(tx.total);
-                }
-                entity.total_activation = totalActivation;
-              }
-
-              await retentionRateWeekDetailsRepo.createQueryBuilder()
-                .delete()
-                .where({
-                  week_hash: item.hash,
-                })
-                .andWhere({
-                  year,
-                })
-                .andWhere({
-                  week: weekStart.isoWeek(),
-                })
-                .execute();
-              await retentionRateWeekDetailsRepo.save(entity);
+              })
+              .andWhere({
+                week: weekStart.isoWeek(),
+              })
+              .execute();
+            await retentionRateWeekDetailsRepo.save(entity);
           }
         }
         weekStart = weekStart.add(1, 'week');

@@ -28,7 +28,10 @@ const updateTracking = async () => {
 
     const dates = await transactionRepo.createQueryBuilder()
       .select("strftime('%Y-%m-%d', timestamp)", 'day')
-      .where("(message_type LIKE :staking OR message_type LIKE :claim)", { staking: `%cosmos.staking.v1beta1%`, claim: `%MsgWithdrawDelegatorReward%` })
+      .where("(message_type LIKE :staking OR message_type LIKE :claim)", {
+        staking: `%cosmos.staking.v1beta1%`,
+        claim: `%MsgWithdrawDelegatorReward%`,
+      })
       .groupBy("strftime('%Y-%m-%d', timestamp)")
       .orderBy("day", "ASC")
       .getRawMany();
@@ -67,7 +70,10 @@ const updateTracking = async () => {
         .addSelect('COUNT(message_type)', 'total')
         .addSelect('SUM(price)', 'price')
         .where('timestamp LIKE :date', { date: `%${currentDate}%` })
-        .andWhere("(message_type LIKE :staking OR message_type LIKE :claim)", { staking: `%cosmos.staking.v1beta1%`, claim: `%MsgWithdrawDelegatorReward%` })
+        .andWhere("(message_type LIKE :staking OR message_type LIKE :claim)", {
+          staking: `%cosmos.staking.v1beta1%`,
+          claim: `%MsgWithdrawDelegatorReward%`,
+        })
         .groupBy('message_type')
         .getRawMany();
 
