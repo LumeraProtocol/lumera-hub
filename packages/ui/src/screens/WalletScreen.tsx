@@ -19,7 +19,6 @@ import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 
 import AppLink from '@/components/AppLink';
-import { ConnectWalletButton } from '@/components/ConnectWallet';
 import NoWalletConnected from '@/components/NoWalletConnected';
 import { AppLoading } from '@/components/Loading';
 import PastTime from '@/components/PastTime';
@@ -449,12 +448,12 @@ export const WalletScreen = ({
                             <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
                               {getTxIcon(getMessages(tx.tx.body.messages))}
                             </div>
-                            <AppLink href={`/block/${tx.height}`} className="text-white ml-2 hover:text-lumera-green">{tx.height}</AppLink>
+                            <AppLink href={`/block/${tx.height}`} className="ml-2 text-lumera-teal hover:text-lumera-green">{tx.height}</AppLink>
                           </div>
                         </div>
                         <div className="w-full md:col-span-2 mt-3 md:mt-0">
                           <div className="md:hidden font-semibold text-gray-500 mr-2">TX Hash: </div>
-                          <AppLink href={`/tx/${tx.txhash}`} className="text-white whitespace-nowrap hover:text-lumera-green">
+                          <AppLink href={`/tx/${tx.txhash}`} className="whitespace-nowrap text-lumera-teal hover:text-lumera-green">
                             {formatAddress(tx.txhash, 10, -4)}
                           </AppLink>
                         </div>
