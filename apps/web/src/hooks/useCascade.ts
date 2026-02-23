@@ -614,7 +614,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         type: getFileType(item.decoded.file_name),
         actionID: item.id,
         signatures: item.decoded.signatures,
-        lastModified: item.finalize_tx_time || fileInfo.created_at,
+        lastModified: item.finalize_tx_time || fileInfo.created_at || item.register_tx_time,
         state: item.state,
         datahash: item.decoded.data_hash,
         height: item.block_height,
