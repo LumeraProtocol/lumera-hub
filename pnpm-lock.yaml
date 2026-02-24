@@ -10,7 +10,7 @@ importers:
     devDependencies:
       '@tamagui/babel-plugin':
         specifier: ^1.132.16
-        version: 1.132.17(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
+        version: 1.132.17(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
       '@tamagui/config':
         specifier: ^1.132.16
         version: 1.132.17(react-dom@19.2.0(react@19.2.0))(react-native-reanimated@3.17.5(@babel/core@7.28.0)(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
@@ -19,10 +19,10 @@ importers:
         version: 1.132.17(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
       '@tamagui/metro-plugin':
         specifier: ^1.132.16
-        version: 1.132.17(bufferutil@4.0.9)(react-dom@19.2.0(react@19.2.0))(react-native-reanimated@3.17.5(@babel/core@7.28.0)(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)(tailwindcss@4.1.14)(utf-8-validate@5.0.10)
+        version: 1.132.17(bufferutil@4.0.9)(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react-native-reanimated@3.17.5(@babel/core@7.28.0)(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)(tailwindcss@4.1.14)(utf-8-validate@5.0.10)
       '@tamagui/next-plugin':
         specifier: ^1.132.16
-        version: 1.132.17(@babel/core@7.28.0)(next@15.4.8(@babel/core@7.28.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)(webpack@5.101.0(esbuild@0.25.8))
+        version: 1.132.17(@babel/core@7.28.0)(encoding@0.1.13)(next@15.4.8(@babel/core@7.28.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)(webpack@5.101.0(esbuild@0.25.8))
       '@tauri-apps/cli':
         specifier: ^2.7.1
         version: 2.7.1
@@ -55,7 +55,7 @@ importers:
         version: 0.3.43(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@4.2.1)
       '@interchain-kit/react':
         specifier: ^0.3.43
-        version: 0.3.43(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(@types/react-dom@19.1.7(@types/react@19.0.14))(@types/react@19.0.14)(bufferutil@4.0.9)(immer@10.1.1)(jiti@2.5.1)(react-dom@19.2.0(react@19.0.0))(react@19.0.0)(typescript@5.8.3)(use-sync-external-store@1.5.0(react@19.0.0))(utf-8-validate@5.0.10)
+        version: 0.3.43(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(@types/react-dom@19.1.7(@types/react@19.0.14))(@types/react@19.0.14)(bufferutil@4.0.9)(encoding@0.1.13)(immer@10.1.1)(jiti@2.5.1)(react-dom@19.2.0(react@19.0.0))(react@19.0.0)(typescript@5.8.3)(use-sync-external-store@1.5.0(react@19.0.0))(utf-8-validate@5.0.10)
       '@react-navigation/native':
         specifier: ^7.1.17
         version: 7.1.17(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.0.0)(utf-8-validate@5.0.10))(react@19.0.0)
@@ -188,7 +188,7 @@ importers:
         version: 8.5.6
       raw-loader:
         specifier: ^4.0.2
-        version: 4.0.2(webpack@5.101.0(esbuild@0.25.8))
+        version: 4.0.2(webpack@5.101.0)
       react:
         specifier: 19.1.0
         version: 19.1.0
@@ -372,7 +372,7 @@ importers:
         version: 14.3.8(react@19.1.0)
       react-json-view:
         specifier: ^1.21.3
-        version: 1.21.3(@types/react@19.0.14)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        version: 1.21.3(@types/react@19.0.14)(encoding@0.1.13)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react-native:
         specifier: 0.79.5
         version: 0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.1.0)(utf-8-validate@5.0.10)
@@ -11519,7 +11519,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@interchain-kit/react@0.3.43(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(@types/react-dom@19.1.7(@types/react@19.0.14))(@types/react@19.0.14)(bufferutil@4.0.9)(immer@10.1.1)(jiti@2.5.1)(react-dom@19.2.0(react@19.0.0))(react@19.0.0)(typescript@5.8.3)(use-sync-external-store@1.5.0(react@19.0.0))(utf-8-validate@5.0.10)':
+  '@interchain-kit/react@0.3.43(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(@types/react-dom@19.1.7(@types/react@19.0.14))(@types/react@19.0.14)(bufferutil@4.0.9)(encoding@0.1.13)(immer@10.1.1)(jiti@2.5.1)(react-dom@19.2.0(react@19.0.0))(react@19.0.0)(typescript@5.8.3)(use-sync-external-store@1.5.0(react@19.0.0))(utf-8-validate@5.0.10)':
     dependencies:
       '@chain-registry/types': 2.0.42
       '@interchain-kit/core': 0.3.43(@chain-registry/v2-types@0.53.146)(@chain-registry/v2@1.71.237)(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@4.2.1)
@@ -15046,14 +15046,14 @@ snapshots:
     transitivePeerDependencies:
       - react-dom
 
-  '@tamagui/babel-plugin@1.132.17(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)':
+  '@tamagui/babel-plugin@1.132.17(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)':
     dependencies:
       '@babel/core': 7.28.0
       '@babel/generator': 7.28.0
       '@babel/helper-plugin-utils': 7.27.1
       '@babel/template': 7.27.2
       '@babel/traverse': 7.28.0
-      '@tamagui/static': 1.132.17(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
+      '@tamagui/static': 1.132.17(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
     transitivePeerDependencies:
       - encoding
       - react
@@ -15999,9 +15999,9 @@ snapshots:
       - react-dom
       - react-native
 
-  '@tamagui/metro-plugin@1.132.17(bufferutil@4.0.9)(react-dom@19.2.0(react@19.2.0))(react-native-reanimated@3.17.5(@babel/core@7.28.0)(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)(tailwindcss@4.1.14)(utf-8-validate@5.0.10)':
+  '@tamagui/metro-plugin@1.132.17(bufferutil@4.0.9)(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react-native-reanimated@3.17.5(@babel/core@7.28.0)(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)(tailwindcss@4.1.14)(utf-8-validate@5.0.10)':
     dependencies:
-      '@tamagui/static': 1.132.17(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
+      '@tamagui/static': 1.132.17(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
       fs-extra: 11.3.1
       metro-config: 0.83.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       metro-transform-worker: 0.83.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -16019,12 +16019,12 @@ snapshots:
       - tailwindcss
       - utf-8-validate
 
-  '@tamagui/next-plugin@1.132.17(@babel/core@7.28.0)(next@15.4.8(@babel/core@7.28.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)(webpack@5.101.0(esbuild@0.25.8))':
+  '@tamagui/next-plugin@1.132.17(@babel/core@7.28.0)(encoding@0.1.13)(next@15.4.8(@babel/core@7.28.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)(webpack@5.101.0(esbuild@0.25.8))':
     dependencies:
       '@babel/preset-react': 7.27.1(@babel/core@7.28.0)
       '@tamagui/proxy-worm': 1.132.17
       '@tamagui/react-native-svg': 1.132.17
-      '@tamagui/static': 1.132.17(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
+      '@tamagui/static': 1.132.17(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
       babel-loader: 9.2.1(@babel/core@7.28.0)(webpack@5.101.0(esbuild@0.25.8))
       browserslist: 4.25.2
       css-loader: 6.11.0(webpack@5.101.0(esbuild@0.25.8))
@@ -16032,7 +16032,7 @@ snapshots:
       file-loader: 6.2.0(webpack@5.101.0(esbuild@0.25.8))
       html-webpack-plugin: 5.6.3(webpack@5.101.0(esbuild@0.25.8))
       next: 15.4.8(@babel/core@7.28.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      tamagui-loader: 1.132.17(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)(webpack@5.101.0(esbuild@0.25.8))
+      tamagui-loader: 1.132.17(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)(webpack@5.101.0(esbuild@0.25.8))
       url-loader: 4.1.1(file-loader@6.2.0(webpack@5.101.0(esbuild@0.25.8)))(webpack@5.101.0(esbuild@0.25.8))
     transitivePeerDependencies:
       - '@babel/core'
@@ -16704,7 +16704,7 @@ snapshots:
     dependencies:
       react: 19.1.0
 
-  '@tamagui/static@1.132.17(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)':
+  '@tamagui/static@1.132.17(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)':
     dependencies:
       '@babel/core': 7.28.0
       '@babel/generator': 7.28.0
@@ -16741,7 +16741,7 @@ snapshots:
       js-yaml: 4.1.0
       react: 19.2.0
       react-native: 0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10)
-      react-native-web: 0.20.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react-native-web: 0.20.0(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
     transitivePeerDependencies:
       - encoding
       - react-dom
@@ -19991,7 +19991,7 @@ snapshots:
     dependencies:
       bser: 2.1.1
 
-  fbemitter@3.0.0:
+  fbemitter@3.0.0(encoding@0.1.13):
     dependencies:
       fbjs: 3.0.5(encoding@0.1.13)
     transitivePeerDependencies:
@@ -20092,9 +20092,9 @@ snapshots:
 
   flow-enums-runtime@0.0.6: {}
 
-  flux@4.0.4(react@19.1.0):
+  flux@4.0.4(encoding@0.1.13)(react@19.1.0):
     dependencies:
-      fbemitter: 3.0.0
+      fbemitter: 3.0.0(encoding@0.1.13)
       fbjs: 3.0.5(encoding@0.1.13)
       react: 19.1.0
     transitivePeerDependencies:
@@ -22384,11 +22384,11 @@ snapshots:
 
   range-parser@1.2.1: {}
 
-  raw-loader@4.0.2(webpack@5.101.0(esbuild@0.25.8)):
+  raw-loader@4.0.2(webpack@5.101.0):
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 3.3.0
-      webpack: 5.101.0(esbuild@0.25.8)
+      webpack: 5.101.0
 
   rc@1.2.8:
     dependencies:
@@ -22563,9 +22563,9 @@ snapshots:
 
   react-is@19.1.1: {}
 
-  react-json-view@1.21.3(@types/react@19.0.14)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+  react-json-view@1.21.3(@types/react@19.0.14)(encoding@0.1.13)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
-      flux: 4.0.4(react@19.1.0)
+      flux: 4.0.4(encoding@0.1.13)(react@19.1.0)
       react: 19.1.0
       react-base16-styling: 0.6.0
       react-dom: 19.1.0(react@19.1.0)
@@ -22655,7 +22655,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.28.0
       '@babel/plugin-transform-arrow-functions': 7.27.1(@babel/core@7.28.0)
-      '@babel/plugin-transform-class-properties': 7.27.1(@babel/core@7.28.0)
+      '@babel/plugin-transform-class-properties': 7.28.6(@babel/core@7.28.0)
       '@babel/plugin-transform-classes': 7.28.0(@babel/core@7.28.0)
       '@babel/plugin-transform-nullish-coalescing-operator': 7.27.1(@babel/core@7.28.0)
       '@babel/plugin-transform-optional-chaining': 7.27.1(@babel/core@7.28.0)
@@ -22712,7 +22712,7 @@ snapshots:
       react-native: 0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.1.0)(utf-8-validate@5.0.10)
       warn-once: 0.1.1
 
-  react-native-web@0.20.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+  react-native-web@0.20.0(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:
       '@babel/runtime': 7.28.2
       '@react-native/normalize-colors': 0.74.89
@@ -23724,11 +23724,11 @@ snapshots:
 
   tailwindcss@4.1.14: {}
 
-  tamagui-loader@1.132.17(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)(webpack@5.101.0(esbuild@0.25.8)):
+  tamagui-loader@1.132.17(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)(webpack@5.101.0(esbuild@0.25.8)):
     dependencies:
       '@tamagui/cli-color': 1.132.17
       '@tamagui/core': 1.132.17(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
-      '@tamagui/static': 1.132.17(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
+      '@tamagui/static': 1.132.17(encoding@0.1.13)(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
       '@tamagui/web': 1.132.17(react-dom@19.2.0(react@19.2.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10))(react@19.2.0)
       esbuild-loader: 4.3.0(webpack@5.101.0(esbuild@0.25.8))
       esm-resolve: 1.0.11
@@ -23914,6 +23914,15 @@ snapshots:
       webpack: 5.101.0(esbuild@0.25.8)
     optionalDependencies:
       esbuild: 0.25.8
+
+  terser-webpack-plugin@5.3.16(webpack@5.101.0):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.29
+      jest-worker: 27.5.1
+      schema-utils: 4.3.2
+      serialize-javascript: 6.0.2
+      terser: 5.43.1
+      webpack: 5.101.0
 
   terser@5.43.1:
     dependencies:
@@ -24412,6 +24421,38 @@ snapshots:
       source-map: 0.6.1
 
   webpack-sources@3.3.3: {}
+
+  webpack@5.101.0:
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.8
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.15.0
+      acorn-import-phases: 1.0.4(acorn@8.15.0)
+      browserslist: 4.25.2
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.18.3
+      es-module-lexer: 1.7.0
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.0
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 4.3.2
+      tapable: 2.2.2
+      terser-webpack-plugin: 5.3.16(webpack@5.101.0)
+      watchpack: 2.4.4
+      webpack-sources: 3.3.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
 
   webpack@5.101.0(esbuild@0.25.8):
     dependencies:
