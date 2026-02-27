@@ -248,14 +248,14 @@ export default function Staking({
               </div>
               <div className="col-span-5"></div>
             </div>
-            {!isAccountInfoLoading && !accountInfo?.delegations.length ? (
+            {!isAccountInfoLoading && !accountInfo?.delegations?.length ? (
               <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-base">
                 <div className='col-span-12'>
                   <H3>No data</H3>
                 </div>
               </div>
             ) : null}
-            {accountInfo?.delegations.length && accountInfo.delegations.sort((a, b) => sortFunc(a, b)).map(delegation => {
+            {accountInfo?.delegations?.length > 0 && accountInfo.delegations.sort((a, b) => sortFunc(a, b)).map(delegation => {
               const validator = allValidators.find(v => v.operator_address === delegation.delegation.validator_address);
               const reward = accountInfo?.rewards.find(v => v.validator_address === delegation.delegation.validator_address);
 

@@ -5,7 +5,7 @@ import { fromHex, toBase64, fromBase64, toHex, fromBech32 } from '@cosmjs/encodi
 import { decodeTxRaw } from '@cosmjs/proto-signing';
 import ReactPaginate from 'react-paginate';
 
-import Loading, { AppLoading } from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import DelegateModal from '@/components/DelegateModal';
 import SectionTitle from '@/components/SectionTitle';
