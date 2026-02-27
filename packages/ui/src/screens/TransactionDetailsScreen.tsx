@@ -7,7 +7,7 @@ import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import SectionTitle from '@/components/SectionTitle';
 import { formatTokens, formatNumber } from '@/utils/format';
-import { ITransaction, TxMessages } from '@/hooks/useTransactionDetails';
+import { ITransaction } from '@/hooks/useTransactionDetails';
 
 interface ITransactionDetailsScreen {
   transaction: ITransaction | null;

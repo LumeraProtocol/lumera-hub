@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
   Card,
   SizableText,
-  H3,
   Input,
   Text,
   Progress,
@@ -15,7 +14,7 @@ import {
 } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
-import Loading, { AppLoading } from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import SectionTitle from '@/components/SectionTitle';
 import useAppRouter from '@/hooks/useAppRouter';
 import { IValidator } from '@/types';

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   Card,
   SizableText,
-  H3,
   Input,
   Label,
   Text,

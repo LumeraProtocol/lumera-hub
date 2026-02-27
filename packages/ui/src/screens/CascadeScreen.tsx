@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   YStack,
   Card,
   H3,
-  Paragraph,
   Input,
   Checkbox,
   Dialog,
@@ -42,7 +41,6 @@ import { AppLoading } from '@/components/Loading';
 import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
-import { ConnectWalletButton } from '@/components/ConnectWallet';
 import SectionTitle from '@/components/SectionTitle';
 import NoWalletConnected from '@/components/NoWalletConnected';
 import useCascade, {

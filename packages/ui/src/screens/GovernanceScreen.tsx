@@ -1,4 +1,3 @@
-import React from 'react'
 import {
   YStack,
   H2,
@@ -8,7 +7,6 @@ import {
   Input,
 } from 'tamagui';
 import {
-  Logs,
   Search,
   Activity,
   Coins,
@@ -22,7 +20,6 @@ import AppLink from '@/components/AppLink';
 import { AppLoading } from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
 import CreateProposalModal from '@/components/CreateProposalModal';
-import Skeleton from '@/components/Skeleton';
 import { IProposal } from '@/hooks/useProposals';
 import { formatNumber, formatToken } from '@/utils/format';
 import { VoteModal } from './HomeScreen';
