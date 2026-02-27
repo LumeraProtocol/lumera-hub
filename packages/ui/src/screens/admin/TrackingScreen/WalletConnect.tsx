@@ -43,6 +43,8 @@ export const ActivationRateChart = ({
   newWalletConnect,
   activatedWallets,
 }: IActivationRateChart) => {
+  const { startDate, endDate } = useSelector((state) => state.admin);
+
   const getOption = () => {
     return {
       tooltip: {
@@ -85,7 +87,7 @@ export const ActivationRateChart = ({
   return (
     <Card elevate size="$4" bordered className='!flex-1 !basis-1/3 !min-w-0 !items-start'>
       <div className='p-5 w-full'>
-        <SectionTitle className="mb-5">New wallet connections</SectionTitle>
+        <SectionTitle className="mb-5">New wallet connections<span className="text-sm text-lumera-label font-normal">({dayjs(startDate).format('MM/DD/YYYY')} - {dayjs(endDate).format('MM/DD/YYYY')})</span></SectionTitle>
         {isLoading ?
           <div className='min-h-[160px] relative w-full'>
             <AppLoading
@@ -230,6 +232,8 @@ export const AcquisitionSourceChart = ({
   isLoading,
   acquisitionSources,
 }: IAcquisitionSourceChart) => {
+  const { startDate, endDate } = useSelector((state) => state.admin);
+
   const getOption = () => {
     const data: ISeriesData[]  = [];
     for (const item of acquisitionSources) {
@@ -267,7 +271,7 @@ export const AcquisitionSourceChart = ({
   return (
     <Card elevate size="$4" bordered className='!flex-1 !basis-1/3 !min-w-0 !items-start'>
       <div className='p-5 w-full'>
-        <SectionTitle className="mb-5">Acquisition source</SectionTitle>
+        <SectionTitle className="mb-5">Acquisition source<span className="text-sm text-lumera-label font-normal">({dayjs(startDate).format('MM/DD/YYYY')} - {dayjs(endDate).format('MM/DD/YYYY')})</span></SectionTitle>
         {isLoading ?
           <div className='min-h-[160px] relative w-full'>
             <AppLoading

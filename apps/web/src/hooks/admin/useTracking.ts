@@ -4,6 +4,10 @@ import * as instance from '@/utils/api';
 import { useSelector } from '@/redux/hooks';
 import { convertDateToTracking } from '@/utils/format';
 
+export type TCascadeDownload = {
+  cascade_download_extra: string | null;
+}
+
 export interface ITracking {
   date: string;
   total: number;
@@ -29,7 +33,7 @@ export interface ITracking {
   total_transaction: number;
   transaction_extra: string;
   cascade_download: number;
-  cascade_download_extra: string;
+  cascade_download_extra: TCascadeDownload[];
 }
 
 export interface ISummary {
@@ -50,7 +54,7 @@ export interface ISummary {
   cascade_total_fee: number;
   total_address: number;
   cascade_download: number;
-  cascade_download_extra: string;
+  cascade_download_extra: TCascadeDownload[];
 }
 
 const useTracking = () => {

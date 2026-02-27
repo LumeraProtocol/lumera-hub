@@ -36,7 +36,6 @@ const useRetentionRate = () => {
   const fetcData = async () => {
     setLoading(true);
     try {
-      console.log('startDate', startDate, dayjs(startDate).startOf('week'))
       const { data } = await instance.getExternal(`/api/admin/trackings/get-retention-rate?startDate=${dayjs(startDate).startOf('week').format('YYYY-MM-DD')}&endDate=${dayjs(endDate || startDate).endOf('week').format('YYYY-MM-DD')}`);
       setItems(data.items);
       setDetails(data.details);

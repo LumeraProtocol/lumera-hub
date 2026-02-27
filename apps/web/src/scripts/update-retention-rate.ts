@@ -31,6 +31,8 @@ const updateRetentionRate = async () => {
       selectYear = process.argv[2];
     }
     const diff = Number(dayjs().format('YYYY')) - Number(selectYear);
+    await retentionRateWeekRepo.createQueryBuilder().delete().where("1 = 1").execute();
+    await retentionRateWeekDetailsRepo.createQueryBuilder().delete().where("1 = 1").execute();
     for (let i = 0; i <= diff; i++) {
       const year = Number(selectYear) + i;
       console.log(`Processing year ${year}`);
@@ -49,8 +51,8 @@ const updateRetentionRate = async () => {
             .where('timestamp >= :start', { start: weekStart.toISOString() })
             .andWhere('timestamp <= :end', { end: weekEnd.toISOString() })
             .groupBy('address')
+            .orderBy('address')
             .getRawMany();
-
           if (addresses?.length) {
             const arrAddresses = addresses.map((adr) => adr.address);
              await retentionRateWeekRepo.save({
@@ -125,8 +127,6 @@ const updateRetentionRate = async () => {
         weekStart = weekStart.add(1, 'week');
       }
     }
-
-
   } catch (error) {
     console.error('updateTracking error: ', error);
   }

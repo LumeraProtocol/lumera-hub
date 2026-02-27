@@ -1,8 +1,10 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import Image from 'next/image';
+import dayjs from 'dayjs';
 
 import AppLink from '@/components/AppLink';
-import { useSelector } from '@/redux/hooks';
+import { useSelector, useDispatch } from '@/redux/hooks';
+import * as admin from '@/redux/admin.slice';
 import { ViewId, VIEW_TITLES } from '@/types';
 
 export type TNaxItems = {
@@ -17,7 +19,18 @@ interface IAdminLayout {
 }
 
 export default function AdminLayout({ children }: IAdminLayout) {
+  const dispatch = useDispatch();
   const { activeView, viewTitle } = useSelector((state) => state.app);
+
+  useEffect(() => {
+    const isNewConnect = sessionStorage.getItem('new_admin_connect');
+    if (!isNewConnect) {
+      dispatch(admin.setDate({
+        startDate: `${new Date(dayjs().subtract(30, 'day').valueOf())}`,
+        endDate: `${new Date()}`,
+      }));
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-lumera-navy text-white">
