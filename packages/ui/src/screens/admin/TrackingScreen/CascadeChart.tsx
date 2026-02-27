@@ -65,7 +65,9 @@ export default function CascadeChart({
                 </ul>
               `;
             } else {
-               const download = tracking?.cascade_download_extra ? JSON.parse(tracking.cascade_download_extra) : null;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const cascadeDownloadExtra: any = tracking?.cascade_download_extra;
+              const download = cascadeDownloadExtra ? JSON.parse(cascadeDownloadExtra) : null;
               downloadHtml += `
                 <div class="text-sm mt-1">${param.marker} <span>${param.seriesName}</span>: <span class="font-bold">${param.value}</span></div>
                 <ul class="mt-1 pl-3 list-inside list-disc">
