@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
     const latestResult = await dataSource.query(
       `
-      SELECT total_address, cascade_download_extra
+      SELECT total_address
       FROM tracking
       WHERE date <= ?
       ORDER BY date DESC
@@ -51,9 +51,17 @@ export async function GET(req: NextRequest) {
       [endDate]
     );
 
+    const downloadExtraResult = await dataSource.query(
+      `
+      SELECT cascade_download_extra
+      FROM tracking
+      WHERE date >= ? AND date <= ?
+      `,
+      [startDate, endDate]
+    );
+
     const latest = latestResult[0] || {
       total_address: 0,
-      cascade_download_extra: null,
     };
 
     return NextResponse.json({
@@ -61,7 +69,7 @@ export async function GET(req: NextRequest) {
       item: {
         ...item,
         total_address: latest.total_address ?? 0,
-        cascade_download_extra: latest.cascade_download_extra ?? null,
+        cascade_download_extra: downloadExtraResult,
       },
     });
   } catch (error) {

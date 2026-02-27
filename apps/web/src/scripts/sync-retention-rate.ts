@@ -60,7 +60,12 @@ export const syncRetentionRate = async () => {
         .execute();
 
       const arrAddresses = addresses.map((adr) => adr.address);
-        await retentionRateWeekRepo.save({
+      await retentionRateWeekRepo.createQueryBuilder()
+        .delete()
+        .where("year = :year", { year })
+        .andWhere('start_date = :startDate', { startDate: weekStart.format('YYYY-MM-DD') })
+        .execute();
+      await retentionRateWeekRepo.save({
         hash: hash({
           address: arrAddresses,
           year,
