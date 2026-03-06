@@ -18,7 +18,7 @@ export default function NoWalletConnected({
             <h2 className='font-normal text-white text-4xl mt-5'>Welcome to the Lumera Hub</h2>
             <p className='text-base font-normal text-lumera-gray mt-2 mx-auto max-w-[420px] text-center'>Connect your wallet to manage assets, participate in governance, and access the full suite of Lumera services.</p>
             <div className='text-center mt-6'>
-              <ConnectWalletButton className='!px-7 !py-2.5 !text-lg' />
+              <ConnectWalletButton />
             </div>
           </div>
         </Card>
@@ -33,11 +33,11 @@ export default function NoWalletConnected({
           <Wallet className='w-6 h-6 text-lumera-teal' />
         </div>
         <h2 className='font-normal text-white text-xl mt-3'>No Wallet Connected</h2>
-        <p className='text-sm font-normal text-lumera-gray mt-0 mx-auto max-w-[420px] text-center'>
+        <p className='text-base font-normal text-lumera-gray mt-0 mx-auto max-w-[420px] text-center'>
           Get started by connecting your wallet.
         </p>
         <div className='text-center mt-4'>
-          <ConnectWalletButton className='!px-4 !py-2 !text-base' />
+          <ConnectWalletButton />
         </div>
       </div>
     )
@@ -53,7 +53,7 @@ export default function NoWalletConnected({
           <h2 className='font-normal text-white text-4xl mt-5'>No Wallet Connected</h2>
           <p className='text-base font-normal text-lumera-gray mt-2 mx-auto max-w-[420px] text-center'>Please connect your wallet to view this page and interact with the Lumera ecosystem.</p>
           <div className='text-center mt-6'>
-            <ConnectWalletButton className='!px-7 !py-2.5 !text-lg' />
+            <ConnectWalletButton />
           </div>
         </div>
       </Card>

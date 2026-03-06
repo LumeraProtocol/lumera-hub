@@ -345,7 +345,7 @@ export const StakingScreen = ({
               <Card elevate size="$4" bordered className='w-full'>
                 <Card.Header padded>
                   <SectionTitle className='mb-0'>Total Staked LUME</SectionTitle>
-                  <div className='text-[40px] font-bold text-white !leading-11 mt-2'>
+                  <div className='text-4xl font-bold text-white leading-11 mt-2'>
                     {staking.isLoading ?
                       <div className='relative min-h-11'>
                         <AppLoading
@@ -368,7 +368,7 @@ export const StakingScreen = ({
               <Card elevate size="$4" bordered className='w-full'>
                 <Card.Header padded>
                   <SectionTitle className='mb-0'>Staking Rewards APR</SectionTitle>
-                  <div className='!text-lumera-green font-bold text-[40px] !leading-11 mt-2'>
+                  <div className='text-lumera-green font-bold text-4xl leading-11 mt-2'>
                     {staking.isAPRLoading ?
                       <div className='relative min-h-11'>
                         <AppLoading
@@ -408,7 +408,7 @@ export const StakingScreen = ({
                   <div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6 mt-6 ">
                       <div>
-                        <p className="text-sm text-gray-400 mb-2">My Staking Amount</p>
+                        <p className="text-base text-gray-400 mb-2">My Staking Amount</p>
                         {staking.isLoading || isAccountInfoLoading ?
                           <div className='relative min-h-9'>
                             <AppLoading
@@ -428,7 +428,7 @@ export const StakingScreen = ({
                         }
                       </div>
                       <div>
-                        <p className="text-sm text-gray-400 mb-2">Claimable Rewards</p>
+                        <p className="text-base text-gray-400 mb-2">Claimable Rewards</p>
                           {staking.isLoading || isAccountInfoLoading ?
                             <div className='relative min-h-9'>
                               <AppLoading

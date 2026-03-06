@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { H3, Card } from 'tamagui';
+import { Card } from 'tamagui';
 import { fromBase64, toHex } from '@cosmjs/encoding';
 import { RefreshCcw } from 'lucide-react';
 import dayjs from 'dayjs';
 import { decodeTxRaw } from '@cosmjs/proto-signing';
 
-import Loading, { AppLoading } from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import SectionTitle from '@/components/SectionTitle';
 import { IFullBlock } from '@/types';
@@ -202,7 +202,7 @@ export const BlockDetailsScreen = ({
   }
 
   return (
-    <div className="space-y-8 relative text-lumera-label">
+    <div className="space-y-8 relative text-lumera-label text-base">
        {isLoading ?
         <div className='relative min-h-[76vh]'>
           <AppLoading

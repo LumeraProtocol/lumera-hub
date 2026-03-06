@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Button,
   Dialog,
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 
+import AppButton, { AppLinkButton } from '@/components/AppButton';
 import Skeleton from '@/components/Skeleton';
 import useStaking from '@/hooks/useStaking';
 import { formatToken } from '@/utils/format';
@@ -37,6 +38,11 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
   const staking = useStaking('');
   const dispatch = useDispatch();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [refer, setRefer] = useState('hub.lumera.io');
+
+  useEffect(() => {
+    setRefer(location.hostname);
+  }, []);
 
   const handleStakeNowClick = () => {
     dispatch(setCurrentPath({
@@ -62,8 +68,8 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
 
   const items: React.ReactNode[] = [
     <>
-      <h2 className='text-xl md:text-3xl font-bold'>Welcome to Lumera Hub</h2>
-      <div className='text-sm text-lumera-label mt-1.5'>Your gateway to everything Lumera.</div>
+      <h2 className='text-xl md:text-2xl font-bold'>Welcome to Lumera Hub</h2>
+      <div className='text-base text-lumera-label mt-1.5'>Your gateway to everything Lumera.</div>
       <div className='max-h-[60vh] overflow-y-auto'>
         <div className='flex flex-col gap-2 mt-10'>
           <Card elevate size="$4" bordered>
@@ -71,7 +77,7 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
               <div className='rounded-full bg-white p-1.5'><Wallet className='text-black w-4.5 h-4.5' /></div>
               <div>
                 <h3 className='text-base'>Create a Wallet</h3>
-                <div className='text-lumera-label text-sm'>Securely set up your key to the ecosystem.</div>
+                <div className='text-lumera-label text-base'>Securely set up your key to the ecosystem.</div>
               </div>
             </div>
           </Card>
@@ -80,7 +86,7 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
               <div className='rounded-full bg-white p-1.5'><Layers className='text-black w-4.5 h-4.5' /></div>
               <div>
                 <h3 className='text-base'>Stake & Earn</h3>
-                <div className='text-lumera-label text-sm'>Delegate your LUME to a validator to earn rewards.</div>
+                <div className='text-lumera-label text-base'>Delegate your LUME to a validator to earn rewards.</div>
               </div>
             </div>
           </Card>
@@ -89,7 +95,7 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
               <div className='rounded-full bg-white p-1.5'><Database className='text-black w-4.5 h-4.5' /></div>
               <div>
                 <h3 className='text-base'>Cascade</h3>
-                <div className='text-lumera-label text-sm'>Your Data. Instantly Stored. Eternally Preserved.</div>
+                <div className='text-lumera-label text-base'>Your Data. Instantly Stored. Eternally Preserved.</div>
               </div>
             </div>
           </Card>
@@ -97,18 +103,18 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
       </div>
     </>,
     <>
-      <h2 className='text-xl md:text-3xl font-bold'>Create a Wallet</h2>
-      <div className='text-sm text-lumera-label mt-1.5'>Create your wallet from one of the wallet service providers below.</div>
+      <h2 className='text-xl md:text-2xl font-bold'>Create a Wallet</h2>
+      <div className='text-base text-lumera-label mt-1.5'>Create your wallet from one of the wallet service providers below.</div>
       <div className='flex flex-col gap-2 mt-10 get-started'>
         <Card elevate size="$4" bordered className='overflow-hidden'>
-          <Link href="https://www.keplr.app?referrer=hub.testnet.lumera.io" target='_blank'>
+          <Link href={`https://www.keplr.app?referrer=${refer}`} target='_blank'>
             <div className='flex gap-3 p-4 relative items-stretch keplr-wallet'>
               <div className='relative z-30'>
                 <h3 className='text-base'>Keplr Wallet</h3>
-                <div className='text-lumera-label text-sm'>Introducing Keplr, the fast, simple, secure wallet connecting you to any blockchains and apps</div>
+                <div className='text-lumera-label text-base'>Introducing Keplr, the fast, simple, secure wallet connecting you to any blockchains and apps</div>
                 <div className='flex gap-2 items-center mt-1'>
                   <Image src='/keplr.svg' width={18} height={18} alt='Keplr Wallet' className='rounded-xl' />
-                  <span className='text-lumera-label text-sm'>https://www.keplr.app/</span>
+                  <span className='text-lumera-label text-base'>https://www.keplr.app/</span>
                 </div>
               </div>
               <div className='min-w-[150px] relative flex-auto h-full wallet-mark'>&nbsp;</div>
@@ -116,14 +122,14 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
           </Link>
         </Card>
         <Card elevate size="$4" bordered className='overflow-hidden'>
-          <Link href="https://www.leapwallet.io?referrer=hub.testnet.lumera.io" target='_blank'>
+          <Link href={`https://www.leapwallet.io?referrer=${refer}`} target='_blank'>
             <div className='flex gap-3 p-4 relative items-stretch leap-wallet'>
               <div>
                 <h3 className='text-base'>Leap Wallet</h3>
-                <div className='text-lumera-label text-sm'>Meet the wallet that understands you, & the Cosmos.</div>
+                <div className='text-lumera-label text-base'>Meet the wallet that understands you, & the Cosmos.</div>
                 <div className='flex gap-2 items-center mt-1'>
                   <Image src='/leap.svg' width={18} height={18} alt='Keplr Wallet' className='rounded-xl' />
-                  <span className='text-lumera-label text-sm'>https://www.leapwallet.io/</span>
+                  <span className='text-lumera-label text-base'>https://www.leapwallet.io/</span>
                 </div>
               </div>
               <div className='min-w-[150px] relative flex-auto h-full wallet-mark'>&nbsp;</div>
@@ -131,14 +137,14 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
           </Link>
         </Card>
         <Card elevate size="$4" bordered className='overflow-hidden'>
-          <Link href="https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf?hl=en&referrer=hub.testnet.lumera.io" target='_blank'>
+          <Link href={`https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf?hl=en&referrer=${refer}`} target='_blank'>
             <div className='flex gap-3 p-4 relative items-stretch cosmostation-wallet'>
               <div className='min-w-0'>
                 <h3 className='text-base'>Cosmostation Wallet</h3>
-                <div className='text-lumera-label text-sm'>Non-custodial multi-chain extension wallet powered by Cosmostation, the interchain validator.</div>
+                <div className='text-lumera-label text-base'>Non-custodial multi-chain extension wallet powered by Cosmostation, the interchain validator.</div>
                 <div className='flex gap-2 items-center mt-1'>
                   <Image src='/cosmostation.svg' width={18} height={18} alt='Keplr Wallet' className='rounded-xl' />
-                  <span className='text-lumera-label text-sm truncate block min-w-0'>https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf?hl=en</span>
+                  <span className='text-lumera-label text-base truncate block min-w-0'>https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf?hl=en</span>
                 </div>
               </div>
               <div className='min-w-[150px] relative flex-auto h-full wallet-mark'>&nbsp;</div>
@@ -148,15 +154,15 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
       </div>
     </>,
     <>
-      <h2 className='text-xl md:text-3xl font-bold'>Stake & Earn</h2>
-      <div className='text-sm text-lumera-label mt-1.5'>Delegate your LUME to a validator to earn rewards through its proof-of-stake system.</div>
+      <h2 className='text-xl md:text-2xl font-bold'>Stake & Earn</h2>
+      <div className='text-base text-lumera-label mt-1.5'>Delegate your LUME to a validator to earn rewards through its proof-of-stake system.</div>
       <div className='flex flex-col gap-2 mt-10'>
         <Card elevate size="$4" bordered>
           <div className='flex items-center gap-5 p-4'>
             <div className='rounded-full bg-white p-1.5'><ChartNoAxesCombined className='text-black w-4.5 h-4.5' /></div>
             <div>
-              <h3 className='text-sm text-lumera-label '>Total Staked LUME</h3>
-              <div className=' text-2xl'>
+              <h3 className='text-base text-lumera-label '>Total Staked LUME</h3>
+              <div className='text-2xl'>
                 {staking.isLoading ?
                   <Skeleton /> : <>
                     ≈{staking.bondedTokens ? formatToken({
@@ -173,7 +179,7 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
           <div className='flex items-center gap-5 p-4'>
             <div className='rounded-full bg-white p-1.5'><Blocks className='text-black w-4.5 h-4.5' /></div>
             <div>
-              <h3 className='text-sm text-lumera-label'>Staking Rewards APR</h3>
+              <h3 className='text-base text-lumera-label'>Staking Rewards APR</h3>
               <div className='text-2xl'>
                 {staking.isAPRLoading ?
                   <Skeleton /> : <>
@@ -186,19 +192,21 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
         </Card>
       </div>
       <div className='w-full pt-6'>
-        <Link href='/staking' className='px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer bg-lumera-teal text-white hover:bg-lumera-green focus:bg-lumera-navy' onClick={handleStakeNowClick}>Stake Now</Link>
+        <AppLinkButton href='/staking' onClick={handleStakeNowClick}>
+          <span>Stake Now</span>
+        </AppLinkButton>
       </div>
     </>,
     <>
-      <h2 className='text-xl md:text-3xl font-bold'>Cascade</h2>
-      <div className='text-sm text-lumera-label mt-1.5'>Lumera Protocol’s decentralized storage module</div>
+      <h2 className='text-xl md:text-2xl font-bold'>Cascade</h2>
+      <div className='text-base text-lumera-label mt-1.5'>Lumera Protocol’s decentralized storage module</div>
       <div className='flex flex-col gap-2 mt-10'>
         <Card elevate size="$4" bordered>
           <div className='flex items-center gap-5 p-4'>
             <div className='rounded-full bg-white p-1.5'><Shredder className='text-black w-4.5 h-4.5' /></div>
             <div>
               <h3 className='text-base'>Permanence</h3>
-              <div className='text-lumera-label text-sm'>Once stored, they are preserved forever.</div>
+              <div className='text-lumera-label text-base'>Once stored, they are preserved forever.</div>
             </div>
           </div>
         </Card>
@@ -207,7 +215,7 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
             <div className='rounded-full bg-white p-1.5'><Coins className='text-black w-4.5 h-4.5' /></div>
             <div>
               <h3 className='text-base'>Negligible Cost</h3>
-              <div className='text-lumera-label text-sm'>Cascade&#39;s storage solution is cost-effective and sustainable.</div>
+              <div className='text-lumera-label text-base'>Cascade&#39;s storage solution is cost-effective and sustainable.</div>
             </div>
           </div>
         </Card>
@@ -216,13 +224,15 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
             <div className='rounded-full bg-white p-1.5'><Workflow className='text-black w-4.5 h-4.5' /></div>
             <div>
               <h3 className='text-base'>Lightweight Integration</h3>
-              <div className='text-lumera-label text-sm'>Seamlessly integrate with third-party applications</div>
+              <div className='text-lumera-label text-base'>Seamlessly integrate with third-party applications</div>
             </div>
           </div>
         </Card>
       </div>
       <div className='w-full pt-6'>
-        <Link href='/cascade' className='px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer bg-lumera-teal text-white hover:bg-lumera-green focus:bg-lumera-navy' onClick={handleExploreNowClick}>Explore Now</Link>
+        <AppLinkButton href='/cascade' onClick={handleExploreNowClick}>
+          <span>Explore Now</span>
+        </AppLinkButton>
       </div>
     </>,
   ];
@@ -244,7 +254,7 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
   };
 
   return (
-    <div className='p-5 pt-3 w-[96vw] sm:w-[550px] max-h-[92vh] overflow-y-auto'>
+    <div className='p-5 pt-3 w-[96vw] sm:w-[650px] max-h-[92vh] overflow-y-auto'>
       <div className="overflow-hidden w-full">
         <div className="flex-none w-full">
           {items[currentIndex]}
@@ -255,7 +265,7 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
           {currentIndex > 0 && (
             <button
               onClick={goPrev}
-              className="text-sm cursor-pointer flex items-center gap-1.5"
+              className="text-base cursor-pointer flex items-center gap-1.5"
             >
               <ArrowLeft size={18} /> <span>Previous</span>
             </button>
@@ -277,7 +287,7 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
           {currentIndex < items.length - 1 && (
             <button
               onClick={goNext}
-              className="text-sm cursor-pointer flex items-center gap-1.5 justify-end"
+              className="text-base cursor-pointer flex items-center gap-1.5 justify-end"
             >
               <span>Next</span> <ArrowRight size={18} />
             </button>
@@ -297,7 +307,9 @@ export default function GetStarted({ className = '' }: IGetStarted) {
 
   return (
     <>
-      <button className={`bg-lumera-teal hover:bg-lumera-green text-white text-sm px-4 py-2 rounded-lg transition-colors flex cursor-pointer ${className}`} onClick={() => setOpen(true)}><Rocket className='w-4 h-4 mr-2' /> Get Started</button>
+      <AppButton className={className} onClick={() => setOpen(true)}>
+        <Rocket className='w-4 h-4' /> <span>Get Started</span>
+      </AppButton>
       <Dialog modal open={open} onOpenChange={() => setOpen(false)}>
         <Dialog.Trigger asChild></Dialog.Trigger>
 

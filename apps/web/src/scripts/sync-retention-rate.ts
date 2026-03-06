@@ -8,6 +8,9 @@ import { Address } from '@/entities/Address';
 import { Transaction } from '@/entities/Transaction';
 import { RetentionRateWeek } from '@/entities/RetentionRateWeek';
 import { RetentionRateWeekDetails } from '@/entities/RetentionRateWeekDetail';
+import { RollingRetention } from '@/entities/RollingRetention';
+import { HubAddress } from '@/entities/HubAddress';
+import { HubTransaction } from '@/entities/HubTransaction';
 
 let isSyncing = false;
 
@@ -25,6 +28,9 @@ export const syncRetentionRate = async () => {
     const transactionRepo = dataSource.getRepository(Transaction);
     const retentionRateWeekRepo = dataSource.getRepository(RetentionRateWeek);
     const retentionRateWeekDetailsRepo = dataSource.getRepository(RetentionRateWeekDetails);
+    const rollingRetentionRepo = dataSource.getRepository(RollingRetention);
+    const hubAddressRepo = dataSource.getRepository(HubAddress);
+    const hubTransactionRepo = dataSource.getRepository(HubTransaction);
 
     const current = dayjs();
     const year = dayjs().format('YYYY');
@@ -123,6 +129,125 @@ export const syncRetentionRate = async () => {
         await retentionRateWeekDetailsRepo.save(entity);
       }
     }
+
+    // For Rolling Retention for week
+    const user = await addressRepo.createQueryBuilder('adr')
+      .select('COUNT(1)', 'total')
+      .where('timestamp >= :start', { start: weekStart.toISOString() })
+      .andWhere('timestamp <= :end', { end: weekEnd.toISOString() })
+      .andWhere(`EXISTS (
+        SELECT 1
+        FROM transactions t
+        WHERE t.creator = adr.address
+          AND t.timestamp >= :start_date
+          AND t.timestamp <= :end_date
+      )`, { start_date: weekStart.toISOString(), end_date: weekEnd.toISOString() })
+      .getRawOne();
+
+    const transaction = await transactionRepo.createQueryBuilder()
+      .select('COUNT(1)', 'total')
+      .where('timestamp >= :start', { start: weekStart.toISOString() })
+      .andWhere('timestamp <= :end', { end: weekEnd.toISOString() })
+      .andWhere('creator IS NOT NULL')
+      .getRawOne();
+
+    const entity = {
+      total_actions: transaction?.total || 0,
+      total_users: user?.total || 0,
+      type: 'week',
+      start_date: weekStart.format('YYYY-MM-DD'),
+      end_date: weekEnd.format('YYYY-MM-DD'),
+    };
+    await rollingRetentionRepo.save(entity);
+
+    const hubUser = await hubAddressRepo.createQueryBuilder('adr')
+      .select('COUNT(1)', 'total')
+      .where('first_connected >= :start', { start: weekStart.toISOString() })
+      .andWhere('first_connected <= :end', { end: weekEnd.toISOString() })
+      .andWhere(`EXISTS (
+        SELECT 1
+        FROM hub_transaction t
+        WHERE t.creator = adr.address
+          AND t.timestamp >= :start_date
+          AND t.timestamp <= :end_date
+      )`, { start_date: weekStart.toISOString(), end_date: weekEnd.toISOString() })
+      .getRawOne();
+
+    const hubTransaction = await hubTransactionRepo.createQueryBuilder()
+      .select('COUNT(1)', 'total')
+      .where('timestamp >= :start', { start: weekStart.toISOString() })
+      .andWhere('timestamp <= :end', { end: weekEnd.toISOString() })
+      .andWhere('creator IS NOT NULL')
+      .getRawOne();
+
+    const hubEntity = {
+      total_actions: hubTransaction?.total || 0,
+      total_users: hubUser?.total || 0,
+      type: 'hub-week',
+      start_date: weekStart.format('YYYY-MM-DD'),
+      end_date: weekEnd.format('YYYY-MM-DD'),
+    };
+    await rollingRetentionRepo.save(hubEntity);
+
+    // For month
+    const month = current.format('MM');
+    const startOfMonth = dayjs(`${year}-${month}-01`).startOf('month');
+    const endOfMonth   = dayjs(`${year}-${month}-01`).endOf('month');
+    const montUser = await addressRepo.createQueryBuilder('adr')
+      .select('COUNT(1)', 'total')
+      .where('timestamp >= :start', { start: startOfMonth.toISOString() })
+      .andWhere('timestamp <= :end', { end: endOfMonth.toISOString() })
+      .andWhere(`EXISTS (
+        SELECT 1
+        FROM transactions t
+        WHERE t.creator = adr.address
+          AND t.timestamp >= :start_date
+          AND t.timestamp <= :end_date
+      )`, { start_date: startOfMonth.toISOString(), end_date: endOfMonth.toISOString() })
+      .getRawOne();
+
+    const monthTransaction = await transactionRepo.createQueryBuilder()
+      .select('COUNT(1)', 'total')
+      .where('timestamp >= :start', { start: startOfMonth.toISOString() })
+      .andWhere('timestamp <= :end', { end: endOfMonth.toISOString() })
+      .andWhere('creator IS NOT NULL')
+      .getRawOne();
+
+    await rollingRetentionRepo.save({
+      total_actions: monthTransaction?.total || 0,
+      total_users: montUser?.total || 0,
+      type: 'month',
+      start_date: startOfMonth.format('YYYY-MM-DD'),
+      end_date: endOfMonth.format('YYYY-MM-DD'),
+    });
+
+    const monthHubUser = await hubAddressRepo.createQueryBuilder('adr')
+      .select('COUNT(1)', 'total')
+      .where('first_connected >= :start', { start: startOfMonth.toISOString() })
+      .andWhere('first_connected <= :end', { end: endOfMonth.toISOString() })
+      .andWhere(`EXISTS (
+        SELECT 1
+        FROM hub_transaction t
+        WHERE t.creator = adr.address
+          AND t.timestamp >= :start_date
+          AND t.timestamp <= :end_date
+      )`, { start_date: startOfMonth.toISOString(), end_date: endOfMonth.toISOString() })
+      .getRawOne();
+
+    const monthHubTransaction = await hubTransactionRepo.createQueryBuilder()
+      .select('COUNT(1)', 'total')
+      .where('timestamp >= :start', { start: startOfMonth.toISOString() })
+      .andWhere('timestamp <= :end', { end: endOfMonth.toISOString() })
+      .andWhere('creator IS NOT NULL')
+      .getRawOne();
+
+    await rollingRetentionRepo.save({
+      total_actions: monthHubTransaction?.total || 0,
+      total_users: monthHubUser?.total || 0,
+      type: 'hub-month',
+      start_date: startOfMonth.format('YYYY-MM-DD'),
+      end_date: endOfMonth.format('YYYY-MM-DD'),
+    });
 
   } catch (error) {
     console.error('updateTracking error: ', error);

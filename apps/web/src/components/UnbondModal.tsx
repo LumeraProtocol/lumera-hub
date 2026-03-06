@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Button,
   Dialog,
   Label,
   Input,
@@ -15,6 +14,8 @@ import {
 
 import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
+import SectionTitle from '@/components/SectionTitle';
+import AppButton from '@/components/AppButton';
 
 interface IUnbondModal {
   isOpen: boolean;
@@ -98,7 +99,7 @@ export default function UnbondModal({
             </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
               <div className='flex justify-between items-center'>
-                <h3 className='text-2xl font-bold text-white'>Unstake {optionsAdvanced?.validatorName}</h3>
+                <SectionTitle>Unstake {optionsAdvanced?.validatorName}</SectionTitle>
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
               </div>
               <div className='mt-2 text-center'>
@@ -118,12 +119,12 @@ export default function UnbondModal({
                   </AppLink>
                 </div>
                 <div className='mt-2 pb-3'>
-                  <button
-                    className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
+                  <AppButton
+                    className='cursor-pointer'
                     onClick={onCloseCongratulationsModal}
                   >
                     Back to Staking
-                  </button>
+                  </AppButton>
                 </div>
               </div>
             </div>
@@ -182,7 +183,7 @@ export default function UnbondModal({
               containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
             />
             <div className='flex justify-between items-center'>
-              <h3 className='text-2xl font-bold text-white'>Unstake LUME</h3>
+              <SectionTitle>Unstake LUME</SectionTitle>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseDailogChange}><CircleX /></button>
             </div>
             <div className='mt-5'>
@@ -230,7 +231,7 @@ export default function UnbondModal({
                 <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
               }
               <div className={`${!isYes ? 'btn-secondary' : 'btn-primary'} mt-8 full`}>
-                <Button onPress={onSendClick} disabled={isUnbondLoading}><strong>Unstake</strong></Button>
+                <AppButton onClick={onSendClick} disabled={isUnbondLoading}><strong>Unstake</strong></AppButton>
               </div>
             </div>
           </div>

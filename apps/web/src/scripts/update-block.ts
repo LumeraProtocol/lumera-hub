@@ -133,7 +133,7 @@ const syncAndSaveTransaction = async (
           });
         }
       }
-      await delay(300);
+      // await delay(300);
     }
   } catch (error) {
     console.error('syncAndSaveTransaction error: ', error);
