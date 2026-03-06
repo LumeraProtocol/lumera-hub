@@ -8,6 +8,9 @@ import { Address } from '@/entities/Address';
 import { Transaction } from '@/entities/Transaction';
 import { RetentionRateWeek } from '@/entities/RetentionRateWeek';
 import { RetentionRateWeekDetails } from '@/entities/RetentionRateWeekDetail';
+import { RollingRetention } from '@/entities/RollingRetention';
+import { HubAddress } from '@/entities/HubAddress';
+import { HubTransaction } from '@/entities/HubTransaction';
 
 let isSyncing = false;
 
@@ -25,6 +28,9 @@ const updateRetentionRate = async () => {
     const transactionRepo = dataSource.getRepository(Transaction);
     const retentionRateWeekRepo = dataSource.getRepository(RetentionRateWeek);
     const retentionRateWeekDetailsRepo = dataSource.getRepository(RetentionRateWeekDetails);
+    const rollingRetentionRepo = dataSource.getRepository(RollingRetention);
+    const hubAddressRepo = dataSource.getRepository(HubAddress);
+    const hubTransactionRepo = dataSource.getRepository(HubTransaction);
 
     let selectYear = dayjs().format('YYYY');
     if (process.argv[2]) {
@@ -33,6 +39,8 @@ const updateRetentionRate = async () => {
     const diff = Number(dayjs().format('YYYY')) - Number(selectYear);
     await retentionRateWeekRepo.createQueryBuilder().delete().where("1 = 1").execute();
     await retentionRateWeekDetailsRepo.createQueryBuilder().delete().where("1 = 1").execute();
+    await rollingRetentionRepo.createQueryBuilder().delete().where("1 = 1").execute();
+
     for (let i = 0; i <= diff; i++) {
       const year = Number(selectYear) + i;
       console.log(`Processing year ${year}`);
@@ -123,8 +131,136 @@ const updateRetentionRate = async () => {
               .execute();
             await retentionRateWeekDetailsRepo.save(entity);
           }
+
+          // For Rolling Retention for week
+          const user = await addressRepo.createQueryBuilder('adr')
+            .select('COUNT(1)', 'total')
+            .where('timestamp >= :start', { start: weekStart.toISOString() })
+            .andWhere('timestamp <= :end', { end: weekEnd.toISOString() })
+            .andWhere(`EXISTS (
+              SELECT 1
+              FROM transactions t
+              WHERE t.creator = adr.address
+                AND t.timestamp >= :start_date
+                AND t.timestamp <= :end_date
+            )`, { start_date: weekStart.toISOString(), end_date: weekEnd.toISOString() })
+            .getRawOne();
+
+          const transaction = await transactionRepo.createQueryBuilder()
+            .select('COUNT(1)', 'total')
+            .where('timestamp >= :start', { start: weekStart.toISOString() })
+            .andWhere('timestamp <= :end', { end: weekEnd.toISOString() })
+            .andWhere('creator IS NOT NULL')
+            .getRawOne();
+
+          const entity = {
+            total_actions: transaction?.total || 0,
+            total_users: user?.total || 0,
+            type: 'week',
+            start_date: weekStart.format('YYYY-MM-DD'),
+            end_date: weekEnd.format('YYYY-MM-DD'),
+          };
+          await rollingRetentionRepo.save(entity);
+
+          const hubUser = await hubAddressRepo.createQueryBuilder('adr')
+            .select('COUNT(1)', 'total')
+            .where('first_connected >= :start', { start: weekStart.toISOString() })
+            .andWhere('first_connected <= :end', { end: weekEnd.toISOString() })
+            .andWhere(`EXISTS (
+              SELECT 1
+              FROM hub_transaction t
+              WHERE t.creator = adr.address
+                AND t.timestamp >= :start_date
+                AND t.timestamp <= :end_date
+            )`, { start_date: weekStart.toISOString(), end_date: weekEnd.toISOString() })
+            .getRawOne();
+
+          const hubTransaction = await hubTransactionRepo.createQueryBuilder()
+            .select('COUNT(1)', 'total')
+            .where('timestamp >= :start', { start: weekStart.toISOString() })
+            .andWhere('timestamp <= :end', { end: weekEnd.toISOString() })
+            .andWhere('creator IS NOT NULL')
+            .getRawOne();
+
+          const hubEntity = {
+            total_actions: hubTransaction?.total || 0,
+            total_users: hubUser?.total || 0,
+            type: 'hub-week',
+            start_date: weekStart.format('YYYY-MM-DD'),
+            end_date: weekEnd.format('YYYY-MM-DD'),
+          };
+          await rollingRetentionRepo.save(hubEntity);
         }
         weekStart = weekStart.add(1, 'week');
+      }
+
+      const currentMonth = dayjs().format('MM');
+      const currentYear = dayjs().format('YYYY');
+      // For Rolling Retention for month
+      for (let month = 1; month <= 12; month++) {
+        if (Number(month) > Number(currentMonth) && Number(currentYear) === Number(year)) {
+          break;
+        }
+        const startOfMonth = dayjs(`${year}-${month}-01`).startOf('month');
+        const endOfMonth   = dayjs(`${year}-${month}-01`).endOf('month');
+
+        const user = await addressRepo.createQueryBuilder('adr')
+          .select('COUNT(1)', 'total')
+          .where('timestamp >= :start', { start: startOfMonth.toISOString() })
+          .andWhere('timestamp <= :end', { end: endOfMonth.toISOString() })
+          .andWhere(`EXISTS (
+            SELECT 1
+            FROM transactions t
+            WHERE t.creator = adr.address
+              AND t.timestamp >= :start_date
+              AND t.timestamp <= :end_date
+          )`, { start_date: startOfMonth.toISOString(), end_date: endOfMonth.toISOString() })
+          .getRawOne();
+
+        const transaction = await transactionRepo.createQueryBuilder()
+          .select('COUNT(1)', 'total')
+          .where('timestamp >= :start', { start: startOfMonth.toISOString() })
+          .andWhere('timestamp <= :end', { end: endOfMonth.toISOString() })
+          .andWhere('creator IS NOT NULL')
+          .getRawOne();
+
+        const entity = {
+          total_actions: transaction?.total || 0,
+          total_users: user?.total || 0,
+          type: 'month',
+          start_date: startOfMonth.format('YYYY-MM-DD'),
+          end_date: endOfMonth.format('YYYY-MM-DD'),
+        };
+        await rollingRetentionRepo.save(entity);
+
+        const hubUser = await hubAddressRepo.createQueryBuilder('adr')
+          .select('COUNT(1)', 'total')
+          .where('first_connected >= :start', { start: startOfMonth.toISOString() })
+          .andWhere('first_connected <= :end', { end: endOfMonth.toISOString() })
+          .andWhere(`EXISTS (
+            SELECT 1
+            FROM hub_transaction t
+            WHERE t.creator = adr.address
+              AND t.timestamp >= :start_date
+              AND t.timestamp <= :end_date
+          )`, { start_date: startOfMonth.toISOString(), end_date: endOfMonth.toISOString() })
+          .getRawOne();
+
+        const hubTransaction = await hubTransactionRepo.createQueryBuilder()
+          .select('COUNT(1)', 'total')
+          .where('timestamp >= :start', { start: startOfMonth.toISOString() })
+          .andWhere('timestamp <= :end', { end: endOfMonth.toISOString() })
+          .andWhere('creator IS NOT NULL')
+          .getRawOne();
+
+        const hubEntity = {
+          total_actions: hubTransaction?.total || 0,
+          total_users: hubUser?.total || 0,
+          type: 'hub-month',
+          start_date: startOfMonth.format('YYYY-MM-DD'),
+          end_date: endOfMonth.format('YYYY-MM-DD'),
+        };
+        await rollingRetentionRepo.save(hubEntity);
       }
     }
   } catch (error) {

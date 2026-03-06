@@ -12,3 +12,4 @@ export * from "./RetentionRateWeek";
 export * from "./RetentionRateWeekDetail";
 export * from "./HubTransaction";
 export * from "./HubTracking";
+export * from "./RollingRetention";

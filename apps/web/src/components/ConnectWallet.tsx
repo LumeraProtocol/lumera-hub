@@ -1,11 +1,15 @@
 'use client'
 
 import { useEffect } from 'react';
-import { Wallet, LogOut } from '@tamagui/lucide-icons';
+import {
+  Wallet,
+  LogOut,
+} from 'lucide-react';
 import { useChain } from '@interchain-kit/react';
 import { InterchainWalletModal, useWalletModal } from '@interchain-kit/react';
 import { toast } from 'react-toastify';
 
+import AppButton from '@/components/AppButton';
 import { useDispatch } from '@/redux/hooks';
 import { formatAddress } from '@/utils/format';
 import { CHAIN_NAME } from '@/contants/network';
@@ -81,15 +85,14 @@ export function ConnectWallet() {
   return (
     <div className='flex gap-2'>
       {!address ?
-        <button
+        <AppButton
           onClick={openView}
-          className="bg-lumera-teal hover:bg-lumera-green text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors flex cursor-pointer"
         >
-          <Wallet size="$1" /> <div className="ml-1 connect-wallet-label">Connect Wallet</div>
-        </button> :
+          <Wallet className='w-4 h-4' /> <div className="connect-wallet-label">Connect Wallet</div>
+        </AppButton> :
         <>
           <span className='btn-address cursor-pointer' onClick={handleCopyAddress}>{formatAddress(address, 5, -4)}</span>
-          <button onClick={handleDesconnect} className='btn-logout'><LogOut /></button>
+          <button onClick={handleDesconnect} className='btn-logout'><LogOut className='w-4 h-4 ml-2' /></button>
         </>
       }
     </div>
@@ -108,12 +111,12 @@ export function ConnectWalletButton({
   return (
     <div style={{ display: 'flex', gap: 8 }}>
       {!address ?
-        <button
+        <AppButton
           onClick={openView}
-          className={`bg-lumera-teal hover:bg-lumera-green text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors flex items-center cursor-pointer ${className}`}
+          className={className}
         >
-          <Wallet size="$1" /> <div className="ml-1">Connect Wallet</div>
-        </button> : null
+          <Wallet className='w-4 h-4' /> <div>Connect Wallet</div>
+        </AppButton> : null
       }
     </div>
   )

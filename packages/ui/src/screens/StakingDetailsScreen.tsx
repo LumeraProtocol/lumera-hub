@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { H2, Card, Button, H3 } from 'tamagui';
+import { H2, Card, H3 } from 'tamagui';
 import { ArrowUpRight, Copy, Check } from 'lucide-react';
 import { fromHex, toBase64, fromBase64, toHex, fromBech32 } from '@cosmjs/encoding';
 import { decodeTxRaw } from '@cosmjs/proto-signing';
@@ -7,6 +7,7 @@ import ReactPaginate from 'react-paginate';
 
 import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
+import AppButton from '@/components/AppButton';
 import DelegateModal from '@/components/DelegateModal';
 import SectionTitle from '@/components/SectionTitle';
 import useAppRouter from '@/hooks/useAppRouter';
@@ -314,13 +315,13 @@ export const StakingDetailsScreen = ({
   return (
     <div className="space-y-8">
       <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
-        <H2 className='!font-bold text-white text-[32px] leading-none'>{validator?.description?.moniker}</H2>
+        <H2 className='!font-bold text-white !text-3xl leading-none'>{validator?.description?.moniker}</H2>
         <div className='btn-primary'>
-          <Button
-            onPress={() => delegateOptions.onOpenModal(validator?.operator_address || '', validator?.description?.moniker ? `Delegate for the ${validator?.description?.moniker}` : '')}
+          <AppButton
+            onClick={() => delegateOptions.onOpenModal(validator?.operator_address || '', validator?.description?.moniker ? `Delegate for the ${validator?.description?.moniker}` : '')}
           >
             <span className='whitespace-nowrap'>Delegate</span>
-          </Button>
+          </AppButton>
         </div>
       </div>
       <div className='flex justify-between gap-5 mt-5 w-full flex-col 2lg:flex-row'>
@@ -471,7 +472,7 @@ export const StakingDetailsScreen = ({
                     {delegators.map((item, i) => {
                       const tx = decodeTxRaw(fromBase64(item.tx));
                       return (
-                        <div key={i} className="flex flex-col md:grid grid-cols-10 gap-2 md:gap-4 p-3 bg-gray-900/40 rounded-lg text-sm">
+                        <div key={i} className="flex flex-col md:grid grid-cols-10 gap-2 md:gap-4 p-3 bg-gray-900/40 rounded-lg text-base">
                           <div className="w-full md:col-span-5 font-mono text-gray-300 truncate">
                             <div className="md:hidden font-semibold text-gray-500 mr-2">Delegator Address: </div>
                             {mapDelegators(tx?.body?.messages).map((d) => (

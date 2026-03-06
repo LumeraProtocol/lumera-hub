@@ -1,8 +1,8 @@
 import cron from 'node-cron';
 
-import { syncBlock } from './sync-block';
-import { syncTracking } from './sync-tracking';
-import { syncRetentionRate } from './sync-retention-rate';
+import { syncBlock } from '@/scripts/sync-block';
+import { syncTracking } from '@/scripts/sync-tracking';
+import { syncRetentionRate } from '@/scripts/sync-retention-rate';
 
 // sync block
 cron.schedule('*/2 * * * *', () => {

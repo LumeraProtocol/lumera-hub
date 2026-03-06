@@ -1,5 +1,4 @@
 import {
-  H3,
   Dialog,
   VisuallyHidden,
   Select,
@@ -17,6 +16,7 @@ import { Check as CheckCircle, Info } from 'lucide-react';
 
 import AppButton from '@/components/AppButton';
 import Tooltip from '@/components/Tooltip';
+import SectionTitle from '@/components/SectionTitle';
 import AppLink from '@/components/AppLink';
 import { AppLoading } from '@/components/Loading';
 import { formatNumber } from '@/utils/format';
@@ -118,7 +118,7 @@ export default function CreateProposalModal({
             </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
               <div className='flex justify-between items-center'>
-                <h3 className='text-2xl font-bold text-white'>Create Proposal</h3>
+                <SectionTitle>Create Proposal</SectionTitle>
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseModal}><CircleX /></button>
               </div>
               <div className='mt-2 text-center'>
@@ -135,12 +135,12 @@ export default function CreateProposalModal({
                   </AppLink>
                 </div>
                 <div className='mt-2 pb-3'>
-                  <button
-                    className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
+                  <AppButton
+                    className='cursor-pointer'
                     onClick={onCloseModal}
                   >
                     Back to Governance
-                  </button>
+                  </AppButton>
                 </div>
               </div>
             </div>
@@ -340,7 +340,7 @@ export default function CreateProposalModal({
               containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
             />
             <div className='flex justify-between items-center'>
-              <H3 className='text-lumera-label text-[32px]'>Create Proposal</H3>
+              <SectionTitle>Create Proposal</SectionTitle>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseModal}>
                 <CircleX />
               </button>
