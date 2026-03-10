@@ -1,27 +1,9 @@
-import { useEffect } from 'react';
-
 import { ConnectButton } from '@/components/ConnectWallet';
 import { AppLoading } from '@/components/Loading';
 import useSnag from '@/hooks/useSnag';
 
 export const WalletConnectScreen = () => {
   const { isLoading } = useSnag();
-
-  useEffect(() => {
-    setTimeout(() => {
-      const currentSpan = document.querySelectorAll<HTMLElement>('.t_sub_theme.t_dark.is_Theme');
-      if (currentSpan) {
-        currentSpan.forEach((el) => {
-          const parent = el.parentElement;
-          const grandParent = parent?.parentElement;
-
-          if (grandParent) {
-            grandParent.style.zIndex = '50';
-          }
-        });
-      }
-    }, 500);
-  }, []);
 
   return (
     <div className='w-screen h-screen flex items-center justify-center'>

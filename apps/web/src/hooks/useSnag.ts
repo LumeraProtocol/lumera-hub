@@ -20,6 +20,10 @@ const useSnag = () => {
         lumeraAddress: address,
         snagAddress: walletAddress,
       });
+      toast.success("Wallet connected!", {
+        position: "bottom-right",
+        theme: "dark",
+      });
       router.push('/');
     } catch (error) {
       console.error(error);
@@ -32,7 +36,6 @@ const useSnag = () => {
   }
 
   useEffect(() => {
-    console.log('address', address)
     if (address) {
       saveWalletConnect();
     }
