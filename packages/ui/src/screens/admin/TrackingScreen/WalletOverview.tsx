@@ -1,11 +1,13 @@
 import { Card } from 'tamagui';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
+import dayjs from 'dayjs';
 
 import SectionTitle from '@/components/SectionTitle';
 import { AppLoading } from '@/components/Loading';
 import { formatNumber } from '@/utils/format';
 import { ISummary, ITracking } from '@/hooks/admin/useTracking';
+import { useSelector } from '@/redux/hooks';
 
 interface IWalletOverview {
   isLoading: boolean;
@@ -18,16 +20,25 @@ export default function WalletOverview({
   tracking,
   trackings,
 }: IWalletOverview) {
+  const { startDate, endDate } = useSelector((state) => state.admin);
   const newTrackings = trackings.filter((t) => t.total_address > 0);
 
   const getOption = () => {
     const dates: string[] = [];
     const totalUsers: number[] = [];
-    for (let i = 0; i < trackings.length; i++) {
-      const user = trackings[i];
-      const date = user.date.split('-');
-      dates.push(`${date[1]}/${date[2]}/${date[0]}`);
-      totalUsers.push(user.total_address || trackings[i - 1]?.total_address);
+    const end = dayjs(endDate);
+    const start = dayjs(startDate);
+    const diff = end.diff(start, 'day');
+
+    for (let i = 0; i < diff; i++) {
+      const currentDate = dayjs(start).add(i, 'day').format('YYYY-MM-DD');
+      dates.push(dayjs(start).add(i, 'day').format('MM/DD/YYYY'));
+      const user = trackings.find((t) => t.date === currentDate);
+      if (user) {
+        totalUsers.push(user.total_address || trackings[i - 1]?.total_address);
+      } else {
+        totalUsers.push(0);
+      }
     }
 
     return {

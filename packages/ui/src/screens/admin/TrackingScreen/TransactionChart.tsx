@@ -1,10 +1,12 @@
 import { Card } from 'tamagui';
 import ReactECharts from 'echarts-for-react';
+import dayjs from 'dayjs';
 
 import SectionTitle from '@/components/SectionTitle';
 import { AppLoading } from '@/components/Loading';
 import { ITracking } from '@/hooks/admin/useTracking';
 import { formatMessageType } from '@/utils/format';
+import { useSelector } from '@/redux/hooks';
 
 interface ITransactionChart {
   isLoading: boolean;
@@ -15,14 +17,25 @@ export default function TransactionChart({
   isLoading,
   trackings,
 }: ITransactionChart) {
+  const { startDate, endDate } = useSelector((state) => state.admin);
+
   const getOption = () => {
     let dates: string[] = [];
     let data: number[] = [];
-    for (const item of trackings) {
-      const date = item.date.split('-');
-      dates.push(`${date[1]}/${date[2]}/${date[0]}`);
-      data.push(item.total_transaction);
+    const end = dayjs(endDate);
+    const start = dayjs(startDate);
+    const diff = end.diff(start, 'day');
+    for (let i = 0; i < diff; i++) {
+      const currentDate = dayjs(start).add(i, 'day').format('YYYY-MM-DD');
+      dates.push(dayjs(start).add(i, 'day').format('MM/DD/YYYY'));
+      const item = trackings.find((t) => t.date === currentDate);
+      if (item) {
+        data.push(item.total_transaction + item.cascade_upload);
+      } else {
+        data.push(0);
+      }
     }
+
     return {
       tooltip: {
         position: 'right',

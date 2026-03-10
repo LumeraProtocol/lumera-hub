@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Script>
           </> : null
         }
-        {googleAnalysicsKey ?
+        {googleTagManagerKey ?
           <>
             <Script id="google-tag-manager" strategy="afterInteractive">
               {`
