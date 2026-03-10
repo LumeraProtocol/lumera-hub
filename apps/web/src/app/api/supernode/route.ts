@@ -6,7 +6,7 @@ import dns from 'dns';
 import util from 'util';
 import { z } from 'zod';
 
-import * as instance from '@/utils/api';
+import * as instance from '@/utils/api-server';
 import { isValidIPv4 } from '@/utils/helpers';
 import { IMarker } from '@/hooks/useCascade';
 import { supernodeListSchema, SupernodeItem } from '@/app/api/supernode/validators';

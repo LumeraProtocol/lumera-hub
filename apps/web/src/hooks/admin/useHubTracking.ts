@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import * as instance from '@/utils/api';
 import { useSelector } from '@/redux/hooks';
 import { convertDateToTracking } from '@/utils/format';
+import { TCascadeDownload } from '@/hooks/admin/useTracking';
 
 export interface ITracking {
   date: string;
@@ -29,7 +30,7 @@ export interface ITracking {
   total_transaction: number;
   transaction_extra: string;
   cascade_download: number;
-  cascade_download_extra: string;
+  cascade_download_extra: TCascadeDownload[];
 }
 
 export interface ISummary {
@@ -50,7 +51,7 @@ export interface ISummary {
   cascade_total_fee: number;
   total_address: number;
   cascade_download: number;
-  cascade_download_extra: string;
+ cascade_download_extra: TCascadeDownload[];
 }
 
 const useHubTracking = () => {

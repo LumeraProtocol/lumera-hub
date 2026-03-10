@@ -7,6 +7,7 @@ import {
 import {  Dialog, VisuallyHidden } from 'tamagui'
 import QRCode from "react-qr-code";
 
+import SectionTitle from '@/components/SectionTitle';
 import { formatAddress } from '@/utils/format';
 
 interface IReceiveModal {
@@ -69,7 +70,7 @@ const ReceiveModal = ({ onClose, walletAddress, isOpen }: IReceiveModal) => {
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
           <div className="flex justify-between items-start">
-            <h3 className="text-2xl font-bold text-white">Receive LUME</h3>
+            <SectionTitle>Receive LUME</SectionTitle>
             <button onClick={onClose} className="text-gray-400 hover:text-white cursor-pointer"><X/></button>
           </div>
           <div className="mt-6 flex flex-col items-center">

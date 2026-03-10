@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
   Card,
   SizableText,
-  H3,
   Input,
   Text,
   Progress,
@@ -15,7 +14,8 @@ import {
 } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
-import Loading, { AppLoading } from '@/components/Loading';
+import AppButton from '@/components/AppButton';
+import { AppLoading } from '@/components/Loading';
 import SectionTitle from '@/components/SectionTitle';
 import useAppRouter from '@/hooks/useAppRouter';
 import { IValidator } from '@/types';
@@ -153,7 +153,7 @@ export default function AllValidators({
         <div className='flex justify-between flex-col md:flex-row gap-4 w-full validators-control'>
           <div className='flex flex-col'>
             <SectionTitle className='mb-0'>All Validators</SectionTitle>
-            <SizableText className='text-lumera-label'>Delegate your stake to a validator to earn rewards.</SizableText>
+            <SizableText className='text-lumera-label !text-base'>Delegate your stake to a validator to earn rewards.</SizableText>
           </div>
           <div className='w-full sm:w-80'>
             <div className='input-wrapper'>
@@ -185,15 +185,15 @@ export default function AllValidators({
               <>
                 <ul className='flex gap-0 list-none tabs'>
                   <li className={`tab-item ${staking?.currentTab === 'active' ? 'active' : ''}`}>
-                    <button className='tab-button cursor-pointer px-3' onClick={() => staking.onTabChange('active')}>Active ({calcTotalValidatorByTab('active')})</button>
+                    <button className='tab-button cursor-pointer px-3 !text-base' onClick={() => staking.onTabChange('active')}>Active ({calcTotalValidatorByTab('active')})</button>
                   </li>
                   <li className={`tab-item ${staking?.currentTab === 'inactive' ? 'active' : ''}`}>
-                    <button className='tab-button cursor-pointer px-3' onClick={() => staking.onTabChange('inactive')}>Inactive ({calcTotalValidatorByTab('inactive')})</button>
+                    <button className='tab-button cursor-pointer px-3 !text-base' onClick={() => staking.onTabChange('inactive')}>Inactive ({calcTotalValidatorByTab('inactive')})</button>
                   </li>
                 </ul>
                 <div className='overflow-x-auto'>
                   <table className='w-full table mt-5'>
-                    <thead className='hidden md:table-header-group'>
+                    <thead className='hidden md:table-header-group text-sm'>
                       <tr className='text-sm'>
                         <th align='left' className='text-lumera-label validator'>
                           <button
@@ -247,7 +247,7 @@ export default function AllValidators({
                         </th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className='text-base'>
                       {getValidators()?.map((validator, index) => {
                         const uptime = getUptime(validator);
                         const uptimePercent = percent(uptime);
@@ -302,16 +302,12 @@ export default function AllValidators({
                                   </Text>
                                 </div>
                                 {validator.jailed ?
-                                  <div className='btn-jailed'>
-                                    <Button>Jailed</Button>
-                                  </div> :
-                                  <div className='btn-primary'>
-                                    <Button
-                                      onPress={() => delegateOptions.onSelectValidator(validator.operator_address)}
-                                    >
-                                      Delegate
-                                    </Button>
-                                  </div>
+                                  <AppButton variant='third' className='min-w-[96px]'>Jailed</AppButton> :
+                                  <AppButton
+                                    onClick={() => delegateOptions.onSelectValidator(validator.operator_address)}
+                                  >
+                                    Delegate
+                                  </AppButton>
                                 }
                               </div>
                             </td>

@@ -1,5 +1,4 @@
 import {
-  H3,
   Text,
   Dialog,
   VisuallyHidden,
@@ -7,6 +6,7 @@ import {
 import { CircleX } from '@tamagui/lucide-icons';
 import { ChevronRight } from 'lucide-react';
 
+import SectionTitle from '@/components/SectionTitle';
 import { IValidator } from '@/types';
 import {
   formatToken,
@@ -76,7 +76,7 @@ export default function ValidatorModal({
           </VisuallyHidden>
           <div className='withdraw-main-content relative p-5'>
             <div className='flex justify-between items-center mb-4'>
-              <h3 className='text-2xl font-bold text-white'>Select a Validator</h3>
+              <SectionTitle className='mb-0'>Select a Validator</SectionTitle>
               <button className='btn-close-modal cursor-pointer' onClick={onClose}><CircleX /></button>
             </div>
             <div className='max-h-[80vh] overflow-auto !min-w-[950px]'>

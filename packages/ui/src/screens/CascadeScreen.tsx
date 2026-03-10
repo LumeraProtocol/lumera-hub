@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   YStack,
   Card,
   H3,
-  Paragraph,
   Input,
   Checkbox,
   Dialog,
@@ -42,7 +41,6 @@ import { AppLoading } from '@/components/Loading';
 import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
-import { ConnectWalletButton } from '@/components/ConnectWallet';
 import SectionTitle from '@/components/SectionTitle';
 import NoWalletConnected from '@/components/NoWalletConnected';
 import useCascade, {
@@ -376,7 +374,7 @@ const ActionFeeModal = ({
           </VisuallyHidden>
           <div className="relative p-3">
             <div className='mx-auto max-w-[550px] sm:w-[550px]'>
-              <h3 className='text-2xl font-bold text-white mb-4'>Upload Files - {uploadedFiles.length} file(s)</h3>
+              <SectionTitle className='mb-4'>Upload Files - {uploadedFiles.length} file(s)</SectionTitle>
               <div className='max-h-[56vh] overflow-y-auto overflow-x-hidden max-w-[92vw] sm:max-w-full'>
                 {uploadedFiles?.map((file) => (
                   <Card key={file.fileName} className='mb-2 px-3 py-2'>
@@ -527,7 +525,7 @@ const UploadCascadeSuccessModal = ({
               <button className='btn-close-modal cursor-pointer' onClick={onCloseModal}><CircleX /></button>
             </div>
             <div className='mt-4 text-center'>
-              <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! upload completed successfully.</H3>
+              <SectionTitle className='!text-green-500 !leading-0 mb-0'>Congratulations! upload completed successfully.</SectionTitle>
             </div>
             <div className='mt-4'>
               <div className='max-h-[56vh] overflow-y-auto overflow-x-hidden'>
@@ -567,12 +565,12 @@ const UploadCascadeSuccessModal = ({
               </div>
             </div>
             <div className='mt-3 pb-3 text-center'>
-              <button
-                className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
+              <AppButton
+                className='cursor-pointer'
                 onClick={onCloseModal}
               >
                 Back to Cascade
-              </button>
+              </AppButton>
             </div>
           </div>
         </Dialog.Content>
@@ -711,7 +709,7 @@ const NetworkStorage = ({
                 <div className='font-bold leading-[1.1]'>
                   <span className='text-4xl'>{networkStorage.networkStorage}</span>
                 </div>
-                <div className='text-lumera-label'>Total data stored across all supernodes.</div>
+                <div className='text-lumera-label text-base'>Total data stored across all supernodes.</div>
               </div>
             </>
           }
@@ -1155,7 +1153,7 @@ const Files = ({
                         <th align='right' className='px-2 py-3'>Action</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className='text-base'>
                       {!memoizedFilteredFiles?.length && !isMyFilesLoadMore ? (
                         <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
                           <td colSpan={9} className='px-2 py-3'>
@@ -1557,7 +1555,7 @@ export const CascadeContent = React.memo(({
                 <div className='upload-icon flex justify-center'>
                   <CloudUpload />
                 </div>
-                <div className='flex items-center gap-1.5'>
+                <div className='flex items-center gap-1.5 text-base'>
                   <div>Drag & drop files here or</div>
                   <div className='flex justify-center text-lumera-teal'>
                     Browse

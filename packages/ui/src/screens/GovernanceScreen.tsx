@@ -1,14 +1,11 @@
-import React from 'react'
 import {
   YStack,
-  H2,
   Button,
   Card,
   H3,
   Input,
 } from 'tamagui';
 import {
-  Logs,
   Search,
   Activity,
   Coins,
@@ -19,10 +16,11 @@ import dayjs from 'dayjs';
 import { LandmarkIcon, Hourglass, BadgeCheck, List } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
+import AppButton from '@/components/AppButton';
+import SectionTitle from '@/components/SectionTitle';
 import { AppLoading } from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
 import CreateProposalModal from '@/components/CreateProposalModal';
-import Skeleton from '@/components/Skeleton';
 import { IProposal } from '@/hooks/useProposals';
 import { formatNumber, formatToken } from '@/utils/format';
 import { VoteModal } from './HomeScreen';
@@ -234,9 +232,9 @@ export const GovernanceScreen = ({
       <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
         <div className='btn-primary flex justify-end gap-3'>
           {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
-            <Button onPress={() => handleVotePress(item)}>Vote</Button> : null
+            <AppButton onClick={() => handleVotePress(item)}>Vote</AppButton> : null
           }
-          <Button onPress={() => handleDepositClick(item)}>Deposit</Button>
+          <AppButton onClick={() => handleDepositClick(item)}>Deposit</AppButton>
         </div>
       </div>
     );
@@ -260,13 +258,10 @@ export const GovernanceScreen = ({
 
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
-      <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
-        <H2 className='!font-bold text-white !text-[32px] leading-none'>Governance</H2>
-        <div className='btn-primary'>
-          <Button onPress={createProposal.onOpenCreateProposalModalClick}>
-            <span className='font-bold whitespace-nowrap'>Create Proposal</span>
-          </Button>
-        </div>
+      <div className='flex justify-end gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
+        <AppButton onClick={createProposal.onOpenCreateProposalModalClick}>
+          <span className='whitespace-nowrap'>Create Proposal</span>
+        </AppButton>
       </div>
       <div className='relative w-full'>
         <div className='mt-5 grid grid-cols-4 gap-6 w-full governance-overview relative'>
@@ -277,7 +272,7 @@ export const GovernanceScreen = ({
                   <List className="w-8 h-8 text-indigo-400"/>
                 </div>
                 <div>
-                  <H3 className='text-sm text-lumera-label !leading-none'>Total Proposals</H3>
+                  <SectionTitle className='!mb-0'>Total Proposals</SectionTitle>
                   <div className='leading-none mt-1 relative min-h-9'>
                     {isSumaryLoading ?
                       <AppLoading
@@ -287,7 +282,7 @@ export const GovernanceScreen = ({
                         iconWidth={18}
                         iconHeight={18}
                         containerClassName='relative w-8 h-8 z-50'
-                      /> :  <span className='text-3xl font-bold text-white'>
+                      /> :  <span className='text-2xl font-bold text-white'>
                         {formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })}
                       </span>
                     }
@@ -303,7 +298,7 @@ export const GovernanceScreen = ({
                   <BadgeCheck className="w-8 h-8 text-green-400"/>
                 </div>
                 <div>
-                  <H3 className='text-sm text-lumera-label !leading-none'>Passed</H3>
+                  <SectionTitle className='!mb-0'>Passed</SectionTitle>
                   <div className='leading-none mt-1 relative min-h-9'>
                     {isSumaryLoading ?
                       <AppLoading
@@ -313,7 +308,7 @@ export const GovernanceScreen = ({
                         iconWidth={18}
                         iconHeight={18}
                         containerClassName='relative w-8 h-8 z-50'
-                      /> :  <span className='text-3xl font-bold text-white'>
+                      /> :  <span className='text-2xl font-bold text-white'>
                         {formatNumber(sumary?.passed || 0, { decimalsLength: 0 })}
                       </span>
                     }
@@ -329,7 +324,7 @@ export const GovernanceScreen = ({
                   <Hourglass className="w-8 h-8 text-amber-400"/>
                 </div>
                 <div>
-                  <H3 className='text-sm text-lumera-label !leading-none'>Voting Period</H3>
+                  <SectionTitle className='!mb-0'>Voting Period</SectionTitle>
                   <div className='leading-none mt-1 relative min-h-9'>
                     {isSumaryLoading ?
                       <AppLoading
@@ -339,7 +334,7 @@ export const GovernanceScreen = ({
                         iconWidth={18}
                         iconHeight={18}
                         containerClassName='relative w-8 h-8 z-50'
-                      /> :  <span className='text-3xl font-bold text-white'>
+                      /> :  <span className='text-2xl font-bold text-white'>
                         {formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days
                       </span>
                     }
@@ -355,7 +350,7 @@ export const GovernanceScreen = ({
                   <LandmarkIcon className="w-8 h-8 text-sky-400"/>
                 </div>
                 <div>
-                  <H3 className='text-sm text-lumera-label !leading-none !whitespace-nowrap'>Deposit Required</H3>
+                  <SectionTitle className='!mb-0'>Deposit Required</SectionTitle>
                   <div className='leading-none mt-1 relative min-h-9'>
                     {isSumaryLoading ?
                       <AppLoading
@@ -365,7 +360,7 @@ export const GovernanceScreen = ({
                         iconWidth={18}
                         iconHeight={18}
                         containerClassName='relative w-8 h-8 z-50'
-                      /> :  <span className='text-3xl font-bold text-white'>
+                      /> :  <span className='text-2xl font-bold text-white'>
                         {formatToken({
                             amount: sumary.depositRequiredParam.amount,
                             denom: sumary.depositRequiredParam.denom,
@@ -475,7 +470,7 @@ export const GovernanceScreen = ({
                       <div className='flex justify-between items-start gap-6 governance-card-header'>
                         <div className='flex flex-col'>
                           <AppLink href={`/governance/${item.id}`}>
-                            <H3 className='!leading-6'>{item.title}</H3>
+                            <h3 className='text-base font-bold text-white hover:text-lumera-teal'>{item.title}</h3>
                           </AppLink>
                         </div>
                         {getStatus(item.status)}

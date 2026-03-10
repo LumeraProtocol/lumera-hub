@@ -15,8 +15,33 @@ export default function CascadeOverview({
   isLoading,
   tracking,
 }: ICascadeOverview) {
-  const download = tracking?.cascade_download_extra ? JSON.parse(tracking.cascade_download_extra) : null;
-
+  const getCascadeDownload = () => {
+    let results = {
+      image: 0,
+      video: 0,
+      program: 0,
+      archive: 0,
+      document: 0,
+      other: 0,
+    };
+    if (tracking?.cascade_download_extra) {
+      for (const item of tracking.cascade_download_extra) {
+        if (item?.cascade_download_extra) {
+          const parseData = JSON.parse(item.cascade_download_extra);
+          results = {
+            image: results.image + Number(parseData.image),
+            video: results.video + Number(parseData.video),
+            program: results.program + Number(parseData.program),
+            archive: results.archive + Number(parseData.archive),
+            document: results.document + Number(parseData.document),
+            other: results.other + Number(parseData.other),
+          };
+        }
+      }
+    }
+    return results;
+  }
+  const download = getCascadeDownload();
   return (
     <Card elevate size="$4" bordered className='w-2/3 !items-start'>
       <div className='p-5 w-full'>

@@ -1,11 +1,11 @@
 import { ReactNode } from 'react';
 import {
-  H3,
   Dialog,
   VisuallyHidden,
 } from 'tamagui';
 
 import AppButton from '@/components/AppButton';
+import SectionTitle from '@/components/SectionTitle';
 
 interface IConfirmModal {
   isOpen: boolean;
@@ -73,7 +73,7 @@ export default function ConfirmModal({
           <div className={`relative p-3 ${className}`}>
             {title ?
               <div className='mb-5'>
-                <h3 className='text-2xl font-bold text-white'>{title}</h3>
+                <SectionTitle>{title}</SectionTitle>
               </div>: null
             }
             <div>{content}</div>

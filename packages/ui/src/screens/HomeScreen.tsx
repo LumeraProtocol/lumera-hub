@@ -6,7 +6,6 @@ import {
   Card,
   H3,
   H4,
-  Button,
   Text,
   SizableText,
   Dialog,
@@ -40,16 +39,17 @@ import {
 
 import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
+import AppButton from '@/components/AppButton';
 import Skeleton from '@/components/Skeleton';
 import { NAV_ITEMS } from '@/components/layout/AppShell';
 import NoWalletConnected from '@/components/NoWalletConnected';
+import SectionTitle from '@/components/SectionTitle';
 import { AccountInfoData, getTotalRewards } from '@/hooks/useAccountInfo';
 import useAppRouter from '@/hooks/useAppRouter';
 import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity';
 import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/useProposals';
 import useStats from '@/hooks/useStats';
 import { formatToken, formatTokenDisplay } from '@/utils/format';
-import SectionTitle from '@/components/SectionTitle';
 import { DENOM } from '@/contants/network';
 
 dayjs.extend(relativeTime);
@@ -281,10 +281,10 @@ export const VoteModal = ({
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
               </div>
               <div className='mt-4'>
-                <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! vote completed successfully.</H3>
+                <SectionTitle className='!text-green-500 !leading-0'>Congratulations! vote completed successfully.</SectionTitle>
               </div>
               <div className='mt-3'>
-                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-teal hover:text-lumera-green text-sm'>View Transaction</AppLink>
+                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-teal hover:text-lumera-green text-base'>View Transaction</AppLink>
               </div>
             </div>
           </Dialog.Content>
@@ -342,7 +342,7 @@ export const VoteModal = ({
                 containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
               />
               <div className='flex justify-between items-center'>
-                <h3 className='text-2xl font-bold text-white'>Vote</h3>
+                <SectionTitle className='mb-0'>Vote</SectionTitle>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
               </div>
               <div className='mt-1'>
@@ -465,7 +465,7 @@ export const VoteModal = ({
                     </Label>
                   </div>
                   <div className='btn-primary flex justify-end mt-3'>
-                    <Button onPress={() => onVoteClick(item)} disabled={isVoteLoading}>Send</Button>
+                    <AppButton onClick={() => onVoteClick(item)} disabled={isVoteLoading}>Send</AppButton>
                   </div>
                 </div>
               </YStack>
@@ -538,7 +538,7 @@ export const ClaimableRewardsModal = ({
             </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
               <div className='flex justify-between items-center'>
-                <h3 className='text-2xl font-bold text-white'>Claim Rewards</h3>
+                <SectionTitle className='mb-0'>Claim Rewards</SectionTitle>
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
               </div>
               <div className='mt-2 text-center'>
@@ -558,12 +558,12 @@ export const ClaimableRewardsModal = ({
                   </AppLink>
                 </div>
                 <div className='mt-2 pb-3'>
-                  <button
-                    className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
+                  <AppButton
+                    className='cursor-pointer'
                     onClick={onCloseCongratulationsModal}
                   >
                     {backButtonText}
-                  </button>
+                  </AppButton>
                 </div>
               </div>
             </div>
@@ -622,7 +622,7 @@ export const ClaimableRewardsModal = ({
                 containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
               />
               <div className='flex justify-between items-center'>
-                <h3 className='text-2xl font-bold text-white'>Withdraw</h3>
+                <SectionTitle className='mb-0'>Withdraw</SectionTitle>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
               </div>
               <div className='mt-1 hidden'>
@@ -631,7 +631,7 @@ export const ClaimableRewardsModal = ({
                   <Input id="sender" placeholder="Sender" className='input' defaultValue={sender} readOnly />
                 </div>
               </div>
-              <div className='mt-5 text-lg'>
+              <div className='mt-5 text-base'>
                 Claim <strong>{message?.amount} LUME</strong> available rewards from <strong>{message?.from}</strong> Delegation Now!
               </div>
 
@@ -640,9 +640,9 @@ export const ClaimableRewardsModal = ({
                   <div className='text-lumera-red-light'>{error}</div> : null
                 }
                 <div className='btn-primary full mt-3'>
-                  <Button onPress={onSendClick} disabled={isVoteLoading}>
-                    <span className='font-bold'>Claim</span>
-                  </Button>
+                  <AppButton onClick={onSendClick} disabled={isVoteLoading}>
+                    <span>Claim</span>
+                  </AppButton>
                 </div>
               </div>
 
@@ -675,8 +675,8 @@ const Stats = () => {
                 <Blocks className='w-5 h-5 text-blue-400' />
               </div>
               <div className="text-center">
-                <div className='text-lg font-bold'>{latestBlock.height}</div>
-                <div className='text-sm text-lumera-label'>Block Height</div>
+                <div className='text-base font-bold'>{latestBlock.height}</div>
+                <div className='text-base text-lumera-label'>Block Height</div>
               </div>
             </div>
           }
@@ -699,8 +699,8 @@ const Stats = () => {
                 <Users className='w-5 h-5 text-lumera-red-light' />
               </div>
               <div className="text-center">
-                <div className='text-lg font-bold'>{latestBlock.validators}</div>
-                <div className='text-sm text-lumera-label'>Validators</div>
+                <div className='text-base font-bold'>{latestBlock.validators}</div>
+                <div className='text-base text-lumera-label'>Validators</div>
               </div>
             </div>
           }
@@ -723,8 +723,8 @@ const Stats = () => {
                 <DollarSign className='w-5 h-5 text-teal-400' />
               </div>
               <div className="text-center">
-                <div className='text-lg font-bold'>{stats.supply}</div>
-                <div className='text-sm text-lumera-label'>Supply</div>
+                <div className='text-base font-bold'>{stats.supply}</div>
+                <div className='text-base text-lumera-label'>Supply</div>
               </div>
             </div>
           }
@@ -747,8 +747,8 @@ const Stats = () => {
                 <LockKeyhole className='w-5 h-5 text-amber-600' />
               </div>
               <div className="text-center">
-                <div className='text-lg font-bold'>{stats.bondedTokens}</div>
-                <div className='text-sm text-lumera-label'>Bonded Tokens</div>
+                <div className='text-base font-bold'>{stats.bondedTokens}</div>
+                <div className='text-base text-lumera-label'>Bonded Tokens</div>
               </div>
             </div>
           }
@@ -771,8 +771,8 @@ const Stats = () => {
                 <ChartNoAxesCombined className='w-5 h-5 text-blue-800' />
               </div>
               <div className="text-center">
-                <div className='text-lg font-bold'>{stats.inflation}</div>
-                <div className='text-sm text-lumera-label'>Inflation</div>
+                <div className='text-base font-bold'>{stats.inflation}</div>
+                <div className='text-base text-lumera-label'>Inflation</div>
               </div>
             </div>
           }
@@ -795,8 +795,8 @@ const Stats = () => {
                 <Landmark className='w-5 h-5 text-amber-400' />
               </div>
               <div className="text-center">
-                <div className='text-lg font-bold'>{stats.communityPool} <span className='text-sm'>LUME</span></div>
-                <div className='text-sm text-lumera-label'>Community Pool</div>
+                <div className='text-base font-bold'>{stats.communityPool} <span className='text-sm'>LUME</span></div>
+                <div className='text-base text-lumera-label'>Community Pool</div>
               </div>
             </div>
           }
@@ -851,7 +851,7 @@ export const HomeScreen = ({
               <Upload className='w-5 h-5 text-teal-400' />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>
+              <Text className='!text-base'>
                 Cascade upload {formatToken({
                   amount: `${parseInt((messages[0] as any)?.price)}`,
                   denom: DENOM,
@@ -870,7 +870,7 @@ export const HomeScreen = ({
               <Layers className='w-5 h-5 text-teal-400' />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>
+              <Text className='!text-base'>
                 Staked {messages[0].amount.denom === 'lume' ? formatToken({
                   amount: `${messages[0].amount.amount}`,
                   denom: 'lume',
@@ -892,7 +892,7 @@ export const HomeScreen = ({
               <BanknoteArrowUp className='w-5 h-5 text-lumera-red-light' />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>
+              <Text className='!text-base'>
                 Deposit {formatToken({
                   amount: `${messages[0].amount[0].amount}`,
                   denom: messages[0].amount[0].denom,
@@ -911,7 +911,7 @@ export const HomeScreen = ({
               <Unlink className='w-5 h-5 text-red-600' />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>
+              <Text className='!text-base'>
                 Unbond {messages[0]?.amount?.length ? formatToken({
                   amount: `${messages[0].amount[0].amount}`,
                   denom: messages[0].amount[0].denom,
@@ -933,7 +933,7 @@ export const HomeScreen = ({
               <ClockPlus className='w-5 h-5 text-lumera-blue-light' />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>
+              <Text className='!text-base'>
                 Begin redelegate {formatToken({
                   amount: `${messages?.[0]?.amount?.amount}`,
                   denom: messages?.[0]?.amount?.denom,
@@ -952,7 +952,7 @@ export const HomeScreen = ({
               <ArrowUpRight className="w-5 h-5 text-lumera-green" />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>Send {formatToken({
+              <Text className='!text-base'>Send {formatToken({
                     amount: `${messages[0].amount[0].amount}`,
                     denom: DENOM,
                   }, true, '0,0.[000000]')}</Text>
@@ -970,7 +970,7 @@ export const HomeScreen = ({
                 <Star className="w-5 h-5 text-amber-400" />
               </div>
               <div className='w-full flex flex-col'>
-                <Text>Claimed {formatToken({
+                <Text className='!text-base'>Claimed {formatToken({
                                   amount: `${amount?.value.replace('ulume', '').replace('stake', '')}`,
                                   denom: DENOM,
                                 }, true, '0,0.[000000]')} in rewards</Text>
@@ -985,7 +985,7 @@ export const HomeScreen = ({
               <Vote className="w-5 h-5 text-indigo-400" />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>{formatMessage(messages)}</Text>
+              <Text className='!text-base'>{formatMessage(messages)}</Text>
               <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
             </div>
           </div>
@@ -1046,25 +1046,25 @@ export const HomeScreen = ({
                             <div>
                               <div className='flex gap-1 items-center'>
                                 <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[0] }}></span>
-                                <SizableText className='text-lumera-label !font-bold'>Staked</SizableText>
+                                <SizableText className='text-lumera-label !text-base'>Staked</SizableText>
                               </div>
-                              <div className='text-2xl font-bold'>
+                              <div className='text-xl font-bold'>
                                 {formatTokenDisplay({
                                   amount: `${stacked}`,
                                   denom: DENOM,
-                                }, false, '0,0.[000000]')} <span className='text-lg whitespace-nowrap'>LUME</span>
+                                }, false, '0,0.[000000]')} <span className='whitespace-nowrap'>LUME</span>
                                 </div>
                             </div>
                             <div className='mt-4'>
                               <div className='flex gap-1 items-center'>
                                 <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[1] }}></span>
-                                <SizableText className='text-lumera-label !font-bold'>Liquid</SizableText>
+                                <SizableText className='text-lumera-label !text-base'>Liquid</SizableText>
                               </div>
-                              <div className='text-2xl font-bold'>
+                              <div className='text-xl font-bold'>
                                 {formatTokenDisplay({
                                   amount: `${liquid}`,
                                   denom: DENOM,
-                                }, false, '0,0.[000000]')} <span className='text-lg whitespace-nowrap'>LUME</span>
+                                }, false, '0,0.[000000]')} <span className='whitespace-nowrap'>LUME</span>
                               </div>
                             </div>
                           </div>
@@ -1090,14 +1090,14 @@ export const HomeScreen = ({
                             containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
                           />
                         </div> :
-                        <H4 className='!text-white !font-bold !text-3xl'>
+                        <H4 className='!text-white !font-bold !text-2xl'>
                           {loading ?
                             <Skeleton /> :
                             <>
                               {formatTokenDisplay({
                                 amount: `${stacked + liquid}`,
                                 denom: DENOM,
-                              })} <span className='text-xl whitespace-nowrap'>LUME</span>
+                              })} <span className='whitespace-nowrap'>LUME</span>
                             </>
                           }
                         </H4>
@@ -1121,14 +1121,20 @@ export const HomeScreen = ({
                           />
                         </div> :
                         <>
-                           <H4 className='!text-lumera-green !font-bold !text-3xl'>
+                          <H4 className='!text-lumera-green !font-bold !text-2xl'>
                             {formatTokenDisplay({
                               amount: `${getTotalRewards(accountInfo)}`,
                               denom: DENOM,
-                            }, false, '0,0.[0000]')} <span className='text-xl whitespace-nowrap'>LUME</span>
+                            }, false, '0,0.[0000]')} <span className='whitespace-nowrap'>LUME</span>
                           </H4>
                           <div className='mt-4 btn-full btn-secondary'>
-                            <Button onPress={() => handleToggleClaimModal(true)} disabled={isClaimLoading || loading}>Claim All Rewards</Button>
+                            <AppButton
+                              onClick={() => handleToggleClaimModal(true)}
+                              disabled={isClaimLoading || loading}
+                              className="w-full"
+                            >
+                              <span>Claim All Rewards</span>
+                            </AppButton>
                           </div>
                         </>
                       }
@@ -1145,7 +1151,7 @@ export const HomeScreen = ({
                       <SectionTitle className='mb-2'>Active Governance Proposals</SectionTitle>
                       <span
                         onClick={handleViewAllProposalsClick}
-                        className='text-link text-sm whitespace-nowrap cursor-pointer text-right'
+                        className='text-link text-base whitespace-nowrap cursor-pointer text-right'
                       >
                         View All
                       </span>
@@ -1165,19 +1171,19 @@ export const HomeScreen = ({
                         <>
                           {!isProposalLoading && proposals?.length <= 0 ?
                             <div className='flex items-center justify-center min-h-28 md:min-h-[284px] my-2'>
-                              <H3 className='text-2xl'>No active proposals</H3>
+                              <H3 className='text-3xl'>No active proposals</H3>
                             </div> : <div className='min-h-[284px]'>
                               {proposals?.map((item) => (
                                 <div className='mt-3 flex justify-between flex-col sm:flex-row gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
                                   <div className='flex flex-col'>
                                     <AppLink href={`/governance/${item.id}`}>
-                                      <Text>{item.title}</Text>
+                                      <Text className='!text-base font-bold'>{item.title}</Text>
                                     </AppLink>
-                                    <SizableText className='text-sm text-lumera-label'>{item.proposer}</SizableText>
+                                    <SizableText className='!text-base text-lumera-label'>{item.proposer}</SizableText>
                                   </div>
                                   {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
                                     <div className='btn-primary'>
-                                      <Button onPress={() => handleVotePress(item)}>Vote Now</Button>
+                                      <AppButton onClick={() => handleVotePress(item)}>Vote Now</AppButton>
                                     </div> : null
                                   }
                                 </div>

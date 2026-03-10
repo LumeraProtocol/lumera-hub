@@ -13,7 +13,7 @@ import {
   Unlink,
   Star,
 } from 'lucide-react';
-import {  H3 } from 'tamagui';
+import { H3 } from 'tamagui';
 import ReactPaginate from 'react-paginate';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';

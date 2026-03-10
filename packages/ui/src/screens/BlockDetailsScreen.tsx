@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { H3, Card } from 'tamagui';
+import { Card } from 'tamagui';
 import { fromBase64, toHex } from '@cosmjs/encoding';
 import { RefreshCcw } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -202,7 +202,7 @@ export const BlockDetailsScreen = ({
   }
 
   return (
-    <div className="space-y-8 relative text-lumera-label">
+    <div className="space-y-8 relative text-lumera-label text-base">
        {isLoading ?
         <div className='relative min-h-[76vh]'>
           <AppLoading
