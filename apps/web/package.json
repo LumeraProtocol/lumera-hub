@@ -29,6 +29,7 @@
     "@interchain-ui/react": "^1.26.3",
     "@lumera-hub/ui": "workspace:^",
     "@reduxjs/toolkit": "^2.9.0",
+    "@snagsolutions/sdk": "0.1.0-alpha.252",
     "@tamagui/config": "^1.132.16",
     "@tamagui/core": "^1.132.16",
     "@tamagui/dialog": "^1.132.20",

@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { Card } from 'tamagui';
 import {
   MoveDown,
@@ -21,28 +22,35 @@ export default function RetentionRate() {
     return `${perDate[1]}/${perDate[2]}/${perDate[0]}`;
   }
   const getData = (item: IData, index: number) => {
-    const selectedItems = details.filter((d) => d.week_hash === item.hash && d.week >= item.week && d.year >= item.year);
-    const firstItem = details.find((d) => d.week_hash === item.hash && d.week === item.week && d.year === item.year);
+    const selectedItems = details.filter((d) => d.week_hash === item.hash && d.year >= item.year);
+    const firstItem = details.find((d) => d.week_hash === item.hash && d.year === item.year);
     if (!selectedItems?.length || !firstItem) {
       return '0%';
     }
     const nextWeek = selectedItems[index + 1];
-    if (nextWeek) {
+    if (nextWeek?.total_activation) {
       const totalActivation = firstItem.total_activation;
+      const percent = (nextWeek.total_activation / totalActivation * 100).toFixed(0);
       return (
         <>
-          {(nextWeek.total_activation / totalActivation * 100).toFixed(0)}%{nextWeek.total_activation ? `(${formatNumber(nextWeek.total_activation, { decimalsLength: 0 })} txs)` : ''}
+          {percent}% <span className="whitespace-nowrap block">{nextWeek.total_activation ? `(${formatNumber(nextWeek.total_activation, { decimalsLength: 0 })} txs)` : ''}</span>
         </>
       );
     }
     return '0%';
   }
 
-  const getFirstData = (item: IData) => {
-    const firstItem = details.find((d) => d.week_hash === item.hash && d.week === item.week && d.year === item.year);
-     if (firstItem) {
-      return formatNumber(firstItem.total_activation, { decimalsLength: 0 });
+  const getFirstData = (item: IData): ReactNode => {
+    const firstItem = details.find((d) => d.week_hash === item.hash && d.year === item.year);
+     if (firstItem?.total_activation) {
+      return (
+        <>
+          100% <span className="whitespace-nowrap block">({formatNumber(firstItem.total_activation, { decimalsLength: 0 })} txs)</span>
+        </>
+      );
     }
+
+    return "0%(0 txs)";
   }
 
   return (
@@ -89,7 +97,7 @@ export default function RetentionRate() {
                       <th align='left' className='px-2 py-3'>
                         {getDate(tx.start_date)} - {getDate(tx.end_date)}
                       </th>
-                      <th align='left' className='px-2 py-3'>100%({getFirstData(tx)} txs)</th>
+                      <th align='left' className='px-2 py-3'>{getFirstData(tx)}</th>
                       {Array.from({ length: 12 }, (_, index) => (
                         <th align='left' className='px-2 py-3' key={index}>
                           {getData(tx, index)}

@@ -1,9 +1,11 @@
 import { Card } from 'tamagui';
 import ReactECharts from 'echarts-for-react';
+import dayjs from 'dayjs';
 
 import SectionTitle from '@/components/SectionTitle';
 import { AppLoading } from '@/components/Loading';
 import { ITracking } from '@/hooks/admin/useTracking';
+import { useSelector } from '@/redux/hooks';
 
 interface ICascadeChart {
   isLoading: boolean;
@@ -14,16 +16,27 @@ export default function CascadeChart({
   isLoading,
   trackings,
 }: ICascadeChart) {
+  const { startDate, endDate } = useSelector((state) => state.admin);
 
   const getOption = () => {
     let dates: string[] = [];
     let data1: number[] = [];
     let data2: number[] = [];
-    for (const item of trackings) {
-      const date = item.date.split('-');
-      dates.push(`${date[1]}/${date[2]}/${date[0]}`);
-      data1.push(item.cascade_upload);
-      data2.push(item.cascade_download);
+
+    const end = dayjs(endDate);
+    const start = dayjs(startDate);
+    const diff = end.diff(start, 'day');
+    for (let i = 0; i < diff; i++) {
+      const currentDate = dayjs(start).add(i, 'day').format('YYYY-MM-DD');
+      const item = trackings.find((t) => t.date === currentDate);
+      dates.push(dayjs(start).add(i, 'day').format('MM/DD/YYYY'));
+      if (item) {
+        data1.push(item.cascade_upload);
+        data2.push(item.cascade_download);
+      } else {
+        data1.push(0);
+        data2.push(0);
+      }
     }
 
     return {
@@ -40,27 +53,27 @@ export default function CascadeChart({
                 <ul class="mt-1 pl-3 list-inside list-disc">
                   <li class="flex justify-between gap-6">
                     <span>- Total images:</span>
-                    <span class="font-bold">${tracking.cascade_image} files</span>
+                    <span class="font-bold">${tracking?.cascade_image || 0} files</span>
                   </li>
                   <li class="flex justify-between gap-6">
                     <span>- Total videos:</span>
-                    <span class="font-bold">${tracking.cascade_video} files</span>
+                    <span class="font-bold">${tracking?.cascade_video || 0} files</span>
                   </li>
                   <li class="flex justify-between gap-6">
                     <span>- Total programs:</span>
-                    <span class="font-bold">${tracking.cascade_program} files</span>
+                    <span class="font-bold">${tracking?.cascade_program || 0} files</span>
                   </li>
                   <li class="flex justify-between gap-6">
                     <span>- Total archives:</span>
-                    <span class="font-bold">${tracking.cascade_archive} files</span>
+                    <span class="font-bold">${tracking?.cascade_archive || 0} files</span>
                   </li>
                   <li class="flex justify-between gap-6">
                     <span>- Total docs:</span>
-                    <span class="font-bold">${tracking.cascade_document} files</span>
+                    <span class="font-bold">${tracking?.cascade_document || 0} files</span>
                   </li>
                   <li class="flex justify-between gap-6">
                     <span>- Total other:</span>
-                    <span class="font-bold">${tracking.cascade_other} files</span>
+                    <span class="font-bold">${tracking?.cascade_other || 0} files</span>
                   </li>
                 </ul>
               `;

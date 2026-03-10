@@ -80,8 +80,7 @@ export const syncRetentionRate = async () => {
       .addSelect('year')
       .addSelect('start_date')
       .addSelect('end_date')
-      .where('year = :year', { year })
-      .andWhere('week <= :week', { week: weekStart.isoWeek() })
+      .where('end_date <= :end_date', { end_date: weekStart.format('YYYY-MM-DD') })
       .getRawMany();
 
     if (groupAddress?.length) {

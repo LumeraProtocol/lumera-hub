@@ -30,9 +30,12 @@ const updateRetentionRate = async () => {
     if (process.argv[2]) {
       selectYear = process.argv[2];
     }
+
     const diff = Number(dayjs().format('YYYY')) - Number(selectYear);
     for (let i = 0; i <= diff; i++) {
       const year = Number(selectYear) + i;
+      retentionRateWeekDetailsRepo.createQueryBuilder().delete().where('year = :year', { year }).execute();
+      retentionRateWeekRepo.createQueryBuilder().delete().where('year = :year', { year }).execute();
       console.log(`Processing year ${year}`);
 
       const current = dayjs(`${year}-01-04`);
@@ -55,7 +58,8 @@ const updateRetentionRate = async () => {
             const arrAddresses = addresses.map((adr) => adr.address);
              await retentionRateWeekRepo.save({
               hash: hash({
-                address: arrAddresses,
+                start_date: weekStart.format('YYYY-MM-DD'),
+                week: weekStart.isoWeek(),
                 year,
               }),
               address: JSON.stringify(arrAddresses),
@@ -73,15 +77,13 @@ const updateRetentionRate = async () => {
             .addSelect('year')
             .addSelect('start_date')
             .addSelect('end_date')
-            .where('year = :year', { year })
-            .andWhere('week <= :week', { week: weekStart.isoWeek() })
+            .where('end_date <= :end_date', { end_date: weekStart.format('YYYY-MM-DD') })
             .getRawMany();
 
           for (const item of groupAddress) {
             const parseAddress = JSON.parse(item.address);
             const startDate = weekStart.startOf('day').toISOString();
             const endDate = weekEnd.endOf('day').toISOString();
-
             const transactions = await transactionRepo.createQueryBuilder()
               .select('message_type')
               .addSelect('COUNT(message_type)', 'total')
@@ -107,18 +109,6 @@ const updateRetentionRate = async () => {
               entity.total_activation = totalActivation;
             }
 
-            await retentionRateWeekDetailsRepo.createQueryBuilder()
-              .delete()
-              .where({
-                week_hash: item.hash,
-              })
-              .andWhere({
-                year,
-              })
-              .andWhere({
-                week: weekStart.isoWeek(),
-              })
-              .execute();
             await retentionRateWeekDetailsRepo.save(entity);
           }
         }

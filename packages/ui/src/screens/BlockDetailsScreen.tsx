@@ -5,7 +5,7 @@ import { RefreshCcw } from 'lucide-react';
 import dayjs from 'dayjs';
 import { decodeTxRaw } from '@cosmjs/proto-signing';
 
-import Loading, { AppLoading } from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import SectionTitle from '@/components/SectionTitle';
 import { IFullBlock } from '@/types';

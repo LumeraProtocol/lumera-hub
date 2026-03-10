@@ -49,7 +49,6 @@ export const ActivationRateChart = ({
         trigger: 'item',
         position: 'right',
         formatter: function (param: any) {
-          console.log(param)
           return `
             <div>
               <div>${param.seriesName}</div>
