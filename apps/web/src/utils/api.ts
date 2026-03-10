@@ -41,6 +41,7 @@ const customFetch = (url: string, method: string, body = {}, isUpload = false, i
             message: 'unknown error',
           });
         }
+        console.log(111111, 'response', response)
         switch (response.status) {
           case 500:
           case 429:
@@ -50,21 +51,21 @@ const customFetch = (url: string, method: string, body = {}, isUpload = false, i
           case 403:
           case 401:
             store.dispatch(setError({
-              message: response.statusText,
+              message: response?.data?.error || response.statusText,
               status: response.status,
             }));
             return reject({
               statusCode: response.status,
               statusText: response.statusText,
               status: response.data.status,
-              message: response.data.message,
+              message: response?.data?.error || response.data.message,
             });
           default:
             return reject({
               statusCode: response.status,
               statusText: response.statusText,
               status: response.data.status,
-              message: response.data.message,
+              message: response?.data?.error || response.data.message,
             });
         }
       });
