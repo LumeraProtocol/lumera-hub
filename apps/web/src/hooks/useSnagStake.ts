@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from "react";
 import { toast } from 'react-toastify';
 import { useRouter, useParams } from 'next/navigation';
