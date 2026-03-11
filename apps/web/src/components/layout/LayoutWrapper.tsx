@@ -11,7 +11,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const { isAdminPage } = useAdminArea();
 
-  if (pathname?.includes('/snag')) {
+  if (pathname?.includes('/snag') && !pathname?.includes('/admin')) {
     return (
       <div>
         {children}

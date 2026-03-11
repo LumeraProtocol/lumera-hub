@@ -74,6 +74,7 @@ const customFetch = (url: string, method: string, body = {}, isUpload = false, i
 
 export const getExternal = (path: string) => customFetch(path, 'GET', {}, false, true);
 export const postExternal = (path: string, body: object) => customFetch(path, 'POST', body, false, true);
+export const removeExternal = (path: string, body: object) => customFetch(path, 'DELETE', body, false, true);
 export const get = (path: string) => customFetch(path, 'GET');
 export const post = (path: string, body: object) => customFetch(path, 'POST', body);
 export const put = (path: string, body: object) => customFetch(path, 'PUT', body);
