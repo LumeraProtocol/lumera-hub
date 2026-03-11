@@ -26,7 +26,7 @@ const useSnagStake = () => {
       const walletAddress = urlParams.get('walletAddress');
       await instance.postExternal('/api/snag/stake-verify', {
         snagAddress: walletAddress,
-        validator: params?.address || ''
+        loyaltyRuleID: params?.loyaltyRuleID || ''
       });
       toast.success("Quest is verified!", {
         position: "bottom-right",

@@ -14,3 +14,5 @@ export * from "./HubTransaction";
 export * from "./HubTracking";
 export * from "./RollingRetention";
 export * from "./SnagUser";
+export * from "./SnagLoyalty";
+export * from "./SnagTransaction";

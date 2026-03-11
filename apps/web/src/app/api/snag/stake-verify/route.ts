@@ -2,10 +2,13 @@
 // app/api/snag/verify/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as instance from '@/utils/api-server';
+import dayjs from 'dayjs';
 
+import * as instance from '@/utils/api-server';
 import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
+import { SnagLoyalty } from '@/entities/SnagLoyalty';
+import { SnagTransaction } from '@/entities/SnagTransaction';
 import client from '@/lib/snag';
 
 export async function POST(req: NextRequest) {
@@ -22,11 +25,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!body?.validator) {
+    if (!body?.loyaltyRuleID) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Validator is required!',
+          error: 'Loyalty Rule ID is required!',
         },
         { status: 400 }
       );
@@ -34,6 +37,8 @@ export async function POST(req: NextRequest) {
 
     const dataSource = await getDataSource();
     const snagUserRepo = dataSource.getRepository(SnagUser);
+    const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
+    const snagTransactionRepo = dataSource.getRepository(SnagTransaction);
 
     const user = await snagUserRepo.createQueryBuilder()
       .select('snagAddress, lumeraAddress, userId')
@@ -50,12 +55,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const loyaltyRuleIds: any = {
-      'lumeravaloper1q498cczezvamq6qu72zd3dt6ng6c4p9pqfsefj': '5a4adfc4-8d8c-4722-8066-816e191825ec',
-      'lumeravaloper1vpqr7jm2mh72zt9rkrd4dlkqdjjj7klg4gp6e3': '7a244320-1322-4b2e-a393-3eea7c329e65',
-      'lumeravaloper13nwzm5dfd26ue74jr6sc39gyn3qze0rjspr93m': 'a84bcd4a-2d41-400a-9f64-74c40cec1ebe',
+    const loyaltyRule = await snagLoyaltyRepo
+      .createQueryBuilder()
+      .select('id')
+      .addSelect('config')
+      .addSelect('startTime')
+      .addSelect('endTime')
+      .where('id = :loyaltyRuleID', { loyaltyRuleID: body.loyaltyRuleID })
+      .getRawOne();
+
+    if (!loyaltyRule) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Loyalty Rule ID is required!',
+        },
+        { status: 400 }
+      );
     }
-    const loyaltyRuleId = loyaltyRuleIds[body.validator];
+
+    const loyaltyRuleId = loyaltyRule.id;
+    const config = JSON.parse(loyaltyRule.config)
     if (!loyaltyRuleId) {
       return NextResponse.json(
         {
@@ -78,16 +98,56 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const stakedTransaction = txResponses.filter((tx: any) => {
+    const stakedTransactions = txResponses.filter((tx: any) => {
       const messages = tx?.tx?.body?.messages || [];
       return messages.some((msg: any) =>
         msg?.["@type"] === "/cosmos.staking.v1beta1.MsgDelegate" &&
         msg?.validator_address === body.validator &&
-        Number(msg?.amount.amount) >= 500000
+        Number(msg?.amount.amount) >= Number(config.amount)
       );
+    }).sort((a: any, b: any) => {
+      const aMessages = a?.tx?.body?.messages || [];
+      const bMessages = b?.tx?.body?.messages || [];
+
+      return Number(aMessages[0].amount.amount) - Number(bMessages[0].amount.amount)
     });
 
-    if (!stakedTransaction?.length) {
+    if (!stakedTransactions?.length) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No stake data found for your account!',
+        },
+        { status: 400 }
+      );
+    }
+
+    let selectedTransaction = null;
+    for (const tx of stakedTransactions) {
+      const transaction = await snagTransactionRepo
+        .createQueryBuilder()
+        .select('txHash')
+        .where('txHash = :txHash', { txHash: tx.txHash })
+        .getRawOne();
+
+      if (
+        !transaction?.txHash &&
+        !selectedTransaction &&
+        dayjs(loyaltyRule.startTime).valueOf() <= dayjs(tx.timestamp).valueOf()
+      ) {
+        if (loyaltyRule.endTime ) {
+          if (dayjs(loyaltyRule.endTime).valueOf() >= dayjs(tx.timestamp).valueOf()) {
+            selectedTransaction = tx;
+            break;
+          }
+        } else {
+          selectedTransaction = tx;
+          break;
+        }
+      }
+    }
+
+    if (!selectedTransaction) {
       return NextResponse.json(
         {
           success: false,
@@ -101,6 +161,12 @@ export async function POST(req: NextRequest) {
       body: {
         userId: user.userId,
       },
+    });
+
+    await snagTransactionRepo.save({
+      txHash: selectedTransaction.txHash,
+      loyaltyRuleId,
+      userId: user.userId,
     });
 
     return NextResponse.json({
