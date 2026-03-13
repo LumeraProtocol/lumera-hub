@@ -281,8 +281,8 @@ export const SnagScreen = () => {
                 id="validator"
                 placeholder="From Address"
                 className='input'
-                value={configForm?.delegate?.validator || ''}
-                onChangeText={(newValue) => handleInputChange('delegate', 'validator', newValue)}
+                value={configForm?.claim?.validator || ''}
+                onChangeText={(newValue) => handleInputChange('claim', 'validator', newValue)}
               />
             </div>
           </div>
