@@ -197,7 +197,7 @@ export const SnagScreen = () => {
                 id="validator"
                 placeholder="Validator Address"
                 className='input'
-                value={configForm.staked.validator}
+                value={configForm?.staked?.validator || ''}
                 onChangeText={(newValue) => handleInputChange('staked', 'validator', newValue)}
               />
             </div>
@@ -209,7 +209,7 @@ export const SnagScreen = () => {
                 id="amount"
                 placeholder="Amount"
                 className='input'
-                value={configForm.staked.amount}
+                value={configForm?.staked?.amount || '0'}
                 onChangeText={(newValue) => handleInputChange('staked', 'amount', newValue)}
               />
             </div>
@@ -257,7 +257,7 @@ export const SnagScreen = () => {
                 id="validator"
                 placeholder="Validator Address"
                 className='input'
-                value={configForm.delegate.validator}
+                value={configForm?.delegate?.validator || ''}
                 onChangeText={(newValue) => handleInputChange('delegate', 'validator', newValue)}
               />
             </div>
@@ -281,7 +281,7 @@ export const SnagScreen = () => {
                 id="validator"
                 placeholder="From Address"
                 className='input'
-                value={configForm.delegate.validator}
+                value={configForm?.delegate?.validator || ''}
                 onChangeText={(newValue) => handleInputChange('delegate', 'validator', newValue)}
               />
             </div>
@@ -305,7 +305,7 @@ export const SnagScreen = () => {
                 id="amount"
                 placeholder="Lumera"
                 className='input'
-                value={configForm.balance.amount}
+                value={configForm?.balance?.amount || '0'}
                 onChangeText={(newValue) => handleInputChange('balance', 'amount', newValue)}
               />
             </div>
@@ -484,7 +484,7 @@ export const SnagScreen = () => {
                 <span>Validator:</span>
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <span>{formatAddress(obj.staked.validator, 10, -6)}</span>
+                    <span>{formatAddress(obj?.staked?.validator || '', 10, -6)}</span>
                   </Tooltip.Trigger>
                   <Tooltip.Content
                     enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
@@ -503,7 +503,7 @@ export const SnagScreen = () => {
                     ]}
                   >
                     <div className='text-white'>
-                      {obj.staked.validator}
+                      {obj?.staked?.validator || ''}
                     </div>
                   </Tooltip.Content>
                 </Tooltip>
@@ -511,7 +511,7 @@ export const SnagScreen = () => {
             </li>
             <li className='mb-1'>
               <div className="flex gap-2">
-                <span>Amount:</span> <span>{formatNumber(obj.staked.amount, { decimalsLength: 0 })}</span>
+                <span>Amount:</span> <span>{formatNumber(obj?.staked?.amount || '0', { decimalsLength: 0 })}</span>
               </div>
             </li>
             <li className='mb-1'>
@@ -556,7 +556,7 @@ export const SnagScreen = () => {
             </li>
             <li className='mb-1'>
               <div className="flex gap-2">
-                <span>Amount:</span> <span>{formatNumber(obj.balance.amount, { decimalsLength: 0 })}</span>
+                <span>Amount:</span> <span>{formatNumber(obj?.balance?.amount || '0', { decimalsLength: 0 })}</span>
               </div>
             </li>
             <li className='mb-1'>
@@ -604,7 +604,7 @@ export const SnagScreen = () => {
                 <span>Validator:</span>
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <span>{formatAddress(obj.delegate.validator, 10, -6)}</span>
+                    <span>{formatAddress(obj?.delegate?.validator || '', 10, -6)}</span>
                   </Tooltip.Trigger>
                   <Tooltip.Content
                     enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
@@ -623,7 +623,7 @@ export const SnagScreen = () => {
                     ]}
                   >
                     <div className='text-white'>
-                      {obj.delegate.validator}
+                      {obj?.delegate?.validator || ''}
                     </div>
                   </Tooltip.Content>
                 </Tooltip>
@@ -674,7 +674,7 @@ export const SnagScreen = () => {
                 <span>From Address:</span>
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <span>{formatAddress(obj.claim.validator, 10, -6)}</span>
+                    <span>{formatAddress(obj?.claim?.validator || '', 10, -6)}</span>
                   </Tooltip.Trigger>
                   <Tooltip.Content
                     enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
@@ -693,7 +693,7 @@ export const SnagScreen = () => {
                     ]}
                   >
                     <div className='text-white'>
-                      {obj.claim.validator}
+                      {obj?.claim?.validator || ''}
                     </div>
                   </Tooltip.Content>
                 </Tooltip>
