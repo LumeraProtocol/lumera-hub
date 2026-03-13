@@ -1,4 +1,4 @@
-// app/api/snag/stake-verify/route.ts
+// app/api/snag/redelegate-verify/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
@@ -126,24 +126,13 @@ export async function POST(req: NextRequest) {
     if (
       dayjs(loyaltyRule.startTime).valueOf() <= dayjs(txResponses.timestamp).valueOf() ||
       (loyaltyRule.endTime && dayjs(loyaltyRule.endTime).valueOf() >= dayjs(txResponses.timestamp).valueOf()) ||
-      message?.["@type"] !== "/cosmos.staking.v1beta1.MsgDelegate" ||
-      message?.validator_address !== config.staked.validator ||
+      message?.["@type"]?.indexOf('MsgBeginRedelegate') === -1 ||
       message?.delegator_address !== user.lumeraAddress
     ) {
       return NextResponse.json(
         {
           success: false,
           error: 'Invalid transaction. Please use a different one.',
-        },
-        { status: 400 }
-      );
-    }
-
-    if ( Number(message?.amount.amount) < Number(config.staked.amount)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `The staked amount is less than the minimum requirement.`,
         },
         { status: 400 }
       );

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 // app/api/admin/trackings/get-loyalty-rules/route.ts
 
 import { NextResponse, NextRequest } from 'next/server';

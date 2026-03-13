@@ -67,8 +67,8 @@ export class SnagLoyalty {
   dappDataWindow: string;
 
   @Column({ type: "text", nullable: true })
-  config: string;
+  config?: string;
 
   @Column({ type: "varchar", length: 25, nullable: true })
-  sprintID: string;
+  sprintID?: string;
 }

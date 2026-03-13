@@ -6,17 +6,25 @@ import {
 
 import { AppLoading } from '@/components/Loading';
 import AppButton from '@/components/AppButton';
-import useSnagStake from '@/hooks/useSnagStake';
 
-export const StakeVerifyScreen = () => {
-  const {
-    isLoading,
-    message,
-    txHash,
-    setTxhash,
-    verifyStaked,
-  } = useSnagStake();
+interface IVerifyScreen {
+  isLoading: boolean;
+  txHash: string;
+  message: {
+    type: string;
+    content: string;
+  };
+  onVerifyClick: () => void;
+  onChangeText: (val: string) => void;
+}
 
+export const VerifyScreen = ({
+  isLoading,
+  txHash,
+  message,
+  onVerifyClick,
+  onChangeText,
+}: IVerifyScreen) => {
   return (
     <div className='w-screen h-screen flex items-center justify-center'>
       <div className="relative p-3 min-w-2xl">
@@ -38,7 +46,7 @@ export const StakeVerifyScreen = () => {
                     placeholder="Enter some text here..."
                     className='input'
                     value={txHash}
-                    onChangeText={setTxhash}
+                    onChangeText={onChangeText}
                   />
                 </div>
               </div>
@@ -56,7 +64,7 @@ export const StakeVerifyScreen = () => {
                 <AppButton
                   className='disabled:opacity-45'
                   disabled={!txHash || isLoading}
-                  onClick={verifyStaked}
+                  onClick={onVerifyClick}
                 >
                   <span>Claim</span>
                 </AppButton>
