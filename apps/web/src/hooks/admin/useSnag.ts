@@ -391,7 +391,7 @@ const useSnag = () => {
           ...configForm,
           staked: {
             ...configForm.staked,
-            [name]: value
+            [name]: value,
           }
         });
         break;
@@ -399,8 +399,7 @@ const useSnag = () => {
         setConfigForm({
           ...configForm,
           delegate: {
-            ...configForm.delegate,
-            [name]: value
+            validator: value,
           }
         });
         break;
@@ -408,23 +407,22 @@ const useSnag = () => {
         setConfigForm({
           ...configForm,
           balance: {
-            ...configForm.balance,
-            [name]: value
-          }
+            amount: value,
+          },
         });
+        break;
       case 'claim':
         setConfigForm({
           ...configForm,
           claim: {
-            ...configForm.claim,
-            [name]: value
-          }
+            validator: value,
+          },
         });
         break;
       case 'root':
         setConfigForm({
           ...configForm,
-          [name]: value
+          [name]: value,
         });
         break;
     }
