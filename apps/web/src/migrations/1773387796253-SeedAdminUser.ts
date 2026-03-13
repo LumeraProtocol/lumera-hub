@@ -2,7 +2,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { AdminUser } from '@/entities/AdminUser';
 
-export class SeedAdminUser1769425962389 implements MigrationInterface {
+export class SeedAdminUser1773387796253 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     const email = process.env.NEXT_PUBLIC_ADMIN_EMAIL || '';
     const plainPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || '';

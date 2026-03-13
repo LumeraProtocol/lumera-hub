@@ -274,6 +274,36 @@ const useSnag = () => {
     setActionType(type);
   }
 
+  const generateUrlCheck = () => {
+    if (!selectedLoyalty || !selectedLoyalty?.config) {
+      return '';
+    }
+    const config = configForm;
+    const path = `${config.domain}snag/${selectedLoyalty.id}`;
+    let prefix = '';
+    switch (actionType) {
+      case 'staked':
+        prefix = '/stake';
+        break;
+      case 'delegate':
+        prefix = '/delegate';
+        break;
+      case 'redelegated':
+        prefix = '/redelegate';
+        break;
+      case 'balance':
+        prefix = '/balance';
+        break;
+      case 'claim':
+        prefix = '/claim';
+        break;
+    }
+    if (actionType === 'connect') {
+      return config.domain;
+    }
+    return `${path}${prefix}`;
+  }
+
   const handleSaveConfig = async () => {
     setMessage({
       type: '',
@@ -370,6 +400,8 @@ const useSnag = () => {
           ...configForm,
           actionType,
         }),
+        loyalty: selectedLoyalty,
+        href: generateUrlCheck(),
       });
       setMessage({
         type: 'success',

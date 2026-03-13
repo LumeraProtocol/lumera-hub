@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
       .createQueryBuilder()
       .select('*')
       .where('sprintID = :sprintID', { sprintID })
-      .orderBy('startTime');
+      .orderBy('startTime', 'DESC');
     const totalQueryBuilder = snagLoyaltyRepo
       .createQueryBuilder()
       .select('COUNT(1)', 'total')
