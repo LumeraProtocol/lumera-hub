@@ -41,7 +41,6 @@ const customFetch = (url: string, method: string, body = {}, isUpload = false, i
             message: 'unknown error',
           });
         }
-        console.log(111111, 'response', response)
         switch (response.status) {
           case 500:
           case 429:

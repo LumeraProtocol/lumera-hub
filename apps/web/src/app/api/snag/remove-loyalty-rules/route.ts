@@ -1,4 +1,4 @@
-// app/api/snag/verify/route.ts
+// app/api/snag/remove-loyalty-rules/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 

@@ -24,12 +24,20 @@ export const ACTION_TYPE = [
     label: 'Redelegated',
   },
   {
-    value: 'haveLumera',
-    label: 'Have Lumera',
+    value: 'balance',
+    label: 'Check balance',
   },
   {
     value: 'supernode',
     label: 'Supernode',
+  },
+  {
+    value: 'claim',
+    label: 'Claim tokens',
+  },
+  {
+    value: 'connect',
+    label: 'Wallet connect',
   },
 ];
 
@@ -42,10 +50,23 @@ const useSnag = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [open, setOpen] = useState(false);
   const [selectedLoyalty, setSelectedLoyalty] = useState<SnagLoyalty | null>(null);
-  const [actionType, setActionType] = useState('staked');
+  const [actionType, setActionType] = useState('');
   const [configForm, setConfigForm] = useState({
-    validator: '',
-    amount: '0',
+    domain: '',
+    urlCheck: '',
+    staked: {
+      validator: '',
+      amount: '0',
+    },
+    delegate: {
+      validator: '',
+    },
+    balance: {
+      amount: '0',
+    },
+    claim: {
+      validator: '',
+    },
   });
   const [message, setMessage] = useState({
     type: '',
@@ -104,8 +125,21 @@ const useSnag = () => {
   const handleSelectedLoyalty = (item: SnagLoyalty | null) => {
     setSelectedLoyalty(item);
     setConfigForm({
-      validator: '',
-      amount: '0',
+      domain: '',
+      urlCheck: '',
+      staked: {
+        validator: '',
+        amount: '0',
+      },
+      delegate: {
+        validator: '',
+      },
+      balance: {
+        amount: '0',
+      },
+      claim: {
+        validator: '',
+      },
     });
     setMessage({
       type: '',
@@ -114,11 +148,120 @@ const useSnag = () => {
     setOpen(true);
     if (item?.config) {
       const config = JSON.parse(item.config);
+      setActionType(config.actionType);
       switch (config.actionType) {
-        case ACTION_TYPE[1].value:
+        case 'staked':
           setConfigForm({
-            amount: config?.amount || '0',
-            validator: config?.validator || '',
+            domain: config?.domain || '',
+            urlCheck: config?.urlCheck || '',
+            staked: {
+              validator: config?.staked?.validator || '',
+              amount: config?.staked?.amount || '0',
+            },
+            delegate: {
+              validator: '',
+            },
+            balance: {
+              amount: '0',
+            },
+            claim: {
+              validator: '',
+            },
+          });
+          break;
+        case 'delegate':
+          setConfigForm({
+            domain: config?.domain || '',
+            urlCheck: config?.urlCheck || '',
+            staked: {
+              validator: '',
+              amount: '0',
+            },
+            delegate: {
+              validator: config?.delegate?.validator || '',
+            },
+            balance: {
+              amount: '0',
+            },
+            claim: {
+              validator: '',
+            },
+          });
+          break;
+        case 'redelegated':
+          setConfigForm({
+            domain: config?.domain || '',
+            urlCheck: config?.urlCheck || '',
+            staked: {
+              validator: '',
+              amount: '0',
+            },
+            delegate: {
+              validator: '',
+            },
+            balance: {
+              amount: '0',
+            },
+            claim: {
+              validator: '',
+            },
+          });
+          break;
+        case 'balance':
+          setConfigForm({
+            domain: config?.domain || '',
+            urlCheck: config?.urlCheck || '',
+            staked: {
+              validator: '',
+              amount: '0',
+            },
+            delegate: {
+              validator: '',
+            },
+            balance: {
+              amount: config.balance.amount || '0',
+            },
+            claim: {
+              validator: '',
+            },
+          });
+          break;
+        case 'connect':
+          setConfigForm({
+            domain: config?.domain || '',
+            urlCheck: '',
+            staked: {
+              validator: '',
+              amount: '0',
+            },
+            delegate: {
+              validator: '',
+            },
+            balance: {
+              amount: '0',
+            },
+            claim: {
+              validator: '',
+            },
+          });
+          break;
+        case 'claim':
+          setConfigForm({
+            domain: config?.domain || '',
+            urlCheck: config?.urlCheck || '',
+            staked: {
+              validator: '',
+              amount: '0',
+            },
+            delegate: {
+              validator: '',
+            },
+            balance: {
+              amount: '0',
+            },
+            claim: {
+              validator: config.claim.validator,
+            },
           });
           break;
         default:
@@ -150,19 +293,70 @@ const useSnag = () => {
       });
       return;
     }
+    if (actionType === 'connect') {
+      if (!configForm.domain) {
+        setMessage({
+          type: 'error',
+          content: 'Verify URL is required.',
+        });
+        return;
+      }
+    } else {
+      if (!configForm.domain) {
+        setMessage({
+          type: 'error',
+          content: 'Verify Domain is required.',
+        });
+        return;
+      }
+      if (!configForm.urlCheck) {
+        setMessage({
+          type: 'error',
+          content: 'URL Check is required.',
+        });
+        return;
+      }
+    }
     switch (actionType) {
-      case ACTION_TYPE[0].value:
-        if (!configForm.validator) {
+      case 'staked':
+        if (!configForm.staked.validator) {
           setMessage({
             type: 'error',
             content: 'Validator is required.',
           });
           return;
         }
-        if (Number(configForm.amount) <= 0) {
+        if (Number(configForm.staked.amount) <= 0) {
           setMessage({
             type: 'error',
             content: 'Amount is required.',
+          });
+          return;
+        }
+      break;
+      case 'delegate':
+        if (!configForm.delegate.validator) {
+          setMessage({
+            type: 'error',
+            content: 'Validator is required.',
+          });
+          return;
+        }
+      break;
+      case 'balance':
+        if (Number(configForm.balance.amount) <= 0) {
+          setMessage({
+            type: 'error',
+            content: 'Amount is required.',
+          });
+          return;
+        }
+      break;
+      case 'claim':
+        if (!configForm.claim.validator) {
+          setMessage({
+            type: 'error',
+            content: 'From Address is required.',
           });
           return;
         }
@@ -190,11 +384,50 @@ const useSnag = () => {
     setConfigLoading(false);
   }
 
-  const handleInputChange = (name: string, value: string) => {
-    setConfigForm({
-      ...configForm,
-      [name]: value,
-    });
+  const handleInputChange = (type: string, name: string, value: string) => {
+    switch (type) {
+      case 'staked':
+        setConfigForm({
+          ...configForm,
+          staked: {
+            ...configForm.staked,
+            [name]: value
+          }
+        });
+        break;
+      case 'delegate':
+        setConfigForm({
+          ...configForm,
+          delegate: {
+            ...configForm.delegate,
+            [name]: value
+          }
+        });
+        break;
+      case 'balance':
+        setConfigForm({
+          ...configForm,
+          balance: {
+            ...configForm.balance,
+            [name]: value
+          }
+        });
+      case 'claim':
+        setConfigForm({
+          ...configForm,
+          claim: {
+            ...configForm.claim,
+            [name]: value
+          }
+        });
+        break;
+      case 'root':
+        setConfigForm({
+          ...configForm,
+          [name]: value
+        });
+        break;
+    }
   }
 
   return {

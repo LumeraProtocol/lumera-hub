@@ -1,13 +1,11 @@
-// app/api/snag/stake-verify/route.ts
+// app/api/snag/balance-verify/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import dayjs from 'dayjs';
 
 import * as instance from '@/utils/api-server';
 import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
-import { SnagTransaction } from '@/entities/SnagTransaction';
 import client from '@/lib/snag';
 
 export async function POST(req: NextRequest) {
@@ -34,36 +32,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!body?.txHash) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Transaction is required!',
-        },
-        { status: 400 }
-      );
-    }
-
     const dataSource = await getDataSource();
     const snagUserRepo = dataSource.getRepository(SnagUser);
     const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
-    const snagTransactionRepo = dataSource.getRepository(SnagTransaction);
-
-    const transaction = await snagTransactionRepo
-      .createQueryBuilder()
-      .select('txHash')
-      .where('txHash = :txHash', { txHash: body.txHash })
-      .getRawOne();
-
-    if (transaction?.txHash) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'This tx hash has already been used. Please use a different one.',
-        },
-        { status: 400 }
-      );
-    }
 
     const user = await snagUserRepo.createQueryBuilder()
       .select('snagAddress, lumeraAddress, userId')
@@ -110,40 +81,30 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const { data } = await instance.getExternal(`${config.urlCheck}${body.txHash}`);
-    const txResponses = data?.tx_response;
-    if (!txResponses?.txhash) {
+    const { data } = await instance.getExternal(`${config.urlCheck}${user.lumeraAddress}`);
+    const balances = data?.balances;
+    if (!balances?.length) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Transaction not found!',
+          error: 'Balance not found!',
         },
         { status: 400 }
       );
     }
 
-    const message = txResponses.tx.body.messages[0];
-    if (
-      dayjs(loyaltyRule.startTime).valueOf() <= dayjs(txResponses.timestamp).valueOf() ||
-      (loyaltyRule.endTime && dayjs(loyaltyRule.endTime).valueOf() >= dayjs(txResponses.timestamp).valueOf()) ||
-      message?.["@type"] !== "/cosmos.staking.v1beta1.MsgDelegate" ||
-      message?.validator_address !== config.staked.validator ||
-      message?.delegator_address !== user.lumeraAddress
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid transaction. Please use a different one.',
-        },
-        { status: 400 }
-      );
+    let totalBalances = 0;
+    for (const item of balances) {
+      if (item.denom === 'ulume') {
+        totalBalances += Number(item.amount);
+      }
     }
 
-    if ( Number(message?.amount.amount) < Number(config.staked.amount)) {
+    if (totalBalances < Number(config.balance.amount) / 1000000) {
       return NextResponse.json(
         {
           success: false,
-          error: `The staked amount is less than the minimum requirement.`,
+          error: 'The amount is less than the minimum requirement!',
         },
         { status: 400 }
       );
@@ -153,12 +114,6 @@ export async function POST(req: NextRequest) {
       body: {
         userId: user.userId,
       },
-    });
-
-    await snagTransactionRepo.save({
-      txHash: txResponses?.txhash,
-      loyaltyRuleId,
-      userId: user.userId,
     });
 
     return NextResponse.json({

@@ -1,4 +1,5 @@
 // app/api/snag/save-loyalty-rule-config/route.ts
+
 import { NextResponse, NextRequest } from 'next/server';
 
 import { getDataSource } from '@/lib/data-source';

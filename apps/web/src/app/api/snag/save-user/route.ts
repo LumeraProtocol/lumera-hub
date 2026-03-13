@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/api/snag/users/route.ts
+// app/api/snag/save-user/route.ts
+
 import { NextResponse, NextRequest } from 'next/server';
 
 import client from '@/lib/snag';

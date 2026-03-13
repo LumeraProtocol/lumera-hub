@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/api/admin/trackings/get-hub-summary/route.ts
+// app/api/admin/trackings/sync-loyalty-rules/route.ts
 
 import { NextResponse, NextRequest } from 'next/server';
 
@@ -44,7 +44,6 @@ export async function GET(req: NextRequest) {
             metadata: JSON.stringify(item.metadata),
             dappDeployedWithin: item.dappDeployedWithin,
             dappDataWindow: item.dappDataWindow,
-            config: '',
             sprintID,
           });
         }
