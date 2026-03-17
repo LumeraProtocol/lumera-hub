@@ -64,14 +64,18 @@ export function ConnectWallet() {
   }, []);
 
   const handleDesconnect = () => {
-    disconnect();
-    dispatch(setAddress({
-      address: '',
-    }));
-    dispatch(setConnected({
-      status: false,
-    }));
-    sessionStorage.removeItem('new_connect');
+    try {
+      disconnect();
+      dispatch(setAddress({
+        address: '',
+      }));
+      dispatch(setConnected({
+        status: false,
+      }));
+      sessionStorage.removeItem('new_connect');
+    } catch {
+      // noop
+    }
   }
 
   const handleCopyAddress = () => {

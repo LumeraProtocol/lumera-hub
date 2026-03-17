@@ -45,7 +45,9 @@ const useSnag = () => {
   const params = useParams();
   const [isLoading, setLoading] = useState(false);
   const [isConfigLoading, setConfigLoading] = useState(false);
-  const [isSyncthing, setSyncthing] = useState(false);
+  const [isSyncing, setSyncing] = useState(false);
+  const [isCurrencySyncing, setCurrencySyncing] = useState(false);
+  const [isSectionSyncing, setSectionSyncing] = useState(false);
   const [loyaltyRules, setLoyaltyRules] = useState<SnagLoyalty[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [open, setOpen] = useState(false);
@@ -87,25 +89,45 @@ const useSnag = () => {
   }
 
   const syncLoyaltyRules = async () => {
-    setSyncthing(true);
+    setSyncing(true);
     try {
       await instance.getExternal(`/api/snag/sync-loyalty-rules?sprintID=${params.sprintID}`);
       fetchLoyaltyRules();
     } catch (error) {
       console.error(error);
     }
-    setSyncthing(false);
+    setSyncing(false);
+  }
+
+  const syncLoyaltyCurrencies = async () => {
+    setCurrencySyncing(true);
+    try {
+      await instance.getExternal('/api/snag/sync-loyalty-currencies');
+    } catch (error) {
+      console.error(error);
+    }
+    setCurrencySyncing(false);
+  }
+
+  const syncLoyaltySections = async () => {
+    setSectionSyncing(true);
+    try {
+      await instance.getExternal('/api/snag/sync-loyalty-section');
+    } catch (error) {
+      console.error(error);
+    }
+    setSectionSyncing(false);
   }
 
   const deleteLoyaltyRules = async () => {
-    setSyncthing(true);
+    setSyncing(true);
     try {
       await instance.removeExternal("/api/snag/remove-loyalty-rules", {});
       fetchLoyaltyRules();
     } catch (error) {
       console.error(error);
     }
-    setSyncthing(false);
+    setSyncing(false);
   }
 
   useEffect(() => {
@@ -464,13 +486,18 @@ const useSnag = () => {
     open,
     isLoading,
     loyaltyRules,
-    isSyncthing,
+    isSyncing,
     totalPages,
     selectedLoyalty,
     actionType,
     configForm,
     isConfigLoading,
     message,
+    isCurrencySyncing,
+    isSectionSyncing,
+    sprintID: params.sprintID,
+    syncLoyaltySections,
+    syncLoyaltyCurrencies,
     deleteLoyaltyRules,
     handleInputChange,
     handleActionTypeChange,

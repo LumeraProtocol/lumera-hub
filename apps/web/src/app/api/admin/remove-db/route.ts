@@ -15,7 +15,6 @@ export async function GET() {
 
       const filePath = path.join(backupsDir, file);
       await fs.unlink(filePath);
-      console.log(`Deleted old file: ${file}`);
       cleanedCount++;
     }
 

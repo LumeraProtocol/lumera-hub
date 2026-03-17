@@ -39,6 +39,9 @@ export const DashboardScreen = ({
             <AppButton onClick={() => onRedirect('/admin/campaigns/sprints/season-2')}>
               Campaigns
             </AppButton>
+            <AppButton onClick={() => onRedirect('/admin/campaigns/sprints/season-2/create')}>
+              Create Loyalty Rule
+            </AppButton>
           </div>
         </div>
       </Card>

@@ -155,3 +155,38 @@ const DateTimePicker = () => {
 };
 
 export default DateTimePicker;
+
+interface IFullDateTimesPicker {
+  defaultValue?: Date | null;
+  dateFormat?: string;
+  onDateChange?: (date: Date | null) => void;
+};
+
+export const FullDateTimesPicker = ({
+  defaultValue,
+  dateFormat = 'MM/dd/yyyy HH:mm',
+  onDateChange,
+}: IFullDateTimesPicker) => {
+  const [selectedDateTime, setSelectedDateTime] = useState<Date | null>(defaultValue || new Date());
+
+  const handleDateTimeChange = (date: Date | null) => {
+    setSelectedDateTime(date);
+    if (onDateChange) {
+      onDateChange(date);
+    }
+  }
+
+  return (
+    <div className="datepicker-wrapper popover">
+      <DatePicker
+        selected={selectedDateTime}
+        onChange={handleDateTimeChange}
+        timeInputLabel="Time:"
+        className="border border-gray-700 rounded-lg px-4 py-2"
+        minDate={new Date()}
+        dateFormat={dateFormat}
+        showTimeInput
+      />
+    </div>
+  )
+}

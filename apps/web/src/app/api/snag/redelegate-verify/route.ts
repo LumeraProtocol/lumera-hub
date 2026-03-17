@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
       status: true,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return NextResponse.json({
       error: (error as Error).message,
     }, {

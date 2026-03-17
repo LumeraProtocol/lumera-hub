@@ -71,4 +71,13 @@ export class SnagLoyalty {
 
   @Column({ type: "varchar", length: 25, nullable: true })
   sprintID?: string;
+
+  @Column({ type: "varchar", length: 50, nullable: true })
+  loyaltyRuleGroupId?: string;
+
+  @Column({ type: "varchar", length: 50, nullable: true })
+  loyaltyCurrencyId?: string;
+
+  @Column({ type: "varchar", length: 25, nullable: true })
+  claimType?: string;
 }
