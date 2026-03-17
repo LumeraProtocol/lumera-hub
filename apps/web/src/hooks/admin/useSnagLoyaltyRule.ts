@@ -685,7 +685,7 @@ const useSnagLoyaltyRule = () => {
     try {
       const { data } = await instance.getExternal('/api/snag/get-loyalty-currencies');
       setCurrencies(data.currencies);
-      if (data.currencies?.length) {
+      if (data.currencies?.length && !params?.loyaltyRuleId) {
         setLoyaltyRuleForm({
           ...loyaltyRuleForm,
           loyaltyCurrencyId: data.currencies[0].id,
@@ -702,7 +702,7 @@ const useSnagLoyaltyRule = () => {
     try {
       const { data } = await instance.getExternal('/api/snag/get-loyalty-sections');
       setSections(data.sections);
-      if (data.sections?.length) {
+      if (data.sections?.length && !params?.loyaltyRuleId) {
         setLoyaltyRuleForm({
           ...loyaltyRuleForm,
           loyaltyRuleGroupId: data.sections[0].id,
