@@ -517,7 +517,7 @@ export const SnagScreen = () => {
             </li>
             <li className='mb-1'>
               <div className="flex gap-2">
-                <span>Amount:</span> <span>{formatNumber(obj?.staked?.amount || '0', { decimalsLength: 0 })}</span>
+                <span>Amount:</span> <span>{formatNumber(obj?.staked?.amount || '0', { decimalsLength: 2 })} LUME</span>
               </div>
             </li>
             <li className='mb-1'>
@@ -562,7 +562,7 @@ export const SnagScreen = () => {
             </li>
             <li className='mb-1'>
               <div className="flex gap-2">
-                <span>Amount:</span> <span>{formatNumber(obj?.balance?.amount || '0', { decimalsLength: 0 })}</span>
+                <span>Amount:</span> <span>{formatNumber(obj?.balance?.amount || '0', { decimalsLength: 2 })} LUME</span>
               </div>
             </li>
             <li className='mb-1'>
