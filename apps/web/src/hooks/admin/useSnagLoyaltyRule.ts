@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 
@@ -86,6 +86,7 @@ type TMessage = {
 
 const useSnagLoyaltyRule = () => {
   const params = useParams();
+  const router = useRouter();
   const [isLoading, setLoading] = useState(false);
   const [actionType, setActionType] = useState('');
   const [loyaltyRuleForm, setLoyaltyRuleForm] = useState({
@@ -348,7 +349,7 @@ const useSnagLoyaltyRule = () => {
     }
     setLoading(true);
     try {
-      const { data } = await instance.postExternal('/api/snag/create-loyalty-rule', {
+      await instance.postExternal('/api/snag/create-loyalty-rule', {
         config: JSON.stringify({
           ...configForm,
           actionType,
@@ -380,21 +381,12 @@ const useSnagLoyaltyRule = () => {
         actionType,
         sprintID: params.sprintID,
       });
+      router.push(`/admin/campaigns/sprints/${params.sprintID}`);
       toast.success('Loyalty Rule saved!', {
         position: "bottom-right",
         theme: "dark",
       });
-      if (data?.loyaltyRule) {
-        try {
-          const metadata = JSON.parse(data?.loyaltyRule.metadata);
-          setLoyaltyRuleForm({
-            ...loyaltyRuleForm,
-            metadata,
-          });
-        } catch {
-          // noop
-        }
-      }
+
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
         position: "bottom-right",

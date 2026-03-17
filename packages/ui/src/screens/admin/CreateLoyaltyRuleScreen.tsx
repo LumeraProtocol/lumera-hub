@@ -708,7 +708,7 @@ export const CreateLoyaltyRuleScreen = () => {
                 <div className=''>
                   <Select
                     id="network"
-                    value={actionType}
+                    value={configForm.network}
                     onValueChange={(val) => handleInputChange('root', 'network', val)}
                   >
                     <Select.Trigger width={'100%'} iconAfter={<ChevronDown className='w-4 h-4' />}>
