@@ -348,7 +348,7 @@ const useSnagLoyaltyRule = () => {
     }
     setLoading(true);
     try {
-      await instance.postExternal('/api/snag/create-loyalty-rule', {
+      const { data } = await instance.postExternal('/api/snag/create-loyalty-rule', {
         config: JSON.stringify({
           ...configForm,
           actionType,
@@ -383,7 +383,18 @@ const useSnagLoyaltyRule = () => {
       toast.success('Loyalty Rule saved!', {
         position: "bottom-right",
         theme: "dark",
-      })
+      });
+      if (data?.loyaltyRule) {
+        try {
+          const metadata = JSON.parse(data?.loyaltyRule.metadata);
+          setLoyaltyRuleForm({
+            ...loyaltyRuleForm,
+            metadata,
+          });
+        } catch {
+          // noop
+        }
+      }
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
         position: "bottom-right",
@@ -553,7 +564,7 @@ const useSnagLoyaltyRule = () => {
     }
     setLoading(true);
     try {
-      await instance.postExternal('/api/snag/update-loyalty-rule', {
+      const { data } = await instance.postExternal('/api/snag/update-loyalty-rule', {
         config: JSON.stringify({
           ...configForm,
           actionType,
@@ -589,7 +600,18 @@ const useSnagLoyaltyRule = () => {
       toast.success('Loyalty Rule saved!', {
         position: "bottom-right",
         theme: "dark",
-      })
+      });
+      if (data?.loyaltyRule) {
+        try {
+          const metadata = JSON.parse(data?.loyaltyRule.metadata);
+          setLoyaltyRuleForm({
+            ...loyaltyRuleForm,
+            metadata,
+          });
+        } catch {
+          // noop
+        }
+      }
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
         position: "bottom-right",

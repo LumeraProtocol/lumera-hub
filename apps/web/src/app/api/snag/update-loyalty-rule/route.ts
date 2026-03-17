@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
     loyaltyRuleId = loyalty.id;
     return NextResponse.json({
       status: true,
-      result: loyalty,
+      loyaltyRule: loyalty,
     });
   } catch (error: any) {
     return NextResponse.json({

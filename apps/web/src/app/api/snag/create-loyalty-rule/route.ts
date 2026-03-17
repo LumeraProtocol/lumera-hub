@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     await snagLoyaltyRepo.save([entity]);
     return NextResponse.json({
       status: true,
-      result,
+      loyaltyRule: loyalty,
     });
   } catch (error: any) {
     return NextResponse.json({
