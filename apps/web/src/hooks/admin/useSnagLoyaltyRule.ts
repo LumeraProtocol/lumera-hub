@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 
@@ -50,6 +50,29 @@ export const NETWORK = [
   },
 ];
 
+export const CONDITION = [
+  {
+    value: '>=',
+    label: '>=',
+  },
+  {
+    value: '>',
+    label: '>',
+  },
+  {
+    value: '<=',
+    label: '<=',
+  },
+  {
+    value: '<',
+    label: '<',
+  },
+  {
+    value: '=',
+    label: '=',
+  },
+];
+
 const URL_CHECK = {
   mainnet: {
     domain: 'https://hub.lumera.io/',
@@ -86,6 +109,7 @@ type TMessage = {
 
 const useSnagLoyaltyRule = () => {
   const params = useParams();
+  const router = useRouter();
   const [isLoading, setLoading] = useState(false);
   const [actionType, setActionType] = useState('');
   const [loyaltyRuleForm, setLoyaltyRuleForm] = useState({
@@ -113,6 +137,7 @@ const useSnagLoyaltyRule = () => {
     domain: '',
     urlCheck: '',
     network: '',
+    condition: CONDITION[0].value,
     staked: {
       validator: '',
       amount: '0',
@@ -175,6 +200,7 @@ const useSnagLoyaltyRule = () => {
         setConfigForm({
           domain: config.domain,
           network: config.network,
+          condition: config.condition || CONDITION[0].value,
           urlCheck: config.urlCheck,
           staked: config.staked,
           delegate: config.delegate,
@@ -309,10 +335,10 @@ const useSnagLoyaltyRule = () => {
               stakedValidator: 'Validator is required.',
             }));
           }
-          if (Number(configForm.staked.amount) <= 0) {
+          if (Number(configForm.staked.amount) <= 0 || !configForm.condition) {
             setMessages(prev => ({
               ...prev,
-              stakedAmount: 'Amount is required.',
+              stakedAmount: 'Condition is required.',
             }));
           }
         break;
@@ -325,10 +351,10 @@ const useSnagLoyaltyRule = () => {
           }
         break;
         case 'balance':
-          if (Number(configForm.balance.amount) <= 0) {
+          if (Number(configForm.balance.amount) <= 0 || !configForm.condition) {
             setMessages(prev => ({
               ...prev,
-              balanceAmount: 'Amount is required.',
+              balanceAmount: 'Condition is required.',
             }));
           }
         break;
@@ -380,10 +406,12 @@ const useSnagLoyaltyRule = () => {
         actionType,
         sprintID: params.sprintID,
       });
+      router.push(`/admin/campaigns/sprints/${params.sprintID}`);
       toast.success('Loyalty Rule saved!', {
         position: "bottom-right",
         theme: "dark",
-      })
+      });
+
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
         position: "bottom-right",
@@ -514,10 +542,10 @@ const useSnagLoyaltyRule = () => {
               stakedValidator: 'Validator is required.',
             }));
           }
-          if (Number(configForm.staked.amount) <= 0) {
+          if (Number(configForm.staked.amount) <= 0 || !configForm.condition) {
             setMessages(prev => ({
               ...prev,
-              stakedAmount: 'Amount is required.',
+              stakedAmount: 'Condition is required.',
             }));
           }
         break;
@@ -530,10 +558,10 @@ const useSnagLoyaltyRule = () => {
           }
         break;
         case 'balance':
-          if (Number(configForm.balance.amount) <= 0) {
+          if (Number(configForm.balance.amount) <= 0 || !configForm.condition) {
             setMessages(prev => ({
               ...prev,
-              balanceAmount: 'Amount is required.',
+              balanceAmount: 'Condition is required.',
             }));
           }
         break;
@@ -553,7 +581,7 @@ const useSnagLoyaltyRule = () => {
     }
     setLoading(true);
     try {
-      await instance.postExternal('/api/snag/update-loyalty-rule', {
+      const { data } = await instance.postExternal('/api/snag/update-loyalty-rule', {
         config: JSON.stringify({
           ...configForm,
           actionType,
@@ -589,7 +617,18 @@ const useSnagLoyaltyRule = () => {
       toast.success('Loyalty Rule saved!', {
         position: "bottom-right",
         theme: "dark",
-      })
+      });
+      if (data?.loyaltyRule) {
+        try {
+          const metadata = JSON.parse(data?.loyaltyRule.metadata);
+          setLoyaltyRuleForm({
+            ...loyaltyRuleForm,
+            metadata,
+          });
+        } catch {
+          // noop
+        }
+      }
     } catch (error) {
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
         position: "bottom-right",
@@ -685,7 +724,7 @@ const useSnagLoyaltyRule = () => {
     try {
       const { data } = await instance.getExternal('/api/snag/get-loyalty-currencies');
       setCurrencies(data.currencies);
-      if (data.currencies?.length) {
+      if (data.currencies?.length && !params?.loyaltyRuleId) {
         setLoyaltyRuleForm({
           ...loyaltyRuleForm,
           loyaltyCurrencyId: data.currencies[0].id,
@@ -702,7 +741,7 @@ const useSnagLoyaltyRule = () => {
     try {
       const { data } = await instance.getExternal('/api/snag/get-loyalty-sections');
       setSections(data.sections);
-      if (data.sections?.length) {
+      if (data.sections?.length && !params?.loyaltyRuleId) {
         setLoyaltyRuleForm({
           ...loyaltyRuleForm,
           loyaltyRuleGroupId: data.sections[0].id,

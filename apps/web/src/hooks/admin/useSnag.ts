@@ -27,10 +27,10 @@ export const ACTION_TYPE = [
     value: 'balance',
     label: 'Check balance',
   },
-  {
-    value: 'supernode',
-    label: 'Supernode',
-  },
+  // {
+  //   value: 'supernode',
+  //   label: 'Supernode',
+  // },
   {
     value: 'claim',
     label: 'Claim tokens',

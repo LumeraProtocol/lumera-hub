@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from 'react';
 import Image from 'next/image';
 import dayjs from 'dayjs';
+import { LogOut } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
 import { LoginScreen } from '@lumera-hub/ui/src/screens/admin/LoginScreen';
@@ -60,13 +61,18 @@ export default function AdminLayout({ children }: IAdminLayout) {
     );
   }
 
+  const handleDesconnect = () => {
+    localStorage.removeItem('adminUser');
+    location.href = '/admin';
+  }
+
   return (
     <div className="min-h-screen bg-lumera-navy text-white">
       {/* Content area */}
       <div className="relative z-10">
         {/* Top bar */}
         <div className="sticky top-0 !z-50 flex h-16 flex-shrink-0 bg-lumera-navy backdrop-blur-lg border-b border-gray-800">
-          <div className="flex flex-1 justify-between pl-0 pr-4 sm:px-6 lg:px-8">
+          <div className="flex flex-1 items-center justify-between pl-0 pr-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
               <AppLink href="/admin">
                 <Image src="/logo.svg" alt="Lumera" width={104} height={24} />
@@ -75,6 +81,9 @@ export default function AdminLayout({ children }: IAdminLayout) {
                 {viewTitle || VIEW_TITLES[activeView]}
               </h1>
             </div>
+            {isLogged ?
+              <button onClick={handleDesconnect} className='btn-logout'><LogOut className='w-4 h-4' /></button> : null
+            }
           </div>
         </div>
 
