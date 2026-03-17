@@ -20,7 +20,11 @@ import SectionTitle from '@/components/SectionTitle';
 import { FullDateTimesPicker } from '@/components/DateTimePicker';
 import AppLink from '@/components/AppLink';
 import { ACTION_TYPE } from '@/hooks/admin/useSnag';
-import useSnagLoyaltyRule, { LOYALTY_RULE_TYPE, FREQUENCE } from '@/hooks/admin/useSnagLoyaltyRule';
+import useSnagLoyaltyRule, {
+  LOYALTY_RULE_TYPE,
+  FREQUENCE,
+  NETWORK,
+} from '@/hooks/admin/useSnagLoyaltyRule';
 
 export const EditLoyaltyRuleScreen = () => {
   const {
@@ -662,7 +666,7 @@ export const EditLoyaltyRuleScreen = () => {
             <Card.Header padded>
               <SectionTitle className='mb-0'>Loyalty Rule Config</SectionTitle>
             </Card.Header>
-            <div className='p-5 pt-0 min-h-40'>
+            <div className='p-5 pt-0 min-h-80'>
               <div>
                 <Label htmlFor="actionType" className='text-base'>Action type *</Label>
                 <div className=''>
@@ -699,9 +703,45 @@ export const EditLoyaltyRuleScreen = () => {
                   }
                 </div>
               </div>
+              <div className='mt-1'>
+                <Label htmlFor="network" className='text-base'>Network *</Label>
+                <div className=''>
+                  <Select
+                    id="network"
+                    value={actionType}
+                    onValueChange={(val) => handleInputChange('root', 'network', val)}
+                  >
+                    <Select.Trigger width={'100%'} iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="N/A" />
+                    </Select.Trigger>
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {NETWORK?.map((item, index) => {
+                            return (
+                              <Select.Item
+                                key={index}
+                                index={index}
+                                value={item.value}
+                              >
+                                <Select.ItemText>
+                                  {item.label}
+                                </Select.ItemText>
+                              </Select.Item>
+                            )
+                          })}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                  {messages?.network ?
+                    <div className="text-red-500 mt-1 text-sm">{messages.network}</div> : null
+                  }
+                </div>
+              </div>
               {actionType && actionType !== 'connect' ?
                 <>
-                  <div className='mt-1'>
+                  <div className='mt-1 hidden'>
                     <Label htmlFor="domain" className='text-base'>Verify Domain *</Label>
                     <div className='input-wrapper'>
                       <Input
@@ -716,7 +756,7 @@ export const EditLoyaltyRuleScreen = () => {
                       }
                     </div>
                   </div>
-                  <div className='mt-1'>
+                  <div className='mt-1 hidden'>
                     <Label htmlFor="urlCheck" className='text-base'>URL Check *</Label>
                     <div className='input-wrapper'>
                       <Input

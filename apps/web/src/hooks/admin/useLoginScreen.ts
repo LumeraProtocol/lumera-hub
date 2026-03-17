@@ -45,6 +45,7 @@ const useLoginScreen = () => {
         });
       } else {
         setLogged(true);
+        localStorage.setItem('adminUser', 'true');
       }
       router.push('/admin');
     } catch (error) {
@@ -58,7 +59,7 @@ const useLoginScreen = () => {
   }
 
   useEffect(() => {
-    const adminLogined = sessionStorage.getItem('adminUser');
+    const adminLogined = localStorage.getItem('adminUser');
     if (adminLogined) {
       setLogged(true);
     }

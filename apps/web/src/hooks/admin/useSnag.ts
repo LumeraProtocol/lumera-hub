@@ -35,10 +35,6 @@ export const ACTION_TYPE = [
     value: 'claim',
     label: 'Claim tokens',
   },
-  {
-    value: 'connect',
-    label: 'Wallet connect',
-  },
 ];
 
 const useSnag = () => {

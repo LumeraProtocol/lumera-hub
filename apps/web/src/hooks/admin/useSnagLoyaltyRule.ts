@@ -35,6 +35,46 @@ export const FREQUENCE = [
   },
 ];
 
+export const NETWORK = [
+  {
+    value: '',
+    label: 'N/A',
+  },
+  {
+    value: 'mainnet',
+    label: 'Mainnet',
+  },
+  {
+    value: 'testnet',
+    label: 'Testnet',
+  },
+];
+
+const URL_CHECK = {
+  mainnet: {
+    domain: 'https://hub.lumera.io/',
+    urlCheck: {
+      staked: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
+      delegate: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
+      redelegated: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
+      balance: 'https://lcd.lumera.io/cosmos/bank/v1beta1/balances/',
+      supernode: 'https://lcd.lumera.io/cosmos/staking/v1beta1/validators?pagination.limit=1000',
+      claim: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
+    }
+  },
+  testnet: {
+    domain: 'https://hub.lumera.io/',
+    urlCheck: {
+      staked: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
+      delegate: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
+      redelegated: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
+      balance: 'https://lcd.testnet.lumera.io/cosmos/bank/v1beta1/balances/',
+      supernode: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/validators?pagination.limit=1000',
+      claim: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
+    }
+  }
+}
+
 type TData = {
   id: string;
   name: string;
@@ -72,6 +112,7 @@ const useSnagLoyaltyRule = () => {
   const [configForm, setConfigForm] = useState({
     domain: '',
     urlCheck: '',
+    network: '',
     staked: {
       validator: '',
       amount: '0',
@@ -108,7 +149,7 @@ const useSnagLoyaltyRule = () => {
           const range = metadata.range[0];
           startRange = `${range.startRange}+`;
         }
-        setLoyaltyRuleForm({
+        const newLoyaltyRuleForm = {
           name: loyaltyRule.name,
           description: loyaltyRule.description,
           type: loyaltyRule.type,
@@ -128,10 +169,12 @@ const useSnagLoyaltyRule = () => {
           loyaltyCurrencyId: loyaltyRule.loyaltyCurrencyId,
           claimType: loyaltyRule.claimType,
           startRange,
-        });
+        }
+        setLoyaltyRuleForm({ ...newLoyaltyRuleForm });
         setActionType(config.actionType)
         setConfigForm({
           domain: config.domain,
+          network: config.network,
           urlCheck: config.urlCheck,
           staked: config.staked,
           delegate: config.delegate,
@@ -225,6 +268,13 @@ const useSnagLoyaltyRule = () => {
       setMessages(prev => ({
         ...prev,
         actionType: 'Action type is required!',
+      }));
+      isValid = false;
+    }
+    if (!configForm.network) {
+      setMessages(prev => ({
+        ...prev,
+        network: 'Network type is required!',
       }));
       isValid = false;
     }
@@ -426,6 +476,14 @@ const useSnagLoyaltyRule = () => {
       isValid = false;
     }
 
+    if (!configForm.network) {
+      setMessages(prev => ({
+        ...prev,
+        network: 'Network type is required!',
+      }));
+      isValid = false;
+    }
+
     if (actionType) {
       if (actionType === 'connect') {
         if (!configForm.domain) {
@@ -582,6 +640,19 @@ const useSnagLoyaltyRule = () => {
           [name]: value,
         });
         break;
+    }
+
+    if (name === 'network') {
+      const selectedUrlCheck = URL_CHECK[value as keyof typeof URL_CHECK];
+      if (selectedUrlCheck && actionType) {
+        const currentUrlCheck = selectedUrlCheck.urlCheck;
+        const url = currentUrlCheck[actionType as keyof typeof currentUrlCheck];
+        setConfigForm(prev => ({
+          ...prev,
+          domain: selectedUrlCheck.domain,
+          urlCheck: url,
+        }));
+      }
     }
   }
 
