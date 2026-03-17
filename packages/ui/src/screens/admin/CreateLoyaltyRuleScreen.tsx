@@ -229,7 +229,7 @@ export const CreateLoyaltyRuleScreen = () => {
                     id="amount"
                     placeholder="Amount"
                     className='input has-symbol'
-                    value={configForm?.staked?.amount || '0'}
+                    value={configForm?.balance?.amount || '0'}
                     onChangeText={(newValue) => handleInputChange('balance', 'amount', newValue)}
                   />
                   <span className='input-symbol'>
