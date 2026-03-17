@@ -45,6 +45,7 @@ const useLoginScreen = () => {
         });
       } else {
         setLogged(true);
+        localStorage.setItem('adminUser', 'true');
       }
       router.push('/admin');
     } catch (error) {
