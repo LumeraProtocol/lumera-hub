@@ -138,16 +138,66 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    if ( Number(message?.amount.amount) < Number(config.staked.amount)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `The staked amount is less than the minimum requirement.`,
-        },
-        { status: 400 }
-      );
+    const configAmount =  Number(config.staked.amount) / 1000000;
+    switch (config.condition) {
+      case '>':
+        if ( Number(message?.amount.amount) <= configAmount) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `The staked amount is less the minimum requirement.`,
+            },
+            { status: 400 }
+          );
+        }
+        break;
+      case '<=':
+        if ( Number(message?.amount.amount) > configAmount) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `The staked amount is greater than the maximum requirement.`,
+            },
+            { status: 400 }
+          );
+        }
+        break;
+      case '<':
+        if ( Number(message?.amount.amount) >= configAmount) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `The staked amount is greater the maximum requirement.`,
+            },
+            { status: 400 }
+          );
+        }
+        break;
+      case '=':
+        if ( Number(message?.amount.amount) !== configAmount) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `The staked amount does not match the required.`,
+            },
+            { status: 400 }
+          );
+        }
+        break;
+      default:
+        if ( Number(message?.amount.amount) < configAmount) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `The staked amount is less than the minimum requirement.`,
+            },
+            { status: 400 }
+          );
+        }
+        break;
     }
+
+
 
     await client.post(`/api/loyalty/rules/${loyaltyRuleId}/complete`, {
       body: {

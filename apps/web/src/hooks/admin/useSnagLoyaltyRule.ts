@@ -50,6 +50,29 @@ export const NETWORK = [
   },
 ];
 
+export const CONDITION = [
+  {
+    value: '>=',
+    label: '>=',
+  },
+  {
+    value: '>',
+    label: '>',
+  },
+  {
+    value: '<=',
+    label: '<=',
+  },
+  {
+    value: '<',
+    label: '<',
+  },
+  {
+    value: '=',
+    label: '=',
+  },
+];
+
 const URL_CHECK = {
   mainnet: {
     domain: 'https://hub.lumera.io/',
@@ -114,6 +137,7 @@ const useSnagLoyaltyRule = () => {
     domain: '',
     urlCheck: '',
     network: '',
+    condition: CONDITION[0].value,
     staked: {
       validator: '',
       amount: '0',
@@ -176,6 +200,7 @@ const useSnagLoyaltyRule = () => {
         setConfigForm({
           domain: config.domain,
           network: config.network,
+          condition: config.condition || CONDITION[0].value,
           urlCheck: config.urlCheck,
           staked: config.staked,
           delegate: config.delegate,
@@ -310,10 +335,10 @@ const useSnagLoyaltyRule = () => {
               stakedValidator: 'Validator is required.',
             }));
           }
-          if (Number(configForm.staked.amount) <= 0) {
+          if (Number(configForm.staked.amount) <= 0 || !configForm.condition) {
             setMessages(prev => ({
               ...prev,
-              stakedAmount: 'Amount is required.',
+              stakedAmount: 'Condition is required.',
             }));
           }
         break;
@@ -326,10 +351,10 @@ const useSnagLoyaltyRule = () => {
           }
         break;
         case 'balance':
-          if (Number(configForm.balance.amount) <= 0) {
+          if (Number(configForm.balance.amount) <= 0 || !configForm.condition) {
             setMessages(prev => ({
               ...prev,
-              balanceAmount: 'Amount is required.',
+              balanceAmount: 'Condition is required.',
             }));
           }
         break;
@@ -517,10 +542,10 @@ const useSnagLoyaltyRule = () => {
               stakedValidator: 'Validator is required.',
             }));
           }
-          if (Number(configForm.staked.amount) <= 0) {
+          if (Number(configForm.staked.amount) <= 0 || !configForm.condition) {
             setMessages(prev => ({
               ...prev,
-              stakedAmount: 'Amount is required.',
+              stakedAmount: 'Condition is required.',
             }));
           }
         break;
@@ -533,10 +558,10 @@ const useSnagLoyaltyRule = () => {
           }
         break;
         case 'balance':
-          if (Number(configForm.balance.amount) <= 0) {
+          if (Number(configForm.balance.amount) <= 0 || !configForm.condition) {
             setMessages(prev => ({
               ...prev,
-              balanceAmount: 'Amount is required.',
+              balanceAmount: 'Condition is required.',
             }));
           }
         break;

@@ -100,14 +100,63 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (totalBalances < Number(config.balance.amount) / 1000000) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'The amount is less than the minimum requirement!',
-        },
-        { status: 400 }
-      );
+    const configAmount =  Number(config.staked.amount) / 1000000;
+    switch (config.condition) {
+      case '>':
+        if (totalBalances <= configAmount) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `The amount is less the minimum requirement.`,
+            },
+            { status: 400 }
+          );
+        }
+        break;
+      case '<=':
+        if (totalBalances > configAmount) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `The amount is greater than the maximum requirement.`,
+            },
+            { status: 400 }
+          );
+        }
+        break;
+      case '<':
+        if (totalBalances >= configAmount) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `The amount is greater the maximum requirement.`,
+            },
+            { status: 400 }
+          );
+        }
+        break;
+      case '=':
+        if (totalBalances !== configAmount) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `The amount does not match the required.`,
+            },
+            { status: 400 }
+          );
+        }
+        break;
+      default:
+        if (totalBalances < configAmount) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `The amount is less than the minimum requirement.`,
+            },
+            { status: 400 }
+          );
+        }
+        break;
     }
 
     await client.post(`/api/loyalty/rules/${loyaltyRuleId}/complete`, {
