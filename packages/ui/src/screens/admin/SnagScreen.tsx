@@ -21,7 +21,8 @@ import {
 import dayjs from 'dayjs';
 
 import { AppLoading } from '@/components/Loading';
-import AppButton from '@/components/AppButton';
+import AppButton, { AppLinkButton } from '@/components/AppButton';
+import AppLink from '@/components/AppLink';
 import SectionTitle from '@/components/SectionTitle';
 import useSnag, { ACTION_TYPE } from '@/hooks/admin/useSnag';
 import { formatNumber, formatAddress } from '@/utils/format';
@@ -33,7 +34,7 @@ type TLoyaltyRuleVerifyCheck = {
   isSplit?: boolean;
 }
 
-const LoyaltyRuleVerifyCheck = ({
+export const LoyaltyRuleVerifyCheck = ({
   loyaltyRule,
   className,
   isSplit = true,
@@ -169,13 +170,18 @@ export const SnagScreen = () => {
     open,
     isLoading,
     loyaltyRules,
-    isSyncthing,
+    isSyncing,
     totalPages,
     selectedLoyalty,
     actionType,
     configForm,
     message,
     isConfigLoading,
+    isCurrencySyncing,
+    isSectionSyncing,
+    sprintID,
+    syncLoyaltySections,
+    syncLoyaltyCurrencies,
     deleteLoyaltyRules,
     handleInputChange,
     handleSaveConfig,
@@ -452,7 +458,7 @@ export const SnagScreen = () => {
                   <div className="text-lumera-teal mt-4">{message.content}</div> : null
                 }
                 <div className="mt-4 flex justify-end">
-                  <AppButton disabled={isSyncthing} onClick={handleSaveConfig}>
+                  <AppButton disabled={isConfigLoading} onClick={handleSaveConfig}>
                     Save
                   </AppButton>
                 </div>
@@ -783,15 +789,34 @@ export const SnagScreen = () => {
           <div>
             <Card.Header padded>
               <div className='flex justify-end gap-3 w-full'>
+                <AppLinkButton
+                  href="/admin/campaigns/sprints/season-2/create"
+                >
+                  <span>Create Loyalty Rule</span>
+                </AppLinkButton>
                 <AppButton
-                  disabled={isSyncthing}
+                  disabled={isSyncing}
                   className='disabled:opacity-45'
                   onClick={syncLoyaltyRules}
                 >
                   <span>Sync Loyalty Rules</span>
                 </AppButton>
                 <AppButton
-                  disabled={isSyncthing}
+                  disabled={isCurrencySyncing}
+                  className='disabled:opacity-45'
+                  onClick={syncLoyaltyCurrencies}
+                >
+                  <span>Sync Loyalty Currencies</span>
+                </AppButton>
+                <AppButton
+                  disabled={isSectionSyncing}
+                  className='disabled:opacity-45'
+                  onClick={syncLoyaltySections}
+                >
+                  <span>Sync Loyalty Sections</span>
+                </AppButton>
+                <AppButton
+                  disabled={isSyncing}
                   className='disabled:opacity-45'
                   onClick={deleteLoyaltyRules}
                   variant='third'
@@ -853,12 +878,9 @@ export const SnagScreen = () => {
                                 {renderConfig(loyaltyRule?.config)}
                               </td>
                               <td className='px-2 py-3'>
-                                <AppButton
-                                  className="!py-1.5 !px-4 !text-sm !font-normal"
-                                  onClick={() => handleSelectedLoyalty(loyaltyRule)}
-                                >
+                                <AppLink href={`/admin/campaigns/sprints/${sprintID}/${loyaltyRule.id}`}>
                                   <PencilLine className='w-4 h-4' />
-                                </AppButton>
+                                </AppLink>
                               </td>
                             </tr>
                           ))}

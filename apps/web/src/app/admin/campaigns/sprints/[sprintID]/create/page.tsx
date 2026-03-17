@@ -5,24 +5,24 @@ import { useEffect } from "react";
 
 import { useDispatch } from '@/redux/hooks';
 import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
-import { SnagScreen } from '@lumera-hub/ui/src/screens/admin/SnagScreen';
+import { CreateLoyaltyRuleScreen } from '@lumera-hub/ui/src/screens/admin/CreateLoyaltyRuleScreen';
 
 export default function AdminDashboard() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    document.title = 'Loyalty Rules - Lumera Hub';
+    document.title = 'Create Rule - Lumera Hub';
     dispatch(setCurrentPath({
-      currentPath: '/admin/snag',
+      currentPath: '/admin/campaigns/create',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Loyalty Rules',
+      viewTitle: 'Create Rule',
     }));
   }, []);
 
   return (
     <div>
-      <SnagScreen />
+      <CreateLoyaltyRuleScreen />
     </div>
   );
 }

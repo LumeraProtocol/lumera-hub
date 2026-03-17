@@ -5,6 +5,7 @@ import { NextResponse, NextRequest } from 'next/server';
 
 import { getDataSource } from '@/lib/data-source';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
+import { SnagCurrency } from '@/entities/SnagCurrency';
 import client from '@/lib/snag';
 
 export async function GET(req: NextRequest) {
@@ -13,6 +14,7 @@ export async function GET(req: NextRequest) {
     const sprintID = searchParams.get("sprintID")?.trim() || "";
     const dataSource = await getDataSource();
     const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
+    const snagCurrencyRepo = dataSource.getRepository(SnagCurrency);
 
     let isContinue = true;
     let startingAfter = '';
@@ -56,7 +58,26 @@ export async function GET(req: NextRequest) {
       if (!loyaltyRules?.hasNextPage) {
         isContinue = false;
       }
-    } while (isContinue)
+    } while (isContinue);
+
+    if (process.env.SNAG_ORGANIZATION_ID && process.env.SNAG_WEBSITE_ID) {
+      const currenciesRes: any = await client.loyalty.currencies.list({
+        organizationId: process.env.SNAG_ORGANIZATION_ID,
+        websiteId: process.env.SNAG_WEBSITE_ID,
+      });
+      const currenciesData = currenciesRes?.data;
+      const entities = [];
+      for (const currency of currenciesData) {
+        entities.push({
+          id: currency.id,
+          name: currency.name,
+        });
+      }
+
+      if (entities?.length) {
+        await snagCurrencyRepo.save(entities);
+      }
+    }
 
     return NextResponse.json({
       success: true,

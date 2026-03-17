@@ -16,3 +16,5 @@ export * from "./RollingRetention";
 export * from "./SnagUser";
 export * from "./SnagLoyalty";
 export * from "./SnagTransaction";
+export * from "./SnagCurrency";
+export * from "./SnagSection";

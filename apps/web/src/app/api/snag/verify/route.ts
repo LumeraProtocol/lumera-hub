@@ -26,13 +26,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log('body', body);
     return NextResponse.json({
       status: true,
       body,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return NextResponse.json({
       error: (error as Error).message,
     }, {

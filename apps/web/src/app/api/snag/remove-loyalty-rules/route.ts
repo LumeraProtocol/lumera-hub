@@ -18,7 +18,7 @@ export async function DELETE(req: NextRequest) {
       body,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return NextResponse.json({
       error: (error as Error).message,
     }, {
