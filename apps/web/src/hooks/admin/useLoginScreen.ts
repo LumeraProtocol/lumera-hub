@@ -99,7 +99,8 @@ const useLoginScreen = () => {
       }));
       setMessage({
         type: 'wallet-error',
-        content: 'Wallet address is incorrect.',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        content: (error as any)?.error || 'Wallet address is incorrect.',
       });
     }
     setLoading(false);
