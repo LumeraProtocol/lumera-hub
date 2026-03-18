@@ -320,7 +320,12 @@ export const CreateLoyaltyRuleScreen = () => {
             <ChevronLeft className="w-5 h-5"/>Back to Loyalty Rules
           </AppLink>
           <div className='flex gap-3'>
-            <AppLinkButton href="/admin/campaigns/sprints/season-2/" variant='third'>Cancel</AppLinkButton>
+            <AppLink
+              href="/admin/campaigns/sprints/season-2/"
+              className='!px-4 !py-2 !rounded-lg font-normal bg-lumera-red text-white hover:bg-lumera-red-light'
+            >
+              Cancel
+            </AppLink>
             <AppButton
               onClick={createLoyaltyRule}
               disabled={isLoading}

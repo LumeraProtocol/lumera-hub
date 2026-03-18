@@ -135,7 +135,7 @@ const useSnag = () => {
   }
 
   const deleteLoyaltyRule = async (id: string) => {
-    if (!window.confirm("All loyalty progress and configurations will be removed. You will need to re-sync and re-configure all quests")) {
+    if (!window.confirm("This loyalty progress and configurations will be removed. You will need to re-sync and re-configure this quests")) {
       return;
     }
     setDeleting(true);
