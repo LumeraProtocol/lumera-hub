@@ -39,6 +39,12 @@ export async function POST(req: NextRequest) {
         case 'claim':
           prefix = '/claim';
           break;
+        case 'supernode':
+          prefix = '/supernode';
+          break;
+        case 'send':
+          prefix = '/send';
+          break;
       }
       if (body.actionType === 'connect') {
         return config.domain;

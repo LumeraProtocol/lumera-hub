@@ -27,13 +27,17 @@ export const ACTION_TYPE = [
     value: 'balance',
     label: 'Check balance',
   },
-  // {
-  //   value: 'supernode',
-  //   label: 'Supernode',
-  // },
+  {
+    value: 'supernode',
+    label: 'Supernode',
+  },
   {
     value: 'claim',
     label: 'Claim tokens',
+  },
+  {
+    value: 'send',
+    label: 'Send A Transaction',
   },
 ];
 
@@ -44,6 +48,7 @@ const useSnag = () => {
   const [isSyncing, setSyncing] = useState(false);
   const [isCurrencySyncing, setCurrencySyncing] = useState(false);
   const [isSectionSyncing, setSectionSyncing] = useState(false);
+  const [isDeleting, setDeleting] = useState(false);
   const [loyaltyRules, setLoyaltyRules] = useState<SnagLoyalty[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [open, setOpen] = useState(false);
@@ -116,6 +121,9 @@ const useSnag = () => {
   }
 
   const deleteLoyaltyRules = async () => {
+    if (!window.confirm("All loyalty progress and configurations will be removed. You will need to re-sync and re-configure all quests")) {
+      return;
+    }
     setSyncing(true);
     try {
       await instance.removeExternal("/api/snag/remove-loyalty-rules", {});
@@ -126,8 +134,31 @@ const useSnag = () => {
     setSyncing(false);
   }
 
+  const deleteLoyaltyRule = async (id: string) => {
+    if (!window.confirm("All loyalty progress and configurations will be removed. You will need to re-sync and re-configure all quests")) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await instance.removeExternal("/api/snag/remove-loyalty-rule", {
+        id,
+      });
+      fetchLoyaltyRules();
+    } catch (error) {
+      console.error(error);
+    }
+    setDeleting(false);
+  }
+
+  const initData = async () => {
+    setLoading(true);
+    await syncLoyaltyCurrencies();
+    await syncLoyaltySections();
+    await fetchLoyaltyRules();
+  }
+
   useEffect(() => {
-    fetchLoyaltyRules();
+    initData();
   }, []);
 
   const handlePageClick = ({ selected }: { selected: number }) => {
@@ -315,6 +346,9 @@ const useSnag = () => {
       case 'claim':
         prefix = '/claim';
         break;
+      case 'supernode':
+        prefix = '/supernode';
+        break;
     }
     if (actionType === 'connect') {
       return config.domain;
@@ -491,6 +525,7 @@ const useSnag = () => {
     message,
     isCurrencySyncing,
     isSectionSyncing,
+    isDeleting,
     sprintID: params.sprintID,
     syncLoyaltySections,
     syncLoyaltyCurrencies,
@@ -502,6 +537,7 @@ const useSnag = () => {
     handleCloseModal,
     handleSelectedLoyalty,
     handleSaveConfig,
+    deleteLoyaltyRule,
   }
 }
 

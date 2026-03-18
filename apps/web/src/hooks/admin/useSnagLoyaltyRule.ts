@@ -81,8 +81,10 @@ const URL_CHECK = {
       delegate: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
       redelegated: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
       balance: 'https://lcd.lumera.io/cosmos/bank/v1beta1/balances/',
-      supernode: 'https://lcd.lumera.io/cosmos/staking/v1beta1/validators?pagination.limit=1000',
+      supernode: 'https://snscope.lumera.io/v1/supernodes/metrics?status=any&minFailedProbeCounter=0&limit=200',
+      supernodeValidator: 'https://lcd.lumera.io/cosmos/staking/v1beta1/validators?pagination.limit=1000',
       claim: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
+      send: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
     }
   },
   testnet: {
@@ -92,8 +94,10 @@ const URL_CHECK = {
       delegate: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
       redelegated: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
       balance: 'https://lcd.testnet.lumera.io/cosmos/bank/v1beta1/balances/',
-      supernode: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/validators?pagination.limit=1000',
+      supernode: 'https://snscope.testnet.lumera.io/v1/supernodes/metrics?status=any&minFailedProbeCounter=0&limit=200',
+      supernodeValidator: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/validators?pagination.limit=1000',
       claim: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
+      send: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
     }
   }
 }
@@ -151,6 +155,10 @@ const useSnagLoyaltyRule = () => {
     claim: {
       validator: '',
     },
+    supernode: {
+      days: '',
+      validatorUrl: '',
+    },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
   const [currencies, setCurrencies] = useState<TData[]>([]);
@@ -206,6 +214,7 @@ const useSnagLoyaltyRule = () => {
           delegate: config.delegate,
           balance: config.balance,
           claim: config.claim,
+          supernode: config.supernode,
         });
       }
     } catch (error) {
@@ -362,7 +371,15 @@ const useSnagLoyaltyRule = () => {
           if (!configForm.claim.validator) {
             setMessages(prev => ({
               ...prev,
-              bclaimValidator: 'From Address is required.',
+              claim: 'From Address is required.',
+            }));
+          }
+        break;
+        case 'supernode':
+          if (!configForm.supernode.days || Number(configForm.supernode.days) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              supernode: 'Condition is required.',
             }));
           }
         break;
@@ -573,6 +590,14 @@ const useSnagLoyaltyRule = () => {
             }));
           }
         break;
+        case 'supernode':
+          if (!configForm.supernode.days || Number(configForm.supernode.days) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              supernode: 'Condition is required.',
+            }));
+          }
+        break;
       }
     }
 
@@ -665,6 +690,15 @@ const useSnagLoyaltyRule = () => {
           },
         });
         break;
+      case 'supernode':
+        setConfigForm({
+          ...configForm,
+          supernode: {
+            ...configForm.supernode,
+            [name]: value,
+          },
+        });
+        break;
       case 'claim':
         setConfigForm({
           ...configForm,
@@ -691,6 +725,20 @@ const useSnagLoyaltyRule = () => {
           domain: selectedUrlCheck.domain,
           urlCheck: url,
         }));
+      }
+
+      if (actionType === 'supernode') {
+        const selectedUrlCheck = URL_CHECK[value as keyof typeof URL_CHECK];
+        if (selectedUrlCheck) {
+          const currentUrlCheck = selectedUrlCheck.urlCheck;
+          setConfigForm(prev => ({
+            ...prev,
+            supernode: {
+              ...prev.supernode,
+              validatorUrl: currentUrlCheck.supernodeValidator,
+            }
+          }));
+        }
       }
     }
   }
