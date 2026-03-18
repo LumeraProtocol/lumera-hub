@@ -615,14 +615,14 @@ export const SnagScreen = () => {
                 <AppLinkButton
                   href="/admin/campaigns/sprints/season-2/create"
                 >
-                  <span>Create Loyalty Quests</span>
+                  <span>Create Quest</span>
                 </AppLinkButton>
                 <AppButton
                   disabled={isSyncing}
                   className='disabled:opacity-45'
                   onClick={syncLoyaltyRules}
                 >
-                  <span>Sync Loyalty Quests</span>
+                  <span>Sync Quests</span>
                 </AppButton>
                 <AppButton
                   disabled={isSyncing}
@@ -630,7 +630,7 @@ export const SnagScreen = () => {
                   onClick={deleteLoyaltyRules}
                   variant='third'
                 >
-                  <span>Remove All Loyalty</span>
+                  <span>Remove All Quests</span>
                 </AppButton>
               </div>
             </Card.Header>

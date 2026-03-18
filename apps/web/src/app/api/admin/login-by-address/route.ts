@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
           success: false,
           error: 'Access denied.',
         },
-        { status: 500 }
+        { status: 401 }
       );
     } else {
       await repo.save({

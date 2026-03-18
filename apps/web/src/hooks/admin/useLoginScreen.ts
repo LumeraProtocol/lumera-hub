@@ -4,13 +4,15 @@ import { useChain } from '@interchain-kit/react';
 
 import * as instance from '@/utils/api';
 import { CHAIN_NAME } from '@/contants/network';
-import { useDispatch } from '@/redux/hooks';
+import { useDispatch, useSelector } from '@/redux/hooks';
 import { setAddress, setConnected } from '@/redux/wallet.slice';
+import { setLoginStatus } from '@/redux/admin.slice';
 
 const useLoginScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const { address, disconnect } = useChain(CHAIN_NAME);
+  const { isLogged } = useSelector((state) => state.admin);
   const [isLoading, setLoading] = useState(false);
   const [message, setMessage] = useState({
     type: '',
@@ -20,7 +22,6 @@ const useLoginScreen = () => {
     email: '',
     password: '',
   });
-  const [isLogged, setLogged] = useState(false);
 
   const handleLogin = async () => {
     setMessage({
@@ -54,7 +55,9 @@ const useLoginScreen = () => {
           content: data.message,
         });
       } else {
-        setLogged(true);
+        dispatch(setLoginStatus({
+          isLogged: true,
+        }));
         localStorage.setItem('adminUser', data.token);
       }
       router.push('/admin');
@@ -81,27 +84,23 @@ const useLoginScreen = () => {
       if (!data.success) {
         setMessage({
           type: 'wallet-error',
-          content: data.message,
+          content: data?.message || data?.error,
         });
       } else {
-        setLogged(true);
+        dispatch(setLoginStatus({
+          isLogged: true,
+        }));
         localStorage.setItem('adminUser', data.token);
       }
       router.push('/admin');
     } catch (error) {
       console.error(error);
-      disconnect();
-      dispatch(setAddress({
-        address: '',
-      }));
-      dispatch(setConnected({
-        status: false,
-      }));
       setMessage({
         type: 'wallet-error',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         content: (error as any)?.error || 'Wallet address is incorrect.',
       });
+      router.push('/');
     }
     setLoading(false);
   }
@@ -109,7 +108,9 @@ const useLoginScreen = () => {
   useEffect(() => {
     const adminLogined = localStorage.getItem('adminUser');
     if (adminLogined) {
-      setLogged(true);
+      dispatch(setLoginStatus({
+        isLogged: true,
+      }));
     }
   }, []);
 

@@ -46,7 +46,7 @@ export const LoginScreen = ({
               containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
             />
             <div className='p-5 min-w-[80vw] sm:min-w-xl'>
-              <div>
+              <div className=''>
                 <div>
                   <Label htmlFor="email" className='!text-base'>Email</Label>
                   <div className='input-wrapper mt-1'>

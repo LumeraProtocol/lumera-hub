@@ -15,6 +15,7 @@ import useLoginScreen from '@/hooks/admin/useLoginScreen';
 import * as admin from '@/redux/admin.slice';
 import { CHAIN_NAME } from '@/contants/network';
 import { setAddress, setConnected } from '@/redux/wallet.slice';
+import { setLoginStatus } from '@/redux/admin.slice';
 import { formatAddress } from '@/utils/format';
 import { ViewId, VIEW_TITLES } from '@/types';
 
@@ -77,6 +78,9 @@ export default function AdminLayout({ children }: IAdminLayout) {
       }));
       dispatch(setConnected({
         status: false,
+      }));
+      dispatch(setLoginStatus({
+        isLogged: false,
       }));
     }
     localStorage.removeItem('adminUser');
