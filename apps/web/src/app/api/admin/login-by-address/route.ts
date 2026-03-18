@@ -27,16 +27,15 @@ export async function POST(req: NextRequest) {
       .where('admin.walletAddress = :walletAddress', { walletAddress: body.address })
       .getRawOne();
 
-    let safeUser = user;
+    const safeUser = user;
     if (!user?.id) {
-      const hashedPassword = await bcrypt.hash(body.address, 12);
-      safeUser = await repo.save({
-        email: `${body.address}@domain.com`,
-        passwordHash: hashedPassword,
-        fullName: body.address,
-        isActive: true,
-        walletAddress: body.address,
-      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Access denied.',
+        },
+        { status: 500 }
+      );
     } else {
       await repo.save({
         id: user.id,
