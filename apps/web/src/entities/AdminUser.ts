@@ -17,6 +17,12 @@ export class AdminUser {
   @Column({ type: "varchar", length: 100, nullable: true })
   fullName?: string;
 
+  @Column({ type: "varchar", length: 100, nullable: true })
+  walletAddress?: string;
+
+  @Column({ type: "varchar", length: 20, nullable: true, default: 'admin' })
+  rule?: string;
+
   @Column({ type: "boolean", default: false })
   isActive!: boolean;
 

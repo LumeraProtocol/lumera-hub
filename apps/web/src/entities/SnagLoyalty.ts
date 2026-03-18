@@ -80,4 +80,7 @@ export class SnagLoyalty {
 
   @Column({ type: "varchar", length: 25, nullable: true })
   claimType?: string;
+
+  @Column({ type: "varchar", length: 1, nullable: true, default: 0 })
+  isDelete?: string;
 }

@@ -6,6 +6,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getDataSource } from '@/lib/data-source';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import { SnagCurrency } from '@/entities/SnagCurrency';
+import { SnagSection } from '@/entities/SnagSection';
 import client from '@/lib/snag';
 
 export async function GET(req: NextRequest) {
@@ -15,6 +16,11 @@ export async function GET(req: NextRequest) {
     const dataSource = await getDataSource();
     const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
     const snagCurrencyRepo = dataSource.getRepository(SnagCurrency);
+    const snagSectionRepo = dataSource.getRepository(SnagSection);
+
+    await snagLoyaltyRepo.createQueryBuilder().update().set({
+      isDelete: '1',
+    }).execute();
 
     let isContinue = true;
     let startingAfter = '';
@@ -47,6 +53,7 @@ export async function GET(req: NextRequest) {
             dappDeployedWithin: item.dappDeployedWithin,
             dappDataWindow: item.dappDataWindow,
             sprintID,
+            isDelete: '0',
           });
         }
         startingAfter = `&startingAfter=${loyaltyRulesData[loyaltyRulesData.length - 1].id}`;
@@ -60,7 +67,12 @@ export async function GET(req: NextRequest) {
       }
     } while (isContinue);
 
+    await snagLoyaltyRepo.createQueryBuilder().delete().where("isDelete = 1").execute();
+
     if (process.env.SNAG_ORGANIZATION_ID && process.env.SNAG_WEBSITE_ID) {
+      await snagCurrencyRepo.createQueryBuilder().delete().where("1 = 1").execute();
+      await snagSectionRepo.createQueryBuilder().delete().where("1 = 1").execute();
+
       const currenciesRes: any = await client.loyalty.currencies.list({
         organizationId: process.env.SNAG_ORGANIZATION_ID,
         websiteId: process.env.SNAG_WEBSITE_ID,
@@ -76,6 +88,20 @@ export async function GET(req: NextRequest) {
 
       if (entities?.length) {
         await snagCurrencyRepo.save(entities);
+      }
+
+      const sectionsRes: any = await client.loyalty.ruleGroups.getRuleGroups();
+      const sectionsData = sectionsRes?.data;
+      const sectionEntities = [];
+      for (const section of sectionsData) {
+        sectionEntities.push({
+          id: section.id,
+          name: section.name,
+        });
+      }
+
+      if (sectionEntities?.length) {
+        await snagSectionRepo.save(sectionEntities);
       }
     }
 

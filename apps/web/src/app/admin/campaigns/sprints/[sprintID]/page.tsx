@@ -11,12 +11,12 @@ export default function AdminDashboard() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    document.title = 'Loyalty Rules - Lumera Hub';
+    document.title = 'Loyalty Quests - Lumera Hub';
     dispatch(setCurrentPath({
       currentPath: '/admin/snag',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Loyalty Rules',
+      viewTitle: 'Loyalty Quests',
     }));
   }, []);
 
