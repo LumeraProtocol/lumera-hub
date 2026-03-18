@@ -16,6 +16,7 @@ import dayjs from 'dayjs';
 
 import { AppLoading } from '@/components/Loading';
 import AppButton, { AppLinkButton } from '@/components/AppButton';
+import AppLink from '@/components/AppLink';
 import useSnag from '@/hooks/admin/useSnag';
 import { formatNumber, formatAddress } from '@/utils/format';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
@@ -687,9 +688,12 @@ export const SnagScreen = () => {
                               </td>
                               <td className='px-2 py-3'>
                                 <div className="flex items-center gap-3">
-                                  <AppLinkButton href={`/admin/campaigns/sprints/${sprintID}/${loyaltyRule.id}`}>
+                                  <AppLink
+                                    href={`/admin/campaigns/sprints/${sprintID}/${loyaltyRule.id}`}
+                                    className='!px-4 !py-2 !rounded-lg font-normal bg-lumera-teal text-white hover:bg-lumera-green focus:bg-lumera-navy '
+                                  >
                                     <PencilLine className='w-4 h-4' />
-                                  </AppLinkButton>
+                                  </AppLink>
                                   <Tooltip>
                                     <Tooltip.Trigger>
                                       <AppButton
