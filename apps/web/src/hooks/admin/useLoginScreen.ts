@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useChain } from '@interchain-kit/react';
 
 import * as instance from '@/utils/api';
+import { CHAIN_NAME } from '@/contants/network';
+import { useDispatch } from '@/redux/hooks';
+import { setAddress, setConnected } from '@/redux/wallet.slice';
 
 const useLoginScreen = () => {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const { address, disconnect } = useChain(CHAIN_NAME);
   const [isLoading, setLoading] = useState(false);
   const [message, setMessage] = useState({
     type: '',
@@ -17,6 +23,10 @@ const useLoginScreen = () => {
   const [isLogged, setLogged] = useState(false);
 
   const handleLogin = async () => {
+    setMessage({
+      type: '',
+      content: '',
+    });
     if (!fornContent.email) {
       setMessage({
         type: 'email',
@@ -45,7 +55,7 @@ const useLoginScreen = () => {
         });
       } else {
         setLogged(true);
-        localStorage.setItem('adminUser', 'true');
+        localStorage.setItem('adminUser', data.token);
       }
       router.push('/admin');
     } catch (error) {
@@ -58,12 +68,55 @@ const useLoginScreen = () => {
     setLoading(false);
   }
 
+  const handleLoginByWalletAddress = async () => {
+    setMessage({
+      type: '',
+      content: '',
+    });
+    setLoading(true);
+    try {
+      const { data } = await instance.postExternal('/api/admin/login-by-address', {
+        address,
+      });
+      if (!data.success) {
+        setMessage({
+          type: 'wallet-error',
+          content: data.message,
+        });
+      } else {
+        setLogged(true);
+        localStorage.setItem('adminUser', data.token);
+      }
+      router.push('/admin');
+    } catch (error) {
+      console.error(error);
+      disconnect();
+      dispatch(setAddress({
+        address: '',
+      }));
+      dispatch(setConnected({
+        status: false,
+      }));
+      setMessage({
+        type: 'wallet-error',
+        content: 'Wallet address is incorrect.',
+      });
+    }
+    setLoading(false);
+  }
+
   useEffect(() => {
     const adminLogined = localStorage.getItem('adminUser');
     if (adminLogined) {
       setLogged(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (address && !isLogged) {
+      handleLoginByWalletAddress()
+    }
+  }, [address, isLogged]);
 
   const handleInputChange = (name: string, value: string) => {
     setFornContent({

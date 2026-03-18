@@ -7,6 +7,7 @@ import {
 import { AppLoading } from '@/components/Loading';
 import AppButton from '@/components/AppButton';
 import SectionTitle from '@/components/SectionTitle';
+import { ConnectButton } from '@/components/ConnectWallet';
 
 interface ILoginScreen {
   isLoading: boolean;
@@ -46,58 +47,73 @@ export const LoginScreen = ({
             />
             <div className='p-5 min-w-[80vw] sm:min-w-xl'>
               <div>
-                <Label htmlFor="email" className='!text-base'>Email</Label>
-                <div className='input-wrapper mt-1'>
-                  <Input
-                    id="email"
-                    placeholder="Enter email here..."
-                    className='input'
-                    value={fornContent.email}
-                    onChangeText={(value) => onInputChange('email', value)}
-                  />
-                </div>
-                {message.type === 'email' ?
-                  <div className='text-red-500 w-full mt-1'>
-                    <span>{message.content}</span>
-                  </div> : null
-                }
-              </div>
-              <div className='mt-2'>
-                <Label htmlFor="password" className='!text-base'>Password</Label>
-                <div className='input-wrapper mt-1'>
-                  <Input
-                    id="password"
-                    placeholder="Enter password here..."
-                    className='input'
-                    secureTextEntry
-                    value={fornContent.password}
-                    onChangeText={(value) => onInputChange('password', value)}
-                  />
-                </div>
-                {message.type === 'password' ?
-                  <div className='text-red-500 w-full mt-1'>
-                    <span>{message.content}</span>
-                  </div> : null
-                }
-              </div>
-              <div className='mt-5 flex justify-between'>
                 <div>
-                  {message.type === 'error' ?
-                    <div className='text-red-500 w-full'>
+                  <Label htmlFor="email" className='!text-base'>Email</Label>
+                  <div className='input-wrapper mt-1'>
+                    <Input
+                      id="email"
+                      placeholder="Enter email here..."
+                      className='input'
+                      value={fornContent.email}
+                      onChangeText={(value) => onInputChange('email', value)}
+                    />
+                  </div>
+                  {message.type === 'email' ?
+                    <div className='text-red-500 w-full mt-1'>
                       <span>{message.content}</span>
                     </div> : null
                   }
                 </div>
-                <div>
-                  <AppButton
-                    className='disabled:opacity-45'
-                    disabled={isLoading}
-                    onClick={onLoginButtonClick}
-                  >
-                    <span>Login</span>
-                  </AppButton>
+                <div className='mt-2'>
+                  <Label htmlFor="password" className='!text-base'>Password</Label>
+                  <div className='input-wrapper mt-1'>
+                    <Input
+                      id="password"
+                      placeholder="Enter password here..."
+                      className='input'
+                      secureTextEntry
+                      value={fornContent.password}
+                      onChangeText={(value) => onInputChange('password', value)}
+                    />
+                  </div>
+                  {message.type === 'password' ?
+                    <div className='text-red-500 w-full mt-1'>
+                      <span>{message.content}</span>
+                    </div> : null
+                  }
+                </div>
+                <div className='mt-5 flex justify-between'>
+                  <div>
+                    {message.type === 'error' ?
+                      <div className='text-red-500 w-full'>
+                        <span>{message.content}</span>
+                      </div> : null
+                    }
+                  </div>
+                  <div>
+                    <AppButton
+                      className='disabled:opacity-45'
+                      disabled={isLoading}
+                      onClick={onLoginButtonClick}
+                    >
+                      <span>Login</span>
+                    </AppButton>
+                  </div>
                 </div>
               </div>
+              <div className="my-5 flex justify-center items-center gap-3 text-lumera-label text-sm">
+                <div className='h-[1px] w-24 bg-lumera-label'></div>
+                <div>Or</div>
+                <div className='h-[1px] w-24 bg-lumera-label'></div>
+              </div>
+              <div className='flex justify-center'>
+                <ConnectButton />
+              </div>
+              {message.type === 'wallet-error' ?
+                <div className='text-red-500 w-full mt-1'>
+                  <span>{message.content}</span>
+                </div> : null
+              }
             </div>
           </Card>
         </div>

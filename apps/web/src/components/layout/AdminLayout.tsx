@@ -4,12 +4,18 @@ import { ReactNode, useEffect } from 'react';
 import Image from 'next/image';
 import dayjs from 'dayjs';
 import { LogOut } from 'lucide-react';
+import { useChain } from '@interchain-kit/react';
+import { toast } from 'react-toastify';
 
 import AppLink from '@/components/AppLink';
+import { WalletModalComponent } from '@/components/ConnectWallet';
 import { LoginScreen } from '@lumera-hub/ui/src/screens/admin/LoginScreen';
 import { useSelector, useDispatch } from '@/redux/hooks';
 import useLoginScreen from '@/hooks/admin/useLoginScreen';
 import * as admin from '@/redux/admin.slice';
+import { CHAIN_NAME } from '@/contants/network';
+import { setAddress, setConnected } from '@/redux/wallet.slice';
+import { formatAddress } from '@/utils/format';
 import { ViewId, VIEW_TITLES } from '@/types';
 
 export type TNaxItems = {
@@ -25,6 +31,7 @@ interface IAdminLayout {
 
 export default function AdminLayout({ children }: IAdminLayout) {
   const dispatch = useDispatch();
+  const { address, disconnect } = useChain(CHAIN_NAME);
   const { activeView, viewTitle } = useSelector((state) => state.app);
   const {
     isLoading,
@@ -56,14 +63,32 @@ export default function AdminLayout({ children }: IAdminLayout) {
             onInputChange={handleInputChange}
             onLoginButtonClick={handleLogin}
           />
+          <WalletModalComponent />
         </div>
       </div>
     );
   }
 
   const handleDesconnect = () => {
+    if (address) {
+      disconnect();
+      dispatch(setAddress({
+        address: '',
+      }));
+      dispatch(setConnected({
+        status: false,
+      }));
+    }
     localStorage.removeItem('adminUser');
     location.href = '/admin';
+  }
+
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(address);
+    toast('The address has been copied.', {
+      position: "bottom-center",
+      theme: "dark",
+    })
   }
 
   return (
@@ -82,7 +107,12 @@ export default function AdminLayout({ children }: IAdminLayout) {
               </h1>
             </div>
             {isLogged ?
-              <button onClick={handleDesconnect} className='btn-logout'><LogOut className='w-4 h-4' /></button> : null
+              <div className='flex justify-end gap-2'>
+                {address ?
+                  <span className='btn-address cursor-pointer' onClick={handleCopyAddress}>{formatAddress(address, 5, -4)}</span> : null
+                }
+                <button onClick={handleDesconnect} className='btn-logout'><LogOut className='w-4 h-4' /></button>
+              </div> : null
             }
           </div>
         </div>

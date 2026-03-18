@@ -172,6 +172,8 @@ const useSnagLoyaltyRule = () => {
     }
     setLoading(true);
     try {
+      await syncLoyaltyCurrencies();
+      await syncLoyaltySections();
       const { data } = await instance.getExternal(`/api/snag/get-loyalty-rule?loyaltyRuleId=${params.loyaltyRuleId}`);
       const loyaltyRule = data?.loyaltyRule;
       if (loyaltyRule) {
@@ -223,9 +225,33 @@ const useSnagLoyaltyRule = () => {
     setLoading(false);
   }
 
-  useEffect(() => {
+  const syncLoyaltyCurrencies = async () => {
+    try {
+      await instance.getExternal('/api/snag/sync-loyalty-currencies');
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const syncLoyaltySections = async () => {
+    try {
+      await instance.getExternal('/api/snag/sync-loyalty-section');
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const initData = async () => {
+    if (!params.loyaltyRuleId) {
+      await syncLoyaltyCurrencies();
+      await syncLoyaltySections();
+    }
     getLoyaltyCurrencies();
     getLoyaltySections();
+  }
+
+  useEffect(() => {
+    initData();
   }, []);
 
   useEffect(() => {

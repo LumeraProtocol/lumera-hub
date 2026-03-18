@@ -21,7 +21,7 @@ export const DashboardScreen = ({
 }: IDashboardScreen) => {
   return (
     <div className="flex justify-between gap-5">
-      <Card elevate size="$4" bordered className='!w-2/3'>
+      <Card elevate size="$4" bordered className='w-full'>
         <div className='p-5'>
           <div className='flex items-center gap-3'>
             <AppButton onClick={() => onRedirect('/admin/campaigns/sprints/season-2')}>
