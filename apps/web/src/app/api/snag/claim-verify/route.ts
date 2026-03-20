@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 
 import * as instance from '@/utils/api-server';
 import { getDataSource } from '@/lib/data-source';
@@ -9,6 +10,8 @@ import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import { SnagTransaction } from '@/entities/SnagTransaction';
 import client from '@/lib/snag';
+
+dayjs.extend(utc);
 
 export async function POST(req: NextRequest) {
   try {
@@ -124,8 +127,8 @@ export async function POST(req: NextRequest) {
 
     const message = txResponses.tx.body.messages[0];
     if (
-      dayjs(loyaltyRule.startTime).valueOf() <= dayjs(txResponses.timestamp).valueOf() ||
-      (loyaltyRule.endTime && dayjs(loyaltyRule.endTime).valueOf() >= dayjs(txResponses.timestamp).valueOf()) ||
+      dayjs.utc(loyaltyRule.startTime).startOf('minute').valueOf() <= dayjs.utc(txResponses.timestamp).startOf('minute').valueOf() ||
+      (loyaltyRule.endTime && dayjs.utc(loyaltyRule.endTime).startOf('minute').valueOf() >= dayjs.utc(txResponses.timestamp).startOf('minute').valueOf()) ||
       message?.from_address !== config.claim.validator ||
       message?.to_address !== user.lumeraAddress
     ) {
