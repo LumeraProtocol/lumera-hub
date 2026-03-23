@@ -230,7 +230,7 @@ export default function UnbondModal({
                {error && !isUnbondLoading ?
                 <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
               }
-              <div className={`${!isYes ? 'btn-secondary' : 'btn-primary'} mt-8 full`}>
+              <div className={`${!isYes ? 'btn-secondary' : 'btn-primary'} mt-8 full flex justify-end`}>
                 <AppButton onClick={onSendClick} disabled={isUnbondLoading}><strong>Unstake</strong></AppButton>
               </div>
             </div>

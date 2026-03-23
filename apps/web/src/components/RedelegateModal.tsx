@@ -266,7 +266,7 @@ export default function RedelegateModal({
               </div>
             </div>
 
-            <div className='mt-5 btn-primary full'>
+            <div className='mt-5 btn-primary full flex justify-end'>
               <AppButton onClick={onSendClick} disabled={isRedelegateLoading}>
                 <strong>Restake</strong>
               </AppButton>
