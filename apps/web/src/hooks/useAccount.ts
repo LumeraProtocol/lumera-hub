@@ -75,6 +75,7 @@ const useAccount = () => {
   const [recentReceived, setRecentReceived] = useState<ITransaction[]>([]);
   const [isBalancesLoading, setBalancesLoading] = useState(false);
   const [balances, setBalances] = useState<IBalance[]>([]);
+  const [delegationsTab, setDelegationsTab] = useState('delegations');
 
   const getBalances = async () => {
     if (!params?.validator) {
@@ -194,6 +195,10 @@ const useAccount = () => {
     getDelegationsInfo();
   }, [params?.validator]);
 
+  const handleDelegationsTabChange = (val: string) => {
+    setDelegationsTab(val);
+  }
+
   return {
     isAccountLoading,
     isDelegationsLoading,
@@ -211,6 +216,8 @@ const useAccount = () => {
     recentReceived,
     isBalancesLoading,
     balances,
+    delegationsTab,
+    handleDelegationsTabChange,
   }
 }
 
