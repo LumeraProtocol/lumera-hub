@@ -246,6 +246,7 @@ export const AccountScreen = () => {
         {
           name: 'Staking',
           type: 'bar',
+          barMaxWidth: 20,
           data: seriesData,
         }
       ]
