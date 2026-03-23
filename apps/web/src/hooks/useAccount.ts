@@ -149,8 +149,12 @@ const useAccount = () => {
 
   const getValidators = async () => {
     try {
-      const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=1000&status=BOND_STATUS_BONDED&pagination.count_total=true');
-      setValidators(data.validators);
+      const [undondingRes, unbondedRes] = await Promise.all([
+        instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=1000&status=BOND_STATUS_UNBONDING&pagination.count_total=true'),
+        instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=300&status=BOND_STATUS_UNBONDED'),
+      ]);
+      const allValidators = [...undondingRes.data.validators, ...unbondedRes.data.validators] as IValidator[];
+      setValidators(allValidators);
     } catch (e) {
       console.error('API Error:', e);
     }

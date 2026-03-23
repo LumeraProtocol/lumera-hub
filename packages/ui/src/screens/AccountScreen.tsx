@@ -597,7 +597,13 @@ export const AccountScreen = () => {
                           </div>
                           <div className='col-span-12 md:col-span-2'>
                             <div className="md:hidden text-gray-500 mr-2">Rewards: </div>
-                            <span>{formatTokens(reward?.reward)}</span>
+                            <span>
+                               {item?.jailed ?
+                                  <span className='text-red-600'>Jailed</span> : <>
+                                    {formatTokens(reward?.reward)}
+                                  </>
+                                }
+                            </span>
                           </div>
                           <div className="col-span-12 md:col-span-4 flex justify-start md:justify-end gap-1 mt-2 md:mt-0">
                             <AppButton
