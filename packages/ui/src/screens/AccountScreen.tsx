@@ -114,19 +114,19 @@ export const AccountScreen = () => {
   } = useAccount();
 
   const getTotalReward = () => {
-    return rewards.reduce((total, item) => total + Number(item.reward[0].amount), 0);
+    return rewards.reduce((total, item) => total + Number(item?.reward?.[0]?.amount || 0), 0);
   }
 
   const getTotalBalances = () => {
-    return balances.reduce((total, item) => total + Number(item.amount), 0);
+    return balances.reduce((total, item) => total + Number(item?.amount || 0), 0);
   }
 
   const getTotalUnbondingDelegations = () => {
-    return unbondingDelegations.reduce((total, item) => total + Number(item.entries[0].balance), 0)
+    return unbondingDelegations.reduce((total, item) => total + Number(item?.entries?.[0]?.balance || 0), 0)
   }
 
   const getTotalDelegations = () => {
-    return delegations.reduce((total, item) => total + Number(item.balance.amount), 0);
+    return delegations.reduce((total, item) => total + Number(item?.balance?.amount || 0), 0);
   }
 
   const calculatePercent = (value: number) => {
@@ -193,18 +193,18 @@ export const AccountScreen = () => {
 
     for (let i = 0; i <= delegations.length - 1; i++) {
       const delegation = delegations[i]
-      const validator = validators.find((v) => v.operator_address === delegation.delegation.validator_address);
+      const validator = validators.find((v) => v.operator_address === delegation?.delegation?.validator_address);
       const value = formatToken({
         amount: delegation.balance.amount,
         denom: DENOM,
       }, false);
       seriesData.push({
         value: Number(value.replaceAll(',', '')),
-        name: validator?.description?.moniker || formatAddress(delegation.delegation.validator_address, 8, 3),
+        name: validator?.description?.moniker || formatAddress(delegation?.delegation?.validator_address, 8, 3),
       });
       xAxisData.push(`${i + 1}`);
     }
-    console.log(seriesData, xAxisData);
+
     return {
       tooltip: {
         trigger: 'item',
@@ -568,8 +568,8 @@ export const AccountScreen = () => {
                     </div>
 
                     {delegations?.map(delegation => {
-                      const item = validators.find(v => v.operator_address === delegation.delegation.validator_address);
-                      const reward = rewards.find(v => v.validator_address === delegation.delegation.validator_address);
+                      const item = validators.find(v => v.operator_address === delegation?.delegation?.validator_address);
+                      const reward = rewards.find(v => v.validator_address === delegation?.delegation?.validator_address);
 
                       return (
                         <div
@@ -589,8 +589,8 @@ export const AccountScreen = () => {
                             <div className="md:hidden text-gray-500 mr-2">Delegation: </div>
                             <span>
                               {formatToken({
-                                amount: delegation.balance.amount,
-                                denom: delegation.balance.denom,
+                                amount: delegation?.balance?.amount,
+                                denom: delegation?.balance?.denom,
                               }, true, '0,0.[000000]')}
                             </span>
                           </div>
@@ -601,17 +601,17 @@ export const AccountScreen = () => {
                           <div className="col-span-12 md:col-span-4 flex justify-start md:justify-end gap-1 mt-2 md:mt-0">
                             <AppButton
                               className="!py-1.5 !px-4 !text-sm !font-normal"
-                              onClick={() => delegateOptions.onSelectValidator(delegation.delegation.validator_address)}
+                              onClick={() => delegateOptions.onSelectValidator(delegation?.delegation?.validator_address)}
                             >
                               Stake
                             </AppButton>
                             <AppButton
                               className="!py-1.5 !px-4 !text-sm !font-normal"
                               onClick={() => redelegate.handleOpenModal(
-                                delegation.delegation.validator_address,
+                                delegation?.delegation?.validator_address,
                                 formatToken({
-                                  amount: delegation.balance.amount,
-                                  denom: delegation.balance.denom,
+                                  amount: delegation?.balance?.amount,
+                                  denom: delegation?.balance?.denom,
                                 }, false, '0,0.[000000]'),
                                 item?.description?.moniker ? `${item?.description?.moniker}` : '',
                               )}
@@ -621,10 +621,10 @@ export const AccountScreen = () => {
                             <AppButton
                               className="!py-1.5 !px-4 !text-sm !font-normal"
                               onClick={() => unbond.handleOpenModal(
-                                delegation.delegation.validator_address,
+                                delegation?.delegation?.validator_address,
                                 formatToken({
-                                  amount: delegation.balance.amount,
-                                  denom: delegation.balance.denom,
+                                  amount: delegation?.balance?.amount,
+                                  denom: delegation?.balance?.denom,
                                 }, false, '0,0.[000000]'),
                                 item?.description?.moniker ? `${item?.description?.moniker}` : '',
                               )}
@@ -666,10 +666,10 @@ export const AccountScreen = () => {
                       <div className="col-span-4 text-right">Completion Time</div>
                     </div>
                     {!unbondingDelegations?.length ?
-                      <div className="text-4xl font-bold py-4">No data</div> : null
+                      <div className="text-2xl font-bold py-4">No data</div> : null
                     }
                     {unbondingDelegations.map((delegation, i) => {
-                      const validator = validators.find(v => v.operator_address === delegation.validator_address);
+                      const validator = validators.find(v => v.operator_address === delegation?.validator_address);
 
                       return (
                         <Fragment key={`${delegation.delegator_address}-${delegation.validator_address}-${i}`}>
@@ -687,25 +687,25 @@ export const AccountScreen = () => {
                             </div>
                             <div className="col-span-12 md:col-span-2 text-white">
                               <div className="md:hidden text-gray-500 mr-2">Creation Height: </div>
-                              <span>{delegation.entries[0].creation_height}</span>
+                              <span>{delegation.entries?.[0]?.creation_height}</span>
                             </div>
                             <div className="col-span-12 md:col-span-2 text-white">
                               <div className="md:hidden text-gray-500 mr-2">Initial balance: </div>
                               {formatToken({
-                                amount: delegation.entries[0].initial_balance,
+                                amount: delegation.entries?.[0]?.initial_balance,
                                 denom: DENOM,
                               }, true, '0,0.[00]')}
                             </div>
                             <div className="col-span-12 md:col-span-2 text-white">
                               <div className="md:hidden text-gray-500 mr-2">Balance: </div>
                               {formatToken({
-                                amount: delegation.entries[0].balance,
+                                amount: delegation.entries?.[0]?.balance,
                                 denom: DENOM,
                               }, true, '0,0.[00]')}
                             </div>
                             <div className="col-span-12 md:col-span-4 md:text-right text-gray-300">
                               <div className="md:hidden text-gray-500 mr-2">Completion Time: </div>
-                              <CountDown targetDate={new Date(delegation.entries[0].completion_time)} className="md:whitespace-nowrap" />
+                              <CountDown targetDate={new Date(delegation.entries?.[0]?.completion_time)} className="md:whitespace-nowrap" />
                             </div>
                           </div>
                         </Fragment>
