@@ -265,7 +265,7 @@ const SuperNodeMap = React.memo(({ markers }: ISuperNodeMap) => {
   );
 });
 
-const getFileIcon = (type: string, className = 'w-4 h-4') => {
+export const getFileIcon = (type: string, className = 'w-4 h-4') => {
   switch (type) {
     case 'Image': return <ImageIcon className={`${className} text-blue-400`} />;
     case 'Video': return <Video className={`${className} text-purple-400`} />;
@@ -579,14 +579,14 @@ const UploadCascadeSuccessModal = ({
   );
 }
 
-const getFileStatus = (state: string) => {
+export const getFileStatus = (state: string) => {
   if (!state) {
     return '--';
   }
   return state.replaceAll('ACTION_STATE_', '').replaceAll('_', ' ').toLocaleLowerCase();
 }
 
-const getStatusColor = (state: string) => {
+export const getStatusColor = (state: string) => {
   if (!state) {
     return '';
   }

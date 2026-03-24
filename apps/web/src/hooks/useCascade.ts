@@ -223,7 +223,7 @@ export const FILES_TYPE: FileTypeOption[] = [
   },
 ];
 
-const getFileType = (filename: string) => {
+export const getFileType = (filename: string) => {
   if (!filename) return '';
 
   const ext = filename.split('.').pop()?.toLowerCase() || '';

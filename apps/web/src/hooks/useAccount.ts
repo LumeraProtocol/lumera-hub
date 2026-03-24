@@ -4,6 +4,9 @@ import { useParams } from 'next/navigation';
 import * as instance from '@/utils/api';
 import { IValidator } from '@/types/validator';
 import { ITransaction } from '@/hooks/useTransaction';
+import { SNSCOPE_URL } from '@/contants/network';
+import { formatTokenDisplay } from '@/utils/format';
+import { IActionDetail } from '@/types';
 
 interface BaseAccount {
   "@type": string;
@@ -58,12 +61,41 @@ interface IBalance {
   denom: string;
 }
 
+interface ICascade {
+  block_height: number;
+  creator: string;
+  decoded: {
+    data_hash: string;
+    file_name: string;
+    rq_ids_ic: number;
+    rq_ids_ids: string[];
+    rq_ids_max: number;
+    signatures: string;
+    public?: boolean;
+  };
+  finalize_tx_id: string;
+  finalize_tx_time: string;
+  id: string;
+  mime_type: string;
+  price: {
+    amount: string;
+    denom: string;
+  };
+  register_tx_id: string;
+  register_tx_time: string;
+  size: number;
+  fee: string;
+  state: string;
+  type: string;
+}
+
 const useAccount = () => {
   const params = useParams();
   const [isAccountLoading, setAccountLoading] = useState(false);
   const [account, setAccount] = useState<BaseAccount | null>(null);
   const [isDelegationsLoading, setDelegationsLoading] = useState(false);
   const [delegations, setDelegations] = useState<IDelegationResponses[]>([]);
+  const [isValidatorsLoading, setValidatorsLoading] = useState(false);
   const [validators, setValidators] = useState<IValidator[]>([]);
   const [isRewardsLoading, setRewardsLoading] = useState(false);
   const [rewards, setRewards] = useState<IRewards[]>([]);
@@ -76,6 +108,8 @@ const useAccount = () => {
   const [isBalancesLoading, setBalancesLoading] = useState(false);
   const [balances, setBalances] = useState<IBalance[]>([]);
   const [delegationsTab, setDelegationsTab] = useState('delegations');
+  const [isCascadeFilesLoading, setCascadeFilesLoading] = useState(false);
+  const [cascades, setCascades] = useState<ICascade[]>([]);
 
   const getBalances = async () => {
     if (!params?.validator) {
@@ -148,9 +182,10 @@ const useAccount = () => {
   }
 
   const getValidators = async () => {
+    setValidatorsLoading(true);
     try {
       const [undondingRes, unbondedRes] = await Promise.all([
-        instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=1000&status=BOND_STATUS_UNBONDING&pagination.count_total=true'),
+        instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=1000&status=BOND_STATUS_BONDED&pagination.count_total=true'),
         instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=300&status=BOND_STATUS_UNBONDED'),
       ]);
       const allValidators = [...undondingRes.data.validators, ...unbondedRes.data.validators] as IValidator[];
@@ -158,6 +193,7 @@ const useAccount = () => {
     } catch (e) {
       console.error('API Error:', e);
     }
+    setValidatorsLoading(false);
   }
 
   const getTransactions = async () => {
@@ -188,7 +224,66 @@ const useAccount = () => {
     setRecentReceivedLoading(false);
   }
 
+  const fetchAction = async (actionId = ''): Promise<IActionDetail | null> => {
+    if (!actionId) {
+      return null;
+    }
+    try {
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions/${actionId}`);
+      return data;
+    } catch {
+      return null
+    }
+  };
+
+  const getAction = async (actionId: string) => {
+    if (!actionId) {
+      return {
+        fee: '0 LUME',
+        size: 0,
+        register_tx_id: '',
+      };
+    }
+    const action = await fetchAction(actionId);
+    let fee = '0 LUME';
+    if (action) {
+      const transaction = action.transactions?.find((tx) => tx.tx_type === 'register');
+      if (transaction) {
+        fee = `${formatTokenDisplay({
+          amount: transaction.tx_fee,
+          denom: transaction.tx_fee_denom,
+        })} LUME`;
+      }
+    }
+    return {
+      fee,
+    };
+  }
+
+  const getCascadeFiles = async () => {
+    if (!params?.validator) {
+      return;
+    }
+    setCascadeFilesLoading(true);
+    try {
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=50&creator=${params?.validator}`);
+      const results = [];
+      for (const item of data.items) {
+        const { fee } = await getAction(item.id);
+        results.push({
+          ...item,
+          fee,
+        })
+      }
+      setCascades(results);
+    } catch (e) {
+      console.error('API Error:', e);
+    }
+    setCascadeFilesLoading(false);
+  }
+
   useEffect(() => {
+    getCascadeFiles();
     getRewards();
     getBalances();
     getRecentReceived();
@@ -221,6 +316,9 @@ const useAccount = () => {
     isBalancesLoading,
     balances,
     delegationsTab,
+    isCascadeFilesLoading,
+    cascades,
+    isValidatorsLoading,
     handleDelegationsTabChange,
   }
 }

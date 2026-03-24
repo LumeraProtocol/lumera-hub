@@ -21,6 +21,7 @@ import useAccountInfo from '@/hooks/useAccountInfo';
 import useRedelegate from '@/hooks/useRedelegate';
 import useUnbond from '@/hooks/useUnbond';
 import useDelegate from '@/hooks/useDelegate';
+import { getFileType } from '@/hooks/useCascade';
 import { DENOM } from '@/contants/network';
 import { RATE_VALUE } from '@/contants';
 import {
@@ -28,11 +29,15 @@ import {
   formatTokens,
   formatAddress,
   percent,
+  formatBytes,
+  formatTokenDisplay,
 } from '@/utils/format';
 import {
   getMessages,
   mapAmount,
+  getSimplifiedType,
 } from '@/utils/helpers';
+import { getFileIcon, getFileStatus, getStatusColor } from './CascadeScreen';
 
 interface IPubKey {
   pubKey: string;
@@ -70,10 +75,10 @@ const PubKey = ({
       </div>
       <div className='mt-3'>
         {currentTab === 'type' ?
-          <div className='text-base'>{type}</div> : null
+          <div className='text-base truncate'>{type}</div> : null
         }
         {currentTab === 'key' ?
-          <div className='text-base'>{pubKey}</div> : null
+          <div className='text-base truncate'>{pubKey}</div> : null
         }
       </div>
     </div>
@@ -110,6 +115,9 @@ export const AccountScreen = () => {
     isBalancesLoading,
     balances,
     delegationsTab,
+    isCascadeFilesLoading,
+    cascades,
+    isValidatorsLoading,
     handleDelegationsTabChange,
   } = useAccount();
 
@@ -326,13 +334,13 @@ export const AccountScreen = () => {
                 <div className="text-base">
                   <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
                     <div className='w-full md:w-52 text-gray-500'>@Type</div>
-                    <div className='w-full'>
+                    <div className='w-full truncate'>
                       {account['@type']}
                     </div>
                   </div>
                   <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
                     <div className='w-full md:w-52 text-gray-500'>Address</div>
-                    <div className='w-full'>
+                    <div className='w-full truncate'>
                       {account.address}
                     </div>
                   </div>
@@ -347,13 +355,13 @@ export const AccountScreen = () => {
                   </div>
                   <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
                     <div className='w-full md:w-52 text-gray-500'>Account Number</div>
-                    <div className='w-full'>
+                    <div className='w-full truncate'>
                       {account.account_number}
                     </div>
                   </div>
                   <div className='flex items-center flex-col md:flex-row py-3 px-4'>
                     <div className='w-full md:w-52 text-gray-500'>Sequence</div>
-                    <div className='w-full'>
+                    <div className='w-full truncate'>
                       {account.sequence}
                     </div>
                   </div>
@@ -363,7 +371,7 @@ export const AccountScreen = () => {
           }
         </div>
       </Card>
-      <div className="grid grid-cols-2 gap-5 mt-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
         <Card elevate size="$4" bordered className='w-full !p-6'>
           <SectionTitle className='mb-0'>Overview</SectionTitle>
           <div className='mt-3 relative'>
@@ -377,11 +385,11 @@ export const AccountScreen = () => {
                   containerClassName='relative w-10 h-10 z-50'
                 />
               </div> :
-              <div className='full relative flex justify-between items-center gap-4'>
-                <div className="w-7/12">
+              <div className='full relative flex justify-between items-center flex-col sm:flex-row gap-4'>
+                <div className="w-full sm:w-7/12">
                   <ReactECharts option={getOption()} style={{ height: '280px', width: '100%' }} />
                 </div>
-                <ul className="w-5/12 text-sm">
+                <ul className="w-full sm:w-5/12 text-sm grid grid-cols-2 gap-y-2 sm:block">
                   <li>
                     <div className='flex items-center gap-2'>
                       <span
@@ -397,7 +405,7 @@ export const AccountScreen = () => {
                       })}
                     </div>
                   </li>
-                  <li className='mt-3'>
+                  <li className='sm:mt-3'>
                     <div className='flex items-center gap-2'>
                       <span
                         className="w-2 h-2 inline-block rounded-full min-w-4 min-h-4"
@@ -412,7 +420,7 @@ export const AccountScreen = () => {
                       })}
                     </div>
                   </li>
-                  <li className='mt-3'>
+                  <li className='sm:mt-3'>
                     <div className='flex items-center gap-2'>
                       <span
                         className="w-2 h-2 inline-block rounded-full min-w-4 min-h-4"
@@ -427,7 +435,7 @@ export const AccountScreen = () => {
                       })}
                     </div>
                   </li>
-                  <li className='mt-3'>
+                  <li className='sm:mt-3'>
                     <div className='flex items-center gap-2'>
                       <span
                         className="w-2 h-2 inline-block rounded-full min-w-4 min-h-4"
@@ -462,12 +470,16 @@ export const AccountScreen = () => {
               </div> :
               <div className='w-full relative'>
                 <ReactECharts option={getStakingOverviewOption()} style={{ height: '180px', width: '100%' }} />
-                <ul className='grid grid-cols-4 gap-x-3 text-sm mt-3 text-lumera-label'>
+                <ul className='grid grid-cols-2 sm:grid-cols-4 gap-x-3 text-sm mt-3 text-lumera-label'>
                   {delegations.map((item, index) => {
                     const validator = validators.find((v) => v.operator_address === item.delegation.validator_address);
                     if (!validator) {
                       return null;
                     }
+                    const value = formatToken({
+                      amount: item.balance.amount,
+                      denom: DENOM,
+                    }, false);
                     return (
                       <li key={index}>
                         <Tooltip>
@@ -493,7 +505,7 @@ export const AccountScreen = () => {
                             ]}
                           >
                             <div className='text-white'>
-                              {index + 1}: {validator?.description.moniker}
+                              {index + 1}: {validator?.description.moniker}: {value} LUME({calculatePercent(Number(value.replaceAll(',', '')) * RATE_VALUE)})
                             </div>
                           </Tooltip.Content>
                         </Tooltip>
@@ -507,11 +519,11 @@ export const AccountScreen = () => {
         </Card>
       </div>
 
-      <div className='w-full mt-5 mb-0'>
-        <ul className='flex gap-0 list-none tabs'>
+      <div className='w-full mt-5 mb-0 overflow-x-auto'>
+        <ul className='flex !gap-0 list-none tabs'>
           <li className={`tab-item ${delegationsTab === 'delegations' ? 'active' : ''}`}>
             <button
-              className='tab-button cursor-pointer px-3'
+              className='tab-button cursor-pointer px-6'
               onClick={() => handleDelegationsTabChange('delegations')}
             >
               Staking
@@ -519,7 +531,7 @@ export const AccountScreen = () => {
           </li>
           <li className={`tab-item ${delegationsTab === 'unbonding' ? 'active' : ''}`}>
             <button
-              className='tab-button cursor-pointer px-3'
+              className='tab-button cursor-pointer px-6'
               onClick={() => handleDelegationsTabChange('unbonding')}
             >
               Unstake
@@ -527,7 +539,7 @@ export const AccountScreen = () => {
           </li>
           <li className={`tab-item ${delegationsTab === 'transactions' ? 'active' : ''}`}>
             <button
-              className='tab-button cursor-pointer px-3'
+              className='tab-button cursor-pointer px-6'
               onClick={() => handleDelegationsTabChange('transactions')}
             >
               Transactions
@@ -535,10 +547,18 @@ export const AccountScreen = () => {
           </li>
           <li className={`tab-item ${delegationsTab === 'received' ? 'active' : ''}`}>
             <button
-              className='tab-button cursor-pointer px-3'
+              className='tab-button cursor-pointer px-6 whitespace-nowrap'
               onClick={() => handleDelegationsTabChange('received')}
             >
               Recent Received
+            </button>
+          </li>
+          <li className={`tab-item ${delegationsTab === 'cascade' ? 'active' : ''}`}>
+            <button
+              className='tab-button cursor-pointer px-6 whitespace-nowrap'
+              onClick={() => handleDelegationsTabChange('cascade')}
+            >
+              Cascade
             </button>
           </li>
         </ul>
@@ -546,7 +566,7 @@ export const AccountScreen = () => {
       {delegationsTab === 'delegations' ?
         <Card elevate size="$4" bordered className='w-full !p-6 mt-5'>
           <div className='relative'>
-            {isDelegationsLoading ?
+            {isDelegationsLoading || isValidatorsLoading ?
               <div className="relative min-h-60 flex items-center justify-center">
                 <AppLoading
                   isLoading
@@ -558,10 +578,10 @@ export const AccountScreen = () => {
               </div> :
               <div>
                 <div className="overflow-x-auto">
-                  <div className="md:min-w-[950px] space-y-2">
+                  <div className="md:min-w-[850px] space-y-2">
                     <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-400">
-                      <div className="col-span-3">Validator</div>
-                      <div className="col-span-3">Delegation</div>
+                      <div className="col-span-3">Delegations</div>
+                      <div className="col-span-3">Staked</div>
                       <div className="col-span-2">Rewards</div>
                       <div className="col-span-4 flex justify-end">
                         <div className="text-left min-w-[240px]">Action</div>
@@ -578,7 +598,7 @@ export const AccountScreen = () => {
                           className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg"
                         >
                           <div className="col-span-12 md:col-span-3">
-                            <div className="md:hidden text-gray-500 mr-2">Validator: </div>
+                            <div className="md:hidden text-gray-500 mr-2">Delegations: </div>
                             <AppLink
                               href={`/staking/${item?.operator_address}`}
                               className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
@@ -587,7 +607,7 @@ export const AccountScreen = () => {
                             </AppLink>
                           </div>
                           <div className="col-span-12 md:col-span-3 text-white">
-                            <div className="md:hidden text-gray-500 mr-2">Delegation: </div>
+                            <div className="md:hidden text-gray-500 mr-2">Staked: </div>
                             <span>
                               {formatToken({
                                 amount: delegation?.balance?.amount,
@@ -652,7 +672,7 @@ export const AccountScreen = () => {
       {delegationsTab === 'unbonding' ?
         <Card elevate size="$4" bordered className='w-full !p-6 mt-5'>
           <div className='relative'>
-            {isAccountLoading ?
+            {isAccountLoading || isValidatorsLoading ?
               <div className="relative min-h-60 flex items-center justify-center">
                 <AppLoading
                   isLoading
@@ -664,7 +684,7 @@ export const AccountScreen = () => {
               </div> :
               <div>
                 <div className="overflow-x-auto">
-                  <div className="md:min-w-[950px] space-y-2">
+                  <div className="md:min-w-[850px] space-y-2">
                     <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-400">
                       <div className="col-span-2">Validator</div>
                       <div className="col-span-2">Creation Height</div>
@@ -694,7 +714,12 @@ export const AccountScreen = () => {
                             </div>
                             <div className="col-span-12 md:col-span-2 text-white">
                               <div className="md:hidden text-gray-500 mr-2">Creation Height: </div>
-                              <span>{delegation.entries?.[0]?.creation_height}</span>
+                              <AppLink
+                                href={`/block/${delegation.entries?.[0]?.creation_height}`}
+                                className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
+                              >
+                                {delegation.entries?.[0]?.creation_height}
+                              </AppLink>
                             </div>
                             <div className="col-span-12 md:col-span-2 text-white">
                               <div className="md:hidden text-gray-500 mr-2">Initial balance: </div>
@@ -741,7 +766,7 @@ export const AccountScreen = () => {
               </div> :
               <div>
                 <div className="overflow-x-auto">
-                  <div className="min:min-w-5xl space-y-2">
+                  <div className="md:min-w-[950px] space-y-2">
                     <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-400">
                       <div className="col-span-1">Height</div>
                       <div className="col-span-4">TX Hash</div>
@@ -777,10 +802,9 @@ export const AccountScreen = () => {
                             }
                           </div>
                         </div>
-                        <div className="col-span-12 md:col-span-4 text-gray-400 md:flex md:justify-end whitespace-nowrap">
+                        <div className="col-span-12 md:col-span-4 text-gray-400 md:flex md:justify-end sm:whitespace-nowrap">
                           <div className="md:hidden text-gray-500 mr-2">Time: </div>
-                          {dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}
-                          (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm md:whitespace-nowrap' />)
+                          {dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}<span className="inline-block sm:hidden"> </span>(<PastTime pastDate={new Date(tx.timestamp)} className='text-sm md:whitespace-nowrap' />)
                         </div>
                       </div>
                     ))}
@@ -806,7 +830,7 @@ export const AccountScreen = () => {
               </div> :
               <div>
                 <div className="overflow-x-auto">
-                  <div className="min:min-w-5xl space-y-2">
+                  <div className="md:min-w-[900px] space-y-2">
                     <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-400">
                       <div className="col-span-1">Height</div>
                       <div className="col-span-4">TX Hash</div>
@@ -836,19 +860,115 @@ export const AccountScreen = () => {
                         <div className="col-span-12 md:col-span-3 text-white">
                           <div className="md:hidden text-gray-500 mr-2">Amount: </div>
                           <div className="flex items-center gap-2">
-                            {mapAmount(tx.events)?.join(", ")}
+                            {formatTokenDisplay({
+                              amount: mapAmount(tx.events)?.join(", ").replaceAll('ulume', '') || '0',
+                              denom: DENOM,
+                            }, false)} LUME
                             {tx.code === 0 ?
                               <Check className='w-5 h-5 text-lumera-teal' /> : <X className='w-5 h-5 text-lumera-red' />
                             }
                           </div>
                         </div>
-                        <div className="col-span-12 md:col-span-4 text-gray-400 md:flex md:justify-end whitespace-nowrap">
+                        <div className="col-span-12 md:col-span-4 text-gray-400 md:flex md:justify-end sm:whitespace-nowrap">
                           <div className="md:hidden text-gray-500 mr-2">Time: </div>
-                          {dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}
-                          (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm md:whitespace-nowrap' />)
+                          {dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}<span className="inline-block sm:hidden"> </span>(<PastTime pastDate={new Date(tx.timestamp)} className='text-sm md:whitespace-nowrap' />)
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </Card> : null
+      }
+      {delegationsTab === 'cascade' ?
+        <Card elevate size="$4" bordered className='w-full !p-6 mt-5'>
+          <div className='relative'>
+            {isCascadeFilesLoading ?
+              <div className="relative min-h-60 flex items-center justify-center">
+                <AppLoading
+                  isLoading
+                  className="w-10 h-10 !border-2"
+                  iconWidth={20}
+                  iconHeight={20}
+                  containerClassName='relative w-10 h-10 z-50'
+                />
+              </div> :
+              <div>
+                <div className="overflow-x-auto">
+                  <div className="md:min-w-[900px] space-y-2">
+                    <table className='w-full border-separate border-spacing-y-2'>
+                      <thead className='hidden md:table-header-group text-gray-400 text-sm'>
+                        <tr>
+                          <th align='left' className='px-2 py-3'>Name</th>
+                          <th align='left' className='px-2 py-3'>Public</th>
+                          <th align='left' className='px-2 py-3'>Status</th>
+                          <th align='left' className='px-2 py-3'>TX ID</th>
+                          <th align='right' className='px-2 py-3'>Price</th>
+                          <th align='right' className='px-2 py-3'>Fee</th>
+                          <th align='right' className='px-2 py-3'>Size</th>
+                          <th align='left' className='px-2 py-3'>Last Modified</th>
+                        </tr>
+                      </thead>
+                      <tbody className='text-base'>
+                        {cascades.sort((a, b) => dayjs(b.finalize_tx_time || b?.register_tx_time).valueOf() - dayjs(a.finalize_tx_time || b?.register_tx_time).valueOf()).map((file) => {
+                          const isExpired = file.state === 'ACTION_STATE_EXPIRED';
+                          const lastModified = file?.finalize_tx_time || file?.register_tx_time;
+                          return (
+                            <tr className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row text-base' key={file.id}>
+                              <td className='px-2 pt-3 pb-1 md:py-3'>
+                                <div className='flex items-center gap-2 w-full'>
+                                  {getFileIcon(getSimplifiedType(getFileType(file.decoded.file_name)))}
+                                  <span className="font-medium text-white max-w-[180px] truncate">
+                                    {file.decoded.file_name}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className='px-2 pt-1 pb-1 md:py-3'>
+                                <div className="md:hidden text-gray-500 mr-2">Public: </div>
+                                <span>{file?.decoded?.public ? 'Yes' : 'No'}</span>
+                              </td>
+                              <td className='px-2 pt-1 pb-1 md:py-3'>
+                                <div className="md:hidden text-gray-500 mr-2">Status: </div>
+                                <span className={`capitalize ${getStatusColor(file.state)}`}>{getFileStatus(file.state)}</span>
+                              </td>
+                              <td className='px-2 pt-1 pb-1 md:py-3'>
+                                <div className="md:hidden text-gray-500 mr-2">TX ID: </div>
+                                <AppLink
+                                  href={`/tx/${file.register_tx_id}`}
+                                  className="font-mono text-lumera-teal hover:text-lumera-green truncate inline-flex items-center gap-1.5"
+                                >
+                                  {formatAddress(file.register_tx_id, 6, -4)}
+                                </AppLink>
+                              </td>
+                              <td className='px-2 pt-1 pb-1 md:py-3 md:text-right'>
+                                <div className="md:hidden text-gray-500 mr-2">Price: </div>
+                                <span className=' whitespace-nowrap'>{!isExpired ? formatToken({
+                                  amount: file.price.amount,
+                                  denom: DENOM,
+                                }) : '0 LUME'}</span>
+                              </td>
+                              <td className='px-2 pt-1 pb-1 md:py-3 md:text-right'>
+                                <div className="md:hidden text-gray-500 mr-2">Fee: </div>
+                                <span className=' whitespace-nowrap'>{file.fee}</span>
+                              </td>
+                              <td className='px-2 pt-1 pb-1 md:py-3 md:text-right'>
+                                <div className="md:hidden text-gray-500 mr-2">Size: </div>
+                                <span className=' whitespace-nowrap'>{formatBytes(!isExpired ? file.size : 0)}</span>
+                              </td>
+                              <td className='px-2 pt-1 pb-3 md:py-3'>
+                                <div className="md:hidden text-gray-500 mr-2 whitespace-nowrap">Last Modified: </div>
+                                {lastModified ?
+                                <span className='whitespace-nowrap'>
+                                  {dayjs(lastModified).format('MM/DD/YYYY')} at {dayjs(lastModified).format('HH:mm:ss')}
+                                </span> : '--'}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
