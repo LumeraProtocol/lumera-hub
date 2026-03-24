@@ -332,7 +332,7 @@ export const AccountScreen = () => {
             <div>
               {account ?
                 <div className="text-base">
-                  <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-2 px-4'>
                     <div className='w-full md:w-52 text-gray-500'>@Type</div>
                     <div className='w-full truncate'>
                       {account['@type']}
@@ -365,7 +365,7 @@ export const AccountScreen = () => {
                       {account.sequence}
                     </div>
                   </div>
-                </div> : null
+                </div> : <div className="text-xl font-bold py-0">No data</div>
               }
             </div>
           }
@@ -469,50 +469,57 @@ export const AccountScreen = () => {
                 />
               </div> :
               <div className='w-full relative'>
-                <ReactECharts option={getStakingOverviewOption()} style={{ height: '180px', width: '100%' }} />
-                <ul className='grid grid-cols-2 sm:grid-cols-4 gap-x-3 text-sm mt-3 text-lumera-label'>
-                  {delegations.map((item, index) => {
-                    const validator = validators.find((v) => v.operator_address === item.delegation.validator_address);
-                    if (!validator) {
-                      return null;
-                    }
-                    const value = formatToken({
-                      amount: item.balance.amount,
-                      denom: DENOM,
-                    }, false);
-                    return (
-                      <li key={index}>
-                        <Tooltip>
-                          <Tooltip.Trigger>
-                            <div className='truncate'>
-                              {index + 1}: {validator?.description.moniker}
-                            </div>
-                          </Tooltip.Trigger>
-                          <Tooltip.Content
-                            enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
-                            exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
-                            scale={1}
-                            x={0}
-                            y={0}
-                            opacity={1}
-                            animation={[
-                              'quick',
-                              {
-                                opacity: {
-                                  overshootClamping: true,
-                                },
-                              },
-                            ]}
-                          >
-                            <div className='text-white'>
-                              {index + 1}: {validator?.description.moniker}: {value} LUME({calculatePercent(Number(value.replaceAll(',', '')) * RATE_VALUE)})
-                            </div>
-                          </Tooltip.Content>
-                        </Tooltip>
-                      </li>
-                    )
-                  })}
-                </ul>
+                {delegations?.length ?
+                  <>
+                    <ReactECharts option={getStakingOverviewOption()} style={{ height: '180px', width: '100%' }} />
+                    <ul className='grid grid-cols-2 sm:grid-cols-4 gap-x-3 text-sm mt-3 text-lumera-label'>
+                      {delegations.map((item, index) => {
+                        const validator = validators.find((v) => v.operator_address === item.delegation.validator_address);
+                        if (!validator) {
+                          return null;
+                        }
+                        const value = formatToken({
+                          amount: item.balance.amount,
+                          denom: DENOM,
+                        }, false);
+                        return (
+                          <li key={index}>
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <div className='truncate'>
+                                  {index + 1}: {validator?.description.moniker}
+                                </div>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content
+                                enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                scale={1}
+                                x={0}
+                                y={0}
+                                opacity={1}
+                                animation={[
+                                  'quick',
+                                  {
+                                    opacity: {
+                                      overshootClamping: true,
+                                    },
+                                  },
+                                ]}
+                              >
+                                <div className='text-white'>
+                                  {index + 1}: {validator?.description.moniker}: {value} LUME({calculatePercent(Number(value.replaceAll(',', '')) * RATE_VALUE)})
+                                </div>
+                              </Tooltip.Content>
+                            </Tooltip>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </> :
+                  <div className='flex items-center justify-center w-full min-h-[275px]'>
+                    <div className="text-xl font-bold py-4">No data</div>
+                  </div>
+                }
               </div>
             }
           </div>
@@ -587,6 +594,12 @@ export const AccountScreen = () => {
                         <div className="text-left min-w-[240px]">Action</div>
                       </div>
                     </div>
+
+                    {!delegations?.length ?
+                      <div className="grid grid-cols-1 items-center bg-gray-900/40 p-4 rounded-lg">
+                        <div className="text-xl font-bold">No data</div>
+                      </div>: null
+                    }
 
                     {delegations?.map(delegation => {
                       const item = validators.find(v => v.operator_address === delegation?.delegation?.validator_address);
@@ -693,7 +706,9 @@ export const AccountScreen = () => {
                       <div className="col-span-4 text-right">Completion Time</div>
                     </div>
                     {!unbondingDelegations?.length ?
-                      <div className="text-2xl font-bold py-4">No data</div> : null
+                      <div className="grid grid-cols-1 items-center bg-gray-900/40 p-4 rounded-lg">
+                        <div className="text-xl font-bold">No data</div>
+                      </div>: null
                     }
                     {unbondingDelegations.map((delegation, i) => {
                       const validator = validators.find(v => v.operator_address === delegation?.validator_address);
@@ -773,6 +788,11 @@ export const AccountScreen = () => {
                       <div className="col-span-3">Messages</div>
                       <div className="col-span-4 text-right">Time</div>
                     </div>
+                    {!transactions?.length ?
+                      <div className="grid grid-cols-1 items-center bg-gray-900/40 p-4 rounded-lg">
+                        <div className="text-xl font-bold">No data</div>
+                      </div>: null
+                    }
                     {transactions.sort((a, b) => dayjs(b.timestamp).valueOf() - dayjs(a.timestamp).valueOf()).map((tx) => (
                       <div key={tx.txhash} className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-base">
                         <div className="col-span-12 md:col-span-1 text-gray-300">
@@ -837,6 +857,11 @@ export const AccountScreen = () => {
                       <div className="col-span-3">Amount</div>
                       <div className="col-span-4 text-right">Time</div>
                     </div>
+                    {!recentReceived?.length ?
+                      <div className="grid grid-cols-1 items-center bg-gray-900/40 p-4 rounded-lg">
+                        <div className="text-xl font-bold">No data</div>
+                      </div>: null
+                    }
                     {recentReceived.sort((a, b) => dayjs(b.timestamp).valueOf() - dayjs(a.timestamp).valueOf()).map((tx) => (
                       <div key={tx.txhash} className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-base">
                         <div className="col-span-12 md:col-span-1 text-gray-300">
@@ -898,26 +923,31 @@ export const AccountScreen = () => {
               <div>
                 <div className="overflow-x-auto">
                   <div className="md:min-w-[900px] space-y-2">
-                    <table className='w-full border-separate border-spacing-y-2'>
+                    <table className='w-full border-separate border-spacing-y-0'>
                       <thead className='hidden md:table-header-group text-gray-400 text-sm'>
                         <tr>
-                          <th align='left' className='px-2 py-3'>Name</th>
-                          <th align='left' className='px-2 py-3'>Public</th>
-                          <th align='left' className='px-2 py-3'>Status</th>
-                          <th align='left' className='px-2 py-3'>TX ID</th>
-                          <th align='right' className='px-2 py-3'>Price</th>
-                          <th align='right' className='px-2 py-3'>Fee</th>
-                          <th align='right' className='px-2 py-3'>Size</th>
-                          <th align='left' className='px-2 py-3'>Last Modified</th>
+                          <th align='left' className='pl-4 pr-2 py-2 pb-4'>Name</th>
+                          <th align='left' className='px-2 py-2 pb-4'>Public</th>
+                          <th align='left' className='px-2 py-2 pb-4'>Status</th>
+                          <th align='left' className='px-2 py-2 pb-4'>TX ID</th>
+                          <th align='right' className='px-2 py-2 pb-4'>Price</th>
+                          <th align='right' className='px-2 py-2 pb-4'>Fee</th>
+                          <th align='right' className='px-2 py-2 pb-4'>Size</th>
+                          <th align='left' className='pl-2 pr-4 py-2 pb-4'>Last Modified</th>
                         </tr>
                       </thead>
                       <tbody className='text-base'>
+                        {!cascades?.length ?
+                          <tr className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row text-base'>
+                            <td className="p-4 text-xl font-bold" colSpan={8}>No data</td>
+                          </tr>: null
+                        }
                         {cascades.sort((a, b) => dayjs(b.finalize_tx_time || b?.register_tx_time).valueOf() - dayjs(a.finalize_tx_time || b?.register_tx_time).valueOf()).map((file) => {
                           const isExpired = file.state === 'ACTION_STATE_EXPIRED';
                           const lastModified = file?.finalize_tx_time || file?.register_tx_time;
                           return (
                             <tr className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row text-base' key={file.id}>
-                              <td className='px-2 pt-3 pb-1 md:py-3'>
+                              <td className='px-2 pt-3 pb-1 md:py-2'>
                                 <div className='flex items-center gap-2 w-full'>
                                   {getFileIcon(getSimplifiedType(getFileType(file.decoded.file_name)))}
                                   <span className="font-medium text-white max-w-[180px] truncate">
@@ -925,15 +955,15 @@ export const AccountScreen = () => {
                                   </span>
                                 </div>
                               </td>
-                              <td className='px-2 pt-1 pb-1 md:py-3'>
+                              <td className='px-2 pt-1 pb-1 md:py-2'>
                                 <div className="md:hidden text-gray-500 mr-2">Public: </div>
                                 <span>{file?.decoded?.public ? 'Yes' : 'No'}</span>
                               </td>
-                              <td className='px-2 pt-1 pb-1 md:py-3'>
+                              <td className='px-2 pt-1 pb-1 md:py-2'>
                                 <div className="md:hidden text-gray-500 mr-2">Status: </div>
                                 <span className={`capitalize ${getStatusColor(file.state)}`}>{getFileStatus(file.state)}</span>
                               </td>
-                              <td className='px-2 pt-1 pb-1 md:py-3'>
+                              <td className='px-2 pt-1 pb-1 md:py-2'>
                                 <div className="md:hidden text-gray-500 mr-2">TX ID: </div>
                                 <AppLink
                                   href={`/tx/${file.register_tx_id}`}
@@ -942,22 +972,22 @@ export const AccountScreen = () => {
                                   {formatAddress(file.register_tx_id, 6, -4)}
                                 </AppLink>
                               </td>
-                              <td className='px-2 pt-1 pb-1 md:py-3 md:text-right'>
+                              <td className='px-2 pt-1 pb-1 md:py-2 md:text-right'>
                                 <div className="md:hidden text-gray-500 mr-2">Price: </div>
                                 <span className=' whitespace-nowrap'>{!isExpired ? formatToken({
                                   amount: file.price.amount,
                                   denom: DENOM,
                                 }) : '0 LUME'}</span>
                               </td>
-                              <td className='px-2 pt-1 pb-1 md:py-3 md:text-right'>
+                              <td className='px-2 pt-1 pb-1 md:py-2 md:text-right'>
                                 <div className="md:hidden text-gray-500 mr-2">Fee: </div>
                                 <span className=' whitespace-nowrap'>{file.fee}</span>
                               </td>
-                              <td className='px-2 pt-1 pb-1 md:py-3 md:text-right'>
+                              <td className='px-2 pt-1 pb-1 md:py-2 md:text-right'>
                                 <div className="md:hidden text-gray-500 mr-2">Size: </div>
                                 <span className=' whitespace-nowrap'>{formatBytes(!isExpired ? file.size : 0)}</span>
                               </td>
-                              <td className='px-2 pt-1 pb-3 md:py-3'>
+                              <td className='px-2 pt-1 pb-3 md:py-2'>
                                 <div className="md:hidden text-gray-500 mr-2 whitespace-nowrap">Last Modified: </div>
                                 {lastModified ?
                                 <span className='whitespace-nowrap'>
