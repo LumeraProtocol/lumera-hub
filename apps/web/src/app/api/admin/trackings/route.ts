@@ -1,7 +1,6 @@
 // app/api/admin/trackings/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import dayjs from 'dayjs';
 
 import { getDataSource } from '@/lib/data-source';
 
@@ -17,7 +16,7 @@ export async function GET(req: NextRequest) {
     const endDate = searchParams.get("endDate");
     const skip = (page - 1) * limit;
 
-    const targetSql = `AND lastAction.timestamp >= '${dayjs(startDate).toISOString()}' AND lastAction.timestamp <= '${dayjs(endDate).toISOString()}'`;
+    const targetSql = `AND lastAction.timestamp >= '${startDate}' AND lastAction.timestamp <= '${endDate}'`;
 
     let sql = `
       SELECT
@@ -26,7 +25,7 @@ export async function GET(req: NextRequest) {
         lastAction.message_type AS last_action_type,
         lastAction.timestamp AS last_action_timestamp,
         lastAction.tx_hash AS last_tx_hash,
-        (SELECT COUNT(1) FROM transactions WHERE message_type LIKE '%MsgRequestAction%' AND action_type  = 'cascade' AND creator = address.address AND timestamp >= '${dayjs(startDate).toISOString()}' AND timestamp <= '${dayjs(endDate).toISOString()}') AS cascade_upload
+        (SELECT COUNT(1) FROM transactions WHERE message_type LIKE '%MsgRequestAction%' AND action_type  = 'cascade' AND creator = address.address AND timestamp >= '${startDate}' AND timestamp <= '${endDate}') AS cascade_upload
       FROM address
       LEFT JOIN (
         SELECT

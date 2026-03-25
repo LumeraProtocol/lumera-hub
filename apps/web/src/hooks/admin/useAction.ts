@@ -26,7 +26,7 @@ const useAction = () => {
   const fetchWallets = async (page = 1) => {
     setLoading(true);
     try {
-      const { data } = await instance.getExternal(`/api/admin/trackings?page=${page}&limit=${ITEM_PER_PAGE}&startDate=${dayjs(startDate)}&endDate=${dayjs(endDate || startDate)}`);
+      const { data } = await instance.getExternal(`/api/admin/trackings?page=${page}&limit=${ITEM_PER_PAGE}&startDate=${dayjs(startDate).toISOString()}&endDate=${dayjs(endDate || startDate).toISOString()}`);
       setWallets(data.items);
       setTotalPages(data.pagination?.totalPages);
     } catch (error) {
