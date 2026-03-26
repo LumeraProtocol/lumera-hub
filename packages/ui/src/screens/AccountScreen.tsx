@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import ReactECharts from 'echarts-for-react';
-import { useChain } from '@interchain-kit/react';
 
 import { AppLoading } from '@/components/Loading';
 import SectionTitle from '@/components/SectionTitle';
@@ -23,7 +22,7 @@ import useRedelegate from '@/hooks/useRedelegate';
 import useUnbond from '@/hooks/useUnbond';
 import useDelegate from '@/hooks/useDelegate';
 import { getFileType } from '@/hooks/useCascade';
-import { DENOM, CHAIN_NAME } from '@/contants/network';
+import { DENOM } from '@/contants/network';
 import { RATE_VALUE } from '@/contants';
 import {
   formatToken,
@@ -87,7 +86,7 @@ const PubKey = ({
 }
 
 export const AccountScreen = () => {
-  const { openView, address } = useChain(CHAIN_NAME);
+
   const delegate = useDelegate();
   const accountInfo = useAccountInfo();
   const redelegate = useRedelegate({
@@ -123,6 +122,8 @@ export const AccountScreen = () => {
     myStacking,
     myStakingBalance,
     myBalance,
+    myAddress,
+    openView,
     handleDelegationsTabChange,
   } = useAccount();
 
@@ -646,7 +647,7 @@ export const AccountScreen = () => {
                           <div className="col-span-12 md:col-span-4 flex justify-start md:justify-end gap-1 mt-2 md:mt-0">
                             <AppButton
                               className="!py-1.5 !px-4 !text-sm !font-normal"
-                              onClick={() => address ? delegateOptions.onSelectValidator(delegation?.delegation?.validator_address) : openView()}
+                              onClick={() => myAddress ? delegateOptions.onSelectValidator(delegation?.delegation?.validator_address) : openView()}
                             >
                               <Tooltip>
                                 <Tooltip.Trigger>
@@ -678,7 +679,7 @@ export const AccountScreen = () => {
                             </AppButton>
                             <AppButton
                               className="!py-1.5 !px-4 !text-sm !font-normal"
-                              onClick={() => address ? redelegate.handleOpenModal(
+                              onClick={() => myAddress ? redelegate.handleOpenModal(
                                 delegation?.delegation?.validator_address,
                                 formatToken({
                                   amount: myStakingBalance[delegation?.delegation?.validator_address] || '0',
@@ -718,7 +719,7 @@ export const AccountScreen = () => {
                             </AppButton>
                             <AppButton
                               className="!py-1.5 !px-4 !text-sm !font-normal"
-                              onClick={() => address ? unbond.handleOpenModal(
+                              onClick={() => myAddress ? unbond.handleOpenModal(
                                 delegation?.delegation?.validator_address,
                                 formatToken({
                                   amount: myStakingBalance[delegation?.delegation?.validator_address] || '0',

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { useChain } from '@interchain-kit/react';
 import numeral from 'numeral';
 
 import * as instance from '@/utils/api';
 import { IValidator } from '@/types/validator';
 import { ITransaction } from '@/hooks/useTransaction';
-import useWalletConnect from '@/hooks/useWalletConnect';
-import { SNSCOPE_URL } from '@/contants/network';
+import { SNSCOPE_URL, CHAIN_NAME } from '@/contants/network';
 import { RATE_VALUE } from '@/contants';
 import { formatTokenDisplay } from '@/utils/format';
 import { IActionDetail } from '@/types';
@@ -98,7 +98,7 @@ interface IMyBalance {
 
 const useAccount = () => {
   const params = useParams();
-  const { address } = useWalletConnect();
+  const { openView, address } = useChain(CHAIN_NAME);
   const [isAccountLoading, setAccountLoading] = useState(false);
   const [account, setAccount] = useState<BaseAccount | null>(null);
   const [isDelegationsLoading, setDelegationsLoading] = useState(false);
@@ -373,6 +373,8 @@ const useAccount = () => {
     myStacking,
     myStakingBalance,
     myBalance,
+    myAddress: address,
+    openView,
     handleDelegationsTabChange,
   }
 }
