@@ -121,7 +121,7 @@ export default function StakeModal({
                     View Transaction
                   </AppLink>
                 </div>
-                <div className='mt-2'>
+                <div className='mt-2 flex justify-center'>
                   <AppButton
                     className='cursor-pointer'
                     onClick={onCloseContinueToStakingModal}

@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import numeral from 'numeral';
 
 import * as instance from '@/utils/api';
 import { IValidator } from '@/types/validator';
 import { ITransaction } from '@/hooks/useTransaction';
+import useWalletConnect from '@/hooks/useWalletConnect';
 import { SNSCOPE_URL } from '@/contants/network';
+import { RATE_VALUE } from '@/contants';
 import { formatTokenDisplay } from '@/utils/format';
 import { IActionDetail } from '@/types';
 
@@ -89,8 +92,13 @@ interface ICascade {
   type: string;
 }
 
+interface IMyBalance {
+  [key: string]: string;
+}
+
 const useAccount = () => {
   const params = useParams();
+  const { address } = useWalletConnect();
   const [isAccountLoading, setAccountLoading] = useState(false);
   const [account, setAccount] = useState<BaseAccount | null>(null);
   const [isDelegationsLoading, setDelegationsLoading] = useState(false);
@@ -110,6 +118,9 @@ const useAccount = () => {
   const [delegationsTab, setDelegationsTab] = useState('delegations');
   const [isCascadeFilesLoading, setCascadeFilesLoading] = useState(false);
   const [cascades, setCascades] = useState<ICascade[]>([]);
+  const [myStacking, setMyStacking] = useState<string[]>([]);
+  const [myStakingBalance, setMyStakingBalance] = useState<IMyBalance>({});
+  const [myBalance, setBalance] = useState<number>(0);
 
   const getBalances = async () => {
     if (!params?.validator) {
@@ -123,6 +134,23 @@ const useAccount = () => {
       console.error(error);
     }
     setBalancesLoading(false);
+  }
+
+  const getMyBalances = async () => {
+    if (!address) {
+      return;
+    }
+    try {
+      const { data } = await instance.get(`/cosmos/bank/v1beta1/balances/${address}`);
+      const balances = data.balances;
+      let total = 0;
+      for (const balance of balances) {
+        total += Number(balance.amount);
+      }
+      setBalance(Number(numeral(total / RATE_VALUE).format('0.[000000]')));
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   const getAccountInfo = async () => {
@@ -151,6 +179,24 @@ const useAccount = () => {
       console.error(error);
     }
     setDelegationsLoading(false);
+  }
+
+  const getMyStakings = async () => {
+    if (!address) {
+      return;
+    }
+    try {
+      const { data } = await instance.get(`/cosmos/staking/v1beta1/delegations/${address}`);
+      const delegationResponses: IDelegationResponses[] = data?.delegation_responses;
+      setMyStacking(delegationResponses.map((item) => item.delegation.validator_address));
+      const items: IMyBalance = {};
+      for (const item of delegationResponses) {
+        items[item.delegation.validator_address] = item.balance.amount;
+      }
+      setMyStakingBalance(items);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   const getRewards = async () => {
@@ -294,6 +340,11 @@ const useAccount = () => {
     getDelegationsInfo();
   }, [params?.validator]);
 
+  useEffect(() => {
+    getMyStakings();
+    getMyBalances();
+  }, [address]);
+
   const handleDelegationsTabChange = (val: string) => {
     setDelegationsTab(val);
   }
@@ -319,6 +370,9 @@ const useAccount = () => {
     isCascadeFilesLoading,
     cascades,
     isValidatorsLoading,
+    myStacking,
+    myStakingBalance,
+    myBalance,
     handleDelegationsTabChange,
   }
 }

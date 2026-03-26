@@ -118,7 +118,7 @@ export default function UnbondModal({
                     View Transaction
                   </AppLink>
                 </div>
-                <div className='mt-2 pb-3'>
+                <div className='mt-2 pb-3 flex justify-center'>
                   <AppButton
                     className='cursor-pointer'
                     onClick={onCloseCongratulationsModal}
@@ -231,7 +231,7 @@ export default function UnbondModal({
                 <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
               }
               <div className={`${!isYes ? 'btn-secondary' : 'btn-primary'} mt-8 full flex justify-end`}>
-                <AppButton onClick={onSendClick} disabled={isUnbondLoading}><strong>Unstake</strong></AppButton>
+                <AppButton onClick={onSendClick} disabled={isUnbondLoading || !isYes}><strong>Unstake</strong></AppButton>
               </div>
             </div>
           </div>

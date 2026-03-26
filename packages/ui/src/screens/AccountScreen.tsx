@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import ReactECharts from 'echarts-for-react';
+import { useChain } from '@interchain-kit/react';
 
 import { AppLoading } from '@/components/Loading';
 import SectionTitle from '@/components/SectionTitle';
@@ -22,7 +23,7 @@ import useRedelegate from '@/hooks/useRedelegate';
 import useUnbond from '@/hooks/useUnbond';
 import useDelegate from '@/hooks/useDelegate';
 import { getFileType } from '@/hooks/useCascade';
-import { DENOM } from '@/contants/network';
+import { DENOM, CHAIN_NAME } from '@/contants/network';
 import { RATE_VALUE } from '@/contants';
 import {
   formatToken,
@@ -86,6 +87,7 @@ const PubKey = ({
 }
 
 export const AccountScreen = () => {
+  const { openView, address } = useChain(CHAIN_NAME);
   const delegate = useDelegate();
   const accountInfo = useAccountInfo();
   const redelegate = useRedelegate({
@@ -118,6 +120,9 @@ export const AccountScreen = () => {
     isCascadeFilesLoading,
     cascades,
     isValidatorsLoading,
+    myStacking,
+    myStakingBalance,
+    myBalance,
     handleDelegationsTabChange,
   } = useAccount();
 
@@ -641,35 +646,115 @@ export const AccountScreen = () => {
                           <div className="col-span-12 md:col-span-4 flex justify-start md:justify-end gap-1 mt-2 md:mt-0">
                             <AppButton
                               className="!py-1.5 !px-4 !text-sm !font-normal"
-                              onClick={() => delegateOptions.onSelectValidator(delegation?.delegation?.validator_address)}
+                              onClick={() => address ? delegateOptions.onSelectValidator(delegation?.delegation?.validator_address) : openView()}
                             >
-                              Stake
+                              <Tooltip>
+                                <Tooltip.Trigger>
+                                  <div className='truncate'>
+                                    Stake
+                                  </div>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content
+                                  enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                  exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                  scale={1}
+                                  x={0}
+                                  y={0}
+                                  opacity={1}
+                                  animation={[
+                                    'quick',
+                                    {
+                                      opacity: {
+                                        overshootClamping: true,
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <div className='text-white'>
+                                    Stake
+                                  </div>
+                                </Tooltip.Content>
+                              </Tooltip>
                             </AppButton>
                             <AppButton
                               className="!py-1.5 !px-4 !text-sm !font-normal"
-                              onClick={() => redelegate.handleOpenModal(
+                              onClick={() => address ? redelegate.handleOpenModal(
                                 delegation?.delegation?.validator_address,
                                 formatToken({
-                                  amount: delegation?.balance?.amount,
-                                  denom: delegation?.balance?.denom,
+                                  amount: myStakingBalance[delegation?.delegation?.validator_address] || '0',
+                                  denom: DENOM,
                                 }, false, '0,0.[000000]'),
                                 item?.description?.moniker ? `${item?.description?.moniker}` : '',
-                              )}
+                              ) : openView()}
+                              disabled={!myStacking.includes(delegation?.delegation?.validator_address)}
                             >
-                              Restake
+                              <Tooltip>
+                                <Tooltip.Trigger>
+                                  <div className='truncate'>
+                                    Restake
+                                  </div>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content
+                                  enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                  exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                  scale={1}
+                                  x={0}
+                                  y={0}
+                                  opacity={1}
+                                  animation={[
+                                    'quick',
+                                    {
+                                      opacity: {
+                                        overshootClamping: true,
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <div className='text-white'>
+                                    {!myStacking.includes(delegation?.delegation?.validator_address) ? "No staking found for this validator." : "Restake"}
+                                  </div>
+                                </Tooltip.Content>
+                              </Tooltip>
                             </AppButton>
                             <AppButton
                               className="!py-1.5 !px-4 !text-sm !font-normal"
-                              onClick={() => unbond.handleOpenModal(
+                              onClick={() => address ? unbond.handleOpenModal(
                                 delegation?.delegation?.validator_address,
                                 formatToken({
-                                  amount: delegation?.balance?.amount,
-                                  denom: delegation?.balance?.denom,
+                                  amount: myStakingBalance[delegation?.delegation?.validator_address] || '0',
+                                  denom: DENOM,
                                 }, false, '0,0.[000000]'),
                                 item?.description?.moniker ? `${item?.description?.moniker}` : '',
-                              )}
+                              ) : openView()}
+                              disabled={!myStacking.includes(delegation?.delegation?.validator_address)}
                             >
-                              Unbond
+                              <Tooltip>
+                                <Tooltip.Trigger>
+                                  <div className='truncate'>
+                                    Unbond
+                                  </div>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content
+                                  enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                  exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                  scale={1}
+                                  x={0}
+                                  y={0}
+                                  opacity={1}
+                                  animation={[
+                                    'quick',
+                                    {
+                                      opacity: {
+                                        overshootClamping: true,
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <div className='text-white'>
+                                    {!myStacking.includes(delegation?.delegation?.validator_address) ? "No staking found for this validator." : "Unbond"}
+                                  </div>
+                                </Tooltip.Content>
+                              </Tooltip>
                             </AppButton>
                           </div>
                         </div>
@@ -1009,7 +1094,7 @@ export const AccountScreen = () => {
 
       <StakeModal
         isOpen={delegateOptions.selectedModal === 'stake'}
-        availableAmount={getTotalBalances()}
+        availableAmount={myBalance}
         onClose={delegateOptions.onCloseContinueToStakingModal}
         onStakingAmountChange={delegateOptions.onStakingAmountChange}
         onCloseContinueToStakingModal={delegateOptions.onCloseContinueToStakingModal}

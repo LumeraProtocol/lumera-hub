@@ -96,7 +96,7 @@ export function ConnectWallet() {
         </AppButton> :
         <>
           <span className='btn-address cursor-pointer' onClick={handleCopyAddress}>{formatAddress(address, 5, -4)}</span>
-          <button onClick={handleDesconnect} className='btn-logout'><LogOut className='w-4 h-4 ml-2' /></button>
+          <button onClick={handleDesconnect} className='btn-logout'><LogOut className='w-4 h-4' /></button>
         </>
       }
     </div>

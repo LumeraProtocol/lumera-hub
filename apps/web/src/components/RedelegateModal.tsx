@@ -118,7 +118,7 @@ export default function RedelegateModal({
                     View Transaction
                   </AppLink>
                 </div>
-                <div className='mt-2 pb-3'>
+                <div className='mt-2 pb-3 flex justify-center'>
                   <AppButton
                     className='cursor-pointer'
                     onClick={onCloseCongratulationsModal}

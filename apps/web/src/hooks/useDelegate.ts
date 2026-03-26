@@ -57,6 +57,15 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   }, []);
 
   useEffect(() => {
+    if (address && !optionsAdvanced.senderAddress) {
+      setOptionsAdvanced(prev => ({
+        ...prev,
+        senderAddress: address,
+      }));
+    }
+  }, [address]);
+
+  useEffect(() => {
     if (options?.customMemo) {
       setOptionsAdvanced({
         ...optionsAdvanced,
