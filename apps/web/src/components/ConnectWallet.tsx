@@ -18,7 +18,7 @@ import useTrackingUser from '@/hooks/useTrackingUser';
 
 export function WalletModalComponent() {
   const dispatch = useDispatch();
-  const { address } = useChain(CHAIN_NAME);
+  const { address, status } = useChain(CHAIN_NAME);
   const { close } = useWalletModal();
   const { trackingUser } = useTrackingUser();
 
@@ -29,7 +29,7 @@ export function WalletModalComponent() {
         address,
       }));
       dispatch(setConnected({
-        status: true,
+        status: status === 'Connected',
       }));
       const isNewConnect = sessionStorage.getItem('new_connect');
       if (!isNewConnect) {
@@ -136,6 +136,7 @@ export function ConnectButton({
       <button
         onClick={openView}
         className={`bg-lumera-teal hover:bg-lumera-green text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors flex items-center cursor-pointer ${className}`}
+        id="connectWallet"
       >
         <Wallet className='w-4 h-4' /> <div className="ml-1">Connect Wallet</div>
       </button>

@@ -127,8 +127,8 @@ export async function POST(req: NextRequest) {
 
     const message = txResponses.tx.body.messages[0];
     if (
-      dayjs.utc(loyaltyRule.startTime).startOf('minute').valueOf() <= dayjs.utc(txResponses.timestamp).startOf('minute').valueOf() ||
-      (loyaltyRule.endTime && dayjs.utc(loyaltyRule.endTime).startOf('minute').valueOf() >= dayjs.utc(txResponses.timestamp).startOf('minute').valueOf()) ||
+      dayjs.utc(loyaltyRule.startTime).startOf('hour').valueOf() > dayjs.utc(txResponses.timestamp).startOf('hour').valueOf() ||
+      (loyaltyRule.endTime && dayjs.utc(loyaltyRule.endTime).startOf('hour').valueOf() < dayjs.utc(txResponses.timestamp).startOf('hour').valueOf()) ||
       message?.["@type"] !== "/cosmos.staking.v1beta1.MsgDelegate" ||
       message?.validator_address !== config.staked.validator ||
       message?.delegator_address !== user.lumeraAddress

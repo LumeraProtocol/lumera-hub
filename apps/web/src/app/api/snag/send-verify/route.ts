@@ -128,8 +128,8 @@ export async function POST(req: NextRequest) {
     const message = txResponses.tx.body.messages[0];
     const amount = message?.amount[0]?.amount || 0;
     if (
-      dayjs.utc(loyaltyRule.startTime).startOf('minute').valueOf() <= dayjs.utc(txResponses.timestamp).startOf('minute').valueOf() ||
-      (loyaltyRule.endTime && dayjs.utc(loyaltyRule.endTime).startOf('minute').valueOf() >= dayjs.utc(txResponses.timestamp).startOf('minute').valueOf()) ||
+      dayjs.utc(loyaltyRule.startTime).startOf('minute').valueOf() > dayjs.utc(txResponses.timestamp).startOf('minute').valueOf() ||
+      (loyaltyRule.endTime && dayjs.utc(loyaltyRule.endTime).startOf('minute').valueOf() < dayjs.utc(txResponses.timestamp).startOf('minute').valueOf()) ||
       message?.["@type"]?.indexOf('MsgSend') === -1 ||
       message?.from_address !== user.lumeraAddress ||
       Number(amount) <= 0
