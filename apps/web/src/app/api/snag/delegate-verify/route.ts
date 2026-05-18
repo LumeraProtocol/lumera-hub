@@ -128,10 +128,19 @@ export async function POST(req: NextRequest) {
     const message = txResponses.tx.body.messages[0];
     if (
       dayjs.utc(loyaltyRule.startTime).startOf('hour').valueOf() > dayjs.utc(txResponses.timestamp).startOf('hour').valueOf() ||
-      (loyaltyRule.endTime && dayjs.utc(loyaltyRule.endTime).startOf('hour').valueOf() < dayjs.utc(txResponses.timestamp).startOf('hour').valueOf()) ||
-      message?.["@type"] !== "/cosmos.staking.v1beta1.MsgDelegate" ||
-      message?.validator_address !== config.delegate.validator ||
-      message?.delegator_address !== user.lumeraAddress
+      (loyaltyRule.endTime && dayjs.utc(loyaltyRule.endTime).startOf('hour').valueOf() < dayjs.utc(txResponses.timestamp).startOf('hour').valueOf())
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid transaction time. Please use a different one.',
+        },
+        { status: 400 }
+      );
+    }
+    if (
+      message?.from_address !== config.claim.validator ||
+      message?.to_address !== user.lumeraAddress
     ) {
       return NextResponse.json(
         {

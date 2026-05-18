@@ -128,8 +128,18 @@ export async function POST(req: NextRequest) {
     const message = txResponses.tx.body.messages[0];
     const amount = message?.amount[0]?.amount || 0;
     if (
-      dayjs.utc(loyaltyRule.startTime).startOf('minute').valueOf() > dayjs.utc(txResponses.timestamp).startOf('minute').valueOf() ||
-      (loyaltyRule.endTime && dayjs.utc(loyaltyRule.endTime).startOf('minute').valueOf() < dayjs.utc(txResponses.timestamp).startOf('minute').valueOf()) ||
+      dayjs.utc(loyaltyRule.startTime).startOf('hour').valueOf() > dayjs.utc(txResponses.timestamp).startOf('hour').valueOf() ||
+      (loyaltyRule.endTime && dayjs.utc(loyaltyRule.endTime).startOf('hour').valueOf() < dayjs.utc(txResponses.timestamp).startOf('hour').valueOf())
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid transaction time. Please use a different one.',
+        },
+        { status: 400 }
+      );
+    }
+    if (
       message?.["@type"]?.indexOf('MsgSend') === -1 ||
       message?.from_address !== user.lumeraAddress ||
       Number(amount) <= 0

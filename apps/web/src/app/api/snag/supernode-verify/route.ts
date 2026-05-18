@@ -8,7 +8,6 @@ import * as instance from '@/utils/api-server';
 import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
-import { SnagTransaction } from '@/entities/SnagTransaction';
 import client from '@/lib/snag';
 
 export async function POST(req: NextRequest) {
@@ -48,7 +47,6 @@ export async function POST(req: NextRequest) {
     const dataSource = await getDataSource();
     const snagUserRepo = dataSource.getRepository(SnagUser);
     const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
-    const snagTransactionRepo = dataSource.getRepository(SnagTransaction);
 
     const user = await snagUserRepo.createQueryBuilder()
       .select('snagAddress, lumeraAddress, userId')
