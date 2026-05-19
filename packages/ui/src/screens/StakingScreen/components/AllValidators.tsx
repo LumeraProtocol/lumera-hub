@@ -258,7 +258,7 @@ export default function AllValidators({
                               className='cursor-pointer text-left !pb-1'
                             >
                               <div className="md:hidden font-semibold text-gray-500 mr-2">Validator: </div>
-                              <AppLink href={`/staking/${validator.operator_address}`} className="hover:text-lumera-teal">
+                              <AppLink href={`/staking/${validator.operator_address}`} className="text-lumera-teal hover:text-lumera-green">
                                 {validator.description.moniker}
                               </AppLink>
                             </td>

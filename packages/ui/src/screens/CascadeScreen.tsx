@@ -564,7 +564,7 @@ const UploadCascadeSuccessModal = ({
                 ))}
               </div>
             </div>
-            <div className='mt-3 pb-3 text-center'>
+            <div className='mt-3 pb-3 text-center flex justify-center'>
               <AppButton
                 className='cursor-pointer'
                 onClick={onCloseModal}

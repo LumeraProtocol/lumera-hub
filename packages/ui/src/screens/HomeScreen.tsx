@@ -557,7 +557,7 @@ export const ClaimableRewardsModal = ({
                     View Transaction
                   </AppLink>
                 </div>
-                <div className='mt-2 pb-3'>
+                <div className='mt-2 pb-3 w-full flex justify-center'>
                   <AppButton
                     className='cursor-pointer'
                     onClick={onCloseCongratulationsModal}
@@ -635,11 +635,11 @@ export const ClaimableRewardsModal = ({
                 Claim <strong>{message?.amount} LUME</strong> available rewards from <strong>{message?.from}</strong> Delegation Now!
               </div>
 
-              <div className='mt-5'>
+              <div className='mt-5 flex justify-end w-full'>
                 {error && !isVoteLoading ?
                   <div className='text-lumera-red-light'>{error}</div> : null
                 }
-                <div className='btn-primary full mt-3'>
+                <div className='btn-primary full'>
                   <AppButton onClick={onSendClick} disabled={isVoteLoading}>
                     <span>Claim</span>
                   </AppButton>

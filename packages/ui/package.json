@@ -15,9 +15,6 @@
   "dependencies": {
     "@cosmjs/encoding": "^0.36.1",
     "@cosmjs/proto-signing": "^0.36.1",
-    "@headlessui/react": "^2.2.9",
-    "@react-jvectormap/core": "^1.0.4",
-    "@react-jvectormap/world": "^1.1.2",
     "@tamagui/config": "^1.132.16",
     "@tamagui/core": "^1.132.16",
     "@tamagui/lucide-icons": "^1.132.20",
@@ -26,13 +23,11 @@
     "echarts": "^6.0.0",
     "echarts-for-react": "^3.0.2",
     "lucide-react": "^0.545.0",
-    "numeral": "^2.0.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-dropzone": "^14.3.8",
     "react-json-view": "^1.21.3",
     "react-native": "0.79.5",
-    "react-native-svg": "^15.12.1",
     "react-paginate": "^8.3.0",
     "react-toastify": "^11.0.5",
     "tamagui": "^1.132.16"
