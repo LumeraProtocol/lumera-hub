@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/api/snag/balance-verify/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import weekday from 'dayjs/plugin/weekday';
 
 import * as instance from '@/utils/api-server';
 import { getDataSource } from '@/lib/data-source';
@@ -12,7 +12,6 @@ import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import client from '@/lib/snag';
 
 dayjs.extend(utc);
-dayjs.extend(weekday);
 
 export async function POST(req: NextRequest) {
   try {
@@ -99,70 +98,79 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const nowUTC = dayjs.utc();
-    const startDate = nowUTC.weekday(1).startOf('day').format('YYYYMMDD');
-    const endDate   = nowUTC.weekday(7).endOf('day').format('YYYYMMDD');
+    const startDate = dayjs.utc(loyaltyRule.startTime).format('YYYYMMDD');
+    const endDate   = dayjs.utc(loyaltyRule.endTime).format('YYYYMMDD');
 
-    let totalTransactions = txResponses.length;
-    if (config.sendTransactions.type === 'weekly') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const txsOfWeek = txResponses.filter((tx: any) => Number(dayjs.utc(tx.timestamp).format('YYYYMMDD')) >= Number(startDate) && Number(dayjs.utc(tx.timestamp).format('YYYYMMDD')) <= Number(endDate));
-      totalTransactions = txsOfWeek.length;
+    const txsOfWeek = txResponses.filter((tx: any) => Number(dayjs.utc(tx.timestamp).format('YYYYMMDD')) >= Number(startDate) && Number(dayjs.utc(tx.timestamp).format('YYYYMMDD')) <= Number(endDate));
+    const currentModules: string[] = [];
+    const configModules = Number(config.interactModules.modules);
+    outer: for (const item of txsOfWeek) {
+      const messages = item.tx.body.messages;
+      for (const mgs of messages) {
+        const type = mgs['@type'];
+        if (!currentModules.includes(type)) {
+          currentModules.push(type);
+          if (currentModules.length >= Number(configModules)) {
+            break outer;
+          }
+        }
+      }
+
     }
-    const configTransactions = Number(config.sendTransactions.transactions);
-    const remaining = configTransactions - totalTransactions;
+    const totalModules = currentModules.length;
+    const remaining = configModules - totalModules;
 
     switch (config.condition) {
       case '>':
-        if (totalTransactions <= configTransactions) {
+        if (totalModules <= configModules) {
           return NextResponse.json(
             {
               success: false,
-              error: `You've sent ${totalTransactions} transactions this week. Send ${remaining} more to complete the weekly goal!`,
+              error: `You've sent ${totalModules} modules. Send ${remaining} more to complete the weekly goal!`,
             },
             { status: 400 }
           );
         }
         break;
       case '<=':
-        if (totalTransactions > configTransactions) {
+        if (totalModules > configModules) {
           return NextResponse.json(
             {
               success: false,
-              error: `You have sent ${totalTransactions} transactions this week. The maximum allowed is ${configTransactions} transactions. Please send fewer transactions.`,
+              error: `You have sent ${totalModules} modules. The maximum allowed is ${configModules} modules. Please send fewer modules.`,
             },
             { status: 400 }
           );
         }
         break;
       case '<':
-        if (totalTransactions >= configTransactions) {
+        if (totalModules >= configModules) {
           return NextResponse.json(
             {
               success: false,
-              error: `You have sent ${totalTransactions} transactions this week. The maximum allowed is ${configTransactions} transactions. Please send fewer transactions.`,
+              error: `You have sent ${totalModules} modules. The maximum allowed is ${configModules} modules. Please send fewer transactions.`,
             },
             { status: 400 }
           );
         }
         break;
       case '=':
-        if (totalTransactions !== configTransactions) {
+        if (totalModules !== configModules) {
           return NextResponse.json(
             {
               success: false,
-              error: `You have sent ${totalTransactions} transactions this week. Reach ${configTransactions} to complete the goal.`,
+              error: `You have sent ${totalModules} modules. Reach ${configModules} to complete the goal.`,
             },
             { status: 400 }
           );
         }
         break;
       default:
-        if (totalTransactions < configTransactions) {
+        if (totalModules < configModules) {
           return NextResponse.json(
             {
               success: false,
-              error: `You've sent ${totalTransactions} transactions this week. Send ${remaining} more to complete the weekly goal!`,
+              error: `You've sent ${totalModules} modules. Send ${remaining} more to complete the weekly goal!`,
             },
             { status: 400 }
           );

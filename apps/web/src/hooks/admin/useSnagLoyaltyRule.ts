@@ -74,14 +74,14 @@ export const CONDITION = [
     value: '>',
     label: '>',
   },
-  {
-    value: '<=',
-    label: '<=',
-  },
-  {
-    value: '<',
-    label: '<',
-  },
+  // {
+  //   value: '<=',
+  //   label: '<=',
+  // },
+  // {
+  //   value: '<',
+  //   label: '<',
+  // },
   {
     value: '=',
     label: '=',
@@ -101,6 +101,7 @@ const URL_CHECK = {
       claim: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
       send: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
       sendTransactions: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
+      interactModules: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
     }
   },
   testnet: {
@@ -115,6 +116,7 @@ const URL_CHECK = {
       claim: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
       send: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
       sendTransactions: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
+      interactModules: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
     }
   }
 }
@@ -180,6 +182,9 @@ const useSnagLoyaltyRule = () => {
       transactions: '',
       type: '',
     },
+    interactModules: {
+      modules: '',
+    },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
   const [currencies, setCurrencies] = useState<TData[]>([]);
@@ -239,6 +244,7 @@ const useSnagLoyaltyRule = () => {
           claim: config.claim,
           supernode: config.supernode,
           sendTransactions: config.sendTransactions,
+          interactModules: config.interactModules,
         });
       }
     } catch (error) {
@@ -442,6 +448,14 @@ const useSnagLoyaltyRule = () => {
             setMessages(prev => ({
               ...prev,
               supernode: 'Type is required.',
+            }));
+          }
+        break;
+        case 'interactModules':
+          if (!configForm.interactModules.modules || Number(configForm.interactModules.modules) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              interactModules: 'Condition is required.',
             }));
           }
         break;
@@ -788,6 +802,14 @@ const useSnagLoyaltyRule = () => {
           ...configForm,
           sendTransactions: {
             ...configForm.sendTransactions,
+            [name]: value,
+          },
+        });
+      case 'interactModules':
+        setConfigForm({
+          ...configForm,
+          interactModules: {
+            ...configForm.interactModules,
             [name]: value,
           },
         });
