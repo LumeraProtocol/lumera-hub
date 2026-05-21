@@ -6,6 +6,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getDataSource } from '@/lib/data-source';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import client from '@/lib/snag';
+import { generateUrlCheck } from '@/utils/helpers';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -16,47 +17,10 @@ export async function POST(req: NextRequest) {
     loyaltyRuleId = body.loyaltyRuleId;
 
     const config = JSON.parse(body.config);
-    const generateUrlCheck = () => {
-      const path = `${config.domain}snag/${loyaltyRuleId}`;
-      let prefix = '';
-      switch (body.actionType) {
-        case 'staked':
-          prefix = '/stake';
-          break;
-        case 'delegate':
-          prefix = '/delegate';
-          break;
-        case 'redelegated':
-          prefix = '/redelegate';
-          break;
-        case 'balance':
-          prefix = '/balance';
-          break;
-        case 'claim':
-          prefix = '/claim';
-          break;
-        case 'supernode':
-          prefix = '/supernode';
-          break;
-        case 'send':
-          prefix = '/send';
-          break;
-        case 'sendTransactions':
-          prefix = '/send-transactions';
-          break;
-        case 'interactModules':
-          prefix = '/interact-modules';
-          break;
-      }
-      if (body.actionType === 'connect') {
-        return config.domain;
-      }
-      return `${path}${prefix}`;
-    }
 
     const metadata = {
       cta: {
-        href: generateUrlCheck(),
+        href: generateUrlCheck(config.domain, loyaltyRuleId, body.actionType),
         label: body.loyaltyRule.metadata.cta.label,
       },
       range: body.loyaltyRule.metadata.range

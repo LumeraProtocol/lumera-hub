@@ -247,3 +247,44 @@ export const isValidIPv4 = (ip: string) => {
 export const delay = (time: number) => {
   return new Promise((resolve) => setTimeout(resolve, time));
 };
+
+export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionType: string) => {
+      const path = `${domain}snag/${loyaltyRuleId}`;
+      let prefix = '';
+      switch (actionType) {
+        case 'staked':
+          prefix = '/stake';
+          break;
+        case 'delegate':
+          prefix = '/delegate';
+          break;
+        case 'redelegated':
+          prefix = '/redelegate';
+          break;
+        case 'balance':
+          prefix = '/balance';
+          break;
+        case 'claim':
+          prefix = '/claim';
+          break;
+        case 'supernode':
+          prefix = '/supernode';
+          break;
+        case 'send':
+          prefix = '/send';
+          break;
+        case 'sendTransactions':
+          prefix = '/send-transactions';
+          break;
+        case 'interactModules':
+          prefix = '/interact-modules';
+          break;
+        case 'firstTimeDelegation':
+          prefix = '/first-time-delegation';
+          break;
+      }
+      if (actionType === 'connect') {
+        return domain;
+      }
+      return `${path}${prefix}`;
+    }

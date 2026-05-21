@@ -102,6 +102,7 @@ const URL_CHECK = {
       send: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
       sendTransactions: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
       interactModules: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
+      firstTimeDelegation: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
     }
   },
   testnet: {
@@ -117,6 +118,7 @@ const URL_CHECK = {
       send: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
       sendTransactions: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
       interactModules: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
+      firstTimeDelegation: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
     }
   }
 }

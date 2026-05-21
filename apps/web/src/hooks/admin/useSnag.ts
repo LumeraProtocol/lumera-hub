@@ -52,6 +52,10 @@ export const ACTION_TYPE = [
     label: 'Interact modules',
   },
   {
+    value: 'firstTimeDelegation',
+    label: 'First-time delegation',
+  },
+  {
     value: 'decentralizationStake',
     label: 'Decentralization Stake',
   },
