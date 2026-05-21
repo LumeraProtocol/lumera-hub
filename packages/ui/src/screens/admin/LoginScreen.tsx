@@ -82,23 +82,19 @@ export const LoginScreen = ({
                     </div> : null
                   }
                 </div>
-                <div className='mt-5 flex justify-between'>
-                  <div>
-                    {message.type === 'error' ?
-                      <div className='text-red-500 w-full'>
-                        <span>{message.content}</span>
-                      </div> : null
-                    }
-                  </div>
-                  <div>
-                    <AppButton
-                      className='disabled:opacity-45'
-                      disabled={isLoading}
-                      onClick={onLoginButtonClick}
-                    >
-                      <span>Login</span>
-                    </AppButton>
-                  </div>
+                {message.type === 'error' ?
+                  <div className='text-red-500 w-full'>
+                    <span>{message.content}</span>
+                  </div> : null
+                }
+                <div className='mt-5 flex justify-center'>
+                  <AppButton
+                    className='disabled:opacity-45 min-w-[138px]'
+                    disabled={isLoading}
+                    onClick={onLoginButtonClick}
+                  >
+                    <span>Login</span>
+                  </AppButton>
                 </div>
               </div>
               <div className="my-5 flex justify-center items-center gap-3 text-lumera-label text-sm">

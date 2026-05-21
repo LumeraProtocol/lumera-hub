@@ -50,6 +50,21 @@ export const NETWORK = [
   },
 ];
 
+export const TRANSACTION_TYPE = [
+  {
+    value: '',
+    label: 'N/A',
+  },
+  {
+    value: 'weekly',
+    label: 'Weekly',
+  },
+  {
+    value: 'lifetime ',
+    label: 'Lifetime ',
+  },
+];
+
 export const CONDITION = [
   {
     value: '>=',
@@ -85,6 +100,7 @@ const URL_CHECK = {
       supernodeValidator: 'https://lcd.lumera.io/cosmos/staking/v1beta1/validators?pagination.limit=1000',
       claim: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
       send: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
+      sendTransactions: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
     }
   },
   testnet: {
@@ -98,6 +114,7 @@ const URL_CHECK = {
       supernodeValidator: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/validators?pagination.limit=1000',
       claim: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
       send: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
+      sendTransactions: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
     }
   }
 }
@@ -159,6 +176,10 @@ const useSnagLoyaltyRule = () => {
       days: '',
       validatorUrl: '',
     },
+    sendTransactions: {
+      transactions: '',
+      type: '',
+    },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
   const [currencies, setCurrencies] = useState<TData[]>([]);
@@ -217,6 +238,7 @@ const useSnagLoyaltyRule = () => {
           balance: config.balance,
           claim: config.claim,
           supernode: config.supernode,
+          sendTransactions: config.sendTransactions,
         });
       }
     } catch (error) {
@@ -406,6 +428,20 @@ const useSnagLoyaltyRule = () => {
             setMessages(prev => ({
               ...prev,
               supernode: 'Condition is required.',
+            }));
+          }
+        break;
+        case 'sendTransactions':
+          if (!configForm.sendTransactions.transactions || Number(configForm.sendTransactions.transactions) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              supernode: 'Condition is required.',
+            }));
+          }
+          if (!configForm.sendTransactions.type) {
+            setMessages(prev => ({
+              ...prev,
+              supernode: 'Type is required.',
             }));
           }
         break;
@@ -624,6 +660,20 @@ const useSnagLoyaltyRule = () => {
             }));
           }
         break;
+        case 'sendTransactions':
+          if (!configForm.sendTransactions.transactions || Number(configForm.sendTransactions.transactions) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              supernode: 'Condition is required.',
+            }));
+          }
+          if (!configForm.sendTransactions.type) {
+            setMessages(prev => ({
+              ...prev,
+              supernode: 'Type is required.',
+            }));
+          }
+        break;
       }
     }
 
@@ -730,6 +780,15 @@ const useSnagLoyaltyRule = () => {
           ...configForm,
           claim: {
             validator: value,
+          },
+        });
+        break;
+      case 'sendTransactions':
+        setConfigForm({
+          ...configForm,
+          sendTransactions: {
+            ...configForm.sendTransactions,
+            [name]: value,
           },
         });
         break;

@@ -39,6 +39,30 @@ export const ACTION_TYPE = [
     value: 'send',
     label: 'Send A Transaction',
   },
+  {
+    value: 'sendTransactions',
+    label: 'Send Transactions',
+  },
+  {
+    value: 'stakeLUME',
+    label: 'Stake LUME',
+  },
+  {
+    value: 'interactModules',
+    label: 'Interact modules',
+  },
+  {
+    value: 'decentralizationStake',
+    label: 'Decentralization Stake',
+  },
+  {
+    value: 'ClaimRewards',
+    label: 'Claim staking rewards',
+  },
+  {
+    value: 'uploadCascade',
+    label: 'Upload to Cascade',
+  },
 ];
 
 const useSnag = () => {
@@ -349,6 +373,9 @@ const useSnag = () => {
       case 'supernode':
         prefix = '/supernode';
         break;
+      case 'sendTransactions':
+        prefix = '/send-transactions';
+        break;
     }
     if (actionType === 'connect') {
       return config.domain;
@@ -435,6 +462,14 @@ const useSnag = () => {
         }
       break;
       case 'claim':
+        if (!configForm.claim.validator) {
+          setMessage({
+            type: 'error',
+            content: 'From Address is required.',
+          });
+          return;
+        }
+      case 'sendTransactions':
         if (!configForm.claim.validator) {
           setMessage({
             type: 'error',

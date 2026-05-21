@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 import { AppLoading } from '@/components/Loading';
-import AppButton, { AppLinkButton } from '@/components/AppButton';
+import AppButton from '@/components/AppButton';
 import SectionTitle from '@/components/SectionTitle';
 import { FullDateTimesPicker } from '@/components/DateTimePicker';
 import AppLink from '@/components/AppLink';
@@ -25,6 +25,7 @@ import useSnagLoyaltyRule, {
   FREQUENCE,
   NETWORK,
   CONDITION,
+  TRANSACTION_TYPE,
 } from '@/hooks/admin/useSnagLoyaltyRule';
 
 export const EditLoyaltyRuleScreen = () => {
@@ -299,6 +300,102 @@ export const EditLoyaltyRuleScreen = () => {
               </div>
               {messages?.supernode ?
                 <div className="text-red-500 mt-1 text-sm">{messages.supernode}</div> : null
+              }
+            </div>
+          </div>
+        </>
+      )
+    }
+
+    if (actionType === 'sendTransactions') {
+      return (
+        <>
+          <div className='mt-1'>
+            <Label htmlFor="network" className='text-base'>Type *</Label>
+            <div className=''>
+              <Select
+                id="network"
+                value={configForm.sendTransactions.type}
+                onValueChange={(val) => handleInputChange('sendTransactions', 'type', val)}
+              >
+                <Select.Trigger width={'100%'} iconAfter={<ChevronDown className='w-4 h-4' />}>
+                  <Select.Value placeholder="N/A" />
+                </Select.Trigger>
+                <Select.Content zIndex={200000}>
+                  <Select.Viewport minWidth={200}>
+                    <Select.Group>
+                      {TRANSACTION_TYPE?.map((item, index) => {
+                        return (
+                          <Select.Item
+                            key={index}
+                            index={index}
+                            value={item.value}
+                          >
+                            <Select.ItemText>
+                              {item.label}
+                            </Select.ItemText>
+                          </Select.Item>
+                        )
+                      })}
+                    </Select.Group>
+                  </Select.Viewport>
+                </Select.Content>
+              </Select>
+              {messages?.type ?
+                <div className="text-red-500 mt-1 text-sm">{messages.type}</div> : null
+              }
+            </div>
+          </div>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>Condition *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-1/7">
+                  <Select
+                    id="condition"
+                    value={configForm.condition}
+                    onValueChange={(value) => handleFormChange('root', 'condition', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {CONDITION.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+                <div className="w-6/7">
+                  <Input
+                    id="days"
+                    placeholder="Transactions"
+                    className='input has-symbol'
+                    value={configForm?.sendTransactions?.transactions || '0'}
+                    onChangeText={(newValue) => handleInputChange('sendTransactions', 'transactions', newValue)}
+                  />
+                  <span className='input-symbol'>
+                    transactions
+                  </span>
+                </div>
+              </div>
+              {messages?.sendTransactions ?
+                <div className="text-red-500 mt-1 text-sm">{messages.sendTransactions}</div> : null
               }
             </div>
           </div>

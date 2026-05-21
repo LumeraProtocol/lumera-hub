@@ -45,6 +45,9 @@ export async function POST(req: NextRequest) {
         case 'send':
           prefix = '/send';
           break;
+        case 'sendTransactions':
+          prefix = '/send-transactions';
+          break;
       }
       if (body.actionType === 'connect') {
         return config.domain;
