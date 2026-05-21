@@ -282,6 +282,9 @@ export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionTy
         case 'firstTimeDelegation':
           prefix = '/first-time-delegation';
           break;
+        case 'stakeLUME':
+          prefix = '/stake-lume';
+          break;
       }
       if (actionType === 'connect') {
         return domain;

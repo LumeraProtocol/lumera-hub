@@ -463,6 +463,119 @@ export const EditLoyaltyRuleScreen = () => {
       )
     }
 
+    if (actionType === 'stakeLUME') {
+      return (
+        <>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>Amount *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-1/7">
+                  <Select
+                    id="condition"
+                    value={configForm.condition}
+                    onValueChange={(value) => handleFormChange('root', 'condition', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {CONDITION.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+                <div className="w-6/7">
+                  <Input
+                    id="days"
+                    placeholder="Transactions"
+                    className='input has-symbol'
+                    value={configForm?.stakeLUME?.amount || '0'}
+                    onChangeText={(newValue) => handleInputChange('stakeLUME', 'amount', newValue)}
+                  />
+                  <span className='input-symbol'>
+                    LUME
+                  </span>
+                </div>
+              </div>
+              {messages?.stakeLUMEAmount ?
+                <div className="text-red-500 mt-1 text-sm">{messages.stakeLUMEAmount}</div> : null
+              }
+            </div>
+          </div>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>Days *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-1/7">
+                  <Select
+                    id="condition"
+                    value={configForm.stakeLUME.condition}
+                    onValueChange={(value) => handleInputChange('stakeLUME', 'condition', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {CONDITION.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+                <div className="w-6/7">
+                  <Input
+                    id="days"
+                    placeholder="Transactions"
+                    className='input has-symbol'
+                    value={configForm?.stakeLUME?.days || '0'}
+                    onChangeText={(newValue) => handleInputChange('stakeLUME', 'days', newValue)}
+                  />
+                  <span className='input-symbol'>
+                    days
+                  </span>
+                </div>
+              </div>
+              {messages?.stakeLUMEDays ?
+                <div className="text-red-500 mt-1 text-sm">{messages.stakeLUMEDays}</div> : null
+              }
+            </div>
+          </div>
+        </>
+      )
+    }
+
     return null;
   }
 

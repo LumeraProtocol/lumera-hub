@@ -32,13 +32,6 @@ export async function POST(req: NextRequest) {
       });
     } catch (error: any) {
       console.error('update error:', error)
-      if (!error.message.includes('invalid json') && !error.message.includes('Unexpected end')) {
-        return NextResponse.json({
-          error: (error as Error).message,
-        }, {
-          status: 500,
-        });
-      }
     }
 
     const loyaltyRes = await client.loyalty.rules.list({

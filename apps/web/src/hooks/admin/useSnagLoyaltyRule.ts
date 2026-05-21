@@ -103,6 +103,7 @@ const URL_CHECK = {
       sendTransactions: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
       interactModules: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
       firstTimeDelegation: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
+      stakeLUME: 'https://lcd.lumera.io/cosmos/staking/v1beta1/delegations/',
     }
   },
   testnet: {
@@ -119,6 +120,7 @@ const URL_CHECK = {
       sendTransactions: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
       interactModules: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
       firstTimeDelegation: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
+      stakeLUME: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/delegations/',
     }
   }
 }
@@ -187,6 +189,11 @@ const useSnagLoyaltyRule = () => {
     interactModules: {
       modules: '',
     },
+    stakeLUME: {
+      amount: '',
+      days: '',
+      condition: CONDITION[0].value,
+    },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
   const [currencies, setCurrencies] = useState<TData[]>([]);
@@ -247,6 +254,7 @@ const useSnagLoyaltyRule = () => {
           supernode: config.supernode,
           sendTransactions: config.sendTransactions,
           interactModules: config.interactModules,
+          stakeLUME: config.stakeLUME,
         });
       }
     } catch (error) {
@@ -458,6 +466,19 @@ const useSnagLoyaltyRule = () => {
             setMessages(prev => ({
               ...prev,
               interactModules: 'Condition is required.',
+            }));
+          }
+        case 'stakeLUME':
+          if (!configForm.stakeLUME.amount || Number(configForm.stakeLUME.amount) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              stakeLUMEAmount: 'Amount is required.',
+            }));
+          }
+          if (!configForm.stakeLUME.amount || Number(configForm.stakeLUME.amount) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              stakeLUMEDays: 'Days is required.',
             }));
           }
         break;
@@ -812,6 +833,15 @@ const useSnagLoyaltyRule = () => {
           ...configForm,
           interactModules: {
             ...configForm.interactModules,
+            [name]: value,
+          },
+        });
+        break;
+      case 'stakeLUME':
+        setConfigForm({
+          ...configForm,
+          stakeLUME: {
+            ...configForm.stakeLUME,
             [name]: value,
           },
         });

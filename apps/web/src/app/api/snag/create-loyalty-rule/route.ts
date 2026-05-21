@@ -37,13 +37,7 @@ export async function POST(req: NextRequest) {
         metadata,
       });
     } catch (error: any) {
-      if (!error.message.includes('invalid json') && !error.message.includes('Unexpected end')) {
-        return NextResponse.json({
-          error: (error as Error).message,
-        }, {
-          status: 500,
-        });
-      }
+      console.log(error)
     }
 
     const loyaltyRes = await client.loyalty.rules.list({
@@ -87,6 +81,7 @@ export async function POST(req: NextRequest) {
       loyaltyRule: loyalty,
     });
   } catch (error: any) {
+    console.log(error)
     return NextResponse.json({
       error: (error as Error).message,
     }, {
