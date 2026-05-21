@@ -33,7 +33,9 @@ export async function POST(req: NextRequest) {
       await client.loyalty.rules.update(result.id, {
         name: body.loyaltyRule.name,
         amount: body.loyaltyRule.amount.toString(),
+        startTime: body.loyaltyRule.startTime,
         endTime: body.loyaltyRule.endTime,
+        interval: body.loyaltyRule.interval,
         metadata,
       });
     } catch (error: any) {

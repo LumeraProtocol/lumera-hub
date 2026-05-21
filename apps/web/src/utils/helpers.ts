@@ -285,6 +285,9 @@ export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionTy
         case 'stakeLUME':
           prefix = '/stake-lume';
           break;
+        case 'decentralizationStake':
+          prefix = '/decentralization-stake';
+          break;
       }
       if (actionType === 'connect') {
         return domain;

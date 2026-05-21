@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const configAmount =  Number(config.stakeLUME.amount) / 1000000;
+    const configAmount =  Number(config.stakeLUME.amount) * 1000000;
     switch (config.condition) {
       case '>':
         if (totalBalances <= configAmount) {

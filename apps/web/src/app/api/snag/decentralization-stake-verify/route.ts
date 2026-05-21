@@ -1,12 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/api/snag/balance-verify/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import weekday from 'dayjs/plugin/weekday';
 
 import * as instance from '@/utils/api-server';
 import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import client from '@/lib/snag';
+
+dayjs.extend(utc);
+dayjs.extend(weekday);
 
 export async function POST(req: NextRequest) {
   try {
@@ -82,25 +89,47 @@ export async function POST(req: NextRequest) {
       );
     }
     const { data } = await instance.getExternal(`${config.urlCheck}${user.lumeraAddress}`);
-    const balances = data?.balances;
-    if (!balances?.length) {
+    const delegations = data?.delegation_responses;
+    if (!delegations?.length) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Balance not found!',
+          error: 'Delegations not found!',
         },
         { status: 400 }
       );
     }
 
+    const validatorsRes = await instance.getExternal(config.decentralizationStake.validatorUrl);
+    if (!validatorsRes?.data?.validators?.length) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Validators not found!',
+        },
+        { status: 400 }
+      );
+    }
+    let start = Number(config.decentralizationStake.rank);
+    const rankCondition = config.decentralizationStake.condition;
+    if (rankCondition === '>=') {
+      start = start - 1;
+    }
+    const sortValidators = validatorsRes.data.validators.sort((a: any, b: any) => Number(b.tokens) - Number(a.tokens));
+    const validators = sortValidators.slice(start, sortValidators.length);
     let totalBalances = 0;
-    for (const item of balances) {
-      if (item.denom === 'ulume') {
-        totalBalances += Number(item.amount);
+    for (const validator of validators) {
+      const items = delegations.filter((d: any) => d.delegation.validator_address === validator.operator_address);
+      if (items.length) {
+        for (const item of items) {
+          const balance = item.balance;
+          if (balance.denom === 'ulume') {
+            totalBalances += Number(balance.amount);
+          }
+        }
       }
     }
-
-    const configAmount =  Number(config.staked.amount) * 1000000;
+    const configAmount =  Number(config.decentralizationStake.amount) * 1000000;
     switch (config.condition) {
       case '>':
         if (totalBalances <= configAmount) {

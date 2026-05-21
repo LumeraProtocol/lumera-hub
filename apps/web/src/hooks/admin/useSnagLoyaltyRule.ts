@@ -88,6 +88,17 @@ export const CONDITION = [
   },
 ];
 
+export const CONDITION_EXTEND = [
+  {
+    value: '>=',
+    label: '>=',
+  },
+  {
+    value: '>',
+    label: '>',
+  },
+];
+
 const URL_CHECK = {
   mainnet: {
     domain: 'https://hub.lumera.io/',
@@ -104,6 +115,7 @@ const URL_CHECK = {
       interactModules: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
       firstTimeDelegation: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
       stakeLUME: 'https://lcd.lumera.io/cosmos/staking/v1beta1/delegations/',
+      decentralizationStake: 'https://lcd.lumera.io/cosmos/staking/v1beta1/delegations/',
     }
   },
   testnet: {
@@ -121,6 +133,7 @@ const URL_CHECK = {
       interactModules: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
       firstTimeDelegation: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
       stakeLUME: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/delegations/',
+      decentralizationStake: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/delegations/',
     }
   }
 }
@@ -194,6 +207,12 @@ const useSnagLoyaltyRule = () => {
       days: '',
       condition: CONDITION[0].value,
     },
+    decentralizationStake: {
+      amount: '',
+      rank: '',
+      validatorUrl: '',
+      condition: CONDITION_EXTEND[0].value,
+    },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
   const [currencies, setCurrencies] = useState<TData[]>([]);
@@ -255,6 +274,7 @@ const useSnagLoyaltyRule = () => {
           sendTransactions: config.sendTransactions,
           interactModules: config.interactModules,
           stakeLUME: config.stakeLUME,
+          decentralizationStake: config.decentralizationStake,
         });
       }
     } catch (error) {
@@ -479,6 +499,20 @@ const useSnagLoyaltyRule = () => {
             setMessages(prev => ({
               ...prev,
               stakeLUMEDays: 'Days is required.',
+            }));
+          }
+        break;
+        case 'decentralizationStake':
+          if (!configForm.decentralizationStake.amount || Number(configForm.decentralizationStake.amount) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              decentralizationStakeAmount: 'Amount is required.',
+            }));
+          }
+          if (!configForm.decentralizationStake.rank || Number(configForm.decentralizationStake.rank) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              decentralizationStakeRank: 'Rank is required.',
             }));
           }
         break;
@@ -711,6 +745,20 @@ const useSnagLoyaltyRule = () => {
             }));
           }
         break;
+        case 'decentralizationStake':
+          if (!configForm.decentralizationStake.amount || Number(configForm.decentralizationStake.amount) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              decentralizationStakeAmount: 'Amount is required.',
+            }));
+          }
+          if (!configForm.decentralizationStake.rank || Number(configForm.decentralizationStake.rank) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              decentralizationStakeRank: 'Rank is required.',
+            }));
+          }
+        break;
       }
     }
 
@@ -846,6 +894,15 @@ const useSnagLoyaltyRule = () => {
           },
         });
         break;
+      case 'decentralizationStake':
+        setConfigForm({
+          ...configForm,
+          decentralizationStake: {
+            ...configForm.decentralizationStake,
+            [name]: value,
+          },
+        });
+        break;
       case 'root':
         setConfigForm({
           ...configForm,
@@ -874,6 +931,20 @@ const useSnagLoyaltyRule = () => {
             ...prev,
             supernode: {
               ...prev.supernode,
+              validatorUrl: currentUrlCheck.supernodeValidator,
+            }
+          }));
+        }
+      }
+
+      if (actionType === 'decentralizationStake') {
+        const selectedUrlCheck = URL_CHECK[value as keyof typeof URL_CHECK];
+        if (selectedUrlCheck) {
+          const currentUrlCheck = selectedUrlCheck.urlCheck;
+          setConfigForm(prev => ({
+            ...prev,
+            decentralizationStake: {
+              ...prev.decentralizationStake,
               validatorUrl: currentUrlCheck.supernodeValidator,
             }
           }));

@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const configAmount =  Number(config.staked.amount) / 1000000;
+    const configAmount =  Number(config.staked.amount) * 1000000;
     switch (config.condition) {
       case '>':
         if ( Number(message?.amount.amount) <= configAmount) {

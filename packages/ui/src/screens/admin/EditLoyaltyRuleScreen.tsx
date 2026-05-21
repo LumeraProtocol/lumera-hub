@@ -26,6 +26,7 @@ import useSnagLoyaltyRule, {
   NETWORK,
   CONDITION,
   TRANSACTION_TYPE,
+  CONDITION_EXTEND,
 } from '@/hooks/admin/useSnagLoyaltyRule';
 
 export const EditLoyaltyRuleScreen = () => {
@@ -569,6 +570,119 @@ export const EditLoyaltyRuleScreen = () => {
               </div>
               {messages?.stakeLUMEDays ?
                 <div className="text-red-500 mt-1 text-sm">{messages.stakeLUMEDays}</div> : null
+              }
+            </div>
+          </div>
+        </>
+      )
+    }
+
+    if (actionType === 'decentralizationStake') {
+      return (
+        <>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>Amount *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-1/7">
+                  <Select
+                    id="condition"
+                    value={configForm.condition}
+                    onValueChange={(value) => handleFormChange('root', 'condition', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {CONDITION.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+                <div className="w-6/7">
+                  <Input
+                    id="days"
+                    placeholder="Transactions"
+                    className='input has-symbol'
+                    value={configForm?.decentralizationStake?.amount || '0'}
+                    onChangeText={(newValue) => handleInputChange('decentralizationStake', 'amount', newValue)}
+                  />
+                  <span className='input-symbol'>
+                    LUME
+                  </span>
+                </div>
+              </div>
+              {messages?.decentralizationStakeAmount ?
+                <div className="text-red-500 mt-1 text-sm">{messages.decentralizationStakeAmount}</div> : null
+              }
+            </div>
+          </div>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>Rank *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-1/7">
+                  <Select
+                    id="condition"
+                    value={configForm.decentralizationStake.condition}
+                    onValueChange={(value) => handleInputChange('decentralizationStake', 'condition', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {CONDITION_EXTEND.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+                <div className="w-6/7">
+                  <Input
+                    id="days"
+                    placeholder="Transactions"
+                    className='input has-symbol'
+                    value={configForm?.decentralizationStake?.rank || '0'}
+                    onChangeText={(newValue) => handleInputChange('decentralizationStake', 'rank', newValue)}
+                  />
+                  <span className='input-symbol'>
+
+                  </span>
+                </div>
+              </div>
+              {messages?.decentralizationStakeRank ?
+                <div className="text-red-500 mt-1 text-sm">{messages.decentralizationStakeRank}</div> : null
               }
             </div>
           </div>
