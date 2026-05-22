@@ -68,8 +68,8 @@ export const ACTION_TYPE = [
     label: 'Compound rewards',
   },
   {
-    value: 'uploadCascade',
-    label: 'Upload to Cascade',
+    value: 'firstUploadCascade',
+    label: 'First upload to Cascade',
   },
 ];
 

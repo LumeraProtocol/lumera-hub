@@ -18,7 +18,7 @@ import { AppLoading } from '@/components/Loading';
 import AppButton, { AppLinkButton } from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
 import useSnag from '@/hooks/admin/useSnag';
-import { formatNumber, formatAddress } from '@/utils/format';
+import { formatNumber, formatAddress, formatKb } from '@/utils/format';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 
 type TLoyaltyRuleVerifyCheck = {
@@ -911,6 +911,51 @@ export const SnagScreen = () => {
                     </div>
                   </Tooltip.Content>
                 </Tooltip>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'firstUploadCascade':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>First Upload Cascade</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>URL check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Size:</span> {obj.decentralizationStake.condition}<span>{formatKb(obj.firstUploadCascade.size)}</span>
               </div>
             </li>
           </ul>

@@ -242,6 +242,43 @@ const useSnagVerify = () => {
     setLoading(false);
   }
 
+  const verifyFirstUploadCascade = async () => {
+    setLoading(true);
+    setMessage({
+      type: '',
+      content: '',
+    });
+    if (!txHash) {
+      setMessage({
+        type: 'error',
+        content: 'The transaction link is required.',
+      });
+      return;
+    }
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const walletAddress = urlParams.get('walletAddress');
+      const parseTxHash = txHash.split('/');
+      await instance.postExternal('/api/snag/first-upload-cascade-verify', {
+        snagAddress: walletAddress,
+        loyaltyRuleID: params?.loyaltyRuleID || '',
+        txHash: parseTxHash[parseTxHash.length - 1],
+      });
+      toast.success("Quest is verified!", {
+        position: "bottom-right",
+        theme: "dark",
+      });
+      router.push('/');
+    } catch (error) {
+      console.error(error);
+      setMessage({
+        type: 'error',
+        content: (error as Error)?.message ||  'An unknown error occurred.',
+      });
+    }
+    setLoading(false);
+  }
+
   return {
     isLoading,
     message,
@@ -253,6 +290,7 @@ const useSnagVerify = () => {
     verifySendTokens,
     verifyFirstTimeDelegation,
     verifyClaimRewards,
+    verifyFirstUploadCascade,
   }
 }
 

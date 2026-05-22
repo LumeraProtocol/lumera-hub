@@ -118,6 +118,7 @@ const URL_CHECK = {
       decentralizationStake: 'https://lcd.lumera.io/cosmos/staking/v1beta1/delegations/',
       claimRewards: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
       compoundRewards: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
+      firstUploadCascade: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
     }
   },
   testnet: {
@@ -138,6 +139,7 @@ const URL_CHECK = {
       decentralizationStake: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/delegations/',
       ClaimRewards: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
       compoundRewards: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
+      firstUploadCascade: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
     }
   }
 }
@@ -217,6 +219,10 @@ const useSnagLoyaltyRule = () => {
       validatorUrl: '',
       condition: CONDITION_EXTEND[0].value,
     },
+    firstUploadCascade: {
+      size: '0',
+      condition: CONDITION_EXTEND[0].value,
+    },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
   const [currencies, setCurrencies] = useState<TData[]>([]);
@@ -279,6 +285,7 @@ const useSnagLoyaltyRule = () => {
           interactModules: config.interactModules,
           stakeLUME: config.stakeLUME,
           decentralizationStake: config.decentralizationStake,
+          firstUploadCascade: config.firstUploadCascade,
         });
       }
     } catch (error) {
@@ -517,6 +524,14 @@ const useSnagLoyaltyRule = () => {
             setMessages(prev => ({
               ...prev,
               decentralizationStakeRank: 'Rank is required.',
+            }));
+          }
+        break;
+        case 'firstUploadCascade':
+          if (!configForm.firstUploadCascade.size || Number(configForm.firstUploadCascade.size) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              firstUploadCascadeSize: 'Size is required.',
             }));
           }
         break;
@@ -763,6 +778,14 @@ const useSnagLoyaltyRule = () => {
             }));
           }
         break;
+        case 'firstUploadCascade':
+          if (!configForm.firstUploadCascade.size || Number(configForm.firstUploadCascade.size) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              firstUploadCascadeSize: 'Size is required.',
+            }));
+          }
+        break;
       }
     }
 
@@ -903,6 +926,15 @@ const useSnagLoyaltyRule = () => {
           ...configForm,
           decentralizationStake: {
             ...configForm.decentralizationStake,
+            [name]: value,
+          },
+        });
+        break;
+      case 'firstUploadCascade':
+        setConfigForm({
+          ...configForm,
+          firstUploadCascade: {
+            ...configForm.firstUploadCascade,
             [name]: value,
           },
         });

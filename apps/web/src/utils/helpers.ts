@@ -294,6 +294,9 @@ export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionTy
         case 'compoundRewards':
           prefix = '/compound-rewards';
           break;
+        case 'firstUploadCascade':
+          prefix = '/first-upload-cascade';
+          break;
       }
       if (actionType === 'connect') {
         return domain;
