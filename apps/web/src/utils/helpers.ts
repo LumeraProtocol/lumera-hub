@@ -291,6 +291,9 @@ export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionTy
         case 'claimRewards':
           prefix = '/claim-rewards';
           break;
+        case 'compoundRewards':
+          prefix = '/compound-rewards';
+          break;
       }
       if (actionType === 'connect') {
         return domain;

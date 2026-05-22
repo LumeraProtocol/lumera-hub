@@ -64,6 +64,10 @@ export const ACTION_TYPE = [
     label: 'Claim staking rewards',
   },
   {
+    value: 'compoundRewards',
+    label: 'Compound rewards',
+  },
+  {
     value: 'uploadCascade',
     label: 'Upload to Cascade',
   },

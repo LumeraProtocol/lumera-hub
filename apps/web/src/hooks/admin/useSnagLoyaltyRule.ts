@@ -117,6 +117,7 @@ const URL_CHECK = {
       stakeLUME: 'https://lcd.lumera.io/cosmos/staking/v1beta1/delegations/',
       decentralizationStake: 'https://lcd.lumera.io/cosmos/staking/v1beta1/delegations/',
       claimRewards: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
+      compoundRewards: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
     }
   },
   testnet: {
@@ -136,6 +137,7 @@ const URL_CHECK = {
       stakeLUME: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/delegations/',
       decentralizationStake: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/delegations/',
       ClaimRewards: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
+      compoundRewards: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
     }
   }
 }

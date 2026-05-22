@@ -1,9 +1,6 @@
 // app/api/snag/balance-verify/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import weekday from 'dayjs/plugin/weekday';
 
 import * as instance from '@/utils/api-server';
 import { getDataSource } from '@/lib/data-source';
@@ -11,8 +8,6 @@ import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import client from '@/lib/snag';
 
-dayjs.extend(utc);
-dayjs.extend(weekday);
 
 export async function POST(req: NextRequest) {
   try {
