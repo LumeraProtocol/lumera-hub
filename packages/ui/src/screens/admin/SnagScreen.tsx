@@ -835,6 +835,46 @@ export const SnagScreen = () => {
             </li>
           </ul>
         );
+      case 'claimRewards':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Claim staking rewards</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>URL check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+          </ul>
+        );
       default:
         return null;
     }

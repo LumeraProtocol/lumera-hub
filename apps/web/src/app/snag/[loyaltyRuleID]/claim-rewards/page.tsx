@@ -1,0 +1,48 @@
+// apps/web/src/app/snag/wallet/connect/page.tsx
+'use client'
+
+import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
+
+import { useDispatch } from '@/redux/hooks';
+import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
+import { VerifyScreen } from '@lumera-hub/ui/src/screens/snag/VerifyScreen';
+import useSnagVerify from '@/hooks/useSnagVerify';
+
+export default function Page() {
+  const dispatch = useDispatch();
+  const {
+    isLoading,
+    message,
+    txHash,
+    setTxhash,
+    verifyClaimRewards,
+  } = useSnagVerify();
+
+  useEffect(() => {
+    document.title = 'Claim staking rewards - Lumera Hub';
+    dispatch(setCurrentPath({
+      currentPath: '/snag/address/claim-rewards',
+    }));
+    dispatch(setViewTitle({
+      viewTitle: 'Claim staking rewards',
+    }));
+  }, []);
+
+  return (
+    <>
+      <Helmet>
+        <title>Claim staking rewards - Lumera Hub</title>
+      </Helmet>
+      <div>
+        <VerifyScreen
+          isLoading={isLoading}
+          message={message}
+          txHash={txHash}
+          onVerifyClick={verifyClaimRewards}
+          onChangeText={setTxhash}
+        />
+      </div>
+    </>
+  )
+}

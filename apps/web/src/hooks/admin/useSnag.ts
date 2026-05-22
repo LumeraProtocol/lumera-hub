@@ -60,7 +60,7 @@ export const ACTION_TYPE = [
     label: 'Decentralization Stake',
   },
   {
-    value: 'ClaimRewards',
+    value: 'claimRewards',
     label: 'Claim staking rewards',
   },
   {
