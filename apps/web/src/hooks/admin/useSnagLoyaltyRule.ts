@@ -110,6 +110,10 @@ const useSnagLoyaltyRule = () => {
       percent: '99.9',
       condition: CONDITION_EXTEND[0].value,
     },
+    storageRequests: {
+      requests: '0',
+      condition: CONDITION_EXTEND[0].value,
+    },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
   const [currencies, setCurrencies] = useState<TData[]>([]);
@@ -176,6 +180,7 @@ const useSnagLoyaltyRule = () => {
             firstUploadCascade: config.firstUploadCascade,
             uploadedToCascade: config.uploadedToCascade,
             uptime: config.uptime,
+            storageRequests: config.storageRequests,
           });
         }
       }
@@ -437,6 +442,14 @@ const useSnagLoyaltyRule = () => {
             setMessages(prev => ({
               ...prev,
               uptimePercent: 'Uptime is required.',
+            }));
+          }
+        break;
+        case 'storageRequests':
+          if (!configForm.storageRequests.requests || Number(configForm.storageRequests.requests) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              storageRequests: 'Uptime is required.',
             }));
           }
         break;
@@ -749,6 +762,14 @@ const useSnagLoyaltyRule = () => {
             }));
           }
         break;
+        case 'storageRequests':
+          if (!configForm.storageRequests.requests || Number(configForm.storageRequests.requests) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              storageRequests: 'Uptime is required.',
+            }));
+          }
+        break;
         case 'uploadedToCascade':
           switch (configForm.uploadedToCascade.type) {
             case UPLOAD_CASCADE[0].value:
@@ -961,6 +982,15 @@ const useSnagLoyaltyRule = () => {
           ...configForm,
           uptime: {
             ...configForm.uptime,
+            [name]: value,
+          },
+        });
+        break;
+      case 'storageRequests':
+        setConfigForm({
+          ...configForm,
+          storageRequests: {
+            ...configForm.storageRequests,
             [name]: value,
           },
         });

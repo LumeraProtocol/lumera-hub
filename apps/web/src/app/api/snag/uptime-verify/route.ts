@@ -105,7 +105,14 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const { data } = await instance.getExternal(config.urlCheck);
+    let urlCheck = URL_CHECK.mainnet.urlCheck.supernode;
+    let validatorUrl = URL_CHECK.mainnet.urlCheck.supernodeValidator;
+    if (config.network === 'testnet') {
+      urlCheck = URL_CHECK.testnet.urlCheck.supernode;
+      validatorUrl = URL_CHECK.testnet.urlCheck.supernodeValidator;
+    }
+
+    const { data } = await instance.getExternal(urlCheck);
     const nodes = data?.nodes;
     if (!nodes?.length) {
       return NextResponse.json(
@@ -138,7 +145,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const validators = await instance.getExternal(config.supernode.validatorUrl);
+    const validators = await instance.getExternal(validatorUrl);
     if (!validators?.data?.validators?.length) {
       return NextResponse.json(
         {

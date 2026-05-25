@@ -135,6 +135,7 @@ export const URL_CHECK = {
       uploadedToCascade: 'https://snscope.lumera.io/v1/actions?type=ACTION_TYPE_CASCADE&creator=',
       slashingParams: 'https://lcd.lumera.io/cosmos/slashing/v1beta1/params',
       signingInfos: 'https://lcd.lumera.io/cosmos/slashing/v1beta1/signing_infos?pagination.limit=300',
+      storageRequests: 'https://snscope.lumera.io/v1/actions?supernode={supernodeAddress}&limit={itemPerPage}&include_transactions=true',
     }
   },
   testnet: {
@@ -159,6 +160,7 @@ export const URL_CHECK = {
       uploadedToCascade: 'https://snscope.testnet.lumera.io/v1/actions?type=ACTION_TYPE_CASCADE&creator=',
       slashingParams: 'https://lcd.testnet.lumera.io/cosmos/slashing/v1beta1/params',
       signingInfos: 'https://lcd.testnet.lumera.io/cosmos/slashing/v1beta1/signing_infos?pagination.limit=300',
+      storageRequests: 'https://snscope.testnet.lumera.io/v1/actions?supernode={supernodeAddress}&limit={itemPerPage}&include_transactions=true',
     }
   }
 }
@@ -235,5 +237,9 @@ export const ACTION_TYPE = [
   {
     value: 'uptime',
     label: 'Uptime this week',
+  },
+  {
+    value: 'storageRequests',
+    label: 'Storage requests',
   },
 ];

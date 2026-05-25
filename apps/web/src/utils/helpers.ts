@@ -303,6 +303,9 @@ export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionTy
         case 'uptime':
           prefix = '/uptime';
           break;
+        case 'storageRequests':
+          prefix = '/storage-requests';
+          break;
       }
       if (actionType === 'connect') {
         return domain;
