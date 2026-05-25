@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
 import { fromHex, toBase64 } from '@cosmjs/encoding';
 import utc from 'dayjs/plugin/utc';
+import weekday from 'dayjs/plugin/weekday';
 
 import * as instance from '@/utils/api-server';
 import { getDataSource } from '@/lib/data-source';
@@ -19,6 +20,7 @@ import {
 import { URL_CHECK } from '@/contants/snag';
 
 dayjs.extend(utc);
+dayjs.extend(weekday);
 
 export async function POST(req: NextRequest) {
   try {
@@ -184,69 +186,69 @@ export async function POST(req: NextRequest) {
         : 0
     }
 
-    const updateTime = validator.commission.update_time;
-    const pastDate = dayjs.utc(updateTime);
-    const now = dayjs().utc();
-    const uptime = Number(config.supernode.days);
-    const diff = now.diff(pastDate, 'day');
+    // const updateTime = validator.commission.update_time;
+    // const pastDate = dayjs().utc(updateTime);
+    // const now = dayjs().utc().startOf('week');
+    // const uptime = Number(config.supernode.days);
+    // const diff = now.diff(pastDate, 'day');
 
-    switch (config.condition) {
-      case '>':
-        if (diff <= uptime) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: 'The day(s) is than the minimum requirement',
-            },
-            { status: 400 }
-          );
-        }
-        break;
-      case '<=':
-        if (diff > uptime) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: 'The day(s) is greater than the minimum requirement',
-            },
-            { status: 400 }
-          );
-        }
-        break;
-      case '<':
-        if (diff >= uptime) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: 'The day(s) is greater the minimum requirement',
-            },
-            { status: 400 }
-          );
-        }
-        break;
-      case '=':
-         if (diff !== uptime) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: 'The day(s) does not match the required',
-            },
-            { status: 400 }
-          );
-        }
-        break;
-      default:
-        if (diff < uptime) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: 'The day(s) is less than the minimum requirement',
-            },
-            { status: 400 }
-          );
-        }
-        break;
-    }
+    // switch (config.condition) {
+    //   case '>':
+    //     if (diff <= uptime) {
+    //       return NextResponse.json(
+    //         {
+    //           success: false,
+    //           error: 'The day(s) is than the minimum requirement',
+    //         },
+    //         { status: 400 }
+    //       );
+    //     }
+    //     break;
+    //   case '<=':
+    //     if (diff > uptime) {
+    //       return NextResponse.json(
+    //         {
+    //           success: false,
+    //           error: 'The day(s) is greater than the minimum requirement',
+    //         },
+    //         { status: 400 }
+    //       );
+    //     }
+    //     break;
+    //   case '<':
+    //     if (diff >= uptime) {
+    //       return NextResponse.json(
+    //         {
+    //           success: false,
+    //           error: 'The day(s) is greater the minimum requirement',
+    //         },
+    //         { status: 400 }
+    //       );
+    //     }
+    //     break;
+    //   case '=':
+    //      if (diff !== uptime) {
+    //       return NextResponse.json(
+    //         {
+    //           success: false,
+    //           error: 'The day(s) does not match the required',
+    //         },
+    //         { status: 400 }
+    //       );
+    //     }
+    //     break;
+    //   default:
+    //     if (diff < uptime) {
+    //       return NextResponse.json(
+    //         {
+    //           success: false,
+    //           error: 'The day(s) is less than the minimum requirement',
+    //         },
+    //         { status: 400 }
+    //       );
+    //     }
+    //     break;
+    // }
 
     const uptimePercent = await getUptime(validator);
     const configUptimePercent = Number(config.supernode.uptime);

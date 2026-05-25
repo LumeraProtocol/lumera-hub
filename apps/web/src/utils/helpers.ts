@@ -300,6 +300,9 @@ export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionTy
         case 'uploadedToCascade':
           prefix = '/uploaded-to-cascade';
           break;
+        case 'uptime':
+          prefix = '/uptime';
+          break;
       }
       if (actionType === 'connect') {
         return domain;

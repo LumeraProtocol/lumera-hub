@@ -106,6 +106,10 @@ const useSnagLoyaltyRule = () => {
       storeCondition: CONDITION_EXTEND[0].value,
       store: '',
     },
+    uptime: {
+      percent: '99.9',
+      condition: CONDITION_EXTEND[0].value,
+    },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
   const [currencies, setCurrencies] = useState<TData[]>([]);
@@ -171,6 +175,7 @@ const useSnagLoyaltyRule = () => {
             decentralizationStake: config.decentralizationStake,
             firstUploadCascade: config.firstUploadCascade,
             uploadedToCascade: config.uploadedToCascade,
+            uptime: config.uptime,
           });
         }
       }
@@ -424,6 +429,14 @@ const useSnagLoyaltyRule = () => {
             setMessages(prev => ({
               ...prev,
               firstUploadCascadeSize: 'Size is required.',
+            }));
+          }
+        break;
+        case 'uptime':
+          if (!configForm.uptime.percent || Number(configForm.uptime.percent) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              uptimePercent: 'Uptime is required.',
             }));
           }
         break;
@@ -728,6 +741,14 @@ const useSnagLoyaltyRule = () => {
             }));
           }
         break;
+        case 'uptime':
+          if (!configForm.uptime.percent || Number(configForm.uptime.percent) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              uptimePercent: 'Uptime is required.',
+            }));
+          }
+        break;
         case 'uploadedToCascade':
           switch (configForm.uploadedToCascade.type) {
             case UPLOAD_CASCADE[0].value:
@@ -931,6 +952,15 @@ const useSnagLoyaltyRule = () => {
           ...configForm,
           uploadedToCascade: {
             ...configForm.uploadedToCascade,
+            [name]: value,
+          },
+        });
+        break;
+      case 'uptime':
+        setConfigForm({
+          ...configForm,
+          uptime: {
+            ...configForm.uptime,
             [name]: value,
           },
         });

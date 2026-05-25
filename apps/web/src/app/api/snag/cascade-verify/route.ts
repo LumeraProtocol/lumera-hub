@@ -11,7 +11,7 @@ import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import client from '@/lib/snag';
-import { UPLOAD_CASCADE } from '@/hooks/admin/useSnagLoyaltyRule';
+import { UPLOAD_CASCADE } from '@/contants/snag';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);

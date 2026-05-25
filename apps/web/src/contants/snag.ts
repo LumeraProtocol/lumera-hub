@@ -232,4 +232,8 @@ export const ACTION_TYPE = [
     value: 'uploadedToCascade',
     label: 'Cascade',
   },
+  {
+    value: 'uptime',
+    label: 'Uptime this week',
+  },
 ];
