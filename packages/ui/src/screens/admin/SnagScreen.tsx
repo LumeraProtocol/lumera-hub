@@ -20,7 +20,7 @@ import AppLink from '@/components/AppLink';
 import useSnag from '@/hooks/admin/useSnag';
 import { formatNumber, formatAddress, formatKb } from '@/utils/format';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
-import { UPLOAD_CASCADE } from '@/hooks/admin/useSnagLoyaltyRule';
+import { UPLOAD_CASCADE } from '@/contants/snag';
 
 type TLoyaltyRuleVerifyCheck = {
   loyaltyRule: SnagLoyalty | null;
@@ -546,11 +546,6 @@ export const SnagScreen = () => {
             </li>
             <li className='mb-1'>
               <div className="flex gap-2">
-                <span>Days:</span> <span>{obj.supernode.days}</span>
-              </div>
-            </li>
-            <li className='mb-1'>
-              <div className="flex gap-2">
                 <span>Supernodes API:</span>
                 <Tooltip>
                   <Tooltip.Trigger>
@@ -607,6 +602,16 @@ export const SnagScreen = () => {
                     </div>
                   </Tooltip.Content>
                 </Tooltip>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Days:</span> <span>{obj.condition} {obj.supernode.days}</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Uptime:</span> <span>{obj.supernode.condition} {obj.supernode.uptime}%</span>
               </div>
             </li>
           </ul>

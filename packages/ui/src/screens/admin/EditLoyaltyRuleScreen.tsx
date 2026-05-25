@@ -19,16 +19,16 @@ import AppButton from '@/components/AppButton';
 import SectionTitle from '@/components/SectionTitle';
 import { FullDateTimesPicker } from '@/components/DateTimePicker';
 import AppLink from '@/components/AppLink';
-import { ACTION_TYPE } from '@/hooks/admin/useSnag';
-import useSnagLoyaltyRule, {
-  LOYALTY_RULE_TYPE,
-  FREQUENCE,
-  NETWORK,
+import useSnagLoyaltyRule from '@/hooks/admin/useSnagLoyaltyRule';
+import {
   CONDITION,
-  TRANSACTION_TYPE,
   CONDITION_EXTEND,
+  FREQUENCE, LOYALTY_RULE_TYPE,
+  NETWORK,
+  TRANSACTION_TYPE,
   UPLOAD_CASCADE,
-} from '@/hooks/admin/useSnagLoyaltyRule';
+  ACTION_TYPE,
+} from '@/contants/snag';
 
 export const EditLoyaltyRuleScreen = () => {
   const {
@@ -589,12 +589,65 @@ export const EditLoyaltyRuleScreen = () => {
                     onChangeText={(newValue) => handleInputChange('supernode', 'days', newValue)}
                   />
                   <span className='input-symbol'>
-                    Days
+                    days
                   </span>
                 </div>
               </div>
               {messages?.supernode ?
                 <div className="text-red-500 mt-1 text-sm">{messages.supernode}</div> : null
+              }
+            </div>
+          </div>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>Uptime *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-1/7">
+                  <Select
+                    id="condition"
+                    value={configForm.supernode.condition}
+                    onValueChange={(value) => handleInputChange('supernode', 'condition', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {CONDITION_EXTEND.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+                <div className="w-6/7">
+                  <Input
+                    id="days"
+                    placeholder="Days"
+                    className='input has-symbol'
+                    value={configForm?.supernode?.uptime || '0'}
+                    onChangeText={(newValue) => handleInputChange('supernode', 'uptime', newValue)}
+                  />
+                  <span className='input-symbol'>
+                    %
+                  </span>
+                </div>
+              </div>
+              {messages?.uptime ?
+                <div className="text-red-500 mt-1 text-sm">{messages.uptime}</div> : null
               }
             </div>
           </div>

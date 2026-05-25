@@ -3,12 +3,19 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
+import { fromHex, toBase64 } from '@cosmjs/encoding';
 
 import * as instance from '@/utils/api-server';
 import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import client from '@/lib/snag';
+import { IValidator } from '@/types/validator';
+import {
+  consensusPubkeyToHexAddress,
+  valconsToBase64,
+} from '@/utils/helpers';
+import { URL_CHECK } from '@/contants/snag';
 
 export async function POST(req: NextRequest) {
   try {
@@ -148,6 +155,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const getUptime = async (validator: IValidator | null) => {
+      if (!validator) {
+        return 0;
+      }
+      let slashingUrl = URL_CHECK.mainnet.urlCheck.slashingParams;
+      let signingInfosUrl = URL_CHECK.mainnet.urlCheck.signingInfos;
+      if (config.network === 'testnet') {
+        slashingUrl = URL_CHECK.testnet.urlCheck.slashingParams;
+        signingInfosUrl = URL_CHECK.testnet.urlCheck.signingInfos;
+      }
+      const [slashingParamsRes, signingInfosRes] = await Promise.all([
+        instance.get(slashingUrl),
+        instance.get(signingInfosUrl),
+      ]);
+      const slashingParams = slashingParamsRes.data.params;
+      const signingInfos = signingInfosRes.data.info;
+      const hex = consensusPubkeyToHexAddress(validator.consensus_pubkey);
+      const window = Number(slashingParams.signed_blocks_window || 0);
+      const signing = signingInfos.find((item: any) => {
+        return toBase64(fromHex(hex)) === valconsToBase64(item.address)
+      });
+      return signing && window > 0
+        ? (window - Number(signing.missed_blocks_counter)) / window
+        : 0
+    }
+
     const updateTime = validator.commission.update_time;
     const pastDate = dayjs(updateTime);
     const now = dayjs();
@@ -210,6 +243,18 @@ export async function POST(req: NextRequest) {
           );
         }
         break;
+    }
+
+    const uptimePercent = await getUptime(validator);
+    const configUptimePercent = Number(config.supernode.uptime);
+    if (Number(uptimePercent) < configUptimePercent) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Uptime over current epoch ≥ 99%.',
+        },
+        { status: 400 }
+      );
     }
 
     await client.post(`/api/loyalty/rules/${loyaltyRuleId}/complete`, {
