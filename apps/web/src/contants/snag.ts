@@ -110,6 +110,10 @@ export const UPLOAD_CASCADE = [
     value: 'store',
     label: 'Store',
   },
+  {
+    value: 'totalStored',
+    label: 'Total stored',
+  },
 ];
 
 export const URL_CHECK = {

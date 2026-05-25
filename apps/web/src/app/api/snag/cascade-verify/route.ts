@@ -89,9 +89,25 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const { data } = await instance.getExternal(`${config.urlCheck}${user.lumeraAddress}`);
+    const type = config.uploadedToCascade.type;
+    const files = Number(config.uploadedToCascade.files);
+    const size = Number(config.uploadedToCascade.size);
+    const types = Number(config.uploadedToCascade.types);
+    const store = Number(config.uploadedToCascade.store);
     const startTime = dayjs.utc(loyaltyRule.startTime).format('YYYYMMDD');
     const endTime = dayjs.utc(loyaltyRule.endTime).format('YYYYMMDD');
+    const targetTime = dayjs.utc().format('YYYYMMDD');
+    if (type === UPLOAD_CASCADE[4].value && Number(endTime) < Number(targetTime)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'This quest can only be received on the last day of the season.',
+        },
+        { status: 400 }
+      );
+    }
+
+    const { data } = await instance.getExternal(`${config.urlCheck}${user.lumeraAddress}`);
     const items = data?.items.filter((item: any) => Number(dayjs.utc(item.register_tx_time).format('YYYYMMDD')) >= Number(startTime) && Number(dayjs.utc(item.register_tx_time).format('YYYYMMDD')) <= Number(endTime));
     if (!items?.length) {
       return NextResponse.json(
@@ -103,11 +119,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const type = config.uploadedToCascade.type;
-    const files = Number(config.uploadedToCascade.files);
-    const size = Number(config.uploadedToCascade.size);
-    const types = Number(config.uploadedToCascade.types);
-    const store = Number(config.uploadedToCascade.store);
+
     switch (type) {
       // Upload 5+ files to Cascade
       case UPLOAD_CASCADE[0].value:
@@ -155,6 +167,7 @@ export async function POST(req: NextRequest) {
         break;
       // Store 1 GB total on Cascade
       case UPLOAD_CASCADE[3].value:
+      case UPLOAD_CASCADE[4].value:
         const totalStore = items.reduce((item: any, total: number) => Number(item.size) + total, 0);
         if (!totalStore || totalStore / 1073741824 < store) {
           return NextResponse.json(

@@ -17,7 +17,7 @@ const useSnagUploadedToCascade = () => {
 
   useEffect(() => {
     if (window?.location?.search) {
-      // verifyTransactions();
+      verifyTransactions();
     }
   }, [window.location.search])
 
