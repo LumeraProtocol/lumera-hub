@@ -20,6 +20,7 @@ import AppLink from '@/components/AppLink';
 import useSnag from '@/hooks/admin/useSnag';
 import { formatNumber, formatAddress, formatKb } from '@/utils/format';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
+import { UPLOAD_CASCADE } from '@/hooks/admin/useSnagLoyaltyRule';
 
 type TLoyaltyRuleVerifyCheck = {
   loyaltyRule: SnagLoyalty | null;
@@ -177,6 +178,56 @@ export const SnagScreen = () => {
     syncLoyaltyRules,
     handlePageClick,
   } = useSnag();
+
+  const generateUploadedToCascadeLabel = (obj: any) => {
+    switch (obj.uploadedToCascade.type) {
+      case UPLOAD_CASCADE[0].value:
+        return (
+          <>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Files:</span> {obj.uploadedToCascade.fileCondition}<span>{obj.uploadedToCascade.files}</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Size:</span> {obj.uploadedToCascade.sizeCondition}<span>{obj.uploadedToCascade.size} KB</span>
+              </div>
+            </li>
+          </>
+        );
+      case UPLOAD_CASCADE[1].value:
+        return (
+          <>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>File Types:</span> {obj.uploadedToCascade.typesCondition}<span>{obj.uploadedToCascade.types} types</span>
+              </div>
+            </li>
+          </>
+        );
+      case UPLOAD_CASCADE[2].value:
+        return (
+          <>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>File size:</span> {obj.uploadedToCascade.sizeCondition}<span>{obj.uploadedToCascade.size} MB</span>
+              </div>
+            </li>
+          </>
+        );
+      default:
+        return (
+          <>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Sum of stored file sizes:</span> {obj.uploadedToCascade.storeCondition}<span>{obj.uploadedToCascade.store} GB</span>
+              </div>
+            </li>
+          </>
+        );
+    }
+  }
 
   const renderConfig = (config: string | undefined) => {
     if (!config) {
@@ -958,6 +1009,47 @@ export const SnagScreen = () => {
                 <span>Size:</span> {obj.decentralizationStake.condition}<span>{formatKb(obj.firstUploadCascade.size)}</span>
               </div>
             </li>
+          </ul>
+        );
+      case 'uploadedToCascade':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Upload to Cascade</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>URL check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+            {generateUploadedToCascadeLabel(obj)}
           </ul>
         );
       default:

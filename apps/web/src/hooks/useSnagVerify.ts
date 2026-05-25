@@ -42,6 +42,10 @@ const useSnagVerify = () => {
         position: "bottom-right",
         theme: "dark",
       });
+      setMessage({
+        type: 'success',
+        content: "Quest is verified!",
+      });
       router.push('/');
     } catch (error) {
       console.error(error);
@@ -78,6 +82,10 @@ const useSnagVerify = () => {
       toast.success("Quest is verified!", {
         position: "bottom-right",
         theme: "dark",
+      });
+      setMessage({
+        type: 'success',
+        content: "Quest is verified!",
       });
       router.push('/');
     } catch (error) {
@@ -116,6 +124,10 @@ const useSnagVerify = () => {
         position: "bottom-right",
         theme: "dark",
       });
+      setMessage({
+        type: 'success',
+        content: "Quest is verified!",
+      });
       router.push('/');
     } catch (error) {
       console.error(error);
@@ -152,6 +164,10 @@ const useSnagVerify = () => {
       toast.success("Quest is verified!", {
         position: "bottom-right",
         theme: "dark",
+      });
+      setMessage({
+        type: 'success',
+        content: "Quest is verified!",
       });
       router.push('/');
     } catch (error) {
@@ -231,6 +247,10 @@ const useSnagVerify = () => {
         position: "bottom-right",
         theme: "dark",
       });
+      setMessage({
+        type: 'success',
+        content: "Quest is verified!",
+      });
       router.push('/');
     } catch (error) {
       console.error(error);
@@ -267,6 +287,10 @@ const useSnagVerify = () => {
       toast.success("Quest is verified!", {
         position: "bottom-right",
         theme: "dark",
+      });
+      setMessage({
+        type: 'success',
+        content: "Quest is verified!",
       });
       router.push('/');
     } catch (error) {

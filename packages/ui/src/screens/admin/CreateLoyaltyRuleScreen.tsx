@@ -27,6 +27,7 @@ import useSnagLoyaltyRule, {
   CONDITION,
   TRANSACTION_TYPE,
   CONDITION_EXTEND,
+  UPLOAD_CASCADE,
 } from '@/hooks/admin/useSnagLoyaltyRule';
 
 export const CreateLoyaltyRuleScreen = () => {
@@ -45,6 +46,299 @@ export const CreateLoyaltyRuleScreen = () => {
     createLoyaltyRule,
     handleActionTypeChange,
   } = useSnagLoyaltyRule();
+
+  const renderUploadCascadeForm = () => {
+    if (configForm.uploadedToCascade.type === UPLOAD_CASCADE[0].value) {
+      return (
+        <>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>Files *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-1/7">
+                  <Select
+                    id="condition"
+                    value={configForm.uploadedToCascade.fileCondition}
+                    onValueChange={(value) => handleInputChange('uploadedToCascade', 'fileCondition', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {CONDITION_EXTEND.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+                <div className="w-6/7">
+                  <Input
+                    id="days"
+                    placeholder="Transactions"
+                    className='input has-symbol'
+                    value={configForm?.uploadedToCascade?.files || '0'}
+                    onChangeText={(newValue) => handleInputChange('uploadedToCascade', 'files', newValue)}
+                  />
+                  <span className='input-symbol'>
+                    files
+                  </span>
+                </div>
+              </div>
+              {messages?.uploadedToCascadeFiles ?
+                <div className="text-red-500 mt-1 text-sm">{messages.uploadedToCascadeFiles}</div> : null
+              }
+            </div>
+          </div>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>Size *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-1/7">
+                  <Select
+                    id="condition"
+                    value={configForm.uploadedToCascade.sizeCondition}
+                    onValueChange={(value) => handleInputChange('uploadedToCascade', 'sizeCondition', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {CONDITION.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+                <div className="w-6/7">
+                  <Input
+                    id="days"
+                    placeholder="Transactions"
+                    className='input has-symbol'
+                    value={configForm?.uploadedToCascade?.size || '0'}
+                    onChangeText={(newValue) => handleInputChange('uploadedToCascade', 'size', newValue)}
+                  />
+                  <span className='input-symbol'>
+                    KB
+                  </span>
+                </div>
+              </div>
+              {messages?.uploadedToCascadeSize ?
+                <div className="text-red-500 mt-1 text-sm">{messages.uploadedToCascadeSize}</div> : null
+              }
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    if (configForm.uploadedToCascade.type === UPLOAD_CASCADE[1].value) {
+      return (
+        <>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>File Types *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-1/7">
+                  <Select
+                    id="condition"
+                    value={configForm.uploadedToCascade.typesCondition}
+                    onValueChange={(value) => handleInputChange('uploadedToCascade', 'typesCondition', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {CONDITION_EXTEND.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+                <div className="w-6/7">
+                  <Input
+                    id="days"
+                    placeholder="Transactions"
+                    className='input has-symbol'
+                    value={configForm?.uploadedToCascade?.types || '0'}
+                    onChangeText={(newValue) => handleInputChange('uploadedToCascade', 'types', newValue)}
+                  />
+                  <span className='input-symbol'>
+                    types
+                  </span>
+                </div>
+              </div>
+              {messages?.uploadedToCascadeTypes ?
+                <div className="text-red-500 mt-1 text-sm">{messages.uploadedToCascadeTypes}</div> : null
+              }
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    if (configForm.uploadedToCascade.type === UPLOAD_CASCADE[2].value) {
+      return (
+        <>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>File size *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-1/7">
+                  <Select
+                    id="condition"
+                    value={configForm.uploadedToCascade.sizeCondition}
+                    onValueChange={(value) => handleInputChange('uploadedToCascade', 'sizeCondition', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {CONDITION_EXTEND.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+                <div className="w-6/7">
+                  <Input
+                    id="days"
+                    placeholder="Transactions"
+                    className='input has-symbol'
+                    value={configForm?.uploadedToCascade?.size || '0'}
+                    onChangeText={(newValue) => handleInputChange('uploadedToCascade', 'size', newValue)}
+                  />
+                  <span className='input-symbol'>
+                    MB
+                  </span>
+                </div>
+              </div>
+              {messages?.uploadedToCascadeSize ?
+                <div className="text-red-500 mt-1 text-sm">{messages.uploadedToCascadeSize}</div> : null
+              }
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <div className='mt-1'>
+          <Label htmlFor="amount" className='text-base'>Sum of stored file sizes *</Label>
+          <div className='input-wrapper'>
+            <div className="flex justify-between gap-4">
+              <div className="w-1/7">
+                <Select
+                  id="condition"
+                  value={configForm.uploadedToCascade.storeCondition}
+                  onValueChange={(value) => handleInputChange('uploadedToCascade', 'storeCondition', value)}
+                >
+                  <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                    <Select.Value placeholder="Select a type" />
+                  </Select.Trigger>
+
+                  <Select.Content zIndex={200000}>
+                    <Select.Viewport minWidth={200}>
+                      <Select.Group>
+                        {CONDITION_EXTEND.map((item, i) => (
+                          <Select.Item
+                            index={i}
+                            key={item.value}
+                            value={item.value}
+                          >
+                            <Select.ItemText>{item.label}</Select.ItemText>
+                            <XStack flex={1} />
+                            <Select.ItemIndicator marginLeft="auto">
+                              <CheckIcon className='w-4 h-4' />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.Group>
+                    </Select.Viewport>
+                  </Select.Content>
+                </Select>
+              </div>
+              <div className="w-6/7">
+                <Input
+                  id="days"
+                  placeholder="Transactions"
+                  className='input has-symbol'
+                  value={configForm?.uploadedToCascade?.store || '0'}
+                  onChangeText={(newValue) => handleInputChange('uploadedToCascade', 'store', newValue)}
+                />
+                <span className='input-symbol'>
+                  GB
+                </span>
+              </div>
+            </div>
+            {messages?.uploadedToCascadeStore ?
+              <div className="text-red-500 mt-1 text-sm">{messages.uploadedToCascadeStore}</div> : null
+            }
+          </div>
+        </div>
+      </>
+    );
+  }
 
   const renderConfigForm = () => {
     if (actionType === 'staked') {
@@ -746,6 +1040,53 @@ export const CreateLoyaltyRuleScreen = () => {
               }
             </div>
           </div>
+        </>
+      )
+    }
+
+    if (actionType === 'uploadedToCascade') {
+      return (
+        <>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>Type *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-full">
+                  <Select
+                    id="condition"
+                    value={configForm.uploadedToCascade.type}
+                    onValueChange={(value) => handleInputChange('uploadedToCascade', 'type', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {UPLOAD_CASCADE.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {renderUploadCascadeForm()}
         </>
       )
     }

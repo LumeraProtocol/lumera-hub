@@ -297,6 +297,9 @@ export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionTy
         case 'firstUploadCascade':
           prefix = '/first-upload-cascade';
           break;
+        case 'uploadedToCascade':
+          prefix = '/uploaded-to-cascade';
+          break;
       }
       if (actionType === 'connect') {
         return domain;

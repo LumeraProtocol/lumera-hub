@@ -93,9 +93,28 @@ export const CONDITION_EXTEND = [
     value: '>=',
     label: '>=',
   },
+  // {
+  //   value: '>',
+  //   label: '>',
+  // },
+];
+
+export const UPLOAD_CASCADE = [
   {
-    value: '>',
-    label: '>',
+    value: 'files',
+    label: 'Files',
+  },
+  {
+    value: 'types',
+    label: 'Types',
+  },
+  {
+    value: 'size',
+    label: 'Size',
+  },
+  {
+    value: 'store',
+    label: 'Store',
   },
 ];
 
@@ -119,6 +138,7 @@ const URL_CHECK = {
       claimRewards: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
       compoundRewards: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
       firstUploadCascade: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
+      uploadedToCascade: 'https://snscope.lumera.io/v1/actions?type=ACTION_TYPE_CASCADE&creator=',
     }
   },
   testnet: {
@@ -140,6 +160,7 @@ const URL_CHECK = {
       ClaimRewards: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
       compoundRewards: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
       firstUploadCascade: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
+      uploadedToCascade: 'https://snscope.testnet.lumera.io/v1/actions?type=ACTION_TYPE_CASCADE&creator=',
     }
   }
 }
@@ -223,6 +244,17 @@ const useSnagLoyaltyRule = () => {
       size: '0',
       condition: CONDITION_EXTEND[0].value,
     },
+    uploadedToCascade: {
+      type: UPLOAD_CASCADE[0].value,
+      fileCondition: CONDITION_EXTEND[0].value,
+      files: '',
+      typesCondition: CONDITION_EXTEND[0].value,
+      types: '',
+      sizeCondition: CONDITION_EXTEND[0].value,
+      size: '',
+      storeCondition: CONDITION_EXTEND[0].value,
+      store: '',
+    },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
   const [currencies, setCurrencies] = useState<TData[]>([]);
@@ -286,6 +318,7 @@ const useSnagLoyaltyRule = () => {
           stakeLUME: config.stakeLUME,
           decentralizationStake: config.decentralizationStake,
           firstUploadCascade: config.firstUploadCascade,
+          uploadedToCascade: config.uploadedToCascade,
         });
       }
     } catch (error) {
@@ -534,6 +567,50 @@ const useSnagLoyaltyRule = () => {
               firstUploadCascadeSize: 'Size is required.',
             }));
           }
+        break;
+        case 'uploadedToCascade':
+          switch (configForm.uploadedToCascade.type) {
+            case UPLOAD_CASCADE[0].value:
+              if (!configForm.uploadedToCascade.files || Number(configForm.uploadedToCascade.files) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeFiles: 'Files is required.',
+                }));
+              }
+              if (!configForm.uploadedToCascade.size || Number(configForm.uploadedToCascade.size) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeSize: 'Size is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[1].value:
+              if (!configForm.uploadedToCascade.types || Number(configForm.uploadedToCascade.types) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeTypes: 'File Types is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[2].value:
+              if (!configForm.uploadedToCascade.size || Number(configForm.uploadedToCascade.size) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeSize: 'File Types is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[3].value:
+              if (!configForm.uploadedToCascade.store || Number(configForm.uploadedToCascade.store) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeStore: 'File Types is required.',
+                }));
+              }
+            break;
+
+          }
+
         break;
       }
     }
@@ -786,6 +863,50 @@ const useSnagLoyaltyRule = () => {
             }));
           }
         break;
+        case 'uploadedToCascade':
+          switch (configForm.uploadedToCascade.type) {
+            case UPLOAD_CASCADE[0].value:
+              if (!configForm.uploadedToCascade.files || Number(configForm.uploadedToCascade.files) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeFiles: 'Files is required.',
+                }));
+              }
+              if (!configForm.uploadedToCascade.size || Number(configForm.uploadedToCascade.size) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeSize: 'Size is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[1].value:
+              if (!configForm.uploadedToCascade.types || Number(configForm.uploadedToCascade.types) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeTypes: 'File Types is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[2].value:
+              if (!configForm.uploadedToCascade.size || Number(configForm.uploadedToCascade.size) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeSize: 'File Types is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[3].value:
+              if (!configForm.uploadedToCascade.store || Number(configForm.uploadedToCascade.store) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeStore: 'File Types is required.',
+                }));
+              }
+            break;
+
+          }
+
+        break;
       }
     }
 
@@ -935,6 +1056,15 @@ const useSnagLoyaltyRule = () => {
           ...configForm,
           firstUploadCascade: {
             ...configForm.firstUploadCascade,
+            [name]: value,
+          },
+        });
+        break;
+      case 'uploadedToCascade':
+        setConfigForm({
+          ...configForm,
+          uploadedToCascade: {
+            ...configForm.uploadedToCascade,
             [name]: value,
           },
         });

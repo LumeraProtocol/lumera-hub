@@ -42,6 +42,10 @@ const useSnagStake = () => {
         position: "bottom-right",
         theme: "dark",
       });
+      setMessage({
+        type: 'success',
+        content: "Quest is verified!",
+      });
       router.push('/');
     } catch (error) {
       console.error(error);

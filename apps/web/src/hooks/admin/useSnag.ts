@@ -71,6 +71,10 @@ export const ACTION_TYPE = [
     value: 'firstUploadCascade',
     label: 'First upload to Cascade',
   },
+  {
+    value: 'uploadedToCascade',
+    label: 'Cascade',
+  },
 ];
 
 const useSnag = () => {
