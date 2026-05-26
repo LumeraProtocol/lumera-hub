@@ -27,6 +27,10 @@ export const FREQUENCE = [
     value: 'monthly',
     label: 'Monthly',
   },
+  {
+    value: 'none',
+    label: 'Custom',
+  },
 ];
 
 export const NETWORK = [
@@ -249,5 +253,9 @@ export const ACTION_TYPE = [
   {
     value: 'storageRequests',
     label: 'Storage requests',
+  },
+  {
+    value: 'referralLink',
+    label: 'Referral Link',
   },
 ];

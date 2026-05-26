@@ -105,18 +105,27 @@ export function ConnectWallet() {
 
 interface IConnectWalletButton {
   className?: string;
+  onClick?: () => void;
 }
 
 export function ConnectWalletButton({
-  className = ''
+  className = '',
+  onClick,
 }: IConnectWalletButton) {
   const { address, openView } = useChain(CHAIN_NAME);
+
+  const handleClick = () => {
+    openView();
+    if (onClick) {
+      onClick();
+    }
+  }
 
   return (
     <div style={{ display: 'flex', gap: 8 }}>
       {!address ?
         <AppButton
-          onClick={openView}
+          onClick={handleClick}
           className={className}
         >
           <Wallet className='w-4 h-4' /> <div>Connect Wallet</div>

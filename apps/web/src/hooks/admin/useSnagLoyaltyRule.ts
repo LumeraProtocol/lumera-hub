@@ -116,6 +116,9 @@ const useSnagLoyaltyRule = () => {
       requests: '0',
       condition: CONDITION_EXTEND[0].value,
     },
+    referralLink: {
+      maxRefer: '10',
+    },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
   const [currencies, setCurrencies] = useState<TData[]>([]);
@@ -183,6 +186,7 @@ const useSnagLoyaltyRule = () => {
             uploadedToCascade: config.uploadedToCascade,
             uptime: config.uptime,
             storageRequests: config.storageRequests,
+            referralLink: config.referralLink,
           });
         }
       }
@@ -508,6 +512,14 @@ const useSnagLoyaltyRule = () => {
           }
 
         break;
+        case 'referralLink':
+          if (!configForm.referralLink.maxRefer || Number(configForm.referralLink.maxRefer) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              maxRefer: 'Max refer is required.',
+            }));
+          }
+        break;
       }
     }
 
@@ -529,7 +541,7 @@ const useSnagLoyaltyRule = () => {
           rewardType: 'points',
           type: loyaltyRuleForm.type,
           frequency: loyaltyRuleForm.frequency,
-          interval: loyaltyRuleForm.frequency,
+          interval: loyaltyRuleForm.frequency === 'none' ? 'custom' : loyaltyRuleForm.frequency,
           amount: loyaltyRuleForm.amount,
           metadata: {
             cta: loyaltyRuleForm.metadata.cta,
@@ -833,6 +845,14 @@ const useSnagLoyaltyRule = () => {
           }
 
         break;
+        case 'referralLink':
+          if (!configForm.referralLink.maxRefer || Number(configForm.referralLink.maxRefer) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              maxRefer: 'Max refer is required.',
+            }));
+          }
+        break;
       }
     }
 
@@ -855,7 +875,7 @@ const useSnagLoyaltyRule = () => {
           rewardType: 'points',
           type: loyaltyRuleForm.type,
           frequency: loyaltyRuleForm.frequency,
-          interval: loyaltyRuleForm.frequency,
+          interval: loyaltyRuleForm.frequency === 'none' ? 'custom' : loyaltyRuleForm.frequency,
           amount: loyaltyRuleForm.amount.toString(),
           metadata: {
             cta: loyaltyRuleForm.metadata.cta,
@@ -1010,6 +1030,15 @@ const useSnagLoyaltyRule = () => {
           ...configForm,
           storageRequests: {
             ...configForm.storageRequests,
+            [name]: value,
+          },
+        });
+        break;
+      case 'referralLink':
+        setConfigForm({
+          ...configForm,
+          referralLink: {
+            ...configForm.referralLink,
             [name]: value,
           },
         });

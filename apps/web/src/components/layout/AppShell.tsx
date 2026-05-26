@@ -20,6 +20,7 @@ import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 import AppLink from '@/components/AppLink';
 import Tooltip from '@/components/Tooltip';
 import GetStarted from '@/components/GetStarted';
+import ReferModal from '@/components/ReferModal';
 import { CHAIN_NAME } from '@/contants/network';
 
 import { useSelector, useDispatch } from '@/redux/hooks';
@@ -226,6 +227,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               {/* Placeholder for wallet actions */}
               <ConnectWallet />
               <WalletModalComponent />
+              <ReferModal />
             </div>
           </div>
         </div>

@@ -21,6 +21,7 @@ import useSnag from '@/hooks/admin/useSnag';
 import { formatNumber, formatAddress, formatKb } from '@/utils/format';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import { UPLOAD_CASCADE } from '@/contants/snag';
+import { generateUrlCheck } from '@/utils/helpers';
 
 type TLoyaltyRuleVerifyCheck = {
   loyaltyRule: SnagLoyalty | null;
@@ -47,32 +48,7 @@ export const LoyaltyRuleVerifyCheck = ({
     }, 3000)
   }
   const config = JSON.parse(loyaltyRule.config);
-  const path = `${config.domain}snag/${loyaltyRule.id}`;
-  let prefix = '';
-
-  switch (config.actionType) {
-    case 'staked':
-      prefix = '/stake';
-      break;
-    case 'delegate':
-      prefix = '/delegate';
-      break;
-    case 'redelegated':
-      prefix = '/redelegate';
-      break;
-    case 'balance':
-      prefix = '/balance';
-      break;
-    case 'claim':
-      prefix = '/claim';
-      break;
-    case 'supernode':
-      prefix = '/supernode';
-      break;
-    case 'send':
-      prefix = '/send';
-      break;
-  }
+  const fullPath = generateUrlCheck(config.domain, loyaltyRule.id, config.actionType);
 
   if (config.actionType === 'connect') {
     return (
@@ -126,7 +102,7 @@ export const LoyaltyRuleVerifyCheck = ({
         {isSplit ?
           <Tooltip>
             <Tooltip.Trigger>
-              <span>{formatAddress(`${path}${prefix}`, 20, -10)}</span>
+              <span>{formatAddress(fullPath, 20, -10)}</span>
             </Tooltip.Trigger>
             <Tooltip.Content
               enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
@@ -145,15 +121,15 @@ export const LoyaltyRuleVerifyCheck = ({
               ]}
             >
               <div className='text-white'>
-                {`${path}${prefix}`}
+                {fullPath}
               </div>
             </Tooltip.Content>
           </Tooltip> :
-          <>{`${path}${prefix}`}</>
+          <>{fullPath}</>
         }
       </div>
       <button
-        onClick={() => handleCopyAddress(`${path}${prefix}`)}
+        onClick={() => handleCopyAddress(fullPath)}
         className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer"
       >
         {!isCopied ?
@@ -1155,6 +1131,21 @@ export const SnagScreen = () => {
                 <span>Storage requests:</span> <span>{obj.storageRequests.condition} {obj.storageRequests.requests}</span>
               </div>
             </li>
+          </ul>
+        );
+      case 'referralLink':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>ReferralLink</span>
+              </div>
+            </li>
+            {/* <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Max refer:</span> <span>{obj.referralLink.maxRefer}</span>
+              </div>
+            </li> */}
           </ul>
         );
       default:

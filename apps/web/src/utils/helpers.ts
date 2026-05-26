@@ -306,6 +306,9 @@ export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionTy
         case 'storageRequests':
           prefix = '/storage-requests';
           break;
+        case 'referralLink':
+          prefix = '/referral-link';
+          break;
       }
       if (actionType === 'connect') {
         return domain;

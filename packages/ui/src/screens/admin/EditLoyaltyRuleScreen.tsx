@@ -1324,6 +1324,35 @@ export const EditLoyaltyRuleScreen = () => {
       )
     }
 
+    // if (actionType === 'referralLink') {
+    //   return (
+    //     <>
+    //       <div className='mt-1'>
+    //         <Label htmlFor="amount" className='text-base'>Max refer *</Label>
+    //         <div className='input-wrapper'>
+    //           <div className="flex justify-between gap-4">
+    //             <div className="w-full">
+    //               <Input
+    //                 id="days"
+    //                 placeholder="Refer"
+    //                 className='input has-symbol'
+    //                 value={configForm?.referralLink?.maxRefer || '0'}
+    //                 onChangeText={(newValue) => handleInputChange('referralLink', 'maxRefer', newValue)}
+    //               />
+    //               <span className='input-symbol'>
+
+    //               </span>
+    //             </div>
+    //           </div>
+    //           {messages?.maxRefer ?
+    //             <div className="text-red-500 mt-1 text-sm">{messages.maxRefer}</div> : null
+    //           }
+    //         </div>
+    //       </div>
+    //     </>
+    //   )
+    // }
+
     return null;
   }
 
