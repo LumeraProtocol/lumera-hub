@@ -1141,11 +1141,16 @@ export const SnagScreen = () => {
                 <span>Action Type:</span> <span>ReferralLink</span>
               </div>
             </li>
-            {/* <li className='mb-1'>
+          </ul>
+        );
+      case 'inviteUsersUploadToCascade':
+        return (
+          <ul>
+            <li className='mb-1'>
               <div className="flex gap-2">
-                <span>Max refer:</span> <span>{obj.referralLink.maxRefer}</span>
+                <span>Action Type:</span> <span>Invite Users Upload to Cascade</span>
               </div>
-            </li> */}
+            </li>
           </ul>
         );
       default:

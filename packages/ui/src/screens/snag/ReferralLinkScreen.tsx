@@ -12,12 +12,14 @@ import { AppLoading } from '@/components/Loading';
 interface IReferralLinkScreen {
   isLoading: boolean;
   referLink: string;
+  customTitle?: string;
   onCopyReferLink: (link: string) => void;
 }
 
 export const ReferralLinkScreen = ({
   referLink,
   isLoading,
+  customTitle,
   onCopyReferLink,
 }: IReferralLinkScreen) => {
   return (
@@ -34,7 +36,7 @@ export const ReferralLinkScreen = ({
             />
             <div className='p-5 min-w-[80vw] sm:min-w-xl max-w-xl'>
               <div className='text-2xl font-bold text-center'>
-                Earn rewards when a new user signs up with your referral link:
+                {customTitle || 'Earn rewards when a new user signs up with your referral link:'}
               </div>
               <div className='mt-3'>
                 <Label htmlFor="txHash" className='!text-base'>Referral Link</Label>

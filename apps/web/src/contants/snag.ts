@@ -258,4 +258,8 @@ export const ACTION_TYPE = [
     value: 'referralLink',
     label: 'Referral Link',
   },
+  {
+    value: 'inviteUsersUploadToCascade',
+    label: 'Invite users to upload to Cascade',
+  },
 ];

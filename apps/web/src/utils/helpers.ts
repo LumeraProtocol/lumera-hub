@@ -309,6 +309,9 @@ export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionTy
         case 'referralLink':
           prefix = '/referral-link';
           break;
+        case 'inviteUsersUploadToCascade':
+          prefix = '/invite-users-upload-to-cascade';
+          break;
       }
       if (actionType === 'connect') {
         return domain;

@@ -14,6 +14,10 @@ export class SnagRefer {
   @Column({ type: "int", default: 0 })
   claim: number;
 
+  @Index()
+  @Column({ type: "int", default: 0 })
+  claimCascade: number;
+
   @CreateDateColumn()
   created_at!: Date;
 }

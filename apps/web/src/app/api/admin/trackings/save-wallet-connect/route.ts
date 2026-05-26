@@ -149,45 +149,47 @@ export async function POST(req: NextRequest) {
 
     if (body.referralCode) {
       const referAddress = fromUtf8(fromHex(body.referralCode));
-      if (!refer) {
-        await snagReferRepo.save({
-          lumeraAddress: data.address,
-          referAddress,
-        });
-      }
+      if (referAddress !== data.address) {
+        if (!refer) {
+          await snagReferRepo.save({
+            lumeraAddress: data.address,
+            referAddress,
+          });
+        }
 
-      if (!refer?.claim || Number(refer?.claim) <= 0) {
-        const totalClaimRefer = await snagReferRepo
-          .createQueryBuilder()
-          .select('lumeraAddress')
-          .where('referAddress = :referAddress', { referAddress })
-          .andWhere("claim = '1'")
-          .getCount();
-
-        if (totalClaimRefer < 10) {
-          const user = await snagUserRepo.createQueryBuilder()
-            .select('snagAddress, lumeraAddress, userId')
-            .where('lumeraAddress = :lumeraAddress', { lumeraAddress: referAddress })
-            .getRawOne();
-          const loyaltyRule = await snagLoyaltyRepo
+        if (!refer?.claim || Number(refer?.claim) <= 0) {
+          const totalClaimRefer = await snagReferRepo
             .createQueryBuilder()
-            .select('id')
-            .addSelect('config')
-            .addSelect('startTime')
-            .addSelect('endTime')
-            .where("config LIKE '%referralLink%'")
-            .getRawOne();
+            .select('lumeraAddress')
+            .where('referAddress = :referAddress', { referAddress })
+            .andWhere("claim = '1'")
+            .getCount();
 
-          if (user && loyaltyRule) {
-            await client.post(`/api/loyalty/rules/${loyaltyRule.id}/complete`, {
-              body: {
-                userId: user.userId,
-              },
-            });
-            await snagReferRepo.save({
-              lumeraAddress: data.address,
-              claim: 1,
-            });
+          if (totalClaimRefer < 10) {
+            const user = await snagUserRepo.createQueryBuilder()
+              .select('snagAddress, lumeraAddress, userId')
+              .where('lumeraAddress = :lumeraAddress', { lumeraAddress: referAddress })
+              .getRawOne();
+            const loyaltyRule = await snagLoyaltyRepo
+              .createQueryBuilder()
+              .select('id')
+              .addSelect('config')
+              .addSelect('startTime')
+              .addSelect('endTime')
+              .where("config LIKE '%referralLink%'")
+              .getRawOne();
+
+            if (user && loyaltyRule) {
+              await client.post(`/api/loyalty/rules/${loyaltyRule.id}/complete`, {
+                body: {
+                  userId: user.userId,
+                },
+              });
+              await snagReferRepo.save({
+                lumeraAddress: data.address,
+                claim: 1,
+              });
+            }
           }
         }
       }
