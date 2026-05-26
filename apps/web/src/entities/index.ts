@@ -18,3 +18,4 @@ export * from "./SnagLoyalty";
 export * from "./SnagTransaction";
 export * from "./SnagCurrency";
 export * from "./SnagSection";
+export * from "./SnagCascadeStorage";

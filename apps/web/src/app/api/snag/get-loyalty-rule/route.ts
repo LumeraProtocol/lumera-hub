@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty Rule Id is required!',
+          error: 'Quest Id is required!',
         },
         { status: 400 }
       );

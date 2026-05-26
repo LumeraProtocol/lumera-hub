@@ -216,6 +216,16 @@ export const SnagScreen = () => {
             </li>
           </>
         );
+      case UPLOAD_CASCADE[5].value:
+        return (
+          <>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Ranking:</span> {obj.uploadedToCascade.rankingCondition}<span>{obj.uploadedToCascade.ranking}</span>
+              </div>
+            </li>
+          </>
+        );
       default:
         return (
           <>

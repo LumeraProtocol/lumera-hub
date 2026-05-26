@@ -10,6 +10,7 @@ import * as instance from '@/utils/api-server';
 import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
+import { SnagCascadeStorage } from '@/entities/SnagCascadeStorage';
 import client from '@/lib/snag';
 import { UPLOAD_CASCADE } from '@/contants/snag';
 
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty Rule ID is required!',
+          error: 'Quest ID is required!',
         },
         { status: 400 }
       );
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
     const dataSource = await getDataSource();
     const snagUserRepo = dataSource.getRepository(SnagUser);
     const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
+    const snagCascadeStorageRepo = dataSource.getRepository(SnagCascadeStorage);
 
     const user = await snagUserRepo.createQueryBuilder()
       .select('snagAddress, lumeraAddress, userId')
@@ -72,7 +74,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty Rule not found!',
+          error: 'Quest not found!',
         },
         { status: 400 }
       );
@@ -118,7 +120,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
 
     switch (type) {
       // Upload 5+ files to Cascade
@@ -174,6 +175,20 @@ export async function POST(req: NextRequest) {
             {
               success: false,
               error: `The total size of saved files has not reached the minimum(${store} GB) required.`,
+            },
+            { status: 400 }
+          );
+        }
+        break;
+      case UPLOAD_CASCADE[5].value:
+        const limit = config.uploadedToCascade.ranking;
+        const firstUpload = await snagCascadeStorageRepo.createQueryBuilder().select('lumeraAddress').orderBy('created_at').limit(limit).getRawMany();
+        const cascade = firstUpload?.filter((c) => c.lumeraAddress === user.lumeraAddress);
+        if (!cascade) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `You don't have any cascades uploaded in the top ${limit} as requested.`,
             },
             { status: 400 }
           );

@@ -105,6 +105,8 @@ const useSnagLoyaltyRule = () => {
       size: '',
       storeCondition: CONDITION_EXTEND[0].value,
       store: '',
+      rankingCondition: CONDITION_EXTEND[0].value,
+      ranking: '100',
     },
     uptime: {
       percent: '99.9',
@@ -481,15 +483,24 @@ const useSnagLoyaltyRule = () => {
               if (!configForm.uploadedToCascade.size || Number(configForm.uploadedToCascade.size) < 1 || !configForm.condition) {
                 setMessages(prev => ({
                   ...prev,
-                  uploadedToCascadeSize: 'File Types is required.',
+                  uploadedToCascadeSize: 'Size is required.',
                 }));
               }
             break;
             case UPLOAD_CASCADE[3].value:
+            case UPLOAD_CASCADE[4].value:
               if (!configForm.uploadedToCascade.store || Number(configForm.uploadedToCascade.store) < 1 || !configForm.condition) {
                 setMessages(prev => ({
                   ...prev,
-                  uploadedToCascadeStore: 'File Types is required.',
+                  uploadedToCascadeStore: 'Store is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[5].value:
+              if (!configForm.uploadedToCascade.ranking || Number(configForm.uploadedToCascade.ranking) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeRanking: 'Ranking is required.',
                 }));
               }
             break;
@@ -803,14 +814,22 @@ const useSnagLoyaltyRule = () => {
               }
             break;
             case UPLOAD_CASCADE[3].value:
+            case UPLOAD_CASCADE[4].value:
               if (!configForm.uploadedToCascade.store || Number(configForm.uploadedToCascade.store) < 1 || !configForm.condition) {
                 setMessages(prev => ({
                   ...prev,
-                  uploadedToCascadeStore: 'File Types is required.',
+                  uploadedToCascadeStore: 'Store is required.',
                 }));
               }
             break;
-
+            case UPLOAD_CASCADE[5].value:
+              if (!configForm.uploadedToCascade.ranking || Number(configForm.uploadedToCascade.ranking) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeRanking: 'Ranking is required.',
+                }));
+              }
+            break;
           }
 
         break;

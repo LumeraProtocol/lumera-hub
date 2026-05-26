@@ -114,6 +114,10 @@ export const UPLOAD_CASCADE = [
     value: 'totalStored',
     label: 'Total stored',
   },
+  {
+    value: 'firstUploaded',
+    label: 'First uploaded',
+  },
 ];
 
 export const URL_CHECK = {

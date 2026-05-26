@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty Rule ID is required!',
+          error: 'Quest ID is required!',
         },
         { status: 400 }
       );
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty Rule not found!',
+          error: 'Quest not found!',
         },
         { status: 400 }
       );
