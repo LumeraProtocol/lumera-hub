@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
         .andWhere("claimCascade = '1'")
         .getCount();
 
-      if (totalClaimCascade < 10) {
+      if (totalClaimCascade < 5) {
         const user = await snagUserRepo.createQueryBuilder()
           .select('snagAddress, lumeraAddress, userId')
           .where('lumeraAddress = :lumeraAddress', { lumeraAddress: refer.referAddress })
