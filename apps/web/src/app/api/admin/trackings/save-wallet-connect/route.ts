@@ -2,10 +2,6 @@
 
 import { NextRequest, NextResponse, userAgent } from 'next/server';
 import dayjs from 'dayjs';
-import {
-  fromHex,
-  fromUtf8,
-} from '@cosmjs/encoding';
 
 import { getDataSource } from '@/lib/data-source';
 import { hubUserSchema } from '@/schemas/hubUserSchema';
@@ -148,7 +144,7 @@ export async function POST(req: NextRequest) {
       .getRawOne();
 
     if (body.referralCode) {
-      const referAddress = fromUtf8(fromHex(body.referralCode));
+      const referAddress = body.referralCode;
       if (referAddress !== data.address) {
         if (!refer) {
           await snagReferRepo.save({

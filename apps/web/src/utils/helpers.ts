@@ -249,7 +249,10 @@ export const delay = (time: number) => {
 };
 
 export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionType: string) => {
-      const path = `${domain}snag/${loyaltyRuleId}`;
+      let path = `${domain}snag/${loyaltyRuleId}`;
+      if (actionType === 'referralLink' || actionType === 'inviteUsersUploadToCascade') {
+        path = `${domain}referral/${loyaltyRuleId}`;
+      }
       let prefix = '';
       switch (actionType) {
         case 'staked':

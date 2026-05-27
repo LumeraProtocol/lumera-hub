@@ -11,19 +11,19 @@ import useSnagReferralLink from '@/hooks/useSnagReferralLink';
 
 export default function Page() {
   const dispatch = useDispatch();
-  const {
+   const {
     isLoading,
-    referLink,
+    referLinkInfo,
     handleCopyReferLink,
   } = useSnagReferralLink();
 
   useEffect(() => {
-    document.title = 'Get My Referral Link - Lumera Hub';
+    document.title = 'Referral Link - Lumera Hub';
     dispatch(setCurrentPath({
-      currentPath: '/snag/address/invite-users-upload-to-cascade',
+      currentPath: '/snag/address/referral-link',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Get My Referral Link',
+      viewTitle: 'Referral Link',
     }));
   }, []);
 
@@ -35,9 +35,11 @@ export default function Page() {
       <div>
         <ReferralLinkScreen
           isLoading={isLoading}
-          referLink={referLink}
+          referLink={`${location.origin}/?referral_code=${referLinkInfo?.referCode || ''}`}
+          totalReferralLink={referLinkInfo?.maxRefer || '10'}
+          point={referLinkInfo.point}
           onCopyReferLink={handleCopyReferLink}
-          customTitle='Earn rewards for new user sign-ups + Cascade uploads via your referral:'
+          customTitle={`Earn ${referLinkInfo.point} for every signed up ${referLinkInfo.maxRefer} friends`}
         />
       </div>
     </>

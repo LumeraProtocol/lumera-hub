@@ -9,13 +9,17 @@ import * as instance from '@/utils/api';
 const useSnagReferralLink = () => {
   const params = useParams();
   const [isLoading, setLoading] = useState(false);
-  const [referLink, setReferLink] = useState('');
+  const [referLinkInfo, setReferLinkInfo] = useState({
+    referCode: '',
+    point: '50 EXP',
+    maxRefer: '10',
+  });
 
   useEffect(() => {
-    if (window?.location?.search) {
+    if (location?.search) {
       generateReferLink();
     }
-  }, [window.location.search])
+  }, [location.search])
 
   const generateReferLink = async () => {
     setLoading(true);
@@ -27,21 +31,21 @@ const useSnagReferralLink = () => {
         loyaltyRuleID: params?.loyaltyRuleID || '',
       });
       if (data?.status) {
-        setReferLink(data.referLink);
+        setReferLinkInfo(data);
       }
     } catch (error) {
       console.error(error);
-      toast.error((error as Error)?.message ||  'An unknown error occurred.', {
-        position: "bottom-right",
-        theme: "dark",
-      });
+      // toast.error((error as Error)?.message ||  'An unknown error occurred.', {
+      //   position: "bottom-right",
+      //   theme: "dark",
+      // });
     }
     setLoading(false);
   }
 
   const handleCopyReferLink = (link: string) => {
     navigator.clipboard.writeText(link);
-    toast('Copied to clipboard.', {
+    toast.success('Copied to clipboard.', {
       position: "bottom-right",
       theme: "dark",
     })
@@ -49,7 +53,7 @@ const useSnagReferralLink = () => {
 
   return {
     isLoading,
-    referLink,
+    referLinkInfo,
     handleCopyReferLink,
   }
 }

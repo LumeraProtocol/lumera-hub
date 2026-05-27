@@ -37,7 +37,18 @@ export function WalletModalComponent() {
         sessionStorage.setItem('new_connect', 'true');
       }
     }
-  }, [address])
+  }, [address]);
+
+  useEffect(() => {
+    if (window?.location?.search) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const referralCode = urlParams.get('referral_code');
+      if (referralCode) {
+        sessionStorage.setItem('referral_code', referralCode);
+      }
+    }
+  }, [window.location.search]);
+
 
   return (
     <div className='relative z-50'>

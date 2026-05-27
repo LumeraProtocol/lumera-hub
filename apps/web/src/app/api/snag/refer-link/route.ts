@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
       .addSelect('config')
       .addSelect('startTime')
       .addSelect('endTime')
+      .addSelect('amount')
       .where('id = :loyaltyRuleID', { loyaltyRuleID: body.loyaltyRuleID })
       .getRawOne();
 
@@ -77,12 +78,11 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const utf8Bytes = toUtf8(user.lumeraAddress);
-    const hex = toHex(utf8Bytes);
-    const referLink = `${config.domain}?referral_code=${hex}`;
     return NextResponse.json({
       status: true,
-      referLink,
+      referCode: user.lumeraAddress,
+      point: loyaltyRule.amount,
+      maxRefer: config.referralLink.maxRefer,
     });
   } catch (error) {
     console.error(error);
