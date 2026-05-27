@@ -5,13 +5,15 @@ import { useParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 
 import * as instance from '@/utils/api';
+import useWalletConnect from '@/hooks/useWalletConnect';
 
 const useSnagReferralLink = () => {
   const params = useParams();
   const [isLoading, setLoading] = useState(false);
+  const { address } = useWalletConnect();
   const [referLinkInfo, setReferLinkInfo] = useState({
     referCode: '',
-    point: '50 EXP',
+    point: '50',
     maxRefer: '10',
   });
 
@@ -54,6 +56,7 @@ const useSnagReferralLink = () => {
   return {
     isLoading,
     referLinkInfo,
+    address,
     handleCopyReferLink,
   }
 }

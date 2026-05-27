@@ -212,7 +212,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           <div className="flex flex-1 justify-between pl-0 pr-4 sm:px-6 lg:px-8">
             <div className="flex items-center">
-              <h1 className="text-base sm:text-2xl font-bold">{viewTitle || VIEW_TITLES[activeView]}</h1>
+              <h1 className="text-base sm:text-2xl font-bold">{viewTitle === '&nbsp;' ? '' : viewTitle || VIEW_TITLES[activeView]}</h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6 gap-2">
               {message ?

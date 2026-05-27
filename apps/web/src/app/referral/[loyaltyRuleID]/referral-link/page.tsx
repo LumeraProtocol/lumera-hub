@@ -14,6 +14,7 @@ export default function Page() {
    const {
     isLoading,
     referLinkInfo,
+    address,
     handleCopyReferLink,
   } = useSnagReferralLink();
 
@@ -23,7 +24,7 @@ export default function Page() {
       currentPath: '/snag/address/referral-link',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Referral Link',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 
@@ -35,11 +36,11 @@ export default function Page() {
       <div>
         <ReferralLinkScreen
           isLoading={isLoading}
-          referLink={`${location.origin}/?referral_code=${referLinkInfo?.referCode || ''}`}
+          referLink={`${location.origin}/?referral_code=${referLinkInfo?.referCode || address || ''}`}
           totalReferralLink={referLinkInfo?.maxRefer || '10'}
           point={referLinkInfo.point}
           onCopyReferLink={handleCopyReferLink}
-          customTitle={`Earn ${referLinkInfo.point} for every signed up ${referLinkInfo.maxRefer} friends`}
+          customTitle="Invite Friends"
         />
       </div>
     </>

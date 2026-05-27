@@ -44,7 +44,7 @@ export const ReferralLinkScreen = ({
       <Card elevate size="$4" bordered className='relative !mt-6'>
         <div className='p-5'>
           <SectionTitle className='!mb-0'>
-           Share your referal link
+           Share your referral link
           </SectionTitle>
           <div className='mt-3'>
             <Label htmlFor="txHash" className='!text-base'>Referral Link</Label>
@@ -79,7 +79,7 @@ export const ReferralLinkScreen = ({
                 </div>
                 <h3 className='text-xl font-bold text-lumera-teal mt-2'>Send invite</h3>
                 <div className='mt-2'>
-                  Send your referral link to friends and teel them how cool {location.hostname} is!
+                  Send your referral link to friends and tell them how to create a Lumera address.
                 </div>
               </Card.Header>
             </Card>
@@ -88,9 +88,9 @@ export const ReferralLinkScreen = ({
                 <div>
                   <span className='rounded-full h-9 w-9 bg-lumera-teal text-white inline-flex items-center justify-center text-base font-bold leading-none'>2</span>
                 </div>
-                <h3 className='text-xl font-bold text-lumera-teal mt-2'>Sign Up</h3>
+                <h3 className='text-xl font-bold text-lumera-teal mt-2'>Connect to Lumera Hub</h3>
                 <div className='mt-2'>
-                  Let them sign up to our services using your referral link.
+                  Let them connect their wallet to Lumera Hub using your referral link.
                 </div>
               </Card.Header>
             </Card>
@@ -101,7 +101,7 @@ export const ReferralLinkScreen = ({
                 </div>
                 <h3 className='text-xl font-bold text-lumera-teal mt-2'>Get your reward</h3>
                 <div className='mt-2'>
-                  You get {point} to your wallet
+                  You get {point} EXP
                 </div>
               </Card.Header>
             </Card>
