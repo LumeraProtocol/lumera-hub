@@ -119,6 +119,9 @@ const useSnagLoyaltyRule = () => {
     referralLink: {
       maxRefer: '10',
     },
+    stakeForFullSeason: {
+      amount: '100',
+    },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
   const [currencies, setCurrencies] = useState<TData[]>([]);
@@ -187,6 +190,7 @@ const useSnagLoyaltyRule = () => {
             uptime: config.uptime,
             storageRequests: config.storageRequests,
             referralLink: config.referralLink,
+            stakeForFullSeason: config.stakeForFullSeason,
           });
         }
       }
@@ -517,6 +521,14 @@ const useSnagLoyaltyRule = () => {
             setMessages(prev => ({
               ...prev,
               maxRefer: 'Max refer is required.',
+            }));
+          }
+        break;
+        case 'stakeForFullSeason':
+          if (!configForm.stakeForFullSeason.amount || Number(configForm.stakeForFullSeason.amount) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              stakeForFullSeasonAmount: 'Amount is required.',
             }));
           }
         break;
@@ -853,6 +865,14 @@ const useSnagLoyaltyRule = () => {
             }));
           }
         break;
+        case 'stakeForFullSeason':
+          if (!configForm.stakeForFullSeason.amount || Number(configForm.stakeForFullSeason.amount) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              stakeForFullSeasonAmount: 'Amount is required.',
+            }));
+          }
+        break;
       }
     }
 
@@ -1039,6 +1059,15 @@ const useSnagLoyaltyRule = () => {
           ...configForm,
           referralLink: {
             ...configForm.referralLink,
+            [name]: value,
+          },
+        });
+        break;
+      case 'stakeForFullSeason':
+        setConfigForm({
+          ...configForm,
+          stakeForFullSeason: {
+            ...configForm.stakeForFullSeason,
             [name]: value,
           },
         });

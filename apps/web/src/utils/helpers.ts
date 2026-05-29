@@ -315,6 +315,9 @@ export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionTy
         case 'inviteUsersUploadToCascade':
           prefix = '/invite-users-upload-to-cascade';
           break;
+        case 'stakeForFullSeason':
+          prefix = '/stake-for-full-season';
+          break;
       }
       if (actionType === 'connect') {
         return domain;

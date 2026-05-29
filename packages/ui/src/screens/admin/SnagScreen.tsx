@@ -1153,6 +1153,51 @@ export const SnagScreen = () => {
             </li>
           </ul>
         );
+      case 'stakeForFullSeason':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Stake For Full Season</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>API Check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.supernode.validatorUrl || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Amount:</span> <span>{obj.condition} {obj.stakeForFullSeason.amount} LUME</span>
+              </div>
+            </li>
+          </ul>
+        );
       default:
         return null;
     }

@@ -1324,34 +1324,65 @@ export const EditLoyaltyRuleScreen = () => {
       )
     }
 
-    // if (actionType === 'referralLink') {
-    //   return (
-    //     <>
-    //       <div className='mt-1'>
-    //         <Label htmlFor="amount" className='text-base'>Max refer *</Label>
-    //         <div className='input-wrapper'>
-    //           <div className="flex justify-between gap-4">
-    //             <div className="w-full">
-    //               <Input
-    //                 id="days"
-    //                 placeholder="Refer"
-    //                 className='input has-symbol'
-    //                 value={configForm?.referralLink?.maxRefer || '0'}
-    //                 onChangeText={(newValue) => handleInputChange('referralLink', 'maxRefer', newValue)}
-    //               />
-    //               <span className='input-symbol'>
+    if (actionType === 'stakeForFullSeason') {
+      return (
+        <>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>Max refer *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-1/7">
+                  <Select
+                    id="condition"
+                    value={configForm.condition}
+                    onValueChange={(value) => handleInputChange('root', 'condition', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
 
-    //               </span>
-    //             </div>
-    //           </div>
-    //           {messages?.maxRefer ?
-    //             <div className="text-red-500 mt-1 text-sm">{messages.maxRefer}</div> : null
-    //           }
-    //         </div>
-    //       </div>
-    //     </>
-    //   )
-    // }
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {CONDITION_EXTEND.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+                <div className="w-6/7">
+                  <Input
+                    id="days"
+                    placeholder="Requests"
+                    className='input has-symbol'
+                    value={configForm?.stakeForFullSeason?.amount || '0'}
+                    onChangeText={(newValue) => handleInputChange('stakeForFullSeason', 'amount', newValue)}
+                  />
+                  <span className='input-symbol'>
+                    LUME
+                  </span>
+                </div>
+              </div>
+              {messages?.stakeForFullSeasonAmount ?
+                <div className="text-red-500 mt-1 text-sm">{messages.stakeForFullSeasonAmount}</div> : null
+              }
+            </div>
+          </div>
+        </>
+      )
+    }
 
     return null;
   }

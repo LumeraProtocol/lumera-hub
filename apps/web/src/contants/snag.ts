@@ -136,8 +136,8 @@ export const URL_CHECK = {
       supernodeValidator: 'https://lcd.lumera.io/cosmos/staking/v1beta1/validators?pagination.limit=1000',
       claim: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
       send: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
-      sendTransactions: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
-      interactModules: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
+      sendTransactions: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
+      interactModules: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
       firstTimeDelegation: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
       stakeLUME: 'https://lcd.lumera.io/cosmos/staking/v1beta1/delegations/',
       decentralizationStake: 'https://lcd.lumera.io/cosmos/staking/v1beta1/delegations/',
@@ -148,6 +148,7 @@ export const URL_CHECK = {
       slashingParams: 'https://lcd.lumera.io/cosmos/slashing/v1beta1/params',
       signingInfos: 'https://lcd.lumera.io/cosmos/slashing/v1beta1/signing_infos?pagination.limit=300',
       storageRequests: 'https://snscope.lumera.io/v1/actions?supernode={supernodeAddress}&limit={itemPerPage}&include_transactions=true',
+      stakeForFullSeason: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=2000&pagination.offset=0&order_by=ORDER_BY_DESC',
     }
   },
   testnet: {
@@ -161,8 +162,8 @@ export const URL_CHECK = {
       supernodeValidator: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/validators?pagination.limit=1000',
       claim: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
       send: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
-      sendTransactions: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
-      interactModules: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
+      sendTransactions: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
+      interactModules: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=20&pagination.offset=0&order_by=ORDER_BY_DESC',
       firstTimeDelegation: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
       stakeLUME: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/delegations/',
       decentralizationStake: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/delegations/',
@@ -173,6 +174,7 @@ export const URL_CHECK = {
       slashingParams: 'https://lcd.testnet.lumera.io/cosmos/slashing/v1beta1/params',
       signingInfos: 'https://lcd.testnet.lumera.io/cosmos/slashing/v1beta1/signing_infos?pagination.limit=300',
       storageRequests: 'https://snscope.testnet.lumera.io/v1/actions?supernode={supernodeAddress}&limit={itemPerPage}&include_transactions=true',
+      stakeForFullSeason: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs?query=message.sender=%27{walletAddress}%27&pagination.limit=2000&pagination.offset=0&order_by=ORDER_BY_DESC',
     }
   }
 }
@@ -261,5 +263,9 @@ export const ACTION_TYPE = [
   {
     value: 'inviteUsersUploadToCascade',
     label: 'Invite users to upload to Cascade',
+  },
+  {
+    value: 'stakeForFullSeason',
+    label: 'Stake for full season ',
   },
 ];
