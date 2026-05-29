@@ -31,6 +31,7 @@ const useSnag = () => {
           position: "bottom-right",
           theme: "dark",
         });
+        sessionStorage.setItem('start_new_session', 'true');
         router.push('/');
       }
     } catch (error) {
