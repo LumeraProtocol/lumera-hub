@@ -8,6 +8,8 @@ import { useDispatch } from '@/redux/hooks';
 import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import { VerifyTransactions } from '@lumera-hub/ui/src/screens/snag/VerifyTransactions';
 import useSnagTransactions from '@/hooks/useSnagTransactions';
+import { NotFoundScreen } from '@lumera-hub/ui/src/screens/snag/NotFoundScreen';
+import useSnagTextInput from '@/hooks/useSnagTextInput';
 
 export default function Page() {
   const dispatch = useDispatch();
@@ -15,6 +17,7 @@ export default function Page() {
     isLoading,
     message,
   } = useSnagTransactions();
+  const snag = useSnagTextInput();
 
   useEffect(() => {
     document.title = 'Send Transactions - Lumera Hub';
@@ -32,10 +35,13 @@ export default function Page() {
         <title>Send Transactions - Lumera Hub</title>
       </Helmet>
       <div>
-        <VerifyTransactions
-          isLoading={isLoading}
-          message={message}
-        />
+        {snag?.message?.type === 'not-found' ?
+          <NotFoundScreen content={snag?.message.content} /> :
+          <VerifyTransactions
+            isLoading={isLoading}
+            message={message}
+          />
+        }
       </div>
     </>
   )

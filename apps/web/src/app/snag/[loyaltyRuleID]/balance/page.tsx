@@ -7,9 +7,12 @@ import { Helmet } from "react-helmet-async";
 import { useDispatch } from '@/redux/hooks';
 import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import { BalanceVerifyScreen } from '@lumera-hub/ui/src/screens/snag/BalanceVerifyScreen';
+import { NotFoundScreen } from '@lumera-hub/ui/src/screens/snag/NotFoundScreen';
+import useSnagTextInput from '@/hooks/useSnagTextInput';
 
 export default function Page() {
   const dispatch = useDispatch();
+  const { message } = useSnagTextInput();
 
   useEffect(() => {
     document.title = 'Balance - Lumera Hub';
@@ -27,7 +30,10 @@ export default function Page() {
         <title>Balance - Lumera Hub</title>
       </Helmet>
       <div>
-        <BalanceVerifyScreen />
+        {message?.type === 'not-found' ?
+          <NotFoundScreen content={message.content} /> :
+          <BalanceVerifyScreen />
+        }
       </div>
     </>
   )

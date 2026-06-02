@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'User not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );

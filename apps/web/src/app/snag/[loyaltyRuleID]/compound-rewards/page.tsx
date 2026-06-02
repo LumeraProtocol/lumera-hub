@@ -8,6 +8,8 @@ import { useDispatch } from '@/redux/hooks';
 import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import { VerifyCompoundScreen } from '@lumera-hub/ui/src/screens/snag/VerifyCompoundScreen';
 import useSnagVerifyCompound from '@/hooks/useSnagVerifyCompound';
+import { NotFoundScreen } from '@lumera-hub/ui/src/screens/snag/NotFoundScreen';
+import useSnagTextInput from '@/hooks/useSnagTextInput';
 
 export default function Page() {
   const dispatch = useDispatch();
@@ -20,6 +22,7 @@ export default function Page() {
     setTxhash,
     verifyClaimCompound,
   } = useSnagVerifyCompound();
+  const snag = useSnagTextInput();
 
   useEffect(() => {
     document.title = 'Compound rewards - Lumera Hub';
@@ -37,15 +40,18 @@ export default function Page() {
         <title>Compound rewards - Lumera Hub</title>
       </Helmet>
       <div>
-        <VerifyCompoundScreen
-          isLoading={isLoading}
-          message={message}
-          txHash={txHash}
-          claimTxHash={claimTxHash}
-          onVerifyClick={verifyClaimCompound}
-          onChangeText={setTxhash}
-          onClaimTxhashChange={setClaimTxhash}
-        />
+        {snag?.message?.type === 'not-found' ?
+          <NotFoundScreen content={snag?.message.content} /> :
+          <VerifyCompoundScreen
+            isLoading={isLoading}
+            message={message}
+            txHash={txHash}
+            claimTxHash={claimTxHash}
+            onVerifyClick={verifyClaimCompound}
+            onChangeText={setTxhash}
+            onClaimTxhashChange={setClaimTxhash}
+          />
+        }
       </div>
     </>
   )

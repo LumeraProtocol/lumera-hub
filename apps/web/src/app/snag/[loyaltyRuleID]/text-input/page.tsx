@@ -8,6 +8,7 @@ import { useDispatch } from '@/redux/hooks';
 import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import { TextInputVerifyScreen } from '@lumera-hub/ui/src/screens/snag/TextInputVerifyScreen';
 import useSnagTextInput from '@/hooks/useSnagTextInput';
+import { NotFoundScreen } from '@lumera-hub/ui/src/screens/snag/NotFoundScreen';
 
 export default function Page() {
   const dispatch = useDispatch();
@@ -37,15 +38,18 @@ export default function Page() {
         <title>Response - Lumera Hub</title>
       </Helmet>
       <div className="w-full h-full">
-        <TextInputVerifyScreen
-          isLoading={isLoading}
-          message={message}
-          content={content}
-          quest={quest}
-          response={response}
-          onVerifyClick={verifyTextInput}
-          onChangeText={setContent}
-        />
+        {message?.type === 'not-found' ?
+          <NotFoundScreen content={message.content} /> :
+          <TextInputVerifyScreen
+            isLoading={isLoading}
+            message={message}
+            content={content}
+            quest={quest}
+            response={response}
+            onVerifyClick={verifyTextInput}
+            onChangeText={setContent}
+          />
+        }
       </div>
     </>
   )

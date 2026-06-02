@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'User not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -71,6 +72,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'Quest not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -83,6 +85,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'Quest ID not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );

@@ -3,7 +3,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
-import { fromHex, toBase64 } from '@cosmjs/encoding';
 import utc from 'dayjs/plugin/utc';
 
 import * as instance from '@/utils/api-server';
@@ -11,11 +10,6 @@ import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import client from '@/lib/snag';
-import { IValidator } from '@/types/validator';
-import {
-  consensusPubkeyToHexAddress,
-  valconsToBase64,
-} from '@/utils/helpers';
 import { URL_CHECK } from '@/contants/snag';
 
 dayjs.extend(utc);
@@ -68,6 +62,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'User not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -87,6 +82,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'Quest not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -99,6 +95,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'Quest ID not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );

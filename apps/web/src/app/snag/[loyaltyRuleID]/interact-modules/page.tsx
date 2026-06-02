@@ -8,6 +8,8 @@ import { useDispatch } from '@/redux/hooks';
 import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import { VerifyInteractModules } from '@lumera-hub/ui/src/screens/snag/VerifyInteractModules';
 import useSnagInteractModules from '@/hooks/useSnagInteractModules';
+import { NotFoundScreen } from '@lumera-hub/ui/src/screens/snag/NotFoundScreen';
+import useSnagTextInput from '@/hooks/useSnagTextInput';
 
 export default function Page() {
   const dispatch = useDispatch();
@@ -15,6 +17,7 @@ export default function Page() {
     isLoading,
     message,
   } = useSnagInteractModules();
+  const snag = useSnagTextInput();
 
   useEffect(() => {
     document.title = 'Interact modules  - Lumera Hub';
@@ -32,10 +35,14 @@ export default function Page() {
         <title>Interact modules - Lumera Hub</title>
       </Helmet>
       <div>
-        <VerifyInteractModules
-          isLoading={isLoading}
-          message={message}
-        />
+        {snag?.message?.type === 'not-found' ?
+          <NotFoundScreen content={snag?.message.content} /> :
+          <VerifyInteractModules
+            isLoading={isLoading}
+            message={message}
+          />
+        }
+
       </div>
     </>
   )

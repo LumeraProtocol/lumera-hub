@@ -8,6 +8,8 @@ import { useDispatch } from '@/redux/hooks';
 import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import { VerifyScreen } from '@lumera-hub/ui/src/screens/snag/VerifyScreen';
 import useSnagVerify from '@/hooks/useSnagVerify';
+import { NotFoundScreen } from '@lumera-hub/ui/src/screens/snag/NotFoundScreen';
+import useSnagTextInput from '@/hooks/useSnagTextInput';
 
 export default function Page() {
   const dispatch = useDispatch();
@@ -18,6 +20,7 @@ export default function Page() {
     setTxhash,
     verifyFirstUploadCascade,
   } = useSnagVerify();
+  const snag = useSnagTextInput();
 
   useEffect(() => {
     document.title = 'First file uploaded to Cascade - Lumera Hub';
@@ -35,13 +38,17 @@ export default function Page() {
         <title>First file uploaded to Cascade - Lumera Hub</title>
       </Helmet>
       <div>
-        <VerifyScreen
-          isLoading={isLoading}
-          message={message}
-          txHash={txHash}
-          onVerifyClick={verifyFirstUploadCascade}
-          onChangeText={setTxhash}
-        />
+        {snag?.message?.type === 'not-found' ?
+          <NotFoundScreen content={snag?.message.content} /> :
+          <VerifyScreen
+            isLoading={isLoading}
+            message={message}
+            txHash={txHash}
+            onVerifyClick={verifyFirstUploadCascade}
+            onChangeText={setTxhash}
+          />
+        }
+
       </div>
     </>
   )

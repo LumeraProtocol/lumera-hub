@@ -8,6 +8,8 @@ import { useDispatch } from '@/redux/hooks';
 import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import { VerifyScreen } from '@lumera-hub/ui/src/screens/snag/VerifyScreen';
 import useSnagVerify from '@/hooks/useSnagVerify';
+import { NotFoundScreen } from '@lumera-hub/ui/src/screens/snag/NotFoundScreen';
+import useSnagTextInput from '@/hooks/useSnagTextInput';
 
 export default function Page() {
   const dispatch = useDispatch();
@@ -18,6 +20,7 @@ export default function Page() {
     setTxhash,
     verifyClaimRewards,
   } = useSnagVerify();
+  const snag = useSnagTextInput();
 
   useEffect(() => {
     document.title = 'Claim staking rewards - Lumera Hub';
@@ -35,13 +38,16 @@ export default function Page() {
         <title>Claim staking rewards - Lumera Hub</title>
       </Helmet>
       <div>
-        <VerifyScreen
-          isLoading={isLoading}
-          message={message}
-          txHash={txHash}
-          onVerifyClick={verifyClaimRewards}
-          onChangeText={setTxhash}
-        />
+        {snag?.message?.type === 'not-found' ?
+          <NotFoundScreen content={snag?.message.content} /> :
+          <VerifyScreen
+            isLoading={isLoading}
+            message={message}
+            txHash={txHash}
+            onVerifyClick={verifyClaimRewards}
+            onChangeText={setTxhash}
+          />
+        }
       </div>
     </>
   )
