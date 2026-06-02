@@ -33,7 +33,7 @@ export default function Page() {
 
         {snag?.message?.type === 'not-found' ?
         <NotFoundScreen content={snag?.message.content} /> :
-        <StakeVerifyScreen />
+        <StakeVerifyScreen quest={snag?.quest} />
       }
       </div>
     </>

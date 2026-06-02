@@ -47,6 +47,7 @@ export default function Page() {
             message={message}
             txHash={txHash}
             claimTxHash={claimTxHash}
+            quest={snag?.quest}
             onVerifyClick={verifyClaimCompound}
             onChangeText={setTxhash}
             onClaimTxhashChange={setClaimTxhash}

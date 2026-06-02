@@ -44,6 +44,7 @@ export default function Page() {
             isLoading={isLoading}
             message={message}
             address={address}
+            quest={snag?.quest}
             onVerifyClick={verifySupernode}
             onChangeText={setAddress}
           />

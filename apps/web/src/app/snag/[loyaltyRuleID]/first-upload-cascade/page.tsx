@@ -44,6 +44,7 @@ export default function Page() {
             isLoading={isLoading}
             message={message}
             txHash={txHash}
+            quest={snag?.quest}
             onVerifyClick={verifyFirstUploadCascade}
             onChangeText={setTxhash}
           />

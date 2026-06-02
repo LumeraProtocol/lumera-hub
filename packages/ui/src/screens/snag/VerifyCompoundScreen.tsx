@@ -6,6 +6,8 @@ import {
 
 import { AppLoading } from '@/components/Loading';
 import AppButton from '@/components/AppButton';
+import SectionTitle from '@/components/SectionTitle';
+import { IQuest } from '@/hooks/useSnagTextInput';
 
 interface IVerifyCompoundScreen {
   isLoading: boolean;
@@ -15,6 +17,7 @@ interface IVerifyCompoundScreen {
     type: string;
     content: string;
   };
+  quest: IQuest | null;
   onVerifyClick: () => void;
   onChangeText: (val: string) => void;
   onClaimTxhashChange: (val: string) => void;
@@ -25,6 +28,7 @@ export const VerifyCompoundScreen = ({
   txHash,
   claimTxHash,
   message,
+  quest,
   onVerifyClick,
   onChangeText,
   onClaimTxhashChange,
@@ -40,7 +44,11 @@ export const VerifyCompoundScreen = ({
           containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
         />
         <div className='p-5'>
-          <div>
+          <SectionTitle className='mb-2'>
+            {quest?.name}
+          </SectionTitle>
+          <div className='text-lumera-label'>{quest?.description}</div>
+          <div className='mt-3'>
             <Label htmlFor="txHash" className='!text-base !font-bold'>Submit your claim transaction link!</Label>
             <div className='input-wrapper mt-1'>
               <Input

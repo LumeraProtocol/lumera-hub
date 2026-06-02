@@ -6,6 +6,8 @@ import {
 
 import { AppLoading } from '@/components/Loading';
 import AppButton from '@/components/AppButton';
+import SectionTitle from '@/components/SectionTitle';
+import { IQuest } from '@/hooks/useSnagTextInput';
 
 interface ISupernodeScreen {
   isLoading: boolean;
@@ -14,6 +16,7 @@ interface ISupernodeScreen {
     type: string;
     content: string;
   };
+  quest: IQuest | null;
   onVerifyClick: () => void;
   onChangeText: (val: string) => void;
 }
@@ -22,6 +25,7 @@ export const SupernodeScreen = ({
   isLoading,
   address,
   message,
+  quest,
   onVerifyClick,
   onChangeText,
 }: ISupernodeScreen) => {
@@ -36,7 +40,11 @@ export const SupernodeScreen = ({
           containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
         />
         <div className='p-5'>
-          <div>
+          <SectionTitle className='mb-2'>
+            {quest?.name}
+          </SectionTitle>
+          <div className='text-lumera-label'>{quest?.description}</div>
+          <div className='mt-3'>
             <Label htmlFor="address" className='!text-base !font-bold'>Submit your Supernode address!</Label>
             <div className='input-wrapper mt-1'>
               <Input
