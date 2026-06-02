@@ -25,7 +25,7 @@ export default function Page() {
       currentPath: '/snag/address/send',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Send A Transaction',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

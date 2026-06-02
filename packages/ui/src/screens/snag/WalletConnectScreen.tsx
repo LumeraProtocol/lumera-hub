@@ -6,8 +6,8 @@ export const WalletConnectScreen = () => {
   const { isLoading } = useSnag();
 
   return (
-    <div className='w-screen h-screen flex items-center justify-center'>
-      <div className="relative p-3 min-w-2xl">
+    <div className='flex items-center justify-center'>
+      <div className="relative p-3">
         <AppLoading
           isLoading={isLoading}
           className="w-10 h-10 !border-2"

@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty ID not found!',
+          error: 'Quest ID not found!',
         },
         { status: 400 }
       );

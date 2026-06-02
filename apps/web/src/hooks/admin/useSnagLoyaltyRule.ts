@@ -12,6 +12,7 @@ import {
   FREQUENCE, LOYALTY_RULE_TYPE,
   UPLOAD_CASCADE,
   URL_CHECK,
+  INPUT_TYPE,
 } from '@/contants/snag';
 
 type TData = {
@@ -122,6 +123,9 @@ const useSnagLoyaltyRule = () => {
     stakeForFullSeason: {
       amount: '100',
     },
+    textInput: {
+      type: INPUT_TYPE[0].value,
+    },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
   const [currencies, setCurrencies] = useState<TData[]>([]);
@@ -191,6 +195,7 @@ const useSnagLoyaltyRule = () => {
             storageRequests: config.storageRequests,
             referralLink: config.referralLink,
             stakeForFullSeason: config.stakeForFullSeason,
+            textInput: config.textInput,
           });
         }
       }
@@ -201,19 +206,23 @@ const useSnagLoyaltyRule = () => {
   }
 
   const syncLoyaltyCurrencies = async () => {
+    setCurrenciesLoading(true);
     try {
       await instance.getExternal('/api/snag/sync-loyalty-currencies');
     } catch (error) {
       console.error(error);
     }
+    setCurrenciesLoading(false);
   }
 
   const syncLoyaltySections = async () => {
+    setSectionsLoading(true);
     try {
       await instance.getExternal('/api/snag/sync-loyalty-section');
     } catch (error) {
       console.error(error);
     }
+    setSectionsLoading(false);
   }
 
   const initData = async () => {
@@ -529,6 +538,14 @@ const useSnagLoyaltyRule = () => {
             setMessages(prev => ({
               ...prev,
               stakeForFullSeasonAmount: 'Amount is required.',
+            }));
+          }
+        break;
+        case 'textInput':
+          if (!configForm.textInput.type) {
+            setMessages(prev => ({
+              ...prev,
+              textInput: 'Type is required.',
             }));
           }
         break;
@@ -873,6 +890,14 @@ const useSnagLoyaltyRule = () => {
             }));
           }
         break;
+        case 'textInput':
+          if (!configForm.textInput.type) {
+            setMessages(prev => ({
+              ...prev,
+              textInput: 'Type is required.',
+            }));
+          }
+        break;
       }
     }
 
@@ -1068,6 +1093,15 @@ const useSnagLoyaltyRule = () => {
           ...configForm,
           stakeForFullSeason: {
             ...configForm.stakeForFullSeason,
+            [name]: value,
+          },
+        });
+        break;
+      case 'textInput':
+        setConfigForm({
+          ...configForm,
+          textInput: {
+            ...configForm.textInput,
             [name]: value,
           },
         });

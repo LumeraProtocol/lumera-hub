@@ -28,6 +28,7 @@ import {
   TRANSACTION_TYPE,
   UPLOAD_CASCADE,
   ACTION_TYPE,
+  INPUT_TYPE,
 } from '@/contants/snag';
 
 export const CreateLoyaltyRuleScreen = () => {
@@ -1377,6 +1378,54 @@ export const CreateLoyaltyRuleScreen = () => {
               </div>
               {messages?.stakeForFullSeasonAmount ?
                 <div className="text-red-500 mt-1 text-sm">{messages.stakeForFullSeasonAmount}</div> : null
+              }
+            </div>
+          </div>
+        </>
+      )
+    }
+
+    if (actionType === 'textInput') {
+      return (
+        <>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>Type *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-full">
+                  <Select
+                    id="condition"
+                    value={configForm.textInput.type}
+                    onValueChange={(value) => handleInputChange('textInput', 'type', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a type" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {INPUT_TYPE.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+              </div>
+              {messages?.textInput ?
+                <div className="text-red-500 mt-1 text-sm">{messages.textInput}</div> : null
               }
             </div>
           </div>

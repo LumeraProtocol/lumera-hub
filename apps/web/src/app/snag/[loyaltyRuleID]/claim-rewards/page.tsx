@@ -25,7 +25,7 @@ export default function Page() {
       currentPath: '/snag/address/claim-rewards',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Claim staking rewards',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

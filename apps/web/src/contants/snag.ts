@@ -266,6 +266,40 @@ export const ACTION_TYPE = [
   },
   {
     value: 'stakeForFullSeason',
-    label: 'Stake for full season ',
+    label: 'Stake for full season',
+  },
+  {
+    value: 'textInput',
+    label: 'Text Input',
+  },
+];
+
+export const INPUT_TYPE = [
+  {
+    value: 'text',
+    label: 'Text',
+  },
+  // {
+  //   value: 'textarea',
+  //   label: 'Textarea',
+  // },
+];
+
+export const RESPONSE_STATUS = [
+  {
+    value: '',
+    label: 'Status',
+  },
+  {
+    value: 'pending',
+    label: 'Pending',
+  },
+  {
+    value: 'approved',
+    label: 'Approved',
+  },
+  {
+    value: 'reject',
+    label: 'Reject',
   },
 ];

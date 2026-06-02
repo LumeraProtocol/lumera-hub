@@ -25,7 +25,7 @@ export default function Page() {
       currentPath: '/snag/address/first-time-delegation',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'First-time delegation',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

@@ -17,7 +17,7 @@ export default function Page() {
       currentPath: '/snag/balance',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Balance',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

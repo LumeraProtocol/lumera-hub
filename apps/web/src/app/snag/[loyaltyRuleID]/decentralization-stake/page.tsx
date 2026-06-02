@@ -22,7 +22,7 @@ export default function Page() {
       currentPath: '/snag/address/decentralization-stake',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Decentralization Stake',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

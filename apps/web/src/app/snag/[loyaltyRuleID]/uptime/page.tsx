@@ -25,7 +25,7 @@ export default function Page() {
       currentPath: '/snag/address/uptime',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Uptime this week',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

@@ -22,7 +22,7 @@ export default function Page() {
       currentPath: '/snag/address/uploaded-to-cascade',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Cascade',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

@@ -25,7 +25,7 @@ export default function Page() {
       currentPath: '/snag/address/storage-requests',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Storage requests',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

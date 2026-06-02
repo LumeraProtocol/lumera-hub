@@ -18,53 +18,49 @@ export const StakeVerifyScreen = () => {
   } = useSnagStake();
 
   return (
-    <div className='w-screen h-screen flex items-center justify-center'>
-      <div className="relative p-3 min-w-2xl">
-        <div className='flex items-center justify-center w-full'>
-          <Card elevate size="$4" bordered className='relative'>
-            <AppLoading
-              isLoading={isLoading}
-              className="w-10 h-10 !border-2"
-              iconWidth={20}
-              iconHeight={20}
-              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
-            />
-            <div className='p-5 min-w-[80vw] sm:min-w-xl'>
-              <div>
-                <Label htmlFor="txHash" className='!text-base !font-bold'>Submit your transaction link!</Label>
-                <div className='input-wrapper mt-2'>
-                  <Input
-                    id="txHash"
-                    placeholder="Enter some text here..."
-                    className='input'
-                    value={txHash}
-                    onChangeText={setTxhash}
-                  />
-                </div>
-              </div>
-              {message.type === 'error' ?
-                <div className='text-red-500 w-full mt-3'>
-                  <span>{message.content}</span>
-                </div> : null
-              }
-              {message.type === 'success' ?
-                <div className='text-lumera-teal w-full mt-3'>
-                  <span>{message.content}</span>
-                </div> : null
-              }
-              <div className='mt-3 flex justify-end'>
-                <AppButton
-                  className='disabled:opacity-45'
-                  disabled={!txHash || isLoading}
-                  onClick={verifyStaked}
-                >
-                  <span>Claim</span>
-                </AppButton>
-              </div>
+    <div className='flex items-center justify-center'>
+      <Card elevate size="$4" bordered className='w-full relative'>
+        <AppLoading
+          isLoading={isLoading}
+          className="w-10 h-10 !border-2"
+          iconWidth={20}
+          iconHeight={20}
+          containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+        />
+        <div className='p-5'>
+          <div>
+            <Label htmlFor="txHash" className='!text-base !font-bold'>Submit your transaction link!</Label>
+            <div className='input-wrapper mt-1'>
+              <Input
+                id="txHash"
+                placeholder="Enter some text here..."
+                className='input'
+                value={txHash}
+                onChangeText={setTxhash}
+              />
             </div>
-          </Card>
+          </div>
+          {message.type === 'error' ?
+            <div className='text-red-500 w-full mt-3'>
+              <span>{message.content}</span>
+            </div> : null
+          }
+          {message.type === 'success' ?
+            <div className='text-lumera-teal w-full mt-3'>
+              <span>{message.content}</span>
+            </div> : null
+          }
+          <div className='mt-3 flex justify-end'>
+            <AppButton
+              className='disabled:opacity-45'
+              disabled={!txHash || isLoading}
+              onClick={verifyStaked}
+            >
+              <span>Claim</span>
+            </AppButton>
+          </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

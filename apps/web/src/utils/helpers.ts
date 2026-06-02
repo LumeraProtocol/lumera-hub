@@ -318,6 +318,9 @@ export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionTy
         case 'stakeForFullSeason':
           prefix = '/stake-for-full-season';
           break;
+        case 'textInput':
+          prefix = '/text-input';
+          break;
       }
       if (actionType === 'connect') {
         return domain;

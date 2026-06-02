@@ -25,7 +25,7 @@ export default function Page() {
       currentPath: '/snag/address/stake-for-full-season',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Stake for full season',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

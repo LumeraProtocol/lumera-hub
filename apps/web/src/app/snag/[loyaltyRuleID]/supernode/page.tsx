@@ -25,7 +25,7 @@ export default function Page() {
       currentPath: '/snag/address/supernode',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Supernode',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

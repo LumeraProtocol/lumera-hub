@@ -25,7 +25,7 @@ export default function Page() {
       currentPath: '/snag/address/first-upload-cascade',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'First file uploaded to Cascade',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

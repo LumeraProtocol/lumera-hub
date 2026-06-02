@@ -1198,6 +1198,21 @@ export const SnagScreen = () => {
             </li>
           </ul>
         );
+      case 'textInput':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Text Input</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Type:</span> <span>{obj.textInput.type}</span>
+              </div>
+            </li>
+          </ul>
+        );
       default:
         return null;
     }
@@ -1210,6 +1225,11 @@ export const SnagScreen = () => {
           <div>
             <Card.Header padded>
               <div className='flex justify-end gap-3 w-full'>
+                <AppLinkButton
+                  href="/admin/campaigns/sprints/season-2/user-responses"
+                >
+                  <span>Manual Review Quests</span>
+                </AppLinkButton>
                 <AppLinkButton
                   href="/admin/campaigns/sprints/season-2/create"
                 >

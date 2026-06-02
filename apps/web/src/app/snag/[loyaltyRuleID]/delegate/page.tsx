@@ -25,7 +25,7 @@ export default function Page() {
       currentPath: '/snag/address/delegate',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Delegate Tokens',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

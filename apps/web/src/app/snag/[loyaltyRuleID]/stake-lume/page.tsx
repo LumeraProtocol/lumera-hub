@@ -22,7 +22,7 @@ export default function Page() {
       currentPath: '/snag/address/stake-lume',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Stake LUME',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

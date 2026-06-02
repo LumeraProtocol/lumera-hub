@@ -27,7 +27,7 @@ export default function Page() {
       currentPath: '/snag/address/compound-rewards',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Compound rewards',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

@@ -58,6 +58,7 @@ const customFetch = (url: string, method: string, body = {}, isUpload = false, i
               statusText: response.statusText,
               status: response.data.status,
               message: response?.data?.error || response.data.message,
+              type: response?.data?.type || response?.data?.type,
             });
           default:
             return reject({
@@ -65,6 +66,7 @@ const customFetch = (url: string, method: string, body = {}, isUpload = false, i
               statusText: response.statusText,
               status: response.data.status,
               message: response?.data?.error || response.data.message,
+              type: response?.data?.type || response?.data?.type,
             });
         }
       });

@@ -59,6 +59,7 @@ const useLoginScreen = () => {
           isLogged: true,
         }));
         localStorage.setItem('adminUser', data.token);
+        localStorage.setItem('adminUserId', data.user.id);
       }
       router.push('/admin');
     } catch (error) {
@@ -91,6 +92,7 @@ const useLoginScreen = () => {
           isLogged: true,
         }));
         localStorage.setItem('adminUser', data.token);
+        localStorage.setItem('adminUserId', data.user.id);
       }
       router.push('/admin');
     } catch (error) {

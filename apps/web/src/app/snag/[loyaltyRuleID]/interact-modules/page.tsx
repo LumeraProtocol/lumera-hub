@@ -22,7 +22,7 @@ export default function Page() {
       currentPath: '/snag/address/interact-modules',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Interact modules',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

@@ -25,7 +25,7 @@ export default function Page() {
       currentPath: '/snag/address/claim',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Claim Tokens',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 

@@ -1,7 +1,6 @@
 // app/api/admin/login/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import { getDataSource } from '@/lib/data-source';

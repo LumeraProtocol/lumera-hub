@@ -17,7 +17,7 @@ export default function Page() {
       currentPath: '/snag/address/staked',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Staked',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 
