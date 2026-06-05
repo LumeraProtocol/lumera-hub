@@ -1429,6 +1429,59 @@ export const EditLoyaltyRuleScreen = () => {
               }
             </div>
           </div>
+          <div className='mt-1'>
+            <Label htmlFor="amount" className='text-base'>Maximum Reward Claims *</Label>
+            <div className='input-wrapper'>
+              <div className="flex justify-between gap-4">
+                <div className="w-1/7">
+                  <Select
+                    id="condition"
+                    value={configForm.textInput.condition}
+                    onValueChange={(value) => handleInputChange('textInput', 'condition', value)}
+                  >
+                    <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                      <Select.Value placeholder="Select a condition" />
+                    </Select.Trigger>
+
+                    <Select.Content zIndex={200000}>
+                      <Select.Viewport minWidth={200}>
+                        <Select.Group>
+                          {CONDITION_EXTEND.map((item, i) => (
+                            <Select.Item
+                              index={i}
+                              key={item.value}
+                              value={item.value}
+                            >
+                              <Select.ItemText>{item.label}</Select.ItemText>
+                              <XStack flex={1} />
+                              <Select.ItemIndicator marginLeft="auto">
+                                <CheckIcon className='w-4 h-4' />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
+                </div>
+                <div className="w-6/7">
+                  <Input
+                    id="maximumRewardClaims"
+                    placeholder="Maximum Reward Claims"
+                    className='input has-symbol'
+                    value={configForm?.textInput?.maximumRewardClaims || '1'}
+                    onChangeText={(newValue) => handleInputChange('textInput', 'maximumRewardClaims', newValue)}
+                  />
+                  <span className='input-symbol'>
+
+                  </span>
+                </div>
+              </div>
+              {messages?.maximumRewardClaims ?
+                <div className="text-red-500 mt-1 text-sm">{messages.maximumRewardClaims}</div> : null
+              }
+            </div>
+          </div>
         </>
       )
     }

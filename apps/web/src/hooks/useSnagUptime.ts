@@ -15,6 +15,7 @@ const useSnagUptime = () => {
     content: '',
   });
   const [address, setAddress] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
 
   const verifySupernode = async () => {
     setLoading(true);
@@ -67,6 +68,8 @@ const useSnagUptime = () => {
     isLoading,
     message,
     address,
+    isVerified,
+    setIsVerified,
     setAddress,
     verifySupernode,
   }

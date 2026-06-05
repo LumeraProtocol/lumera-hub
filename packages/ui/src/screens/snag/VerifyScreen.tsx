@@ -7,6 +7,7 @@ import {
 import { AppLoading } from '@/components/Loading';
 import AppButton from '@/components/AppButton';
 import SectionTitle from '@/components/SectionTitle';
+import Recaptcha from '@/components/Recaptcha';
 import { IQuest } from '@/hooks/useSnagTextInput';
 
 interface IVerifyScreen {
@@ -17,6 +18,8 @@ interface IVerifyScreen {
     content: string;
   };
   quest: IQuest | null;
+  isVerified: boolean;
+  onVerified: (val: boolean) => void;
   onVerifyClick: () => void;
   onChangeText: (val: string) => void;
 }
@@ -26,6 +29,8 @@ export const VerifyScreen = ({
   txHash,
   message,
   quest,
+  isVerified,
+  onVerified,
   onVerifyClick,
   onChangeText,
 }: IVerifyScreen) => {
@@ -56,6 +61,9 @@ export const VerifyScreen = ({
               />
             </div>
           </div>
+          <div className="mt-3">
+            <Recaptcha onChange={() => onVerified(true)} />
+          </div>
           {message.type === 'error' ?
             <div className='text-red-500 w-full mt-3'>
               <span>{message.content}</span>
@@ -69,7 +77,7 @@ export const VerifyScreen = ({
           <div className='mt-3 flex justify-end'>
             <AppButton
               className='disabled:opacity-45'
-              disabled={!txHash || isLoading}
+              disabled={!txHash || isLoading || !isVerified}
               onClick={onVerifyClick}
             >
               <span>Claim</span>

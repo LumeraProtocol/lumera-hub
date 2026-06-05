@@ -18,6 +18,8 @@ export default function Page() {
     message,
     txHash,
     claimTxHash,
+    isVerified,
+    setIsVerified,
     setClaimTxhash,
     setTxhash,
     verifyClaimCompound,
@@ -48,6 +50,8 @@ export default function Page() {
             txHash={txHash}
             claimTxHash={claimTxHash}
             quest={snag?.quest}
+            isVerified={isVerified}
+            onVerified={setIsVerified}
             onVerifyClick={verifyClaimCompound}
             onChangeText={setTxhash}
             onClaimTxhashChange={setClaimTxhash}

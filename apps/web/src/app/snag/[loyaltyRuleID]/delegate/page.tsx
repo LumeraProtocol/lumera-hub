@@ -17,6 +17,8 @@ export default function Page() {
     isLoading,
     message,
     txHash,
+    isVerified,
+    setIsVerified,
     setTxhash,
     verifyDelegateTokens,
   } = useSnagVerify();
@@ -45,6 +47,8 @@ export default function Page() {
             message={message}
             txHash={txHash}
             quest={snag?.quest}
+            isVerified={isVerified}
+            onVerified={setIsVerified}
             onVerifyClick={verifyDelegateTokens}
             onChangeText={setTxhash}
           />

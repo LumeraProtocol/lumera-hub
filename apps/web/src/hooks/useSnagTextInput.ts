@@ -10,6 +10,7 @@ export interface IQuest {
   id: string,
   name: string,
   description: string,
+  config: string,
   amount: number,
 }
 
@@ -20,7 +21,7 @@ export interface IResponse {
   content: string,
 }
 
-const useSnagTextInput = () => {
+const useSnagTextInput = (callBack?: () => void) => {
   const params = useParams();
   const [isLoading, setLoading] = useState(false);
   const [message, setMessage] = useState({
@@ -30,6 +31,7 @@ const useSnagTextInput = () => {
   const [content, setContent] = useState('');
   const [quest, setQuest] = useState<IQuest | null>(null);
   const [response, setResponse] = useState<IResponse | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
 
   const getQuest = async () => {
     setLoading(true);
@@ -46,7 +48,8 @@ const useSnagTextInput = () => {
       });
       setQuest(data.loyaltyRule);
       setResponse(data.response);
-      if (data?.response?.content) {
+       const config = data?.loyaltyRule?.config ? JSON.parse(data?.loyaltyRule.config) : null;
+      if (data?.response?.content && config && Number(config.textInput.maximumRewardClaims) <= 1) {
         setContent(data.response.content);
       }
     } catch (error: any) {
@@ -90,6 +93,10 @@ const useSnagTextInput = () => {
         type: 'success',
         content: "Our moderator will review your submission, and you’ll get your rewards once it’s approved.",
       });
+      getQuest();
+      if (callBack) {
+        callBack();
+      }
     } catch (error) {
       console.error(error);
       setMessage({
@@ -106,8 +113,10 @@ const useSnagTextInput = () => {
     content,
     quest,
     response,
+    isVerified,
     setContent,
     verifyTextInput,
+    setIsVerified,
   }
 }
 

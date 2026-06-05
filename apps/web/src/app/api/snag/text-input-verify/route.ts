@@ -112,16 +112,28 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    await snagUserResponseRepo.save({
-      id: userResponse?.id || undefined,
-      loyaltyRuleId,
-      userId: user.userId,
-      lumeraAddress: user.lumeraAddress,
-      content: body.content,
-      snagAddress: body.snagAddress,
-      status: 'pending',
-    })
+    const config = JSON.parse(loyaltyRule.config);
+    const maximumRewardClaims = Number(config.textInput.maximumRewardClaims);
+    if (maximumRewardClaims > 1) {
+      await snagUserResponseRepo.save({
+        loyaltyRuleId,
+        userId: user.userId,
+        lumeraAddress: user.lumeraAddress,
+        content: body.content,
+        snagAddress: body.snagAddress,
+        status: 'pending',
+      })
+    } else {
+      await snagUserResponseRepo.save({
+        id: userResponse?.id || undefined,
+        loyaltyRuleId,
+        userId: user.userId,
+        lumeraAddress: user.lumeraAddress,
+        content: body.content,
+        snagAddress: body.snagAddress,
+        status: 'pending',
+      })
+    }
 
     return NextResponse.json({
       status: true,

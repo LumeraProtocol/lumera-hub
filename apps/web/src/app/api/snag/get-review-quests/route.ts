@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDataSource } from '@/lib/data-source';
 import { SnagUserResponse } from '@/entities/SnagUserResponse';
 import { SnagUser } from '@/entities/SnagUser';
-import { SnagLoyalty } from '@/entities/SnagLoyalty';
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,7 +35,6 @@ export async function POST(req: NextRequest) {
     const dataSource = await getDataSource();
     const snagUserResponseRepo = dataSource.getRepository(SnagUserResponse);
     const snagUserRepo = dataSource.getRepository(SnagUser);
-    const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
 
     const user = await snagUserRepo.createQueryBuilder()
       .select('snagAddress, lumeraAddress, userId')
@@ -54,42 +52,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const loyaltyRule = await snagLoyaltyRepo
-      .createQueryBuilder()
-      .select('id')
-      .addSelect('name')
-      .addSelect('description')
-      .addSelect('amount')
-      .addSelect('config')
-      .where('id = :loyaltyRuleID', { loyaltyRuleID: body.loyaltyRuleID })
-      .getRawOne();
-
-    if (!loyaltyRule) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Quest not found!',
-          type: 'not-found'
-        },
-        { status: 400 }
-      );
-    }
-
-    const response = await snagUserResponseRepo.createQueryBuilder()
+    const responses = await snagUserResponseRepo.createQueryBuilder()
       .select([
         'id',
         'loyaltyRuleId',
         'status',
         'content',
+        'created_at',
       ])
       .where('lumeraAddress = :lumeraAddress', { lumeraAddress: user.lumeraAddress })
       .andWhere('loyaltyRuleId = :loyaltyRuleId', { loyaltyRuleId: body.loyaltyRuleID })
-      .getRawOne();
+      .orderBy('created_at', 'DESC')
+      .getRawMany();
 
     return NextResponse.json({
       success: true,
-      response,
-      loyaltyRule,
+      responses,
     });
   } catch (error) {
     console.error('Get Loyalty sections error:', error);

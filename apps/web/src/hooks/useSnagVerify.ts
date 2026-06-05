@@ -15,6 +15,7 @@ const useSnagVerify = () => {
     content: '',
   });
   const [txHash, setTxhash] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
 
   const verifyClaimTokens = async () => {
     setLoading(true);
@@ -307,6 +308,8 @@ const useSnagVerify = () => {
     isLoading,
     message,
     txHash,
+    isVerified,
+    setIsVerified,
     setTxhash,
     verifyClaimTokens,
     verifyDelegateTokens,

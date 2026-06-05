@@ -125,6 +125,8 @@ const useSnagLoyaltyRule = () => {
     },
     textInput: {
       type: INPUT_TYPE[0].value,
+      maximumRewardClaims: '1',
+      condition: CONDITION_EXTEND[0].value,
     },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
@@ -548,6 +550,12 @@ const useSnagLoyaltyRule = () => {
               textInput: 'Type is required.',
             }));
           }
+          if (!configForm.textInput.maximumRewardClaims || Number(configForm.textInput.maximumRewardClaims) < 1) {
+            setMessages(prev => ({
+              ...prev,
+              maximumRewardClaims: 'Maximum Reward Claims is required.',
+            }));
+          }
         break;
       }
     }
@@ -895,6 +903,12 @@ const useSnagLoyaltyRule = () => {
             setMessages(prev => ({
               ...prev,
               textInput: 'Type is required.',
+            }));
+          }
+          if (!configForm.textInput.maximumRewardClaims || Number(configForm.textInput.maximumRewardClaims) < 1) {
+            setMessages(prev => ({
+              ...prev,
+              maximumRewardClaims: 'Maximum Reward Claims is required.',
             }));
           }
         break;

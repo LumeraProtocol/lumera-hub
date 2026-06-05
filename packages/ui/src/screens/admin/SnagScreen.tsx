@@ -1075,7 +1075,7 @@ export const SnagScreen = () => {
                     ]}
                   >
                     <div className='text-white'>
-                      {obj.supernode.validatorUrl || '--'}
+                      {obj.urlCheck || '--'}
                     </div>
                   </Tooltip.Content>
                 </Tooltip>
@@ -1120,7 +1120,7 @@ export const SnagScreen = () => {
                     ]}
                   >
                     <div className='text-white'>
-                      {obj.supernode.validatorUrl || '--'}
+                      {obj.urlCheck || '--'}
                     </div>
                   </Tooltip.Content>
                 </Tooltip>
@@ -1185,7 +1185,7 @@ export const SnagScreen = () => {
                     ]}
                   >
                     <div className='text-white'>
-                      {obj.supernode.validatorUrl || '--'}
+                      {obj.urlCheck || '--'}
                     </div>
                   </Tooltip.Content>
                 </Tooltip>
@@ -1209,6 +1209,11 @@ export const SnagScreen = () => {
             <li className='mb-1'>
               <div className="flex gap-2">
                 <span>Type:</span> <span>{obj.textInput.type}</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Maximum Reward Claims:</span> <span>{obj.textInput.condition} {obj.textInput.maximumRewardClaims}</span>
               </div>
             </li>
           </ul>

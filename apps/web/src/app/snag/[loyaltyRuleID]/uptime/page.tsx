@@ -17,6 +17,8 @@ export default function Page() {
     isLoading,
     message,
     address,
+    isVerified,
+    setIsVerified,
     setAddress,
     verifySupernode,
   } = useSnagUptime();
@@ -45,6 +47,8 @@ export default function Page() {
             message={message}
             address={address}
             quest={snag?.quest}
+            isVerified={isVerified}
+            onVerified={setIsVerified}
             onVerifyClick={verifySupernode}
             onChangeText={setAddress}
           />

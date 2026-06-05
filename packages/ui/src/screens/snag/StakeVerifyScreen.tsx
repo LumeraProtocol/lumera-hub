@@ -8,12 +8,17 @@ import { AppLoading } from '@/components/Loading';
 import AppButton from '@/components/AppButton';
 import useSnagStake from '@/hooks/useSnagStake';
 import SectionTitle from '@/components/SectionTitle';
+import Recaptcha from '@/components/Recaptcha';
 import { IQuest } from '@/hooks/useSnagTextInput';
 
 export const StakeVerifyScreen = ({
   quest,
+  isVerified,
+  onVerified,
 }: {
-  quest: IQuest | null
+  quest: IQuest | null;
+  isVerified: boolean;
+  onVerified: (val: boolean) => void;
 }) => {
   const {
     isLoading,
@@ -50,6 +55,9 @@ export const StakeVerifyScreen = ({
               />
             </div>
           </div>
+          <div className="mt-3">
+            <Recaptcha onChange={() => onVerified(true)} />
+          </div>
           {message.type === 'error' ?
             <div className='text-red-500 w-full mt-3'>
               <span>{message.content}</span>
@@ -63,7 +71,7 @@ export const StakeVerifyScreen = ({
           <div className='mt-3 flex justify-end'>
             <AppButton
               className='disabled:opacity-45'
-              disabled={!txHash || isLoading}
+              disabled={!txHash || isLoading || !isVerified}
               onClick={verifyStaked}
             >
               <span>Claim</span>

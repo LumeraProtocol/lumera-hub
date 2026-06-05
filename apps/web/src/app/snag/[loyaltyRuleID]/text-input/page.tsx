@@ -6,21 +6,25 @@ import { Helmet } from "react-helmet-async";
 
 import { useDispatch } from '@/redux/hooks';
 import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
-import { TextInputVerifyScreen } from '@lumera-hub/ui/src/screens/snag/TextInputVerifyScreen';
 import useSnagTextInput from '@/hooks/useSnagTextInput';
+import useSnagReview from '@/hooks/useSnagReview';
+import { TextInputVerifyScreen } from '@lumera-hub/ui/src/screens/snag/TextInputVerifyScreen';
 import { NotFoundScreen } from '@lumera-hub/ui/src/screens/snag/NotFoundScreen';
 
 export default function Page() {
   const dispatch = useDispatch();
+  const review = useSnagReview();
   const {
     isLoading,
     message,
     content,
     quest,
     response,
+    isVerified,
     setContent,
     verifyTextInput,
-  } = useSnagTextInput();
+    setIsVerified,
+  } = useSnagTextInput(review.getResponses);
 
   useEffect(() => {
     document.title = 'Response - Lumera Hub';
@@ -46,8 +50,14 @@ export default function Page() {
             content={content}
             quest={quest}
             response={response}
+            isVerified={isVerified}
+            review={{
+              isLoading: review.isLoading,
+              responses: review.responses,
+            }}
             onVerifyClick={verifyTextInput}
             onChangeText={setContent}
+            onVerified={setIsVerified}
           />
         }
       </div>

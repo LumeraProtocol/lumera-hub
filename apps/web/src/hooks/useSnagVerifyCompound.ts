@@ -16,6 +16,7 @@ const useSnagVerifyCompound = () => {
   });
   const [txHash, setTxhash] = useState('');
   const [claimTxHash, setClaimTxhash] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
 
   const verifyClaimCompound = async () => {
     setLoading(true);
@@ -72,6 +73,8 @@ const useSnagVerifyCompound = () => {
     message,
     txHash,
     claimTxHash,
+    isVerified,
+    setIsVerified,
     setClaimTxhash,
     setTxhash,
     verifyClaimCompound,
