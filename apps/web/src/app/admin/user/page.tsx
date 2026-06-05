@@ -17,8 +17,16 @@ export default function UserManagement() {
     totalPages,
     keyword,
     pageSize,
+    selectedModal,
+    userForm,
+    isUserLoading,
+    messages,
+    handleInputChange,
+    handleOpenAddUserModal,
     handlePageClick,
     handleSearchChange,
+    handleCloseAddUserModal,
+    handleAddUser,
   } = useUser();
 
   useEffect(() => {
@@ -40,8 +48,16 @@ export default function UserManagement() {
         totalPages={totalPages}
         keyword={keyword}
         pageSize={pageSize}
+        selectedModal={selectedModal}
+        userForm={userForm}
+        isUserLoading={isUserLoading}
+        messages={messages}
+        handleInputChange={handleInputChange}
+        handleOpenAddUserModal={handleOpenAddUserModal}
         handlePageClick={handlePageClick}
         handleSearchChange={handleSearchChange}
+        handleCloseAddUserModal={handleCloseAddUserModal}
+        handleAddUser={handleAddUser}
       />
     </div>
   );

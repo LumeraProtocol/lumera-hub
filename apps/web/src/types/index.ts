@@ -359,3 +359,7 @@ export const VIEW_TITLES: Record<ViewId, string> = {
   user: 'Users',
   tracking: "Active Hub Users",
 }
+
+export type TFromMessage = {
+  [key: string]: string;
+}

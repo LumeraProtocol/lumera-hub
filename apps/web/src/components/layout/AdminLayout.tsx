@@ -85,7 +85,7 @@ export default function AdminLayout({ children }: IAdminLayout) {
     }));
     localStorage.removeItem('adminUser');
     localStorage.removeItem('adminUserId');
-    location.href = '/login';
+    location.href = '/admin';
   }
 
   const handleCopyAddress = () => {

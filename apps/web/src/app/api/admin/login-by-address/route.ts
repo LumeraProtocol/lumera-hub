@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       .getRawOne();
 
     const safeUser = user;
-    if (!user?.id) {
+    if (!user?.id || !user?.isActive) {
       return NextResponse.json(
         {
           success: false,

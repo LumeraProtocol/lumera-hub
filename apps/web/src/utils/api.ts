@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import axios from 'axios';
@@ -6,7 +7,7 @@ import { REST_AI_URL } from '@/contants/network';
 import store from '@/store';
 import { setError } from '@/redux/error.slice';
 
-const headers = {
+let headers: any = {
   'Content-Type': 'application/json',
   Accept: 'application/json',
 };
@@ -18,7 +19,15 @@ const uploadHeaders = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const customFetch = (url: string, method: string, body = {}, isUpload = false, isExternal = false): any => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (isExternal && url.indexOf('/admin') !== -1) {
+    const token = localStorage.getItem('adminUser');
+    if (token) {
+      headers = {
+        ...headers,
+        authorization: `Bearer ${token}`,
+      }
+    }
+  }
   const options: any = {
     url: `${!isExternal ? REST_AI_URL : ''}${url}`,
     method,
