@@ -115,12 +115,11 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(body.password || body.walletAddress, 12);
-
     await userRepo.save({
       email: body.type === USER_TYPE[0].value ? body.email : `${body.walletAddress}@lumera.io`,
       passwordHash: hashedPassword,
       fullName: body.fullName,
-      isActive: body.status,
+      isActive: body.status === '1' ? true : false,
       rule: body.rule,
       walletAddress: body.walletAddress,
     });
