@@ -12,7 +12,7 @@ import dayjs from 'dayjs';
 import { AppLoading } from '@/components/Loading';
 import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
-import useSnagUserResponse from '@/hooks/admin/useSnagUserResponse';
+import useSnagUserResponse, { IUserResponse } from '@/hooks/admin/useSnagUserResponse';
 import { formatAddress } from '@/utils/format';
 import { RESPONSE_STATUS } from '@/contants/snag';
 
@@ -29,6 +29,16 @@ export const SnagUserResponsesScreen = () => {
     handleStatusChange,
     handleResponseAction,
   } = useSnagUserResponse();
+
+  const getClaims = (response: IUserResponse) => {
+    const config = response?.config ? JSON.parse(response.config) : null;
+    const maximumRewardClaims = config.textInput.maximumRewardClaims;
+    const claims = response.claims;
+    return {
+      claims: response.claims,
+      maximumRewardClaims: maximumRewardClaims,
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -104,88 +114,21 @@ export const SnagUserResponsesScreen = () => {
                   <>
                     {userResponses?.length ?
                       <>
-                        {userResponses.map((response) => (
-                          <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg' key={response.id}>
-                            <td className='px-2 py-3'>
-                              {response.loyaltyRule.name}
-                            </td>
-                            <td className='px-2 py-3'>
-                              {response.loyaltyRule.amount}
-                            </td>
-                            <td className='px-2 py-3'>
-                              <div>
-                                <Tooltip>
-                                  <Tooltip.Trigger>
-                                    <span>Lumera Address: {formatAddress(response.lumeraAddress, 15, -5)}</span>
-                                  </Tooltip.Trigger>
-                                  <Tooltip.Content
-                                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
-                                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
-                                    scale={1}
-                                    x={0}
-                                    y={0}
-                                    opacity={1}
-                                    animation={[
-                                      'quick',
-                                      {
-                                        opacity: {
-                                          overshootClamping: true,
-                                        },
-                                      },
-                                    ]}
-                                  >
-                                    <div className='text-white'>
-                                      {response.lumeraAddress}
-                                    </div>
-                                  </Tooltip.Content>
-                                </Tooltip>
-                              </div>
-                              <div>
-                                <Tooltip>
-                                  <Tooltip.Trigger>
-                                    <span>Snag Address: {formatAddress(response.snagAddress, 15, -5)}</span>
-                                  </Tooltip.Trigger>
-                                  <Tooltip.Content
-                                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
-                                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
-                                    scale={1}
-                                    x={0}
-                                    y={0}
-                                    opacity={1}
-                                    animation={[
-                                      'quick',
-                                      {
-                                        opacity: {
-                                          overshootClamping: true,
-                                        },
-                                      },
-                                    ]}
-                                  >
-                                    <div className='text-white'>
-                                      {response.snagAddress}
-                                    </div>
-                                  </Tooltip.Content>
-                                </Tooltip>
-                              </div>
-                            </td>
-                            <td className='px-2 py-3 whitespace-pre-wrap break-all'>
-                              {response.content}
-                            </td>
-                            <td className='px-2 py-3'>
-                              {dayjs(response.created_at).format('MMM DD, YYYY HH:mm')}
-                            </td>
-                            <td className='px-2 py-3'>
-                              {response.status === 'pending' ?
-                                <div className='flex items-center gap-3'>
+                        {userResponses.map((response) => {
+                          const { claims, maximumRewardClaims } = getClaims(response);
+                          return (
+                            <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg' key={response.id}>
+                              <td className='px-2 py-3'>
+                                {response.name}
+                              </td>
+                              <td className='px-2 py-3'>
+                                {response.amount}
+                              </td>
+                              <td className='px-2 py-3'>
+                                <div>
                                   <Tooltip>
                                     <Tooltip.Trigger>
-                                      <AppButton
-                                        onClick={() => handleResponseAction(response.id, response.userId, response.loyaltyRuleId, 'approved')}
-                                        disabled={isActionLoading}
-                                        className='disabled:opacity-45'
-                                      >
-                                        <Check className='w-4 h-4' />
-                                      </AppButton>
+                                      <span>Lumera Address: {formatAddress(response.lumeraAddress, 15, -5)}</span>
                                     </Tooltip.Trigger>
                                     <Tooltip.Content
                                       enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
@@ -204,50 +147,124 @@ export const SnagUserResponsesScreen = () => {
                                       ]}
                                     >
                                       <div className='text-white'>
-                                        Approved this response
+                                        {response.lumeraAddress}
                                       </div>
                                     </Tooltip.Content>
                                   </Tooltip>
-                                  <Tooltip>
-                                    <Tooltip.Trigger>
-                                      <AppButton
-                                        variant='third'
-                                        onClick={() => handleResponseAction(response.id, response.userId, response.loyaltyRuleId, 'reject')}
-                                        disabled={isActionLoading}
-                                        className='disabled:opacity-45'
-                                      >
-                                        <X className='w-4 h-4' />
-                                      </AppButton>
-                                    </Tooltip.Trigger>
-                                    <Tooltip.Content
-                                      enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
-                                      exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
-                                      scale={1}
-                                      x={0}
-                                      y={0}
-                                      opacity={1}
-                                      animation={[
-                                        'quick',
-                                        {
-                                          opacity: {
-                                            overshootClamping: true,
-                                          },
-                                        },
-                                      ]}
-                                    >
-                                      <div className='text-white'>
-                                        Reject this response
-                                      </div>
-                                    </Tooltip.Content>
-                                  </Tooltip>
-                                </div> :
-                                <div className={`capitalize ${response.status === 'reject' ? 'text-lumera-red' : 'text-lumera-teal'}`}>
-                                  {response.status}
                                 </div>
-                              }
-                            </td>
-                          </tr>
-                        ))}
+                                <div>
+                                  <Tooltip>
+                                    <Tooltip.Trigger>
+                                      <span>Snag Address: {formatAddress(response.snagAddress, 15, -5)}</span>
+                                    </Tooltip.Trigger>
+                                    <Tooltip.Content
+                                      enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                      exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                      scale={1}
+                                      x={0}
+                                      y={0}
+                                      opacity={1}
+                                      animation={[
+                                        'quick',
+                                        {
+                                          opacity: {
+                                            overshootClamping: true,
+                                          },
+                                        },
+                                      ]}
+                                    >
+                                      <div className='text-white'>
+                                        {response.snagAddress}
+                                      </div>
+                                    </Tooltip.Content>
+                                  </Tooltip>
+                                </div>
+                              </td>
+                              <td className='px-2 py-3 whitespace-pre-wrap break-all'>
+                                {response.content}
+                              </td>
+                              <td className='px-2 py-3'>
+                                {dayjs(response.created_at).format('MMM DD, YYYY HH:mm')}
+                              </td>
+                              <td className='px-2 py-3'>
+                                <div className="mb-2">
+                                  <span>Claims: {claims || '0'}/{maximumRewardClaims || '1'}</span>
+                                </div>
+                                {response.status === 'pending' ?
+                                  <>
+                                    <div className='flex items-center gap-2'>
+                                      <Tooltip>
+                                        <Tooltip.Trigger>
+                                          <AppButton
+                                            onClick={() => handleResponseAction(response.id, response.userId, response.loyaltyRuleId, 'approved')}
+                                            disabled={isActionLoading || Number(claims) >= Number(maximumRewardClaims)}
+                                            className='disabled:opacity-45'
+                                          >
+                                            <Check className='w-4 h-4' />
+                                          </AppButton>
+                                        </Tooltip.Trigger>
+                                        <Tooltip.Content
+                                          enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                          exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                          scale={1}
+                                          x={0}
+                                          y={0}
+                                          opacity={1}
+                                          animation={[
+                                            'quick',
+                                            {
+                                              opacity: {
+                                                overshootClamping: true,
+                                              },
+                                            },
+                                          ]}
+                                        >
+                                          <div className='text-white'>
+                                            Approved this response
+                                          </div>
+                                        </Tooltip.Content>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <Tooltip.Trigger>
+                                          <AppButton
+                                            variant='third'
+                                            onClick={() => handleResponseAction(response.id, response.userId, response.loyaltyRuleId, 'reject')}
+                                            disabled={isActionLoading}
+                                            className='disabled:opacity-45'
+                                          >
+                                            <X className='w-4 h-4' />
+                                          </AppButton>
+                                        </Tooltip.Trigger>
+                                        <Tooltip.Content
+                                          enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                          exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                          scale={1}
+                                          x={0}
+                                          y={0}
+                                          opacity={1}
+                                          animation={[
+                                            'quick',
+                                            {
+                                              opacity: {
+                                                overshootClamping: true,
+                                              },
+                                            },
+                                          ]}
+                                        >
+                                          <div className='text-white'>
+                                            Reject this response
+                                          </div>
+                                        </Tooltip.Content>
+                                      </Tooltip>
+                                    </div>
+                                  </> :
+                                  <div className={`capitalize ${response.status === 'reject' ? 'text-lumera-red' : 'text-lumera-teal'}`}>
+                                    {response.status}
+                                  </div>
+                                }
+                              </td>
+                            </tr>
+                          )})}
                       </> : <>
                         <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
                           <td className='px-2 py-3' colSpan={6}>

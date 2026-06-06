@@ -10,7 +10,6 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { SnagLoyalty } from "./SnagLoyalty";
-import { SnagUser } from "./SnagUser";
 
 @Entity({ name: "snag_user_response" })
 export class SnagUserResponse {

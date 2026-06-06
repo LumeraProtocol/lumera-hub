@@ -35,20 +35,28 @@ export async function GET(req: NextRequest) {
     // Query builder
     const queryBuilder = snagUserResponseRepo.createQueryBuilder("sur")
       .leftJoinAndSelect('sur.loyaltyRule', 'sl')
-      .select([
-        'sur.id',
-        'sur.loyaltyRuleId',
-        'sur.userId',
-        'sur.status',
-        'sur.adminUserId',
-        'sur.lumeraAddress',
-        'sur.content',
-        'sur.created_at',
-        'sur.updated_at',
-        'sur.snagAddress',
-        'sl.name',
-        'sl.amount',
-      ]);
+      .select('sur.id', 'id')
+      .addSelect('sur.loyaltyRuleId', 'loyaltyRuleId')
+      .addSelect('sur.content', 'content')
+      .addSelect('sur.userId', 'userId')
+      .addSelect('sur.lumeraAddress', 'lumeraAddress')
+      .addSelect('sur.snagAddress', 'snagAddress')
+      .addSelect('sur.status', 'status')
+      .addSelect('sur.adminUserId', 'adminUserId')
+      .addSelect('sur.created_at', 'created_at')
+      .addSelect('sur.updated_at', 'updated_at')
+      .addSelect('sl.name', 'name')
+      .addSelect('sl.amount', 'amount')
+      .addSelect('sl.config', 'config')
+      .addSelect(
+        subQuery => subQuery
+          .select("COUNT(1)")
+          .from("snag_user_response", "sur2")
+          .where("sur2.loyaltyRuleId = sur.loyaltyRuleId")
+          .andWhere("sur2.lumeraAddress = sur.lumeraAddress")
+          .andWhere("sur2.status = 'approved'"),
+        "claims"
+      );
 
     if (status) {
       queryBuilder.andWhere('sur.status = :status', { status });
@@ -60,11 +68,13 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const [data, total] = await queryBuilder
+    const data = await queryBuilder
       .orderBy('sur.created_at', 'DESC')
       .skip(skip)
       .take(limit)
-      .getManyAndCount();
+      .getRawMany();
+
+    const total = await queryBuilder.getCount();
 
     return NextResponse.json({
       success: true,

@@ -288,7 +288,7 @@ export const INPUT_TYPE = [
 export const RESPONSE_STATUS = [
   {
     value: '',
-    label: 'Status',
+    label: 'All',
   },
   {
     value: 'pending',

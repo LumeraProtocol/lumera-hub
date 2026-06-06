@@ -6,16 +6,16 @@ import { RESPONSE_STATUS } from '@/contants/snag';
 
 export interface IUserResponse {
   id: number;
-  loyaltyRule: {
-    name: string;
-    amount: number;
-  };
+  name: string;
+  amount: number;
+  config: string;
   lumeraAddress: string;
   snagAddress: string;
   content: string;
   loyaltyRuleId: string;
   userId: string;
   status: string;
+  claims: string;
   created_at: string;
 }
 
@@ -27,7 +27,7 @@ const useSnagUserResponse = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [keyword, setKeyword] = useState('');
-  const [status, setStatus] = useState(RESPONSE_STATUS[0].value);
+  const [status, setStatus] = useState(RESPONSE_STATUS[1].value);
   const [isActionLoading, setActionLoading] = useState(false);
 
   const fetchUserResponses = async (page = 1, inputKeyword = '', inputStatus = '') => {
@@ -37,6 +37,7 @@ const useSnagUserResponse = () => {
       const statusFilter = inputStatus ? `&status=${inputStatus}` : '';
       const { data } = await instance.getExternal(`/api/admin/snag-user-responses?page=${page}&limit=${ITEM_PER_PAGE}${search}${statusFilter}`);
       setUserResponses(data.items);
+      console.log('data.items', data.items)
       setTotalPages(data.pagination?.totalPages);
     } catch (error) {
       console.error(error)
@@ -45,7 +46,7 @@ const useSnagUserResponse = () => {
   }
 
   useEffect(() => {
-    fetchUserResponses();
+    fetchUserResponses(1, '', status);
   }, []);
 
   const handlePageClick = ({ selected }: { selected: number }) => {
