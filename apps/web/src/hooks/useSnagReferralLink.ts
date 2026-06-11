@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
+import { TRefer } from '@/types';
 
 const useSnagReferralLink = () => {
   const params = useParams();
@@ -16,6 +17,7 @@ const useSnagReferralLink = () => {
     point: '50',
     maxRefer: '10',
   });
+  const [refers, setRefers] = useState<TRefer[]>([]);
 
   useEffect(() => {
     if (location?.search) {
@@ -33,7 +35,12 @@ const useSnagReferralLink = () => {
         loyaltyRuleID: params?.loyaltyRuleID || '',
       });
       if (data?.status) {
-        setReferLinkInfo(data);
+        setReferLinkInfo({
+          referCode: data.referCode,
+          point: data.point,
+          maxRefer: data.maxRefer,
+        });
+        setRefers(data.refers)
       }
     } catch (error) {
       console.error(error);
@@ -57,6 +64,7 @@ const useSnagReferralLink = () => {
     isLoading,
     referLinkInfo,
     address,
+    refers,
     handleCopyReferLink,
   }
 }

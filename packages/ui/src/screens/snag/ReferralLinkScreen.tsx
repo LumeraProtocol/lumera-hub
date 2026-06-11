@@ -7,10 +7,16 @@ import {
 import {
   CopyIcon
 } from 'lucide-react';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 
 import { AppLoading } from '@/components/Loading';
 import SectionTitle from '@/components/SectionTitle';
 import AppButton from '@/components/AppButton';
+import { TRefer } from '@/types';
+import { formatAddress } from '@/utils/format';
+
+dayjs.extend(relativeTime);
 
 interface IReferralLinkScreen {
   isLoading: boolean;
@@ -18,6 +24,7 @@ interface IReferralLinkScreen {
   customTitle: string;
   point?: string;
   totalReferralLink?: string;
+  refers: TRefer[];
   onCopyReferLink: (link: string) => void;
 }
 
@@ -27,6 +34,7 @@ export const ReferralLinkScreen = ({
   customTitle,
   totalReferralLink = '10',
   point = '50 EXP',
+  refers,
   onCopyReferLink,
 }: IReferralLinkScreen) => {
   return (
@@ -108,6 +116,42 @@ export const ReferralLinkScreen = ({
           </div>
         </div>
       </Card>
+      {refers?.length ?
+        <Card elevate size="$4" bordered className='relative !mt-6'>
+          <div className='p-5'>
+            <SectionTitle className='!mb-0'>
+              My Referrals
+            </SectionTitle>
+            <div className='mt-3'>
+              <div className="md:overflow-x-auto">
+                <table className="table w-full md:min-w-[550px]">
+                  <thead className='hidden md:table-header-group'>
+                    <tr className='text-sm'>
+                      <th align='left' className='!py-2 !px-3'>Address</th>
+                      <th align='left' className='!py-2 !px-3'>Created at</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm">
+                    {refers.map((refer, index) => (
+                      <tr key={refer.lumeraAddress} className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col gap-1 md:table-row`}>
+                        <td className='!py-2 !px-3'>
+                          <div className="md:hidden font-semibold text-gray-500 mr-2">Address: </div>
+                          <span className='truncate hidden sm:inline-block'>{refer.lumeraAddress}</span>
+                          <span className='block sm:hidden'>{formatAddress(refer.lumeraAddress, 12, -6)}</span>
+                        </td>
+                        <td className='!py-2 !px-3'>
+                          <div className="md:hidden font-semibold text-gray-500 mr-2">Created at: </div>
+                          <span className='break-words'>{dayjs(refer.created_at).format('MMMM DD, YYYY')} at {dayjs(refer.created_at).format('HH:mm:ss')}({dayjs(refer.created_at).fromNow()})</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </Card> : null
+      }
     </div>
   );
 }

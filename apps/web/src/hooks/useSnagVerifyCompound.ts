@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { toast } from 'react-toastify';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
 import * as instance from '@/utils/api';
 
 const useSnagVerifyCompound = () => {
   const params = useParams();
-  const router = useRouter();
   const [isLoading, setLoading] = useState(false);
   const [message, setMessage] = useState({
     type: '',
@@ -57,7 +56,6 @@ const useSnagVerifyCompound = () => {
         type: 'success',
         content: "Quest is verified!",
       });
-      router.push('/');
     } catch (error) {
       console.error(error);
       setMessage({

@@ -143,7 +143,8 @@ export async function POST(req: NextRequest) {
     }
     if (
       message?.from_address !== config.claim.validator ||
-      message?.to_address !== user.lumeraAddress
+      message['@type'].indexOf('staking.v1beta1.MsgDelegate') === -1 ||
+      message?.delegator_address !== user.lumeraAddress
     ) {
       return NextResponse.json(
         {

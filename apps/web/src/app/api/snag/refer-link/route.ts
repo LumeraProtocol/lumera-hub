@@ -3,14 +3,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {
-  toHex,
-  toUtf8,
-} from '@cosmjs/encoding';
 
 import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
+import { SnagRefer } from '@/entities/SnagRefer';
 
 dayjs.extend(utc);
 
@@ -41,6 +38,7 @@ export async function POST(req: NextRequest) {
     const dataSource = await getDataSource();
     const snagUserRepo = dataSource.getRepository(SnagUser);
     const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
+    const snagReferRepo = dataSource.getRepository(SnagRefer);
 
     const loyaltyRule = await snagLoyaltyRepo
       .createQueryBuilder()
@@ -78,11 +76,21 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const refers = await snagReferRepo.createQueryBuilder()
+      .select('lumeraAddress')
+      .addSelect('referAddress')
+      .addSelect('created_at')
+      .where('referAddress = :referAddress', { referAddress: user.lumeraAddress })
+      .orderBy('created_at', 'DESC')
+      .getRawMany();
+
     return NextResponse.json({
       status: true,
       referCode: user.lumeraAddress,
       point: loyaltyRule.amount,
       maxRefer: config.referralLink.maxRefer,
+      refers,
     });
   } catch (error) {
     console.error(error);

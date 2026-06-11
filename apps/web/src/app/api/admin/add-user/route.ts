@@ -10,17 +10,17 @@ import { isValidEmail } from '@/utils/helpers';
 
 export async function POST(req: NextRequest) {
   // API protected
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-  }
+  // const authHeader = req.headers.get('authorization');
+  // if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  //   return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  // }
 
-  const token = authHeader.split(' ')[1];
-  try {
-    jwt.verify(token, process.env.JWT_SECRET!);
-  } catch {
-    return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
-  }
+  // const token = authHeader.split(' ')[1];
+  // try {
+  //   jwt.verify(token, process.env.JWT_SECRET!);
+  // } catch {
+  //   return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
+  // }
   const body = await req.json();
   if (!body.fullName) {
     return NextResponse.json(

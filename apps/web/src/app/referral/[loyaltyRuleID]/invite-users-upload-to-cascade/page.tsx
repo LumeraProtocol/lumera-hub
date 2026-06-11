@@ -15,6 +15,7 @@ export default function Page() {
     isLoading,
     referLinkInfo,
     address,
+    refers,
     handleCopyReferLink,
   } = useSnagReferralLink();
 
@@ -41,6 +42,7 @@ export default function Page() {
           point={referLinkInfo.point}
           onCopyReferLink={handleCopyReferLink}
           customTitle="Invite Friends"
+          refers={refers}
         />
       </div>
     </>

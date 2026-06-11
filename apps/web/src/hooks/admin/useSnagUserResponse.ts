@@ -37,7 +37,6 @@ const useSnagUserResponse = () => {
       const statusFilter = inputStatus ? `&status=${inputStatus}` : '';
       const { data } = await instance.getExternal(`/api/admin/snag-user-responses?page=${page}&limit=${ITEM_PER_PAGE}${search}${statusFilter}`);
       setUserResponses(data.items);
-      console.log('data.items', data.items)
       setTotalPages(data.pagination?.totalPages);
     } catch (error) {
       console.error(error)

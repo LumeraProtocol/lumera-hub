@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { toast } from 'react-toastify';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
 import * as instance from '@/utils/api';
 
 const useSnagStakeForFullSeason = () => {
   const params = useParams();
-  const router = useRouter();
   const [isLoading, setLoading] = useState(false);
   const [message, setMessage] = useState({
     type: '',
@@ -53,7 +52,6 @@ const useSnagStakeForFullSeason = () => {
         type: 'success',
         content: "Quest is verified!",
       });
-      router.push('/');
     } catch (error) {
       console.error(error);
       setMessage({

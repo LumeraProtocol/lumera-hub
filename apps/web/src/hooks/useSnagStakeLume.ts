@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { toast } from 'react-toastify';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
 import * as instance from '@/utils/api';
 
 const useSnagStakeLume = () => {
   const params = useParams();
-  const router = useRouter();
   const [isLoading, setLoading] = useState(true);
   const [message, setMessage] = useState({
     type: '',
@@ -43,7 +42,6 @@ const useSnagStakeLume = () => {
         type: 'success',
         content: "Quest is verified!",
       });
-      router.push('/');
     } catch (error) {
       console.error(error);
       setMessage({

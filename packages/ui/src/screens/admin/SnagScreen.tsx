@@ -1231,6 +1231,11 @@ export const SnagScreen = () => {
             <Card.Header padded>
               <div className='flex justify-end gap-3 w-full'>
                 <AppLinkButton
+                  href="/admin/campaigns/sprints/season-2/referral-stats"
+                >
+                  <span>Referral Stats</span>
+                </AppLinkButton>
+                <AppLinkButton
                   href="/admin/campaigns/sprints/season-2/user-responses"
                 >
                   <span>Manual Review Quests</span>
