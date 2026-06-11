@@ -1135,7 +1135,7 @@ const useSnagLoyaltyRule = () => {
         const url = currentUrlCheck[actionType as keyof typeof currentUrlCheck];
         setConfigForm(prev => ({
           ...prev,
-          domain: selectedUrlCheck.domain,
+          domain: URL_CHECK.mainnet.domain,
           urlCheck: url,
         }));
       }

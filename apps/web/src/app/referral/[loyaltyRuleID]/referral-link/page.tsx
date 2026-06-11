@@ -11,7 +11,7 @@ import useSnagReferralLink from '@/hooks/useSnagReferralLink';
 
 export default function Page() {
   const dispatch = useDispatch();
-   const {
+  const {
     isLoading,
     referLinkInfo,
     address,
@@ -37,12 +37,13 @@ export default function Page() {
       <div>
         <ReferralLinkScreen
           isLoading={isLoading}
-          referLink={`${location.origin}/?referral_code=${referLinkInfo?.referCode || address || ''}`}
+          referLink={`${location.origin}/?referral_code=${address ? address : referLinkInfo?.referCode || ''}`}
           totalReferralLink={referLinkInfo?.maxRefer || '10'}
           point={referLinkInfo.point}
           onCopyReferLink={handleCopyReferLink}
           customTitle="Invite Friends"
           refers={refers}
+          walletAddress={address}
         />
       </div>
     </>

@@ -24,6 +24,7 @@ interface IReferralLinkScreen {
   customTitle: string;
   point?: string;
   totalReferralLink?: string;
+  walletAddress?: string;
   refers: TRefer[];
   onCopyReferLink: (link: string) => void;
 }
@@ -35,6 +36,7 @@ export const ReferralLinkScreen = ({
   totalReferralLink = '10',
   point = '50 EXP',
   refers,
+  walletAddress,
   onCopyReferLink,
 }: IReferralLinkScreen) => {
   return (
@@ -116,7 +118,7 @@ export const ReferralLinkScreen = ({
           </div>
         </div>
       </Card>
-      {refers?.length ?
+      {refers?.length && walletAddress ?
         <Card elevate size="$4" bordered className='relative !mt-6'>
           <div className='p-5'>
             <SectionTitle className='!mb-0'>

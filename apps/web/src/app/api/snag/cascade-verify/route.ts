@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json(
             {
               success: false,
-              error: `The number of file types less than the minimum(${files} file types) required.`,
+              error: `The number of file types less than the minimum(${types} file types) required.`,
             },
             { status: 400 }
           );
