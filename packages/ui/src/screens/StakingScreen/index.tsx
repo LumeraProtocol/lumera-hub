@@ -515,7 +515,7 @@ export const StakingScreen = ({
       <UnbondModal
         isOpen={unbondOptions.isOpenModal}
         isUnbondLoading={unbondOptions.isUnbondLoading}
-        availableAmount={parseFloat(unbondOptions.availableAmount || '0')}
+        availableAmount={Number(unbondOptions.availableAmount?.replaceAll(',', '') || '0')}
         onAdvancedCheckedChange={unbondOptions.onAdvancedCheckedChange}
         onCloseDailogChange={unbondOptions.onCloseDailogChange}
         onInputChange={unbondOptions.onInputChange}
@@ -530,7 +530,7 @@ export const StakingScreen = ({
       <RedelegateModal
         isOpen={redelegateOptions.isOpenModal}
         isRedelegateLoading={redelegateOptions.isRedelegateLoading}
-        availableAmount={parseFloat(redelegateOptions.availableAmount || '0')}
+        availableAmount={Number(redelegateOptions.availableAmount?.replaceAll(',', '') || '0')}
         onAdvancedCheckedChange={redelegateOptions.onAdvancedCheckedChange}
         onCloseDailogChange={redelegateOptions.onCloseDailogChange}
         onInputChange={redelegateOptions.onInputChange}

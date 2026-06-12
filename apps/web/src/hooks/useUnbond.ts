@@ -75,7 +75,7 @@ const useUnbond = (options: UseDepositOptions = {}) => {
       return
     }
     if (Number(optionsAdvanced.amount) <= 0) {
-      setError('Amount must not be less than 0.');
+      setError('Amount must not be less 0.');
       return
     }
     if (availableAmount && Number(optionsAdvanced.amount) > Number(availableAmount)) {
@@ -120,6 +120,7 @@ const useUnbond = (options: UseDepositOptions = {}) => {
         amount: [{ denom: DENOM, amount: estimatedFee }],
         gas: gasLimit,
       };
+
       const result = await client.signAndBroadcast(
         optionsAdvanced.senderAddress,
         msgWithdraw,
@@ -190,7 +191,7 @@ const useUnbond = (options: UseDepositOptions = {}) => {
         ...optionsAdvanced,
         memo: customMemo ? `Unbond for the ${customMemo}` : options?.customMemo || 'Lumera Hub',
         validator,
-        amount,
+        amount: `${Number(amount) / RATE_VALUE}`,
         validatorName: customMemo || options?.customMemo || 'Lumera Hub',
       });
       setAvailableAmount(amount);

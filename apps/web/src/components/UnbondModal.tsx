@@ -7,7 +7,6 @@ import {
   Checkbox,
 } from 'tamagui';
 import { CircleX } from '@tamagui/lucide-icons';
-import numeral from 'numeral';
 import {
   Check as CheckCircle,
 } from 'lucide-react';
@@ -16,6 +15,9 @@ import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import SectionTitle from '@/components/SectionTitle';
 import AppButton from '@/components/AppButton';
+import {
+  formatToken,
+} from '@/utils/format';
 
 interface IUnbondModal {
   isOpen: boolean;
@@ -195,14 +197,21 @@ export default function UnbondModal({
               <div className='flex items-center justify-between'>
                 <Label htmlFor="amount" className='text-base'>Amount</Label>
                 <div className='text-sm font-normal flex gap-2 items-center text-gray-600'>
-                  <span>Available: {numeral(availableAmount).format('0.[000000]')}</span>
+                  <span>Available: {formatToken({
+                                    amount: availableAmount.toString(),
+                                    denom: 'ulume',
+                                  }, true, '0,0.[000000]')}</span>
                   <button type='button' className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer' onClick={() => onInputChange('amount', `${availableAmount}`)}>MAX</button>
                 </div>
               </div>
+
               <div className='input-wrapper'>
                 <Input
                   id="amount"
-                  placeholder={`Available: ${numeral(availableAmount).format('0.[000000]')} lume`}
+                  placeholder={`Available: ${formatToken({
+                                    amount: availableAmount.toString(),
+                                    denom: 'ulume',
+                                  }, true, '0,0.[000000]')} lume`}
                   className='input has-symbol'
                   value={optionsAdvanced.amount}
                   onChangeText={(newValue) => onInputChange('amount', newValue)}

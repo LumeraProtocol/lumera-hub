@@ -239,7 +239,7 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
         ...optionsAdvanced,
         memo: customMemo ? `Redelegate from ${customMemo}` : options?.customMemo || 'Lumera Hub',
         sourceValidator: validator,
-        amount,
+        amount: `${Number(amount) / RATE_VALUE}`,
         validatorName: customMemo || options?.customMemo || 'Lumera Hub',
       });
       setAvailableAmount(amount);
