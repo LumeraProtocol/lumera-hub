@@ -1504,21 +1504,29 @@ export const CascadeContent = React.memo(({
         />
         <Card elevate size="$4" bordered className='w-full'>
           <Card.Header padded>
-            <SectionTitle className="mb-0 flex gap-2">
-              <>
-                {isFetchSummaryLoading ?
-                <div className='relative w-6'>
-                  <AppLoading
-                    isLoading
-                    hideOverlay
-                    className="w-6 h-6 !border-2"
-                    iconWidth={10}
-                    iconHeight={10}
-                    containerClassName='w-6 h-6 z-50'
-                  />
-                </div> : networkStorage.totalSupernode}
-              </> Supernodes
-            </SectionTitle>
+            <div className='flex justify-between items-center'>
+              <SectionTitle className="mb-0 flex gap-2">
+                <>
+                  {isFetchSummaryLoading ?
+                  <div className='relative w-6'>
+                    <AppLoading
+                      isLoading
+                      hideOverlay
+                      className="w-6 h-6 !border-2"
+                      iconWidth={10}
+                      iconHeight={10}
+                      containerClassName='w-6 h-6 z-50'
+                    />
+                  </div> : networkStorage.totalSupernode}
+                </> Supernodes
+              </SectionTitle>
+              <AppLink
+                href='/supernodes'
+                className="font-mono text-lumera-teal hover:text-lumera-green truncate inline-flex items-center gap-1.5"
+              >
+                View all
+              </AppLink>
+            </div>
             <div className='mt-4'>
               {isMarkerLoading ?
                 <div className='min-h-[176px] relative mt-1'>

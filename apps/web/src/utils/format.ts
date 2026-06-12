@@ -176,7 +176,7 @@ const toTruncPrecision3 = (number: number) => {
   return result.toString();
 }
 
-export const formatBytes = (bytes: number) => {
+export const formatBytes = (bytes: number, fractionDigits = 0) => {
   if (bytes < 1024) {
     return bytes + ' Bytes';
   }
@@ -187,7 +187,7 @@ export const formatBytes = (bytes: number) => {
     i++;
     result /= 1024;
   }
-  return toTruncPrecision3(result) + ' ' + sizes[i];
+  return fractionDigits > 0 ? result.toFixed(fractionDigits) : toTruncPrecision3(result) + ' ' + sizes[i];
 };
 
 export const formatKb = (bytes: number) => {

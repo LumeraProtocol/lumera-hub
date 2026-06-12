@@ -15,6 +15,7 @@ import SectionTitle from '@/components/SectionTitle';
 import AppButton from '@/components/AppButton';
 import { TRefer } from '@/types';
 import { formatAddress } from '@/utils/format';
+import useWalletConnect from '@/hooks/useWalletConnect';
 
 dayjs.extend(relativeTime);
 
@@ -39,6 +40,8 @@ export const ReferralLinkScreen = ({
   walletAddress,
   onCopyReferLink,
 }: IReferralLinkScreen) => {
+  const { isConnected } = useWalletConnect();
+
   return (
     <div className='w-full relative'>
       <AppLoading
@@ -118,7 +121,7 @@ export const ReferralLinkScreen = ({
           </div>
         </div>
       </Card>
-      {refers?.length && walletAddress ?
+      {refers?.length && isConnected ?
         <Card elevate size="$4" bordered className='relative !mt-6'>
           <div className='p-5'>
             <SectionTitle className='!mb-0'>
