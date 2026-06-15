@@ -313,10 +313,7 @@ export default function Staking({
                       className="!py-1.5 !px-4 !text-sm !font-normal"
                       onClick={() => redelegateOptions.onOpenModal(
                         delegation.delegation.validator_address,
-                        formatToken({
-                          amount: delegation.balance.amount,
-                          denom: delegation.balance.denom,
-                        }, false, '0,0.[000000]'),
+                        delegation.balance.amount,
                         validator?.description?.moniker ? `${validator?.description?.moniker}` : '',
                       )}
                     >
@@ -326,10 +323,7 @@ export default function Staking({
                       className="!py-1.5 !px-4 !text-sm !font-normal"
                       onClick={() => unbondOptions.onOpenModal(
                         delegation.delegation.validator_address,
-                        formatToken({
-                          amount: delegation.balance.amount,
-                          denom: delegation.balance.denom,
-                        }, false, '0,0.[000000]'),
+                        delegation.balance.amount,
                         validator?.description?.moniker ? `${validator?.description?.moniker}` : '',
                       )}
                     >

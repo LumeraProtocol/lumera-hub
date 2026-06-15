@@ -30,6 +30,9 @@ export const DashboardScreen = ({
             <AppButton onClick={() => onRedirect('/admin/tracking')}>
               Tracking
             </AppButton>
+            <AppButton onClick={() => onRedirect('/admin/user')}>
+              Users
+            </AppButton>
             <AppButton onClick={onDownloadDb} disabled={isLoading} className='disabled:opacity-40'>
               Download db file
             </AppButton>

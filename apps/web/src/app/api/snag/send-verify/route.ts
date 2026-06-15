@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 
 import * as instance from '@/utils/api-server';
 import { getDataSource } from '@/lib/data-source';
@@ -9,6 +10,8 @@ import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import { SnagTransaction } from '@/entities/SnagTransaction';
 import client from '@/lib/snag';
+
+dayjs.extend(utc);
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,7 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty Rule ID is required!',
+          error: 'Quest ID is required!',
         },
         { status: 400 }
       );
@@ -75,6 +78,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'User not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -93,7 +97,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty Rule not found!',
+          error: 'Quest not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -105,7 +110,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty ID not found!',
+          error: 'Quest ID not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -125,8 +131,18 @@ export async function POST(req: NextRequest) {
     const message = txResponses.tx.body.messages[0];
     const amount = message?.amount[0]?.amount || 0;
     if (
-      dayjs(loyaltyRule.startTime).valueOf() <= dayjs(txResponses.timestamp).valueOf() ||
-      (loyaltyRule.endTime && dayjs(loyaltyRule.endTime).valueOf() >= dayjs(txResponses.timestamp).valueOf()) ||
+      dayjs.utc(loyaltyRule.startTime).startOf('hour').valueOf() > dayjs.utc(txResponses.timestamp).startOf('hour').valueOf() ||
+      (loyaltyRule.endTime && dayjs.utc(loyaltyRule.endTime).startOf('hour').valueOf() < dayjs.utc(txResponses.timestamp).startOf('hour').valueOf())
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid transaction time. Please use a different one.',
+        },
+        { status: 400 }
+      );
+    }
+    if (
       message?.["@type"]?.indexOf('MsgSend') === -1 ||
       message?.from_address !== user.lumeraAddress ||
       Number(amount) <= 0

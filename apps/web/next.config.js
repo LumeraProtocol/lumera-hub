@@ -7,20 +7,16 @@ const tamaguiConfigPath = path.resolve(__dirname, '../../tamagui.config.ts')
 
 module.exports = withTamagui({
   config: tamaguiConfigPath,
-  components: ['tamagui', '@lumera-hub/ui'],
+  components: ['tamagui', '@tamagui/core', '@lumera-hub/ui'],
+  disableExtraction: process.env.NODE_ENV === 'development',
   appDir: true,
 })({
   reactStrictMode: true,
   transpilePackages: [
     'tamagui',
-    '@tamagui',
-    'react-native',
+    '@tamagui/core',
+    '@tamagui/lucide-icons',
     'react-native-web',
-    '@lumera-hub/ui',
-    '@lumera-protocol/sdk-js',
-    '@cosmjs/proto-signing',
-    '@cosmjs/stargate',
-    'sdk-js-react'
   ],
   ...(isDesktopExport ? { output: 'export' } : {}),
   webpack: (config, { dev }) => {
@@ -45,6 +41,10 @@ module.exports = withTamagui({
     // Turn off source maps in development to suppress missing .css.map requests
     if (dev) {
       config.devtool = false
+
+      config.watchOptions = {
+        ignored: /node_modules\/(?!(@tamagui|@lumera-hub|react-native-web))/,
+      }
     }
 
     config.module.rules.push({
@@ -53,9 +53,6 @@ module.exports = withTamagui({
     });
 
     return config
-  },
-  experimental: {
-    esmExternals: 'loose',
   },
   serverExternalPackages: ["typeorm", "sqlite3"],
 })

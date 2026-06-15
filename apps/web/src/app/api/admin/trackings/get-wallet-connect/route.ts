@@ -1,7 +1,6 @@
 // app/api/admin/trackings/get-wallet-connect/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import dayjs from 'dayjs';
 
 import { getDataSource } from '@/lib/data-source';
 
@@ -10,8 +9,18 @@ export async function GET(req: NextRequest) {
     const dataSource = await getDataSource();
 
     const searchParams = req.nextUrl.searchParams;
-    const startDate = searchParams.get('startDate') || dayjs().toISOString();
-    const endDate = searchParams.get('endDate') || dayjs().toISOString();
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
+    if (!startDate || !endDate) {
+      return NextResponse.json(
+       {
+         success: false,
+         error: 'startDate or endDate is required.',
+       },
+       { status: 400 }
+     );
+    }
 
     const [newAddressRow] = await dataSource.query(
       `

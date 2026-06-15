@@ -1,7 +1,6 @@
 // app/api/admin/login/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import { getDataSource } from '@/lib/data-source';
@@ -28,7 +27,7 @@ export async function POST(req: NextRequest) {
       .getRawOne();
 
     const safeUser = user;
-    if (!user?.id) {
+    if (!user?.id || !user?.isActive) {
       return NextResponse.json(
         {
           success: false,

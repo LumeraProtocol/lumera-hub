@@ -8,6 +8,8 @@ import { useDispatch } from '@/redux/hooks';
 import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import { SupernodeScreen } from '@lumera-hub/ui/src/screens/snag/SupernodeScreen';
 import useSnagSupernode from '@/hooks/useSnagSupernode';
+import { NotFoundScreen } from '@lumera-hub/ui/src/screens/snag/NotFoundScreen';
+import useSnagTextInput from '@/hooks/useSnagTextInput';
 
 export default function Page() {
   const dispatch = useDispatch();
@@ -15,9 +17,12 @@ export default function Page() {
     isLoading,
     message,
     address,
+    isVerified,
+    setIsVerified,
     setAddress,
     verifySupernode,
   } = useSnagSupernode();
+  const snag = useSnagTextInput();
 
   useEffect(() => {
     document.title = 'Supernode - Lumera Hub';
@@ -25,7 +30,7 @@ export default function Page() {
       currentPath: '/snag/address/supernode',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Supernode',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 
@@ -35,13 +40,19 @@ export default function Page() {
         <title>Supernode - Lumera Hub</title>
       </Helmet>
       <div>
-        <SupernodeScreen
-          isLoading={isLoading}
-          message={message}
-          address={address}
-          onVerifyClick={verifySupernode}
-          onChangeText={setAddress}
-        />
+        {snag?.message?.type === 'not-found' ?
+          <NotFoundScreen content={snag?.message.content} /> :
+          <SupernodeScreen
+            isLoading={isLoading}
+            message={message}
+            address={address}
+            quest={snag?.quest}
+            isVerified={isVerified}
+            onVerified={setIsVerified}
+            onVerifyClick={verifySupernode}
+            onChangeText={setAddress}
+          />
+        }
       </div>
     </>
   )

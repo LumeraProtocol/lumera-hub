@@ -6,6 +6,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getDataSource } from '@/lib/data-source';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import client from '@/lib/snag';
+import { generateUrlCheck } from '@/utils/helpers';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -16,41 +17,10 @@ export async function POST(req: NextRequest) {
     loyaltyRuleId = body.loyaltyRuleId;
 
     const config = JSON.parse(body.config);
-    const generateUrlCheck = () => {
-      const path = `${config.domain}snag/${loyaltyRuleId}`;
-      let prefix = '';
-      switch (body.actionType) {
-        case 'staked':
-          prefix = '/stake';
-          break;
-        case 'delegate':
-          prefix = '/delegate';
-          break;
-        case 'redelegated':
-          prefix = '/redelegate';
-          break;
-        case 'balance':
-          prefix = '/balance';
-          break;
-        case 'claim':
-          prefix = '/claim';
-          break;
-        case 'supernode':
-          prefix = '/supernode';
-          break;
-        case 'send':
-          prefix = '/send';
-          break;
-      }
-      if (body.actionType === 'connect') {
-        return config.domain;
-      }
-      return `${path}${prefix}`;
-    }
 
     const metadata = {
       cta: {
-        href: generateUrlCheck(),
+        href: generateUrlCheck(config.domain, loyaltyRuleId, body.actionType),
         label: body.loyaltyRule.metadata.cta.label,
       },
       range: body.loyaltyRule.metadata.range
@@ -62,13 +32,6 @@ export async function POST(req: NextRequest) {
       });
     } catch (error: any) {
       console.error('update error:', error)
-      if (!error.message.includes('invalid json') && !error.message.includes('Unexpected end')) {
-        return NextResponse.json({
-          error: (error as Error).message,
-        }, {
-          status: 500,
-        });
-      }
     }
 
     const loyaltyRes = await client.loyalty.rules.list({

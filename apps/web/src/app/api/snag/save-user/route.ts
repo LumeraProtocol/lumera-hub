@@ -35,6 +35,34 @@ export async function POST(req: NextRequest) {
     .getRawOne();
 
     if (existsUser?.snagAddress) {
+      const loyaltyRule = await SnagLoyaltyRepo
+        .createQueryBuilder()
+        .select('id')
+        .where('metadata LIKE :metadata', { metadata: `%snag/wallet/connect%` })
+        .andWhere("type = 'external_rule'")
+        .getRawOne();
+      if (!loyaltyRule) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Quest not found.',
+          },
+          { status: 400 }
+        );
+      }
+      const loyaltyRuleId = loyaltyRule.id;
+      if (userId && loyaltyRuleId) {
+        try {
+          await client.post(`/api/loyalty/rules/${loyaltyRuleId}/complete`, {
+            body: {
+              userId,
+            },
+          });
+        } catch {
+          // noop
+        }
+      }
+
       return NextResponse.json({
         status: true,
         result: null,
@@ -46,24 +74,24 @@ export async function POST(req: NextRequest) {
       snagAddress: data.snagAddress,
       userId: user?.data[0]?.id || ''
     });
+
     const loyaltyRule = await SnagLoyaltyRepo
       .createQueryBuilder()
       .select('id')
       .where('metadata LIKE :metadata', { metadata: `%snag/wallet/connect%` })
       .andWhere("type = 'external_rule'")
       .getRawOne();
-
     if (!loyaltyRule) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty Rule not found.',
+          error: 'Quest not found.',
         },
         { status: 400 }
       );
     }
     const loyaltyRuleId = loyaltyRule.id;
-    if (result && userId && loyaltyRuleId) {
+    if (userId && loyaltyRuleId) {
       await client.post(`/api/loyalty/rules/${loyaltyRuleId}/complete`, {
         body: {
           userId,

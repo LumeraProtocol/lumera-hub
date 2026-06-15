@@ -331,6 +331,10 @@
 .z-1 {
   z-index: 1;
 }
+#interchain-ui-overlays-manager {
+  position: relative;
+  z-index: 1000;
+}
 #interchain-ui-overlays-manager > div {
   z-index: 50 !important;
 }
@@ -415,6 +419,7 @@
   z-index: 50;
 }
 .paginate-wrapper ul.react-paginate {
+  display: flex;
   justify-content: flex-end;
   gap: 8px;
   margin-bottom: 0;
@@ -423,7 +428,9 @@
 }
 .paginate-wrapper ul.react-paginate li a {
   padding: 0.1rem 0.6rem;
+  border-radius: 6px;
   transition: all 0.3s ease-in-out;
+  cursor: pointer;
 }
 .paginate-wrapper ul.react-paginate li.selected a,
 .paginate-wrapper ul.react-paginate li a:hover {
@@ -537,6 +544,7 @@
 .welcome-section {
   min-height: calc(100vh - 276px);
 }
+
 @keyframes slideBackForth {
   050% {
     width: 100%;

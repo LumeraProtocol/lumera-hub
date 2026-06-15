@@ -11,22 +11,29 @@ import { CHAIN_NAME } from '@/contants/network';
 const useSnag = () => {
   const router = useRouter();
   const [isLoading, setLoading] = useState(false);
-  const { address } = useChain(CHAIN_NAME);
+    const { address, status } = useChain(CHAIN_NAME);
+  const [isClick, setClick] = useState(false);
 
   const saveWalletConnect = async () => {
+    if (!isClick) {
+      return;
+    }
     setLoading(true);
     try {
       const params = new URLSearchParams(window.location.search);
       const walletAddress = params.get('walletAddress');
-      await instance.postExternal('/api/snag/save-user', {
-        lumeraAddress: address,
-        snagAddress: walletAddress,
-      });
-      toast.success("Wallet connected!", {
-        position: "bottom-right",
-        theme: "dark",
-      });
-      router.push('/');
+      if (walletAddress) {
+        await instance.postExternal('/api/snag/save-user', {
+          lumeraAddress: address,
+          snagAddress: walletAddress,
+        });
+        toast.success("Wallet connected!", {
+          position: "bottom-right",
+          theme: "dark",
+        });
+        sessionStorage.setItem('start_new_session', 'true');
+        router.push('/');
+      }
     } catch (error) {
       console.error(error);
       toast.error((error as Error)?.message ||  'An unknown error occurred.', {
@@ -38,10 +45,14 @@ const useSnag = () => {
   }
 
   useEffect(() => {
-    if (address) {
+    const btn = document.querySelector('#connectWallet');
+    btn?.addEventListener('click', () => {
+      setClick(true);
+    });
+    if (address && status === 'Connected') {
       saveWalletConnect();
     }
-  }, [address]);
+  }, [address, status]);
 
   return {
     isLoading,

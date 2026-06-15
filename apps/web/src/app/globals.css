@@ -24,6 +24,7 @@
   --color-lumera-red: #f87272;
   --breakpoint-2lg: 71.875rem;
   --breakpoint-1-5xl: 83rem;
+  --breakpoint-tiny: 480px;
 }
 
 @theme inline {

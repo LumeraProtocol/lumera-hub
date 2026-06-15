@@ -2,19 +2,19 @@
 
 import { useState } from "react";
 import { toast } from 'react-toastify';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
 import * as instance from '@/utils/api';
 
 const useSnagSupernode = () => {
   const params = useParams();
-  const router = useRouter();
   const [isLoading, setLoading] = useState(false);
   const [message, setMessage] = useState({
     type: '',
     content: '',
   });
   const [address, setAddress] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
 
   const verifySupernode = async () => {
     setLoading(true);
@@ -48,7 +48,10 @@ const useSnagSupernode = () => {
         position: "bottom-right",
         theme: "dark",
       });
-      router.push('/');
+      setMessage({
+        type: 'success',
+        content: "Quest is verified!",
+      });
     } catch (error) {
       console.error(error);
       setMessage({
@@ -63,6 +66,8 @@ const useSnagSupernode = () => {
     isLoading,
     message,
     address,
+    isVerified,
+    setIsVerified,
     setAddress,
     verifySupernode,
   }

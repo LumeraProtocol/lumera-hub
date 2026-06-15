@@ -3,13 +3,22 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
+import { fromHex, toBase64 } from '@cosmjs/encoding';
+import utc from 'dayjs/plugin/utc';
 
 import * as instance from '@/utils/api-server';
 import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
-import { SnagTransaction } from '@/entities/SnagTransaction';
 import client from '@/lib/snag';
+import { IValidator } from '@/types/validator';
+import {
+  consensusPubkeyToHexAddress,
+  valconsToBase64,
+} from '@/utils/helpers';
+import { URL_CHECK } from '@/contants/snag';
+
+dayjs.extend(utc);
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,7 +48,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty Rule ID is required!',
+          error: 'Quest ID is required!',
         },
         { status: 400 }
       );
@@ -48,7 +57,6 @@ export async function POST(req: NextRequest) {
     const dataSource = await getDataSource();
     const snagUserRepo = dataSource.getRepository(SnagUser);
     const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
-    const snagTransactionRepo = dataSource.getRepository(SnagTransaction);
 
     const user = await snagUserRepo.createQueryBuilder()
       .select('snagAddress, lumeraAddress, userId')
@@ -60,6 +68,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'User not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -78,7 +87,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty Rule not found!',
+          error: 'Quest not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -90,7 +100,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty ID not found!',
+          error: 'Quest ID not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -150,9 +161,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const getUptime = async (validator: IValidator | null) => {
+      if (!validator) {
+        return 0;
+      }
+      let slashingUrl = URL_CHECK.mainnet.urlCheck.slashingParams;
+      let signingInfosUrl = URL_CHECK.mainnet.urlCheck.signingInfos;
+      if (config.network === 'testnet') {
+        slashingUrl = URL_CHECK.testnet.urlCheck.slashingParams;
+        signingInfosUrl = URL_CHECK.testnet.urlCheck.signingInfos;
+      }
+      const [slashingParamsRes, signingInfosRes] = await Promise.all([
+        instance.get(slashingUrl),
+        instance.get(signingInfosUrl),
+      ]);
+      const slashingParams = slashingParamsRes.data.params;
+      const signingInfos = signingInfosRes.data.info;
+      const hex = consensusPubkeyToHexAddress(validator.consensus_pubkey);
+      const window = Number(slashingParams.signed_blocks_window || 0);
+      const signing = signingInfos.find((item: any) => {
+        return toBase64(fromHex(hex)) === valconsToBase64(item.address)
+      });
+      return signing && window > 0
+        ? (window - Number(signing.missed_blocks_counter)) / window
+        : 0
+    }
+
     const updateTime = validator.commission.update_time;
-    const pastDate = dayjs(updateTime);
-    const now = dayjs();
+    const pastDate = dayjs.utc(updateTime);
+    const now = dayjs().utc();
     const uptime = Number(config.supernode.days);
     const diff = now.diff(pastDate, 'day');
 
@@ -212,6 +249,18 @@ export async function POST(req: NextRequest) {
           );
         }
         break;
+    }
+
+    const uptimePercent = await getUptime(validator);
+    const configUptimePercent = Number(config.supernode.uptime);
+    if (Number(uptimePercent) < configUptimePercent) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Uptime over current epoch ≥ 99%.',
+        },
+        { status: 400 }
+      );
     }
 
     await client.post(`/api/loyalty/rules/${loyaltyRuleId}/complete`, {

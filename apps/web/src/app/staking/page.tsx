@@ -30,6 +30,7 @@ export default function Page() {
     handleToggleClaimModal,
     handleCloseCongratulationsModal,
   } = useAccountInfo();
+
   const delegate = useDelegate({
     availableAmount: `${getTotalBalances(accountInfo)}`,
     callback: fetchData,
@@ -40,6 +41,7 @@ export default function Page() {
       fetchData();
     },
   });
+
   const redelegate = useRedelegate({
     callback: () => {
       staking.fetchUnbondingDelegations();

@@ -247,3 +247,89 @@ export const isValidIPv4 = (ip: string) => {
 export const delay = (time: number) => {
   return new Promise((resolve) => setTimeout(resolve, time));
 };
+
+export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionType: string) => {
+  let path = `${domain}snag/${loyaltyRuleId}`;
+  if (actionType === 'referralLink' || actionType === 'inviteUsersUploadToCascade') {
+    path = `${domain}referral/${loyaltyRuleId}`;
+  }
+  let prefix = '';
+  switch (actionType) {
+    case 'staked':
+      prefix = '/stake';
+      break;
+    case 'delegate':
+      prefix = '/delegate';
+      break;
+    case 'redelegated':
+      prefix = '/redelegate';
+      break;
+    case 'balance':
+      prefix = '/balance';
+      break;
+    case 'claim':
+      prefix = '/claim';
+      break;
+    case 'supernode':
+      prefix = '/supernode';
+      break;
+    case 'send':
+      prefix = '/send';
+      break;
+    case 'sendTransactions':
+      prefix = '/send-transactions';
+      break;
+    case 'interactModules':
+      prefix = '/interact-modules';
+      break;
+    case 'firstTimeDelegation':
+      prefix = '/first-time-delegation';
+      break;
+    case 'stakeLUME':
+      prefix = '/stake-lume';
+      break;
+    case 'decentralizationStake':
+      prefix = '/decentralization-stake';
+      break;
+    case 'claimRewards':
+      prefix = '/claim-rewards';
+      break;
+    case 'compoundRewards':
+      prefix = '/compound-rewards';
+      break;
+    case 'firstUploadCascade':
+      prefix = '/first-upload-cascade';
+      break;
+    case 'uploadedToCascade':
+      prefix = '/uploaded-to-cascade';
+      break;
+    case 'uptime':
+      prefix = '/uptime';
+      break;
+    case 'storageRequests':
+      prefix = '/storage-requests';
+      break;
+    case 'referralLink':
+      prefix = '/referral-link';
+      break;
+    case 'inviteUsersUploadToCascade':
+      prefix = '/invite-users-upload-to-cascade';
+      break;
+    case 'stakeForFullSeason':
+      prefix = '/stake-for-full-season';
+      break;
+    case 'textInput':
+      prefix = '/text-input';
+      break;
+  }
+  if (actionType === 'connect') {
+    return domain;
+  }
+  return `${path}${prefix}`;
+}
+
+export const isValidEmail = (email: string) => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  return regex.test(email.trim());
+}

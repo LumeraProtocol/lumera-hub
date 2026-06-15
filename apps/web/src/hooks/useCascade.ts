@@ -223,7 +223,7 @@ export const FILES_TYPE: FileTypeOption[] = [
   },
 ];
 
-const getFileType = (filename: string) => {
+export const getFileType = (filename: string) => {
   if (!filename) return '';
 
   const ext = filename.split('.').pop()?.toLowerCase() || '';
@@ -823,8 +823,20 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     setTotalPage(Math.ceil(filteredFiles?.length / ITEM_PER_PAGE));
   }, [filteredFiles]);
 
+  const trackingCascadeUpload = async (taskId: string) => {
+    try {
+      await instance.postExternal(`/api/snag/tracking-cascade-upload`, {
+        taskId,
+        lumeraAddress: address,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   const updateCascadeStogre = (taskId: string, fileName: string, isPublic: boolean) => {
     try {
+      trackingCascadeUpload(taskId);
       const currentUploadFiles = localStorage.getItem(storeName);
       let files = [];
       if (currentUploadFiles) {

@@ -1,6 +1,6 @@
 // app/api/admin/trackings/save-wallet-connect/route.ts
 
-import { NextRequest, NextResponse, userAgent } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
 
 import { getDataSource } from '@/lib/data-source';

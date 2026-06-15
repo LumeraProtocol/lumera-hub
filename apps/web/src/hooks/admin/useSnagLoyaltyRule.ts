@@ -1,106 +1,19 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 
 import * as instance from '@/utils/api';
-
-export const LOYALTY_RULE_TYPE = [
-  {
-    value: 'external_rule',
-    label: 'External rule',
-  }
-];
-
-export const FREQUENCE = [
-  {
-    value: 'once',
-    label: 'One time',
-  },
-  {
-    value: 'hourly',
-    label: 'Hourly',
-  },
-  {
-    value: 'daily',
-    label: 'Daily',
-  },
-  {
-    value: 'weekly',
-    label: 'Weekly',
-  },
-  {
-    value: 'monthly',
-    label: 'Monthly',
-  },
-];
-
-export const NETWORK = [
-  {
-    value: '',
-    label: 'N/A',
-  },
-  {
-    value: 'mainnet',
-    label: 'Mainnet',
-  },
-  {
-    value: 'testnet',
-    label: 'Testnet',
-  },
-];
-
-export const CONDITION = [
-  {
-    value: '>=',
-    label: '>=',
-  },
-  {
-    value: '>',
-    label: '>',
-  },
-  {
-    value: '<=',
-    label: '<=',
-  },
-  {
-    value: '<',
-    label: '<',
-  },
-  {
-    value: '=',
-    label: '=',
-  },
-];
-
-const URL_CHECK = {
-  mainnet: {
-    domain: 'https://hub.lumera.io/',
-    urlCheck: {
-      staked: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
-      delegate: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
-      redelegated: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
-      balance: 'https://lcd.lumera.io/cosmos/bank/v1beta1/balances/',
-      supernode: 'https://snscope.lumera.io/v1/supernodes/metrics?status=any&minFailedProbeCounter=0&limit=200',
-      supernodeValidator: 'https://lcd.lumera.io/cosmos/staking/v1beta1/validators?pagination.limit=1000',
-      claim: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
-      send: 'https://lcd.lumera.io/cosmos/tx/v1beta1/txs/',
-    }
-  },
-  testnet: {
-    domain: 'https://hub.lumera.io/',
-    urlCheck: {
-      staked: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
-      delegate: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
-      redelegated: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
-      balance: 'https://lcd.testnet.lumera.io/cosmos/bank/v1beta1/balances/',
-      supernode: 'https://snscope.testnet.lumera.io/v1/supernodes/metrics?status=any&minFailedProbeCounter=0&limit=200',
-      supernodeValidator: 'https://lcd.testnet.lumera.io/cosmos/staking/v1beta1/validators?pagination.limit=1000',
-      claim: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
-      send: 'https://lcd.testnet.lumera.io/cosmos/tx/v1beta1/txs/',
-    }
-  }
-}
+import {
+  CONDITION,
+  CONDITION_EXTEND,
+  FREQUENCE, LOYALTY_RULE_TYPE,
+  UPLOAD_CASCADE,
+  URL_CHECK,
+  INPUT_TYPE,
+} from '@/contants/snag';
 
 type TData = {
   id: string;
@@ -158,6 +71,62 @@ const useSnagLoyaltyRule = () => {
     supernode: {
       days: '',
       validatorUrl: '',
+      uptime: '99',
+      condition: CONDITION[0].value,
+    },
+    sendTransactions: {
+      transactions: '',
+      type: '',
+    },
+    interactModules: {
+      modules: '',
+    },
+    stakeLUME: {
+      amount: '',
+      days: '',
+      condition: CONDITION[0].value,
+    },
+    decentralizationStake: {
+      amount: '',
+      rank: '',
+      validatorUrl: '',
+      condition: CONDITION_EXTEND[0].value,
+    },
+    firstUploadCascade: {
+      size: '0',
+      condition: CONDITION_EXTEND[0].value,
+    },
+    uploadedToCascade: {
+      type: UPLOAD_CASCADE[0].value,
+      fileCondition: CONDITION_EXTEND[0].value,
+      files: '',
+      typesCondition: CONDITION_EXTEND[0].value,
+      types: '',
+      sizeCondition: CONDITION_EXTEND[0].value,
+      size: '',
+      storeCondition: CONDITION_EXTEND[0].value,
+      store: '',
+      rankingCondition: CONDITION_EXTEND[0].value,
+      ranking: '100',
+    },
+    uptime: {
+      percent: '99.9',
+      condition: CONDITION_EXTEND[0].value,
+    },
+    storageRequests: {
+      requests: '0',
+      condition: CONDITION_EXTEND[0].value,
+    },
+    referralLink: {
+      maxRefer: '10',
+    },
+    stakeForFullSeason: {
+      amount: '100',
+    },
+    textInput: {
+      type: INPUT_TYPE[0].value,
+      maximumRewardClaims: '1',
+      condition: CONDITION_EXTEND[0].value,
     },
   });
   const [isCurrenciesLoading, setCurrenciesLoading] = useState(false);
@@ -206,18 +175,31 @@ const useSnagLoyaltyRule = () => {
           startRange,
         }
         setLoyaltyRuleForm({ ...newLoyaltyRuleForm });
-        setActionType(config.actionType)
-        setConfigForm({
-          domain: config.domain,
-          network: config.network,
-          condition: config.condition || CONDITION[0].value,
-          urlCheck: config.urlCheck,
-          staked: config.staked,
-          delegate: config.delegate,
-          balance: config.balance,
-          claim: config.claim,
-          supernode: config.supernode,
-        });
+        if (config) {
+          setActionType(config?.actionType)
+          setConfigForm({
+            domain: config.domain,
+            network: config.network,
+            condition: config.condition || CONDITION[0].value,
+            urlCheck: config.urlCheck,
+            staked: config.staked,
+            delegate: config.delegate,
+            balance: config.balance,
+            claim: config.claim,
+            supernode: config.supernode,
+            sendTransactions: config.sendTransactions,
+            interactModules: config.interactModules,
+            stakeLUME: config.stakeLUME,
+            decentralizationStake: config.decentralizationStake,
+            firstUploadCascade: config.firstUploadCascade,
+            uploadedToCascade: config.uploadedToCascade,
+            uptime: config.uptime,
+            storageRequests: config.storageRequests,
+            referralLink: config.referralLink,
+            stakeForFullSeason: config.stakeForFullSeason,
+            textInput: config.textInput,
+          });
+        }
       }
     } catch (error) {
       console.error(error);
@@ -226,19 +208,23 @@ const useSnagLoyaltyRule = () => {
   }
 
   const syncLoyaltyCurrencies = async () => {
+    setCurrenciesLoading(true);
     try {
       await instance.getExternal('/api/snag/sync-loyalty-currencies');
     } catch (error) {
       console.error(error);
     }
+    setCurrenciesLoading(false);
   }
 
   const syncLoyaltySections = async () => {
+    setSectionsLoading(true);
     try {
       await instance.getExternal('/api/snag/sync-loyalty-section');
     } catch (error) {
       console.error(error);
     }
+    setSectionsLoading(false);
   }
 
   const initData = async () => {
@@ -408,6 +394,168 @@ const useSnagLoyaltyRule = () => {
               supernode: 'Condition is required.',
             }));
           }
+          if (!configForm.supernode.uptime || Number(configForm.supernode.uptime) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              uptime: 'Uptime is required.',
+            }));
+          }
+        break;
+        case 'sendTransactions':
+          if (!configForm.sendTransactions.transactions || Number(configForm.sendTransactions.transactions) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              supernode: 'Condition is required.',
+            }));
+          }
+          if (!configForm.sendTransactions.type) {
+            setMessages(prev => ({
+              ...prev,
+              supernode: 'Type is required.',
+            }));
+          }
+        break;
+        case 'interactModules':
+          if (!configForm.interactModules.modules || Number(configForm.interactModules.modules) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              interactModules: 'Condition is required.',
+            }));
+          }
+        case 'stakeLUME':
+          if (!configForm.stakeLUME.amount || Number(configForm.stakeLUME.amount) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              stakeLUMEAmount: 'Amount is required.',
+            }));
+          }
+          if (!configForm.stakeLUME.amount || Number(configForm.stakeLUME.amount) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              stakeLUMEDays: 'Days is required.',
+            }));
+          }
+        break;
+        case 'decentralizationStake':
+          if (!configForm.decentralizationStake.amount || Number(configForm.decentralizationStake.amount) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              decentralizationStakeAmount: 'Amount is required.',
+            }));
+          }
+          if (!configForm.decentralizationStake.rank || Number(configForm.decentralizationStake.rank) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              decentralizationStakeRank: 'Rank is required.',
+            }));
+          }
+        break;
+        case 'firstUploadCascade':
+          if (!configForm.firstUploadCascade.size || Number(configForm.firstUploadCascade.size) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              firstUploadCascadeSize: 'Size is required.',
+            }));
+          }
+        break;
+        case 'uptime':
+          if (!configForm.uptime.percent || Number(configForm.uptime.percent) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              uptimePercent: 'Uptime is required.',
+            }));
+          }
+        break;
+        case 'storageRequests':
+          if (!configForm.storageRequests.requests || Number(configForm.storageRequests.requests) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              storageRequests: 'Uptime is required.',
+            }));
+          }
+        break;
+        case 'uploadedToCascade':
+          switch (configForm.uploadedToCascade.type) {
+            case UPLOAD_CASCADE[0].value:
+              if (!configForm.uploadedToCascade.files || Number(configForm.uploadedToCascade.files) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeFiles: 'Files is required.',
+                }));
+              }
+              if (!configForm.uploadedToCascade.size || Number(configForm.uploadedToCascade.size) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeSize: 'Size is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[1].value:
+              if (!configForm.uploadedToCascade.types || Number(configForm.uploadedToCascade.types) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeTypes: 'File Types is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[2].value:
+              if (!configForm.uploadedToCascade.size || Number(configForm.uploadedToCascade.size) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeSize: 'Size is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[3].value:
+            case UPLOAD_CASCADE[4].value:
+              if (!configForm.uploadedToCascade.store || Number(configForm.uploadedToCascade.store) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeStore: 'Store is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[5].value:
+              if (!configForm.uploadedToCascade.ranking || Number(configForm.uploadedToCascade.ranking) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeRanking: 'Ranking is required.',
+                }));
+              }
+            break;
+
+          }
+
+        break;
+        case 'referralLink':
+          if (!configForm.referralLink.maxRefer || Number(configForm.referralLink.maxRefer) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              maxRefer: 'Max refer is required.',
+            }));
+          }
+        break;
+        case 'stakeForFullSeason':
+          if (!configForm.stakeForFullSeason.amount || Number(configForm.stakeForFullSeason.amount) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              stakeForFullSeasonAmount: 'Amount is required.',
+            }));
+          }
+        break;
+        case 'textInput':
+          if (!configForm.textInput.type) {
+            setMessages(prev => ({
+              ...prev,
+              textInput: 'Type is required.',
+            }));
+          }
+          if (!configForm.textInput.maximumRewardClaims || Number(configForm.textInput.maximumRewardClaims) < 1) {
+            setMessages(prev => ({
+              ...prev,
+              maximumRewardClaims: 'Maximum Reward Claims is required.',
+            }));
+          }
         break;
       }
     }
@@ -430,7 +578,7 @@ const useSnagLoyaltyRule = () => {
           rewardType: 'points',
           type: loyaltyRuleForm.type,
           frequency: loyaltyRuleForm.frequency,
-          interval: loyaltyRuleForm.frequency,
+          interval: loyaltyRuleForm.frequency === 'none' ? 'custom' : loyaltyRuleForm.frequency,
           amount: loyaltyRuleForm.amount,
           metadata: {
             cta: loyaltyRuleForm.metadata.cta,
@@ -623,6 +771,146 @@ const useSnagLoyaltyRule = () => {
               supernode: 'Condition is required.',
             }));
           }
+          if (!configForm.supernode.uptime || Number(configForm.supernode.uptime) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              uptime: 'Uptime is required.',
+            }));
+          }
+        break;
+        case 'sendTransactions':
+          if (!configForm.sendTransactions.transactions || Number(configForm.sendTransactions.transactions) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              supernode: 'Condition is required.',
+            }));
+          }
+          if (!configForm.sendTransactions.type) {
+            setMessages(prev => ({
+              ...prev,
+              supernode: 'Type is required.',
+            }));
+          }
+        break;
+        case 'decentralizationStake':
+          if (!configForm.decentralizationStake.amount || Number(configForm.decentralizationStake.amount) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              decentralizationStakeAmount: 'Amount is required.',
+            }));
+          }
+          if (!configForm.decentralizationStake.rank || Number(configForm.decentralizationStake.rank) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              decentralizationStakeRank: 'Rank is required.',
+            }));
+          }
+        break;
+        case 'firstUploadCascade':
+          if (!configForm.firstUploadCascade.size || Number(configForm.firstUploadCascade.size) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              firstUploadCascadeSize: 'Size is required.',
+            }));
+          }
+        break;
+        case 'uptime':
+          if (!configForm.uptime.percent || Number(configForm.uptime.percent) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              uptimePercent: 'Uptime is required.',
+            }));
+          }
+        break;
+        case 'storageRequests':
+          if (!configForm.storageRequests.requests || Number(configForm.storageRequests.requests) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              storageRequests: 'Uptime is required.',
+            }));
+          }
+        break;
+        case 'uploadedToCascade':
+          switch (configForm.uploadedToCascade.type) {
+            case UPLOAD_CASCADE[0].value:
+              if (!configForm.uploadedToCascade.files || Number(configForm.uploadedToCascade.files) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeFiles: 'Files is required.',
+                }));
+              }
+              if (!configForm.uploadedToCascade.size || Number(configForm.uploadedToCascade.size) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeSize: 'Size is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[1].value:
+              if (!configForm.uploadedToCascade.types || Number(configForm.uploadedToCascade.types) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeTypes: 'File Types is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[2].value:
+              if (!configForm.uploadedToCascade.size || Number(configForm.uploadedToCascade.size) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeSize: 'File Types is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[3].value:
+            case UPLOAD_CASCADE[4].value:
+              if (!configForm.uploadedToCascade.store || Number(configForm.uploadedToCascade.store) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeStore: 'Store is required.',
+                }));
+              }
+            break;
+            case UPLOAD_CASCADE[5].value:
+              if (!configForm.uploadedToCascade.ranking || Number(configForm.uploadedToCascade.ranking) < 1 || !configForm.condition) {
+                setMessages(prev => ({
+                  ...prev,
+                  uploadedToCascadeRanking: 'Ranking is required.',
+                }));
+              }
+            break;
+          }
+
+        break;
+        case 'referralLink':
+          if (!configForm.referralLink.maxRefer || Number(configForm.referralLink.maxRefer) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              maxRefer: 'Max refer is required.',
+            }));
+          }
+        break;
+        case 'stakeForFullSeason':
+          if (!configForm.stakeForFullSeason.amount || Number(configForm.stakeForFullSeason.amount) < 1 || !configForm.condition) {
+            setMessages(prev => ({
+              ...prev,
+              stakeForFullSeasonAmount: 'Amount is required.',
+            }));
+          }
+        break;
+        case 'textInput':
+          if (!configForm.textInput.type) {
+            setMessages(prev => ({
+              ...prev,
+              textInput: 'Type is required.',
+            }));
+          }
+          if (!configForm.textInput.maximumRewardClaims || Number(configForm.textInput.maximumRewardClaims) < 1) {
+            setMessages(prev => ({
+              ...prev,
+              maximumRewardClaims: 'Maximum Reward Claims is required.',
+            }));
+          }
         break;
       }
     }
@@ -646,7 +934,7 @@ const useSnagLoyaltyRule = () => {
           rewardType: 'points',
           type: loyaltyRuleForm.type,
           frequency: loyaltyRuleForm.frequency,
-          interval: loyaltyRuleForm.frequency,
+          interval: loyaltyRuleForm.frequency === 'none' ? 'custom' : loyaltyRuleForm.frequency,
           amount: loyaltyRuleForm.amount.toString(),
           metadata: {
             cta: loyaltyRuleForm.metadata.cta,
@@ -733,6 +1021,105 @@ const useSnagLoyaltyRule = () => {
           },
         });
         break;
+      case 'sendTransactions':
+        setConfigForm({
+          ...configForm,
+          sendTransactions: {
+            ...configForm.sendTransactions,
+            [name]: value,
+          },
+        });
+        break;
+      case 'interactModules':
+        setConfigForm({
+          ...configForm,
+          interactModules: {
+            ...configForm.interactModules,
+            [name]: value,
+          },
+        });
+        break;
+      case 'stakeLUME':
+        setConfigForm({
+          ...configForm,
+          stakeLUME: {
+            ...configForm.stakeLUME,
+            [name]: value,
+          },
+        });
+        break;
+      case 'decentralizationStake':
+        setConfigForm({
+          ...configForm,
+          decentralizationStake: {
+            ...configForm.decentralizationStake,
+            [name]: value,
+          },
+        });
+        break;
+      case 'firstUploadCascade':
+        setConfigForm({
+          ...configForm,
+          firstUploadCascade: {
+            ...configForm.firstUploadCascade,
+            [name]: value,
+          },
+        });
+        break;
+      case 'uploadedToCascade':
+        setConfigForm({
+          ...configForm,
+          uploadedToCascade: {
+            ...configForm.uploadedToCascade,
+            [name]: value,
+          },
+        });
+        break;
+      case 'uptime':
+        setConfigForm({
+          ...configForm,
+          uptime: {
+            ...configForm.uptime,
+            [name]: value,
+          },
+        });
+        break;
+      case 'storageRequests':
+        setConfigForm({
+          ...configForm,
+          storageRequests: {
+            ...configForm.storageRequests,
+            [name]: value,
+          },
+        });
+        break;
+      case 'referralLink':
+        setConfigForm({
+          ...configForm,
+          referralLink: {
+            ...configForm.referralLink,
+            [name]: value,
+          },
+        });
+        break;
+      case 'stakeForFullSeason':
+        setConfigForm({
+          ...configForm,
+          stakeForFullSeason: {
+            ...configForm.stakeForFullSeason,
+            [name]: value,
+          },
+        });
+        break;
+      case 'textInput':
+        setConfigForm({
+          ...configForm,
+          textInput: {
+            ...configForm.textInput,
+            [name]: value,
+          },
+        });
+        break;
       case 'root':
         setConfigForm({
           ...configForm,
@@ -748,7 +1135,7 @@ const useSnagLoyaltyRule = () => {
         const url = currentUrlCheck[actionType as keyof typeof currentUrlCheck];
         setConfigForm(prev => ({
           ...prev,
-          domain: selectedUrlCheck.domain,
+          domain: URL_CHECK.mainnet.domain,
           urlCheck: url,
         }));
       }
@@ -761,6 +1148,20 @@ const useSnagLoyaltyRule = () => {
             ...prev,
             supernode: {
               ...prev.supernode,
+              validatorUrl: currentUrlCheck.supernodeValidator,
+            }
+          }));
+        }
+      }
+
+      if (actionType === 'decentralizationStake') {
+        const selectedUrlCheck = URL_CHECK[value as keyof typeof URL_CHECK];
+        if (selectedUrlCheck) {
+          const currentUrlCheck = selectedUrlCheck.urlCheck;
+          setConfigForm(prev => ({
+            ...prev,
+            decentralizationStake: {
+              ...prev.decentralizationStake,
               validatorUrl: currentUrlCheck.supernodeValidator,
             }
           }));

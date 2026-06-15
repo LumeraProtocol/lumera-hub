@@ -18,8 +18,10 @@ import { AppLoading } from '@/components/Loading';
 import AppButton, { AppLinkButton } from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
 import useSnag from '@/hooks/admin/useSnag';
-import { formatNumber, formatAddress } from '@/utils/format';
+import { formatNumber, formatAddress, formatKb } from '@/utils/format';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
+import { UPLOAD_CASCADE } from '@/contants/snag';
+import { generateUrlCheck } from '@/utils/helpers';
 
 type TLoyaltyRuleVerifyCheck = {
   loyaltyRule: SnagLoyalty | null;
@@ -46,32 +48,7 @@ export const LoyaltyRuleVerifyCheck = ({
     }, 3000)
   }
   const config = JSON.parse(loyaltyRule.config);
-  const path = `${config.domain}snag/${loyaltyRule.id}`;
-  let prefix = '';
-
-  switch (config.actionType) {
-    case 'staked':
-      prefix = '/stake';
-      break;
-    case 'delegate':
-      prefix = '/delegate';
-      break;
-    case 'redelegated':
-      prefix = '/redelegate';
-      break;
-    case 'balance':
-      prefix = '/balance';
-      break;
-    case 'claim':
-      prefix = '/claim';
-      break;
-    case 'supernode':
-      prefix = '/supernode';
-      break;
-    case 'send':
-      prefix = '/send';
-      break;
-  }
+  const fullPath = generateUrlCheck(config.domain, loyaltyRule.id, config.actionType);
 
   if (config.actionType === 'connect') {
     return (
@@ -125,7 +102,7 @@ export const LoyaltyRuleVerifyCheck = ({
         {isSplit ?
           <Tooltip>
             <Tooltip.Trigger>
-              <span>{formatAddress(`${path}${prefix}`, 20, -10)}</span>
+              <span>{formatAddress(fullPath, 20, -10)}</span>
             </Tooltip.Trigger>
             <Tooltip.Content
               enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
@@ -144,15 +121,15 @@ export const LoyaltyRuleVerifyCheck = ({
               ]}
             >
               <div className='text-white'>
-                {`${path}${prefix}`}
+                {fullPath}
               </div>
             </Tooltip.Content>
           </Tooltip> :
-          <>{`${path}${prefix}`}</>
+          <>{fullPath}</>
         }
       </div>
       <button
-        onClick={() => handleCopyAddress(`${path}${prefix}`)}
+        onClick={() => handleCopyAddress(fullPath)}
         className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer"
       >
         {!isCopied ?
@@ -177,6 +154,66 @@ export const SnagScreen = () => {
     syncLoyaltyRules,
     handlePageClick,
   } = useSnag();
+
+  const generateUploadedToCascadeLabel = (obj: any) => {
+    switch (obj.uploadedToCascade.type) {
+      case UPLOAD_CASCADE[0].value:
+        return (
+          <>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Files:</span> {obj.uploadedToCascade.fileCondition}<span>{obj.uploadedToCascade.files}</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Size:</span> {obj.uploadedToCascade.sizeCondition}<span>{obj.uploadedToCascade.size} KB</span>
+              </div>
+            </li>
+          </>
+        );
+      case UPLOAD_CASCADE[1].value:
+        return (
+          <>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>File Types:</span> {obj.uploadedToCascade.typesCondition}<span>{obj.uploadedToCascade.types} types</span>
+              </div>
+            </li>
+          </>
+        );
+      case UPLOAD_CASCADE[2].value:
+        return (
+          <>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>File size:</span> {obj.uploadedToCascade.sizeCondition}<span>{obj.uploadedToCascade.size} MB</span>
+              </div>
+            </li>
+          </>
+        );
+      case UPLOAD_CASCADE[5].value:
+        return (
+          <>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Ranking:</span> {obj.uploadedToCascade.rankingCondition}<span>{obj.uploadedToCascade.ranking}</span>
+              </div>
+            </li>
+          </>
+        );
+      default:
+        return (
+          <>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Sum of stored file sizes:</span> {obj.uploadedToCascade.storeCondition}<span>{obj.uploadedToCascade.store} GB</span>
+              </div>
+            </li>
+          </>
+        );
+    }
+  }
 
   const renderConfig = (config: string | undefined) => {
     if (!config) {
@@ -495,11 +532,6 @@ export const SnagScreen = () => {
             </li>
             <li className='mb-1'>
               <div className="flex gap-2">
-                <span>Days:</span> <span>{obj.supernode.days}</span>
-              </div>
-            </li>
-            <li className='mb-1'>
-              <div className="flex gap-2">
                 <span>Supernodes API:</span>
                 <Tooltip>
                   <Tooltip.Trigger>
@@ -558,6 +590,16 @@ export const SnagScreen = () => {
                 </Tooltip>
               </div>
             </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Days:</span> <span>{obj.condition} {obj.supernode.days}</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Uptime:</span> <span>{obj.supernode.condition} {obj.supernode.uptime}%</span>
+              </div>
+            </li>
           </ul>
         );
       case 'send':
@@ -600,6 +642,582 @@ export const SnagScreen = () => {
             </li>
           </ul>
         );
+      case 'sendTransactions':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Send Transactions</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>URL check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Type:</span> <span>{obj.sendTransactions.type}</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Condition:</span> {obj.condition}<span>{obj.sendTransactions.transactions} transactions</span>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'interactModules':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Interact modules</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>URL check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Condition:</span> {obj.condition}<span>{obj.interactModules.modules} modules</span>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'stakeLUME':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Stake LUME</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>URL check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Amount:</span> {obj.condition}<span>{formatNumber(obj.stakeLUME.amount, { decimalsLength: 0 })} LUME</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Days:</span> {obj.stakeLUME.condition}<span>{obj.stakeLUME.days}</span>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'decentralizationStake':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Decentralization Stake</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>URL check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Amount:</span> {obj.condition}<span>{formatNumber(obj.decentralizationStake.amount, { decimalsLength: 0 })} LUME</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Rank:</span> {obj.decentralizationStake.condition}<span>{obj.decentralizationStake.rank}</span>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'firstTimeDelegation':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>First-time delegation</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>URL check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'claimRewards':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Claim staking rewards</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>URL check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'compoundRewards':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Compound Rewards</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>URL check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'firstUploadCascade':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>First Upload Cascade</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>URL check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Size:</span> {obj.decentralizationStake.condition}<span>{formatKb(obj.firstUploadCascade.size)}</span>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'uploadedToCascade':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Upload to Cascade</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>URL check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+            {generateUploadedToCascadeLabel(obj)}
+          </ul>
+        );
+      case 'uptime':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Uptime this week</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>API Check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Percent:</span> <span>{obj.uptime.condition} {obj.uptime.percent}%</span>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'storageRequests':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Storage requests</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>API Check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Storage requests:</span> <span>{obj.storageRequests.condition} {obj.storageRequests.requests}</span>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'referralLink':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>ReferralLink</span>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'inviteUsersUploadToCascade':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Invite Users Upload to Cascade</span>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'stakeForFullSeason':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Stake For Full Season</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>API Check:</span>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <span>{obj.urlCheck ? formatAddress(obj.urlCheck, 10, -6) : '--'}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                    scale={1}
+                    x={0}
+                    y={0}
+                    opacity={1}
+                    animation={[
+                      'quick',
+                      {
+                        opacity: {
+                          overshootClamping: true,
+                        },
+                      },
+                    ]}
+                  >
+                    <div className='text-white'>
+                      {obj.urlCheck || '--'}
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Amount:</span> <span>{obj.condition} {obj.stakeForFullSeason.amount} LUME</span>
+              </div>
+            </li>
+          </ul>
+        );
+      case 'textInput':
+        return (
+          <ul>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Action Type:</span> <span>Text Input</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Type:</span> <span>{obj.textInput.type}</span>
+              </div>
+            </li>
+            <li className='mb-1'>
+              <div className="flex gap-2">
+                <span>Maximum Reward Claims:</span> <span>{obj.textInput.condition} {obj.textInput.maximumRewardClaims}</span>
+              </div>
+            </li>
+          </ul>
+        );
       default:
         return null;
     }
@@ -612,6 +1230,16 @@ export const SnagScreen = () => {
           <div>
             <Card.Header padded>
               <div className='flex justify-end gap-3 w-full'>
+                <AppLinkButton
+                  href="/admin/campaigns/sprints/season-2/referral-stats"
+                >
+                  <span>Referral Stats</span>
+                </AppLinkButton>
+                <AppLinkButton
+                  href="/admin/campaigns/sprints/season-2/user-responses"
+                >
+                  <span>Manual Review Quests</span>
+                </AppLinkButton>
                 <AppLinkButton
                   href="/admin/campaigns/sprints/season-2/create"
                 >

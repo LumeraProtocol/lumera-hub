@@ -18,7 +18,7 @@ import useTrackingUser from '@/hooks/useTrackingUser';
 
 export function WalletModalComponent() {
   const dispatch = useDispatch();
-  const { address } = useChain(CHAIN_NAME);
+  const { address, status } = useChain(CHAIN_NAME);
   const { close } = useWalletModal();
   const { trackingUser } = useTrackingUser();
 
@@ -29,7 +29,7 @@ export function WalletModalComponent() {
         address,
       }));
       dispatch(setConnected({
-        status: true,
+        status: status === 'Connected',
       }));
       const isNewConnect = sessionStorage.getItem('new_connect');
       if (!isNewConnect) {
@@ -37,7 +37,18 @@ export function WalletModalComponent() {
         sessionStorage.setItem('new_connect', 'true');
       }
     }
-  }, [address])
+  }, [address]);
+
+  useEffect(() => {
+    if (window?.location?.search) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const referralCode = urlParams.get('referral_code');
+      if (referralCode) {
+        sessionStorage.setItem('referral_code', referralCode);
+      }
+    }
+  }, [window.location.search]);
+
 
   return (
     <div className='relative z-50'>
@@ -96,7 +107,7 @@ export function ConnectWallet() {
         </AppButton> :
         <>
           <span className='btn-address cursor-pointer' onClick={handleCopyAddress}>{formatAddress(address, 5, -4)}</span>
-          <button onClick={handleDesconnect} className='btn-logout'><LogOut className='w-4 h-4 ml-2' /></button>
+          <button onClick={handleDesconnect} className='btn-logout'><LogOut className='w-4 h-4' /></button>
         </>
       }
     </div>
@@ -105,18 +116,27 @@ export function ConnectWallet() {
 
 interface IConnectWalletButton {
   className?: string;
+  onClick?: () => void;
 }
 
 export function ConnectWalletButton({
-  className = ''
+  className = '',
+  onClick,
 }: IConnectWalletButton) {
   const { address, openView } = useChain(CHAIN_NAME);
+
+  const handleClick = () => {
+    openView();
+    if (onClick) {
+      onClick();
+    }
+  }
 
   return (
     <div style={{ display: 'flex', gap: 8 }}>
       {!address ?
         <AppButton
-          onClick={openView}
+          onClick={handleClick}
           className={className}
         >
           <Wallet className='w-4 h-4' /> <div>Connect Wallet</div>
@@ -136,6 +156,7 @@ export function ConnectButton({
       <button
         onClick={openView}
         className={`bg-lumera-teal hover:bg-lumera-green text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors flex items-center cursor-pointer ${className}`}
+        id="connectWallet"
       >
         <Wallet className='w-4 h-4' /> <div className="ml-1">Connect Wallet</div>
       </button>

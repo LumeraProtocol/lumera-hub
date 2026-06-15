@@ -8,6 +8,8 @@ import { useDispatch } from '@/redux/hooks';
 import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import { VerifyScreen } from '@lumera-hub/ui/src/screens/snag/VerifyScreen';
 import useSnagVerify from '@/hooks/useSnagVerify';
+import { NotFoundScreen } from '@lumera-hub/ui/src/screens/snag/NotFoundScreen';
+import useSnagTextInput from '@/hooks/useSnagTextInput';
 
 export default function Page() {
   const dispatch = useDispatch();
@@ -15,9 +17,12 @@ export default function Page() {
     isLoading,
     message,
     txHash,
+    isVerified,
+    setIsVerified,
     setTxhash,
     verifySendTokens,
   } = useSnagVerify();
+  const snag = useSnagTextInput();
 
   useEffect(() => {
     document.title = 'Send A Transaction - Lumera Hub';
@@ -25,7 +30,7 @@ export default function Page() {
       currentPath: '/snag/address/send',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Send A Transaction',
+      viewTitle: '&nbsp;',
     }));
   }, []);
 
@@ -35,13 +40,19 @@ export default function Page() {
         <title>Send A Transaction - Lumera Hub</title>
       </Helmet>
       <div>
-        <VerifyScreen
-          isLoading={isLoading}
-          message={message}
-          txHash={txHash}
-          onVerifyClick={verifySendTokens}
-          onChangeText={setTxhash}
-        />
+        {snag?.message?.type === 'not-found' ?
+          <NotFoundScreen content={snag?.message.content} /> :
+          <VerifyScreen
+            isLoading={isLoading}
+            message={message}
+            txHash={txHash}
+            quest={snag?.quest}
+            isVerified={isVerified}
+            onVerified={setIsVerified}
+            onVerifyClick={verifySendTokens}
+            onChangeText={setTxhash}
+          />
+        }
       </div>
     </>
   )

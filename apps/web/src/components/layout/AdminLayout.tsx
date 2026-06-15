@@ -70,20 +70,21 @@ export default function AdminLayout({ children }: IAdminLayout) {
     );
   }
 
-  const handleDesconnect = () => {
+  const handleDisconnect = () => {
     if (address) {
       disconnect();
-      dispatch(setAddress({
-        address: '',
-      }));
-      dispatch(setConnected({
-        status: false,
-      }));
-      dispatch(setLoginStatus({
-        isLogged: false,
-      }));
     }
+    dispatch(setAddress({
+      address: '',
+    }));
+    dispatch(setConnected({
+      status: false,
+    }));
+    dispatch(setLoginStatus({
+      isLogged: false,
+    }));
     localStorage.removeItem('adminUser');
+    localStorage.removeItem('adminUserId');
     location.href = '/admin';
   }
 
@@ -115,7 +116,7 @@ export default function AdminLayout({ children }: IAdminLayout) {
                 {address ?
                   <span className='btn-address cursor-pointer' onClick={handleCopyAddress}>{formatAddress(address, 5, -4)}</span> : null
                 }
-                <button onClick={handleDesconnect} className='btn-logout'><LogOut className='w-4 h-4' /></button>
+                <button onClick={handleDisconnect} className='btn-logout'><LogOut className='w-4 h-4' /></button>
               </div> : null
             }
           </div>

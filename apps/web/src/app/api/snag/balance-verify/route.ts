@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'Address is required!',
+          type: 'required'
         },
         { status: 400 }
       );
@@ -26,7 +27,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty Rule ID is required!',
+          error: 'Quest ID is required!',
+          type: 'required'
         },
         { status: 400 }
       );
@@ -46,6 +48,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'User not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -64,7 +67,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty Rule not found!',
+          error: 'Quest not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -76,7 +80,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Loyalty ID not found!',
+          error: 'Quest ID not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -88,6 +93,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'Balance not found!',
+          type: 'not-found'
         },
         { status: 400 }
       );
@@ -100,7 +106,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const configAmount =  Number(config.staked.amount) / 1000000;
+    const configAmount =  Number(config.staked.amount) * 1000000;
     switch (config.condition) {
       case '>':
         if (totalBalances <= configAmount) {

@@ -2,12 +2,15 @@ import { H3, Card } from 'tamagui';
 import dayjs from 'dayjs';
 import ReactJson from 'react-json-view';
 import { Fragment } from 'react';
+import relativeTime from 'dayjs/plugin/relativeTime';
 
 import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import SectionTitle from '@/components/SectionTitle';
 import { formatTokens, formatNumber } from '@/utils/format';
 import { ITransaction } from '@/hooks/useTransactionDetails';
+
+dayjs.extend(relativeTime);
 
 interface ITransactionDetailsScreen {
   transaction: ITransaction | null;

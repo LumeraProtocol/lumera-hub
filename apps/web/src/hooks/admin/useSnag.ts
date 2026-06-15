@@ -6,41 +6,6 @@ import { SnagLoyalty } from '@/entities/SnagLoyalty';
 
 export const ITEM_PER_PAGE = 20;
 
-export const ACTION_TYPE = [
-  {
-    value: '',
-    label: 'N/A',
-  },
-  {
-    value: 'staked',
-    label: 'Staked',
-  },
-  {
-    value: 'delegate',
-    label: 'Delegate tokens',
-  },
-  {
-    value: 'redelegated',
-    label: 'Redelegated',
-  },
-  {
-    value: 'balance',
-    label: 'Check balance',
-  },
-  {
-    value: 'supernode',
-    label: 'Supernode',
-  },
-  {
-    value: 'claim',
-    label: 'Claim tokens',
-  },
-  {
-    value: 'send',
-    label: 'Send A Transaction',
-  },
-];
-
 const useSnag = () => {
   const params = useParams();
   const [isLoading, setLoading] = useState(false);
@@ -349,6 +314,9 @@ const useSnag = () => {
       case 'supernode':
         prefix = '/supernode';
         break;
+      case 'sendTransactions':
+        prefix = '/send-transactions';
+        break;
     }
     if (actionType === 'connect') {
       return config.domain;
@@ -435,6 +403,14 @@ const useSnag = () => {
         }
       break;
       case 'claim':
+        if (!configForm.claim.validator) {
+          setMessage({
+            type: 'error',
+            content: 'From Address is required.',
+          });
+          return;
+        }
+      case 'sendTransactions':
         if (!configForm.claim.validator) {
           setMessage({
             type: 'error',

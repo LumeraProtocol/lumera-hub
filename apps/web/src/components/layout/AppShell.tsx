@@ -46,6 +46,9 @@ export const NAV_ITEMS: TNaxItems[] = [
   // { id: "nfts", label: "NFTs", url: "/nfts", icon: <ImageIcon /> },
 ]
 
+const ESSENTIALS_NAV_ITEMS: TNaxItems[] = NAV_ITEMS.slice(0, 4);
+const TOOLS_NAV_ITEMS: TNaxItems[] = NAV_ITEMS.slice(4, 6);
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
@@ -113,28 +116,58 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </AppLink>
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            {NAV_ITEMS.map((item) => (
-              <AppLink
-                key={item.id}
-                id={item.id}
-                href={item?.url || '#'}
-                className="text-lumera-teal hover:text-lumera-green text-base font-medium block mb-1"
-              >
-                <span
-                  onClick={() => handleMenuItemClick(item)}
-                  className={`flex items-center gap-3 px-4 py-3 transition-colors duration-200 rounded-lg w-full ${
-                    isActive(currentPath, item.url)
-                      ? "text-white bg-lumera-teal"
-                      : "text-lumera-gray hover:text-white hover:bg-lumera-teal"
-                  }`}
-                >
-                  <span className="inline-block w-6 h-6">{item.icon}</span>
-                  <span>{item.label}</span>
-                </span>
-              </AppLink>
-            ))}
-          </nav>
+          <div>
+            <div>
+              <div className="text-md px-4 py-6 pb-3 text-lumera-label">Essentials</div>
+              <nav className="flex-1 px-4 py-6 pt-0 space-y-2">
+                {ESSENTIALS_NAV_ITEMS.map((item) => (
+                  <AppLink
+                    key={item.id}
+                    id={item.id}
+                    href={item?.url || '#'}
+                    className="text-lumera-teal hover:text-lumera-green text-base font-medium block mb-1"
+                  >
+                    <span
+                      onClick={() => handleMenuItemClick(item)}
+                      className={`flex items-center gap-3 px-4 py-3 transition-colors duration-200 rounded-lg w-full ${
+                        isActive(currentPath, item.url)
+                          ? "text-white bg-lumera-teal"
+                          : "text-lumera-gray hover:text-white hover:bg-lumera-teal"
+                      }`}
+                    >
+                      <span className="inline-block w-6 h-6">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </span>
+                  </AppLink>
+                ))}
+              </nav>
+            </div>
+            <div>
+              <div className="text-md px-4 py-6 pb-3 text-lumera-label">Tools</div>
+              <nav className="flex-1 px-4 py-6 pt-0 space-y-2">
+                {TOOLS_NAV_ITEMS.map((item) => (
+                  <AppLink
+                    key={item.id}
+                    id={item.id}
+                    href={item?.url || '#'}
+                    className="text-lumera-teal hover:text-lumera-green text-base font-medium block mb-1"
+                  >
+                    <span
+                      onClick={() => handleMenuItemClick(item)}
+                      className={`flex items-center gap-3 px-4 py-3 transition-colors duration-200 rounded-lg w-full ${
+                        isActive(currentPath, item.url)
+                          ? "text-white bg-lumera-teal"
+                          : "text-lumera-gray hover:text-white hover:bg-lumera-teal"
+                      }`}
+                    >
+                      <span className="inline-block w-6 h-6">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </span>
+                  </AppLink>
+                ))}
+              </nav>
+            </div>
+          </div>
           <div className="px-6 py-4 mt-auto border-t border-gray-800 text-center text-xs text-gray-500">
             © {new Date().getFullYear()} Lumera
           </div>
@@ -161,26 +194,54 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <button className="btn-close mr-3" onClick={() => setSidebarOpen(false)}><X /></button>
               </div>
               <div className="flex-1 flex flex-col justify-between">
-                <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                  {NAV_ITEMS.map((item) => (
-                    <AppLink
-                      key={item.id}
-                      href={item?.url || '#'}
-                      className="text-lumera-teal hover:text-lumera-green text-base font-medium block mb-1">
-                      <span
-                        onClick={() => handleMenuItemClick(item)}
-                        className={`flex items-center gap-3 px-4 py-3  transition-colors duration-200 rounded-lg w-full ${
-                          isActive(currentPath, item.url)
-                            ? "text-white bg-lumera-teal"
-                            : "text-lumera-gray hover:text-white hover:bg-lumera-teal"
-                        }`}
-                      >
-                        <span className="inline-block w-6 h-6">{item.icon}</span>
-                        <span>{item.label}</span>
-                      </span>
-                    </AppLink>
-                  ))}
-                </nav>
+                <div className="flex-1 overflow-y-auto">
+                  <div>
+                    <div className="text-md px-4 py-6 pb-3 text-lumera-label">Essentials</div>
+                    <nav className="flex-1 px-4 py-6 pt-0 space-y-2">
+                      {ESSENTIALS_NAV_ITEMS.map((item) => (
+                        <AppLink
+                          key={item.id}
+                          href={item?.url || '#'}
+                          className="text-lumera-teal hover:text-lumera-green text-base font-medium block mb-1">
+                          <span
+                            onClick={() => handleMenuItemClick(item)}
+                            className={`flex items-center gap-3 px-4 py-3  transition-colors duration-200 rounded-lg w-full ${
+                              isActive(currentPath, item.url)
+                                ? "text-white bg-lumera-teal"
+                                : "text-lumera-gray hover:text-white hover:bg-lumera-teal"
+                            }`}
+                          >
+                            <span className="inline-block w-6 h-6">{item.icon}</span>
+                            <span>{item.label}</span>
+                          </span>
+                        </AppLink>
+                      ))}
+                    </nav>
+                  </div>
+                  <div>
+                    <div className="text-md px-4 pt-0 pb-3 text-lumera-label">Tools</div>
+                    <nav className="flex-1 px-4 py-6 pt-0 space-y-2">
+                      {TOOLS_NAV_ITEMS.map((item) => (
+                        <AppLink
+                          key={item.id}
+                          href={item?.url || '#'}
+                          className="text-lumera-teal hover:text-lumera-green text-base font-medium block mb-1">
+                          <span
+                            onClick={() => handleMenuItemClick(item)}
+                            className={`flex items-center gap-3 px-4 py-3  transition-colors duration-200 rounded-lg w-full ${
+                              isActive(currentPath, item.url)
+                                ? "text-white bg-lumera-teal"
+                                : "text-lumera-gray hover:text-white hover:bg-lumera-teal"
+                            }`}
+                          >
+                            <span className="inline-block w-6 h-6">{item.icon}</span>
+                            <span>{item.label}</span>
+                          </span>
+                        </AppLink>
+                      ))}
+                    </nav>
+                  </div>
+                </div>
                 {!address ?
                   <div className="px-4 pb-6"><GetStarted className="w-full justify-center py-3" /></div> : null
                 }
@@ -212,7 +273,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           <div className="flex flex-1 justify-between pl-0 pr-4 sm:px-6 lg:px-8">
             <div className="flex items-center">
-              <h1 className="text-base sm:text-2xl font-bold">{viewTitle || VIEW_TITLES[activeView]}</h1>
+              <h1 className="text-base sm:text-2xl font-bold">{viewTitle === '&nbsp;' ? '' : viewTitle || VIEW_TITLES[activeView]}</h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6 gap-2">
               {message ?

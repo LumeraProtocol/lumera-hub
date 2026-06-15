@@ -259,7 +259,7 @@ export const GovernanceScreen = ({
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className='flex justify-end gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
-        <AppButton onClick={createProposal.onOpenCreateProposalModalClick}>
+        <AppButton onClick={createProposal.onOpenCreateProposalModalClick} disabled={!address}>
           <span className='whitespace-nowrap'>Create Proposal</span>
         </AppButton>
       </div>
@@ -470,7 +470,7 @@ export const GovernanceScreen = ({
                       <div className='flex justify-between items-start gap-6 governance-card-header'>
                         <div className='flex flex-col'>
                           <AppLink href={`/governance/${item.id}`}>
-                            <h3 className='text-base font-bold text-white hover:text-lumera-teal'>{item.title}</h3>
+                            <h3 className='text-base font-bold text-lumera-teal hover:text-lumera-green'>{item.title}</h3>
                           </AppLink>
                         </div>
                         {getStatus(item.status)}

@@ -121,7 +121,7 @@ export default function StakeModal({
                     View Transaction
                   </AppLink>
                 </div>
-                <div className='mt-2'>
+                <div className='mt-2 flex justify-center'>
                   <AppButton
                     className='cursor-pointer'
                     onClick={onCloseContinueToStakingModal}
@@ -249,7 +249,7 @@ export default function StakeModal({
                   I understand that unstaking will take 21 days for LUME to become liquid upon withdrawal.
                 </Label>
               </div>
-              <div className={`${!isYes ? 'btn-secondary' : 'btn-primary'} mt-8 full`}>
+              <div className={`${!isYes ? 'btn-secondary' : 'btn-primary'} mt-8 full flex justify-end`}>
                 <AppButton onClick={onSendClick} disabled={!isYes}>
                   <span>Stake</span>
                 </AppButton>
