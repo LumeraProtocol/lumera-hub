@@ -545,8 +545,14 @@ const useSupernodes = () => {
   const getSupernodesByFilter = (currentTab: string) => {
     let newSupernodesOriginal = supernodesOriginal;
     if (currentTab === 'top') {
-      const supernodeAccounts = topSupernode?.map((t) => t.supernode_account);
-      newSupernodesOriginal = supernodesOriginal.filter((s) => supernodeAccounts.includes(s.supernode_account));
+      newSupernodesOriginal = topSupernode.map((t) => {
+        const item = supernodesOriginal.find((s) => s.supernode_account === t.supernode_account);
+        return ({
+          ...t,
+          ...item,
+          current_state: '',
+        })
+      })
     }
     switch (currentTab) {
       case 'favorites':
