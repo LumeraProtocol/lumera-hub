@@ -105,6 +105,13 @@ type TEligibilityMap = {
   }
 }
 
+type TSupernodeBalance = {
+  [key: string]: {
+    amount: number;
+    denom: string;
+  }
+}
+
 const toBigIntSafe = (v: string | number | undefined | null) => {
   if (v === undefined || v === null) return 0n;
   if (typeof v === 'string') {
@@ -121,6 +128,9 @@ const toBigIntSafe = (v: string | number | undefined | null) => {
   }
   return 0n;
 }
+
+const APPROX_BLOCK_SECONDS = 6;
+let _blocksRemaining = 0
 
 const useSupernodes = () => {
   const { assetList } = useChain(CHAIN_NAME);
@@ -151,7 +161,17 @@ const useSupernodes = () => {
   const [statusFilter, setStatusFilter] = useState(STATUS_OPTIONS[0].value);
   const [stateFilter, setStateFilter] = useState(STATE_OPTIONS[0].value);
   const [versionFilter, setVersionFilter] = useState('all');
-  const [tab, setTab] = useState('all')
+  const [tab, setTab] = useState('all');
+  const [supernodeBalances, setSupernodeBalances] = useState<TSupernodeBalance>({});
+  const [scheduleError, setScheduleError] = useState('');
+  const [nextPayoutHeight, setNextPayoutHeight] = useState(0);
+  const [blocksRemaining, setBlocksRemaining] = useState(0);
+  const [lastDistributionHeight, setLastDistributionHeight] = useState(0);
+  const [paymentPeriodBlocks, setPaymentPeriodBlocks] = useState(0);
+  const [currentHeightBig, setCurrentHeightBig] = useState(0);
+  const [etaSecondsApprox, setEtaSecondsApprox] = useState(0);
+  const [isTopSupernodeLoading, setTopSupernodeLoading] = useState(false);
+  const [topSupernode, setTopSupernode] = useState<TSupernode[]>([]);
 
   const lumeAsset = useMemo(() => {
     const assets = assetList?.assets || [];
@@ -220,6 +240,7 @@ const useSupernodes = () => {
     const eligibility: TEligibilityMap = {};
     for (const supernode of items) {
       try {
+        getSupernodesBalances(supernode.supernode_account);
         eligibility[supernode.validator_address] = {
           status: 'loading'
         }
@@ -285,6 +306,29 @@ const useSupernodes = () => {
     setSupernodeLoading(false);
   }
 
+  const getSupernodesBalances = async (account: string) => {
+    try {
+      const { data } = await instance.get(`/cosmos/bank/v1beta1/balances/${account}`);
+      let totalBalances = 0;
+      if (data?.balances?.length) {
+        for (const item of data.balances) {
+          if (item.denom === 'ulume') {
+            totalBalances += Number(item.amount)
+          }
+        }
+      }
+      setSupernodeBalances((prev) => ({
+        ...prev,
+        [account]: {
+          amount: totalBalances,
+          denom: 'ulume',
+        }
+      }));
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   const getSupernodesStats = async () => {
     setStatsLoading(true);
     try {
@@ -312,10 +356,32 @@ const useSupernodes = () => {
     try {
       const { data } = await instance.get('/LumeraProtocol/lumera/supernode/v1/pool_state');
       setPoolState(data);
+      const lastH = data?.last_distribution_height;
+      if (lastH === undefined || lastH === null) {
+        setScheduleError('Schedule unavailable');
+      } else {
+        setLastDistributionHeight(Number(lastH));
+      }
     } catch (error) {
       console.error(error);
+      setScheduleError('Schedule unavailable');
     }
     setPoolStateLoading(false);
+  }
+
+  const getSupernodeParams = async () => {
+    try {
+      const { data } = await instance.get('/LumeraProtocol/lumera/supernode/v1/params');
+      const ppb = data.params.reward_distribution.payment_period_blocks;
+      if (!ppb) {
+        setScheduleError('Schedule unavailable');
+      } else {
+        setPaymentPeriodBlocks(Number(ppb));
+      }
+    } catch (error) {
+      console.error(error);
+
+    }
   }
 
   const getListSuperNodes = async () => {
@@ -367,6 +433,42 @@ const useSupernodes = () => {
     }
   }
 
+  const getLatest = async () => {
+    try {
+      const { data } = await instance.get('/cosmos/base/tendermint/v1beta1/blocks/latest');
+      const height = data?.block?.header?.height;
+      const t = data?.block?.header?.time;
+      if (height) {
+        setCurrentHeightBig(Number(height));
+      }
+      if (t) {
+        const blockMs = Date.parse(t);
+        if (Number.isFinite(blockMs)) {
+          const nextPayoutAtMs = blockMs + _blocksRemaining * APPROX_BLOCK_SECONDS * 1000;
+          const nowTick = new Date();
+          const delta = Math.round((nextPayoutAtMs - nowTick.getTime()) / 1000);
+          setEtaSecondsApprox(delta > 0 ? delta : 0)
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    setTimeout(() => {
+      getLatest();
+    }, 6000);
+  }
+
+  const getTopSupernode = async () => {
+    setTopSupernodeLoading(true);
+    try {
+      const { data } = await instance.get('/LumeraProtocol/lumera/supernode/v1/get_top_super_nodes_for_block/5530134?state=SUPERNODE_STATE_ACTIVE');
+      setTopSupernode(data.supernodes);
+    } catch (error) {
+      console.error(error);
+    }
+    setTopSupernodeLoading(false);
+  }
+
   useEffect(() => {
     getSupernodes();
     getSupernodesStats();
@@ -377,11 +479,28 @@ const useSupernodes = () => {
     getValidators();
     getListSuperNodes();
     getMyFavorites();
+    getSupernodeParams();
+    getLatest();
+    getTopSupernode();
   }, []);
 
   useEffect(() => {
     setSupernodes(getSupernodesByFilter(tab));
-  }, [statusFilter, stateFilter, versionFilter, tab])
+  }, [statusFilter, stateFilter, versionFilter, tab]);
+
+  useEffect(() => {
+    if (lastDistributionHeight && paymentPeriodBlocks) {
+      setNextPayoutHeight(lastDistributionHeight + paymentPeriodBlocks);
+    }
+  }, [lastDistributionHeight, paymentPeriodBlocks]);
+
+  useEffect(() => {
+    if (currentHeightBig && nextPayoutHeight) {
+      const diff = nextPayoutHeight - currentHeightBig;
+      setBlocksRemaining(diff > 0 ? diff : 0);
+      _blocksRemaining = diff > 0 ? diff : 0;
+    }
+  }, [currentHeightBig, nextPayoutHeight]);
 
   const toggleFavorite = (account: string) => {
     const favorites = localStorage.getItem('favorite-supernodes');
@@ -425,6 +544,10 @@ const useSupernodes = () => {
 
   const getSupernodesByFilter = (currentTab: string) => {
     let newSupernodesOriginal = supernodesOriginal;
+    if (currentTab === 'top') {
+      const supernodeAccounts = topSupernode?.map((t) => t.supernode_account);
+      newSupernodesOriginal = supernodesOriginal.filter((s) => supernodeAccounts.includes(s.supernode_account));
+    }
     switch (currentTab) {
       case 'favorites':
         newSupernodesOriginal = newSupernodesOriginal.filter((s) => myFavorites.includes(s.supernode_account))
@@ -461,7 +584,6 @@ const useSupernodes = () => {
   const handleTabChange = (value: string) => {
     setTab(value);
     setSupernodes(getSupernodesByFilter(value));
-
   }
 
   return {
@@ -493,6 +615,12 @@ const useSupernodes = () => {
     versionFilter,
     myFavorites,
     tab,
+    supernodeBalances,
+    scheduleError,
+    nextPayoutHeight,
+    blocksRemaining,
+    etaSecondsApprox,
+    isTopSupernodeLoading,
     handleTabChange,
     toggleFavorite,
     handleStatusFilterChange,

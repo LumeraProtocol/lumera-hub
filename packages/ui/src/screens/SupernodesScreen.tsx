@@ -23,7 +23,7 @@ import {
   formatTokenDisplay,
 } from '@/utils/format';
 import { TSupernode } from '@/types';
-import { CHAIN_NAME } from '@/contants/network';
+import { RATE_VALUE } from '@/contants';
 
 const formatBigIntToLume = (value: bigint | null, exponent: number, maxFractionDigits = 4) => {
     if (value === null) return '—';
@@ -39,6 +39,19 @@ const formatBigIntToLume = (value: bigint | null, exponent: number, maxFractionD
     frac = frac.replace(/0+$/, '');
     if (!frac) return whole.toString();
     return `${whole.toString()}.${frac}`;
+}
+
+const formatEta = (seconds: number) => {
+  if (!Number.isFinite(seconds) || seconds <= 0) return 'due now';
+  const s = Math.floor(seconds);
+  const days = Math.floor(s / 86400);
+  const hours = Math.floor((s % 86400) / 3600);
+  const minutes = Math.floor((s % 3600) / 60);
+  const secs = s % 60;
+  if (days > 0) return `in ~${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `~${hours}h ${minutes}m ${secs}s`;
+  if (minutes > 0) return `~${minutes}m ${secs}s`;
+  return `~${secs}s`;
 }
 
 export const SupernodesScreen = () => {
@@ -66,6 +79,13 @@ export const SupernodesScreen = () => {
     versionFilter,
     myFavorites,
     tab,
+    listSuperNodes,
+    supernodeBalances,
+    scheduleError,
+    nextPayoutHeight,
+    blocksRemaining,
+    etaSecondsApprox,
+    isTopSupernodeLoading,
     handleTabChange,
     toggleFavorite,
     handleStatusFilterChange,
@@ -129,11 +149,22 @@ export const SupernodesScreen = () => {
     return '';
   };
 
+
+  const latestChainState = (supernode_account: string) => {
+    if (!listSuperNodes || !supernode_account) {
+      return null
+    }
+    const item = listSuperNodes[supernode_account];
+    const states =  item.states;
+    return states?.length ? `#${states[states.length - 1].state}` : '';
+  }
+
   const getState = (supernode: TSupernode) => {
     if (!supernode) {
       return 'Unknown'
     }
-    const state = supernode.current_state.replaceAll('SUPERNODE_STATE_', '');
+    const lastSate = latestChainState(supernode.supernode_account);
+    const state = (supernode?.current_state || lastSate)?.replaceAll('SUPERNODE_STATE_', '') || '';
     if (state === 'POSTPONED') {
       return (
         <span className="block badge capitalize bg-lumera-warning rounded-lg py-1.5 px-3 text-[12px] text-lumera-navy w-[86px] text-center">
@@ -393,9 +424,66 @@ export const SupernodesScreen = () => {
     );
   }
 
+  const getHeight = (supernode_account: string) => {
+    if (!listSuperNodes || !supernode_account) {
+      return null
+    }
+    const item = listSuperNodes[supernode_account];
+    const states =  item.states;
+    return states?.length ? `#${states[states.length - 1].height}` : '';
+  }
+
+  const isLowBalance = (address?: string) => {
+    if (!address) return false;
+    const b = supernodeBalances[address]?.amount;
+    if (b == null) return false;
+    return b / RATE_VALUE < 1; // < 1 LUME in micro
+  }
+
+  const getNextPayout = () => {
+    const poolBalanceUlume = getPoolBalanceUlume();
+    if (!poolBalanceUlume) {
+      return null;
+    }
+
+    if (scheduleError) {
+      return (
+        <div className="text-xs text-gray-500 mt-3">
+          Schedule unavailable
+        </div>
+      );
+    }
+
+    if (nextPayoutHeight && blocksRemaining) {
+      return (
+        <div className="text-xs text-gray-500 mt-3">
+          <span className="text-gray-500">Next payout:</span>
+          {!blocksRemaining ?
+            <>
+              <span className="font-semibold ml-1">due now</span>
+              <span className="text-xs text-lumera-gray ml-2">(Block {nextPayoutHeight.toString()})</span>
+            </> : <>
+              <span className="font-semibold ml-1 text-lumera-gray">Block {nextPayoutHeight.toString()}</span>
+              {etaSecondsApprox ?
+                <span className="text-xs text-gray-500 ml-2">
+                  ({formatEta(etaSecondsApprox)})
+                </span> : null
+              }
+            </>
+          }
+          <div className="text-xs text-gray-500 mt-1">
+              {blocksRemaining.toString()} blocks remaining
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  }
+
   return (
     <div className="space-y-6">
-      <div className='grid grid-cols-3 gap-6 mb-0'>
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-0'>
         <Card elevate size="$4" bordered className='w-full p-5 relative'>
           <AppLoading
             isLoading={isMatrixLoading || isStatsLoading}
@@ -443,7 +531,7 @@ export const SupernodesScreen = () => {
             <div className='mt-3'>
               <span className="text-sm text-lumera-label">Success Rate: {getGlobalSuccessRate()}</span>
             </div>
-            <div className='mt-2 grid grid-cols-2 gap-4 text-lumera-label text-sm'>
+            <div className='mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4 text-lumera-label text-sm'>
               <ul>
                 <li className='flex justify-between mb-1'>
                   <span>Done</span>
@@ -507,12 +595,12 @@ export const SupernodesScreen = () => {
       </div>
       <div className="mt-6">
         <Card elevate size="$4" bordered className='w-full p-5 relative'>
-          <SectionTitle className='mb-0 flex items-end gap-2'>
+          <SectionTitle className='mb-0 flex flex-col sm:flex-row items-start sm:items-end gap-2'>
             <span>Everlight Pool</span>
             <span className='text-sm text-lumera-label font-normal'>Cascade retention payout estimates</span>
           </SectionTitle>
           <div className='mt-3'>
-            <ul className="grid grid-cols-4 gap-6">
+            <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
               <li className='relative'>
                 <AppLoading
                   isLoading={isPoolStateLoading}
@@ -594,11 +682,12 @@ export const SupernodesScreen = () => {
               </li>
             </ul>
           </div>
+          {getNextPayout()}
         </Card>
       </div>
       <div className="mt-6">
         <Card elevate size="$4" bordered className='w-full p-5 relative'>
-          <SectionTitle className='mb-0 flex items-end gap-2'>
+          <SectionTitle className='mb-0 flex flex-col sm:flex-row items-start sm:items-end gap-2'>
             <span>Uptime Heatmap</span>
             <span className='text-sm text-lumera-label font-normal'>Node availability over the last 30 days</span>
           </SectionTitle>
@@ -611,17 +700,17 @@ export const SupernodesScreen = () => {
       <div className="mt-6">
         <Card elevate size="$4" bordered className='w-full p-5 relative'>
           <AppLoading
-            isLoading={isSupernodeLoading}
+            isLoading={isSupernodeLoading || isTopSupernodeLoading}
             className="w-10 h-10 !border-2"
             iconWidth={20}
             iconHeight={20}
             containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
           />
-          <div className='flex justify-between items-center gap-6'>
-            <ul className='flex !gap-0 list-none tabs'>
-              <li className={`tab-item hidden ${tab === 'top' ? 'active' : ''}`}>
+          <div className='flex flex-col sm:flex-row justify-between sm:items-center gap-6'>
+            <ul className='flex !gap-0 list-none tabs overflow-auto'>
+              <li className={`tab-item ${tab === 'top' ? 'active' : ''}`}>
                 <button
-                  className='tab-button cursor-pointer px-6'
+                  className='tab-button cursor-pointer px-6 whitespace-nowrap'
                   onClick={() => handleTabChange('top')}
                 >
                   Top 10
@@ -649,114 +738,122 @@ export const SupernodesScreen = () => {
             </div>
           </div>
           <div className='flex justify-between items-center gap-6 mt-6'>
-            <div className='text-lumera-label'>
+            <div className='text-lumera-label hidden md:block'>
               Filters
             </div>
-            <div className='flex items-center gap-3'>
-              <Select
-                id="statusFilter"
-                value={statusFilter}
-                onValueChange={(newValue) => handleStatusFilterChange(newValue)}
-              >
-                <Select.Trigger width={140} iconAfter={<ChevronDown className='w-4 h-4' />}>
-                  <Select.Value placeholder={STATUS_OPTIONS[0].label} />
-                </Select.Trigger>
+            <div className='w-full grid grid-cols-1 tiny:grid-cols-2 sm:flex justify-end items-center flex-wrap gap-3'>
+              <div className='w-full sm:w-36'>
+                <Select
+                  id="statusFilter"
+                  value={statusFilter}
+                  onValueChange={(newValue) => handleStatusFilterChange(newValue)}
+                >
+                  <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                    <Select.Value placeholder={STATUS_OPTIONS[0].label} />
+                  </Select.Trigger>
 
-                <Select.Content zIndex={200000}>
-                  <Select.Viewport minWidth={140}>
-                    <Select.Group>
-                      {STATUS_OPTIONS.map((item, i) => (
+                  <Select.Content zIndex={200000}>
+                    <Select.Viewport minWidth={140}>
+                      <Select.Group>
+                        {STATUS_OPTIONS.map((item, i) => (
+                          <Select.Item
+                            index={i}
+                            key={item.value}
+                            value={item.value}
+                          >
+                            <Select.ItemText>{item.label}</Select.ItemText>
+                            <XStack flex={1} />
+                            <Select.ItemIndicator marginLeft="auto">
+                              <CheckIcon size={16} />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.Group>
+                    </Select.Viewport>
+                  </Select.Content>
+                </Select>
+              </div>
+              <div className='w-full sm:w-36'>
+                <Select
+                  id="stateFilter"
+                  value={stateFilter}
+                  onValueChange={(newValue) => handleStateFilterChange(newValue)}
+                >
+                  <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                    <Select.Value placeholder={STATE_OPTIONS[0].label} />
+                  </Select.Trigger>
+
+                  <Select.Content zIndex={200000}>
+                    <Select.Viewport minWidth={140}>
+                      <Select.Group>
+                        {STATE_OPTIONS.map((item, i) => (
+                          <Select.Item
+                            index={i}
+                            key={item.value}
+                            value={item.value}
+                          >
+                            <Select.ItemText>{item.label}</Select.ItemText>
+                            <XStack flex={1} />
+                            <Select.ItemIndicator marginLeft="auto">
+                              <CheckIcon size={16} />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.Group>
+                    </Select.Viewport>
+                  </Select.Content>
+                </Select>
+              </div>
+              <div className='w-full sm:w-56'>
+                <Select
+                  id="versionFilter"
+                  value={versionFilter}
+                  onValueChange={(newValue) => handleVersionFilterChange(newValue)}
+                >
+                  <Select.Trigger iconAfter={<ChevronDown className='w-4 h-4' />}>
+                    <Select.Value placeholder={STATE_OPTIONS[0].label} />
+                  </Select.Trigger>
+
+                  <Select.Content zIndex={200000}>
+                    <Select.Viewport minWidth={120}>
+                      <Select.Group>
                         <Select.Item
-                          index={i}
-                          key={item.value}
-                          value={item.value}
+                          index={0}
+                          value='all'
                         >
-                          <Select.ItemText>{item.label}</Select.ItemText>
+                          <Select.ItemText>All Versions</Select.ItemText>
                           <XStack flex={1} />
                           <Select.ItemIndicator marginLeft="auto">
                             <CheckIcon size={16} />
                           </Select.ItemIndicator>
                         </Select.Item>
-                      ))}
-                    </Select.Group>
-                  </Select.Viewport>
-                </Select.Content>
-              </Select>
-              <Select
-                id="stateFilter"
-                value={stateFilter}
-                onValueChange={(newValue) => handleStateFilterChange(newValue)}
-              >
-                <Select.Trigger width={140} iconAfter={<ChevronDown className='w-4 h-4' />}>
-                  <Select.Value placeholder={STATE_OPTIONS[0].label} />
-                </Select.Trigger>
-
-                <Select.Content zIndex={200000}>
-                  <Select.Viewport minWidth={140}>
-                    <Select.Group>
-                      {STATE_OPTIONS.map((item, i) => (
-                        <Select.Item
-                          index={i}
-                          key={item.value}
-                          value={item.value}
-                        >
-                          <Select.ItemText>{item.label}</Select.ItemText>
-                          <XStack flex={1} />
-                          <Select.ItemIndicator marginLeft="auto">
-                            <CheckIcon size={16} />
-                          </Select.ItemIndicator>
-                        </Select.Item>
-                      ))}
-                    </Select.Group>
-                  </Select.Viewport>
-                </Select.Content>
-              </Select>
-              <Select
-                id="versionFilter"
-                value={versionFilter}
-                onValueChange={(newValue) => handleVersionFilterChange(newValue)}
-              >
-                <Select.Trigger width={220} iconAfter={<ChevronDown className='w-4 h-4' />}>
-                  <Select.Value placeholder={STATE_OPTIONS[0].label} />
-                </Select.Trigger>
-
-                <Select.Content zIndex={200000}>
-                  <Select.Viewport minWidth={120}>
-                    <Select.Group>
-                      <Select.Item
-                        index={0}
-                        value='all'
-                      >
-                        <Select.ItemText>All Versions</Select.ItemText>
-                        <XStack flex={1} />
-                        <Select.ItemIndicator marginLeft="auto">
-                          <CheckIcon size={16} />
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                      {allVersions.map((item, i) => (
-                        <Select.Item
-                          index={i}
-                          key={item.version}
-                          value={item.version}
-                        >
-                          <Select.ItemText>{item.version} ({item.nodes_total})</Select.ItemText>
-                          <XStack flex={1} />
-                          <Select.ItemIndicator marginLeft="auto">
-                            <CheckIcon size={16} />
-                          </Select.ItemIndicator>
-                        </Select.Item>
-                      ))}
-                    </Select.Group>
-                  </Select.Viewport>
-                </Select.Content>
-              </Select>
-              <AppButton onClick={handleRefresh}>
-                Refresh
-              </AppButton>
+                        {allVersions.map((item, i) => (
+                          <Select.Item
+                            index={i}
+                            key={item.version}
+                            value={item.version}
+                          >
+                            <Select.ItemText>{item.version} ({item.nodes_total})</Select.ItemText>
+                            <XStack flex={1} />
+                            <Select.ItemIndicator marginLeft="auto">
+                              <CheckIcon size={16} />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.Group>
+                    </Select.Viewport>
+                  </Select.Content>
+                </Select>
+              </div>
+              <div className='w-full sm:w-auto'>
+                <AppButton onClick={handleRefresh}>
+                  Refresh
+                </AppButton>
+              </div>
             </div>
           </div>
-          <div className='overflow-x-auto mt-6 !min-w-[950px]'>
-            <table className='w-full table'>
+          <div className='overflow-x-auto mt-6'>
+            <table className='w-full table !min-w-[950px]'>
               <thead className='hidden md:table-header-group text-sm'>
                 <tr className='text-sm'>
                   <th align='left' className='text-lumera-label'>Supernode</th>
@@ -774,12 +871,14 @@ export const SupernodesScreen = () => {
               <tbody>
                 {supernodes?.map((supernode, index) => {
                   const validator = validators.find((v) => v.operator_address === supernode.validator_address);
+
                   return (
                     <tr
                       key={supernode.supernode_account}
                       className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col md:table-row text-sm`}
                     >
                       <td className='cursor-pointer text-left'>
+                        <div className='block md:hidden text-lumera-label mb-1'>Supernode:</div>
                         <div className='flex items-center gap-2'>
                           {validator?.description?.identity ?
                             <img
@@ -805,24 +904,61 @@ export const SupernodesScreen = () => {
                         </div>
                       </td>
                       <td className='cursor-pointer text-left'>
-                        {supernode.ip_address}
+                        <div className='block md:hidden text-lumera-label mb-1'>IP Address:</div>
+                        <span>{supernode.ip_address}</span>
                       </td>
-                      <td className='cursor-pointer text-center'>
-                        {getState(supernode)}
-                        {/* <div className='mt-2 text-[10px] text-lumera-label'>#{validator?.unbonding_height}</div> */}
+                      <td className='cursor-pointer text-left md:text-center'>
+                        <div className='block md:hidden text-lumera-label mb-1'>State:</div>
+                        <div>
+                          {getState(supernode)}
+                          <div className='mt-2 text-[10px] text-lumera-label'>
+                            {getHeight(supernode.supernode_account)}
+                          </div>
+                          {isLowBalance(supernode.supernode_account) ?
+                            <Tooltip>
+                              <Tooltip.Trigger>
+                                <span className="text-[11px] text-lumera-red mt-1">low balance</span>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content
+                                enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                scale={1}
+                                x={0}
+                                y={0}
+                                opacity={1}
+                                animation={[
+                                  'quick',
+                                  {
+                                    opacity: {
+                                      overshootClamping: true,
+                                    },
+                                  },
+                                ]}
+                              >
+                                <div className='text-white'>
+                                  Required minimum for SN: 1 LUME
+                                </div>
+                              </Tooltip.Content>
+                            </Tooltip> : null
+                          }
+                        </div>
                       </td>
                       <td className='cursor-pointer text-left'>
+                        <div className='block md:hidden text-lumera-label mb-2'>Actual Version:</div>
                         <span className='py-1.5 px-3 rounded-lg border border-lumera-label text-lumera-label text-sm'>{supernode.actual_version || '—'}</span>
                       </td>
                       <td className='cursor-pointer text-left'>
+                        <div className='block md:hidden text-lumera-label mb-1'>Status:</div>
                         <span className={supernode.is_status_api_available ? 'text-lumera-teal' : 'text-lumera-red'}>{supernode.is_status_api_available ? 'Online' : 'Offline'}</span>
                       </td>
                       <td className='cursor-pointer text-left'>
+                        <div className='block md:hidden text-lumera-label mb-1'>Hardware:</div>
                         <div className='whitespace-nowrap'>• {supernode.metrics_report.status.CPUCores} cores</div>
                         <div className='whitespace-nowrap'>• {supernode.metrics_report.status.MemoryTotalGb.toFixed(1)} GB RAM</div>
                         <div className='whitespace-nowrap'>• {formatBytes(supernode.metrics_report.status.StorageTotalBytes)} total</div>
                       </td>
                       <td className='cursor-pointer text-left'>
+                        <div className='block md:hidden text-lumera-label mb-1'>Storage Usage:</div>
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-medium whitespace-nowrap">
                             {formatBytes(supernode.storage_used_bytes)}
@@ -881,12 +1017,15 @@ export const SupernodesScreen = () => {
                         }
                       </td>
                       <td className='cursor-pointer text-left'>
+                        <div className='block md:hidden text-lumera-label mb-1'>Participation:</div>
                         {getParticipationPercent(supernode.supernode_account)}
                       </td>
                       <td className='cursor-pointer text-left'>
+                        <div className='block md:hidden text-lumera-label mb-1'>Est. Payout:</div>
                         {getEverlightPayout(supernode)}
                       </td>
                       <td className='cursor-pointer text-left'>
+                        <div className='block md:hidden text-lumera-label mb-1'>Favorite:</div>
                         <AppButton
                           className='!rounded-full !p-2'
                           variant='ghost'
