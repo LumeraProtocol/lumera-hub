@@ -3,6 +3,7 @@ import {
   Select,
   XStack,
   Tooltip,
+  Button,
 } from 'tamagui';
 import {
   Copy,
@@ -86,6 +87,7 @@ export const SupernodesScreen = () => {
     blocksRemaining,
     etaSecondsApprox,
     isTopSupernodeLoading,
+    logo,
     handleTabChange,
     toggleFavorite,
     handleStatusFilterChange,
@@ -134,24 +136,6 @@ export const SupernodesScreen = () => {
     return ((compliant / total) * 100).toFixed(1);
   }
 
-  const logo = (identity?: string) => {
-    const cache = localStorage.getItem('supernode-avatars');
-    try {
-      if (cache) {
-        const parseCache = JSON.parse(cache);
-        if (!identity || !parseCache[identity]) return '';
-        const url = parseCache[identity] || '';
-        return url.startsWith('http')
-          ? url
-          : `https://s3.amazonaws.com/keybase_processed_uploads/${url}`;
-      }
-    } catch (err) {
-      console.error(err);
-    }
-    return '';
-  };
-
-
   const latestChainState = (supernode_account: string) => {
     if (!listSuperNodes || !supernode_account) {
       return null
@@ -166,25 +150,40 @@ export const SupernodesScreen = () => {
       return 'Unknown'
     }
     const lastSate = latestChainState(supernode.supernode_account);
-    const state = (supernode?.current_state || lastSate)?.replaceAll('SUPERNODE_STATE_', '') || '';
+    const state = (lastSate || supernode?.current_state)?.replaceAll('SUPERNODE_STATE_', '')?.replaceAll('#', '') || '';
     if (state === 'POSTPONED') {
       return (
-        <span className="block badge capitalize bg-lumera-warning rounded-lg py-1.5 px-3 text-[12px] text-lumera-navy w-[86px] text-center">
-          {state.toLowerCase()}
-        </span>
+        <div className='btn-yellow not-button mt-1 text-[12px] btn-label'>
+          <Button className='small !py-1.5 !px-3'>
+            <span className='capitalize'>{state.toLowerCase()}</span>
+          </Button>
+        </div>
+      );
+    }
+    if (state.toLowerCase() === 'storage_full') {
+      return (
+        <div className='btn-storage-full not-button mt-1 text-[12px] btn-label'>
+          <Button className='small'>
+            <span className='capitalize whitespace-nowrap'>{state.replaceAll('_', ' ').toLowerCase()}</span>
+          </Button>
+        </div>
       );
     }
     if (state === 'DISABLED') {
       return (
-        <span className="block badge capitalize bg-lumera-red rounded-lg py-1.5 px-3 text-[12px] w-[86px] text-center">
-          {state.toLowerCase()}
-        </span>
+        <div className='btn-disabled not-button mt-1 text-[12px] btn-label'>
+          <Button className='small'>
+            <span className='capitalize whitespace-nowrap'>{state.replaceAll('_', ' ').toLowerCase()}</span>
+          </Button>
+        </div>
       );
     }
     return (
-      <span className="block badge capitalize bg-lumera-teal rounded-lg py-1.5 px-3 text-[12px] w-[86px] text-center">
-        {state.toLowerCase()}
-      </span>
+      <div className='btn-green not-button mt-1 text-[12px] btn-label'>
+        <Button className='small !py-1.5 !px-3'>
+          <span className='capitalize'>{state.toLowerCase()}</span>
+        </Button>
+      </div>
     );
   }
 
@@ -267,7 +266,7 @@ export const SupernodesScreen = () => {
     const rec = p2p_records;
     const parts: string[] = [formatBytes(b)];
     if (rec !== undefined && rec !== null && !isNaN(rec as any)) parts.push(`${formatCount(rec)} records`);
-    return `P2P DB: ${parts.join(' • ')}`;
+    return `P2P DB: ${parts[0]}${parts.length === 2 ? '(' + parts[1] + ')' : ''}`;
   }
 
   const getParticipationPercent = (address?: string) => {
@@ -327,7 +326,10 @@ export const SupernodesScreen = () => {
   }
 
   const getEverlightPayout = (supernode: TSupernode) => {
-    if (everlightStatus(supernode.validator_address) === 'none' || everlightStatus(supernode.validator_address) === 'loading') {
+    if (
+      everlightStatus(supernode.validator_address) === 'none' ||
+      everlightStatus(supernode.validator_address) === 'loading'
+    ) {
       return (
         <AppLoading
           isLoading
@@ -344,9 +346,11 @@ export const SupernodesScreen = () => {
         <>
           <Tooltip>
             <Tooltip.Trigger>
-              <span className="block badge capitalize bg-lumera-red rounded-lg py-1.5 px-3 text-[12px] w-[86px] text-center">
-                Unavailable
-              </span>
+              <div className='btn-red not-button mt-1 text-[12px] btn-label'>
+                <Button className='small !py-1.5 !px-3'>
+                  <span className='capitalize'>Unavailable</span>
+                </Button>
+              </div>
             </Tooltip.Trigger>
             <Tooltip.Content
               enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
@@ -369,7 +373,7 @@ export const SupernodesScreen = () => {
               </div>
             </Tooltip.Content>
           </Tooltip>
-          <div className="text-xs text-gray-400 mt-1">—</div>
+          <div className="text-xs text-lumera-label mt-1">—</div>
         </>
       );
     }
@@ -379,9 +383,11 @@ export const SupernodesScreen = () => {
         <>
           <Tooltip>
             <Tooltip.Trigger>
-              <span className="block badge capitalize bg-lumera-warning rounded-lg py-1.5 px-3 text-lumera-navy text-[12px] w-[86px] text-center">
-                Ineligible
-              </span>
+              <div className='btn-yellow not-button mt-1 text-[12px] btn-label'>
+                <Button className='small !py-1.5 !px-3'>
+                  <span className='capitalize'>Ineligible</span>
+                </Button>
+              </div>
             </Tooltip.Trigger>
             <Tooltip.Content
               enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
@@ -404,23 +410,27 @@ export const SupernodesScreen = () => {
               </div>
             </Tooltip.Content>
           </Tooltip>
+          <div className="text-sm mt-1">0 LUME</div>
           <div className="text-xs text-gray-500 mt-1">{everlightReason(supernode.validator_address)}</div>
-          <div className="text-xs text-gray-400 mt-1">0 LUME</div>
         </>
       )
     }
 
     return (
       <>
-        <span className="block badge capitalize bg-lumera-teal rounded-lg py-1.5 px-3 text-[12px] w-[86px] text-center">Eligible</span>
+        <div className='btn-green not-button mt-1 text-[12px] btn-label'>
+          <Button className='small !py-1.5 !px-3'>
+            <span className='capitalize'>Eligible</span>
+          </Button>
+        </div>
         <div className="text-sm font-medium mt-1">
           {formatBigIntToLume(getPayoutByAccount(supernode.validator_address) ?? 0n, lumeExponent)} LUME
         </div>
         <div className="text-xs text-gray-500">
-          weight: {everlightWeight(supernode?.validator_address)?.toString()}
+          Weight: {everlightWeight(supernode?.validator_address)?.toString()}
         </div>
         <div className="text-xs text-gray-500">
-          bytes: {formatBytes(Number(everlightBytes(supernode.validator_address)))}
+          Bytes: {formatBytes(Number(everlightBytes(supernode.validator_address)))}
         </div>
       </>
     );
@@ -450,7 +460,7 @@ export const SupernodesScreen = () => {
 
     if (scheduleError) {
       return (
-        <div className="text-xs text-gray-500 mt-3">
+        <div className="text-xs text-lumera-gray mt-3">
           Schedule unavailable
         </div>
       );
@@ -458,8 +468,8 @@ export const SupernodesScreen = () => {
 
     if (nextPayoutHeight && blocksRemaining) {
       return (
-        <div className="text-xs text-gray-500 mt-3">
-          <span className="text-gray-500">Next payout:</span>
+        <div className="text-xs text-lumera-label mt-3">
+          <span className="text-lumera-gray">Next payout:</span>
           {!blocksRemaining ?
             <>
               <span className="font-semibold ml-1">due now</span>
@@ -467,13 +477,13 @@ export const SupernodesScreen = () => {
             </> : <>
               <span className="font-semibold ml-1 text-lumera-gray">Block {nextPayoutHeight.toString()}</span>
               {etaSecondsApprox ?
-                <span className="text-xs text-gray-500 ml-2">
+                <span className="text-xs text-lumera-label ml-2">
                   ({formatEta(etaSecondsApprox)})
                 </span> : null
               }
             </>
           }
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-lumera-label mt-1">
               {blocksRemaining.toString()} blocks remaining
           </div>
         </div>
@@ -531,9 +541,9 @@ export const SupernodesScreen = () => {
               </span>
             </div>
             <div className='mt-3'>
-              <span className="text-sm text-lumera-label">Success Rate: {getGlobalSuccessRate()}</span>
+              <span className="text-sm text-lumera-gray">Success Rate: {getGlobalSuccessRate()}</span>
             </div>
-            <div className='mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4 text-lumera-label text-sm'>
+            <div className='mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4 text-lumera-gray text-sm'>
               <ul>
                 <li className='flex justify-between mb-1'>
                   <span>Done</span>
@@ -589,8 +599,8 @@ export const SupernodesScreen = () => {
             <div>
               <span className='text-lumera-gray font-bold text-2xl'>{supernodesStats?.total_storage_bytes ? formatBytes(supernodesStats?.total_storage_bytes, 1) : '0'}</span>
             </div>
-            <div className='mt-3'>
-              <span className="text-sm text-lumera-label">{supernodesStats?.storage_used_percent ? supernodesStats?.storage_used_percent.toFixed(1) : '0'}% used • {getFreeStorageBytes()} free</span>
+            <div>
+              <span className="text-sm text-lumera-gray">{supernodesStats?.storage_used_percent ? supernodesStats?.storage_used_percent.toFixed(1) : '0'}% used • {getFreeStorageBytes()} free</span>
             </div>
           </div>
         </Card>
@@ -653,7 +663,7 @@ export const SupernodesScreen = () => {
                       </div>
                     </Tooltip.Content>
                   </Tooltip>
-                  <button className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => copyToClipboard(supernodeAccount?.base_account?.address || '')}>
+                  <button className="p-1 text-lumera-label hover:text-white transition-colors cursor-pointer" onClick={() => copyToClipboard(supernodeAccount?.base_account?.address || '')}>
                     <Copy className="w-4 h-4"/>
                   </button>
                 </div>
@@ -849,56 +859,85 @@ export const SupernodesScreen = () => {
                   <th align='left' className='text-lumera-label'>Supernode</th>
                   <th align='left' className='text-lumera-label whitespace-nowrap'>IP Address</th>
                   <th align='left' className='text-lumera-label'>State</th>
-                  <th align='left' className='text-lumera-label whitespace-nowrap'>Actual Version</th>
-                  <th align='left' className='text-lumera-label'>Status</th>
                   <th align='left' className='text-lumera-label'>Hardware</th>
                   <th align='left' className='text-lumera-label whitespace-nowrap'>Storage Usage</th>
-                  <th align='left' className='text-lumera-label'>Participation</th>
+                  <th align='left' className='text-lumera-label whitespace-nowrap'>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <span>Part.</span>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content
+                        enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                        exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                        scale={1}
+                        x={0}
+                        y={0}
+                        opacity={1}
+                        animation={[
+                          'quick',
+                          {
+                            opacity: {
+                              overshootClamping: true,
+                            },
+                          },
+                        ]}
+                      >
+                        <div className='text-white'>
+                          Participation
+                        </div>
+                      </Tooltip.Content>
+                    </Tooltip>
+                  </th>
                   <th align='left' className='text-lumera-label whitespace-nowrap'>Est. Payout</th>
-                  <th align='left' className='text-lumera-label'>Favorite</th>
+                  <th align='left' className='text-lumera-label whitespace-nowrap'></th>
                 </tr>
               </thead>
               <tbody>
                 {supernodes?.map((supernode, index) => {
                   const validator = validators.find((v) => v.operator_address === supernode.validator_address);
-
                   return (
                     <tr
                       key={supernode.supernode_account}
                       className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col md:table-row text-sm`}
                       onClick={() => redirect(`/supernodes/${supernode.supernode_account}`)}
                     >
-                      <td className='cursor-pointer text-left'>
+                      <td className='cursor-pointer text-left align-top !pb-2 md:!pb-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Supernode:</div>
                         <div className='flex items-center gap-2'>
                           {validator?.description?.identity ?
                             <img
                               src={logo(validator.description?.identity)}
                               alt="avatar"
-                              className='w-6 h-6 rounded-full'
+                              className='w-4 h-4 rounded-full'
                             /> :
-                            <CircleUser className="w-6 h-6"/>
+                            <CircleUser className="w-4 h-4"/>
                           }
                           <span className='whitespace-nowrap'>{validator?.description?.moniker || supernode.validator_moniker}</span>
                         </div>
-                        <div className='text-lumera-label text-sm flex items-center gap-2 mt-2 whitespace-nowrap'>
+                        <div className='text-xs text-lumera-label flex items-center gap-2 mt-2 whitespace-nowrap'>
                           <span>SN: {formatAddress(supernode.supernode_account, 12, -6)}</span>
-                          <button className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => copyToClipboard(supernode.supernode_account)}>
-                            <Copy className="w-4 h-4"/>
+                          <button className="p-1 text-lumera-label hover:text-white transition-colors cursor-pointer" onClick={() => copyToClipboard(supernode.supernode_account)}>
+                            <Copy className="w-3 h-3"/>
                           </button>
                         </div>
-                        <div className='text-lumera-label text-sm flex items-center gap-2 whitespace-nowrap'>
+                        <div className='text-xs text-lumera-label flex items-center gap-2 whitespace-nowrap'>
                           <span>Val: {formatAddress(supernode.validator_address, 12, -6)}</span>
-                          <button className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => copyToClipboard(supernode.validator_address)}>
-                            <Copy className="w-4 h-4"/>
+                          <button className="p-1 text-lumera-label hover:text-white transition-colors cursor-pointer" onClick={() => copyToClipboard(supernode.validator_address)}>
+                            <Copy className="w-3 h-3"/>
                           </button>
                         </div>
                       </td>
-                      <td className='cursor-pointer text-left'>
+                      <td className='cursor-pointer text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>IP Address:</div>
-                        <span>{supernode.ip_address}</span>
+                        <div className='md:max-w-40 break-all'>{supernode.ip_address}</div>
+                        <div className='text-xs text-lumera-label'>
+                          <span>Version: </span> <span>{supernode.actual_version || '—'}</span>
+                        </div>
+                        <div className='text-xs'>
+                          <span className='text-lumera-label'>Status: </span> <span className={supernode.is_status_api_available ? 'text-lumera-teal' : 'text-lumera-red'}>{supernode.is_status_api_available ? 'Online' : 'Offline'}</span>
+                        </div>
                       </td>
-                      <td className='cursor-pointer text-left md:text-center'>
+                      <td className='cursor-pointer text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>State:</div>
                         <div>
                           {getState(supernode)}
@@ -934,30 +973,25 @@ export const SupernodesScreen = () => {
                           }
                         </div>
                       </td>
-                      <td className='cursor-pointer text-left'>
-                        <div className='block md:hidden text-lumera-label mb-2'>Actual Version:</div>
-                        <span className='py-1.5 px-3 rounded-lg border border-lumera-label text-lumera-label text-sm'>{supernode.actual_version || '—'}</span>
-                      </td>
-                      <td className='cursor-pointer text-left'>
-                        <div className='block md:hidden text-lumera-label mb-1'>Status:</div>
-                        <span className={supernode.is_status_api_available ? 'text-lumera-teal' : 'text-lumera-red'}>{supernode.is_status_api_available ? 'Online' : 'Offline'}</span>
-                      </td>
-                      <td className='cursor-pointer text-left'>
+                      <td className='cursor-pointer text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Hardware:</div>
-                        <div className='whitespace-nowrap'>• {supernode.metrics_report.status.CPUCores} cores</div>
-                        <div className='whitespace-nowrap'>• {supernode.metrics_report.status.MemoryTotalGb.toFixed(1)} GB RAM</div>
-                        <div className='whitespace-nowrap'>• {formatBytes(supernode.metrics_report.status.StorageTotalBytes)} total</div>
+                        {!Number(supernode.metrics_report.status.CPUCores) && !Number(supernode.metrics_report.status.CPUCores) && !Number(supernode.metrics_report.status.CPUCores) ?
+                          <>—</> :
+                          <>
+                            <div className='whitespace-nowrap'>
+                              {supernode.metrics_report.status.CPUCores} cores
+                            </div>
+                            <div className='whitespace-nowrap'>
+                              {supernode.metrics_report.status.MemoryTotalGb.toFixed(1)} GB RAM
+                            </div>
+                            <div className='whitespace-nowrap'>
+                              {formatBytes(supernode.metrics_report.status.StorageTotalBytes)} total
+                            </div>
+                          </>
+                        }
                       </td>
-                      <td className='cursor-pointer text-left'>
+                      <td className='cursor-pointer text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Storage Usage:</div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium whitespace-nowrap">
-                            {formatBytes(supernode.storage_used_bytes)}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {(supernode.storage_usage_percent ?? 0).toFixed(0)}%
-                          </span>
-                        </div>
                         <div className="w-40 bg-lumera-icon-bg rounded h-2 relative">
                           <div
                             className={`h-2 rounded ${getStorageUsagePercentClassName(supernode.storage_usage_percent)}`}
@@ -967,7 +1001,7 @@ export const SupernodesScreen = () => {
                             <Tooltip>
                               <Tooltip.Trigger>
                                 <div
-                                  className='absolute -top-3 w-2 h-2 rounded-full bg-lumera-blue-light border border-white tooltip tooltip-info'
+                                  className='absolute -top-2 w-2 h-2 rounded-full bg-lumera-blue-light border border-white tooltip tooltip-info'
                                   style={{ left: getP2pLeftPercent(supernode.storage_total_bytes, supernode.storage_usage_percent, supernode.p2p_db_size_mb) + '%' }}
                                 />
                               </Tooltip.Trigger>
@@ -994,28 +1028,36 @@ export const SupernodesScreen = () => {
                             </Tooltip> : null
                           }
                         </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-sm font-medium whitespace-nowrap">
+                            {formatBytes(supernode.storage_used_bytes)}
+                            <span className="text-xs text-gray-500 ml-1">
+                              ({(supernode.storage_usage_percent ?? 0).toFixed(0)}%)
+                            </span>
+                          </span>
+                        </div>
                         {getP2pBytes(supernode?.p2p_db_size_mb) ?
-                          <div className="text-xs text-gray-400 mt-1">
-                            <div className='whitespace-nowrap'>
+                          <div className="text-xs text-lumera-label mt-1">
+                            <div className='whitespace-nowrap flex gap-1'>
                               P2P DB: {formatBytes(getP2pBytes(supernode?.p2p_db_size_mb) || 0)}
+                              {supernode.p2p_records !== null ?
+                                <div className='whitespace-nowrap'>
+                                  ({formatCount(supernode.p2p_records)} records)
+                                </div> : null
+                              }
                             </div>
-                            {supernode.p2p_records !== null ?
-                              <div className='whitespace-nowrap'>
-                                {formatCount(supernode.p2p_records)} records
-                              </div> : null
-                            }
                           </div> : null
                         }
                       </td>
-                      <td className='cursor-pointer text-left'>
+                      <td className='cursor-pointer text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Participation:</div>
                         {getParticipationPercent(supernode.supernode_account)}
                       </td>
-                      <td className='cursor-pointer text-left'>
+                      <td className='cursor-pointer text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Est. Payout:</div>
                         {getEverlightPayout(supernode)}
                       </td>
-                      <td className='cursor-pointer text-left'>
+                      <td className='cursor-pointer text-left align-top !pt-2 md:!pt-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Favorite:</div>
                         <AppButton
                           className='!rounded-full !p-2'
@@ -1028,11 +1070,11 @@ export const SupernodesScreen = () => {
                     </tr>
                   )
                 })}
-                {!supernodes?.length ?
+                {!supernodes?.length && !isSupernodeLoading ?
                   <tr
                     className={`flex flex-col md:table-row text-sm`}
                   >
-                    <td className='cursor-pointer text-left' colSpan={10}>
+                    <td className='cursor-pointer text-left' colSpan={6}>
                       <div className="text-xl font-bold py-0">No data</div>
                     </td>
                   </tr> : null

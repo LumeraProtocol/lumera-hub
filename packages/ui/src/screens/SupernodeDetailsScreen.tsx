@@ -1,5 +1,6 @@
 import {
   Card,
+  Button,
   Tooltip,
 } from 'tamagui';
 import dayjs from 'dayjs';
@@ -24,6 +25,7 @@ import {
   Cpu,
   MemoryStick,
   HardDrive,
+  ChevronLeft,
 } from 'lucide-react';
 
 import SectionTitle from '@/components/SectionTitle';
@@ -31,7 +33,12 @@ import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import AppButton from '@/components/AppButton';
 import useSupernodeDetails from '@/hooks/useSupernodeDetails';
-import { formatAddress, formatNumber, formatTokenDisplay, formatBytes } from '@/utils/format';
+import {
+  formatAddress,
+  formatNumber,
+  formatTokenDisplay,
+  formatBytes,
+} from '@/utils/format';
 import { TSupernode } from '@/types';
 
 const parseHostAndPort = (addr?: string): { host: string; port: number | null } => {
@@ -123,6 +130,7 @@ export const SupernodeDetailsScreen = () => {
     metrics,
     paymentInfo,
     lumeExponent,
+    recentActivitiesError,
     setShowMoreInfo,
     copyToClipboard,
     handleRefresh,
@@ -142,25 +150,40 @@ export const SupernodeDetailsScreen = () => {
       return 'Unknown'
     }
     const lastSate = latestChainState(supernode.supernode_account);
-    const state = (supernode?.current_state || lastSate)?.replaceAll('SUPERNODE_STATE_', '')?.replaceAll('#', '') || '';
+    const state = (lastSate || supernode?.current_state)?.replaceAll('SUPERNODE_STATE_', '')?.replaceAll('#', '') || '';
     if (state === 'POSTPONED') {
       return (
-        <span className="inline-block badge capitalize bg-lumera-warning rounded-lg py-1.5 px-3 text-[12px] text-lumera-navy text-center mt-1">
-          {state.toLowerCase()}
-        </span>
+        <div className='btn-yellow not-button mt-1 text-[12px] btn-label'>
+          <Button className='small !py-1.5 !px-3'>
+            <span className='capitalize'>{state.toLowerCase()}</span>
+          </Button>
+        </div>
+      );
+    }
+    if (state.toLowerCase() === 'storage_full') {
+      return (
+        <div className='btn-storage-full not-button mt-1 text-[12px] btn-label'>
+          <Button className='small'>
+            <span className='capitalize whitespace-nowrap'>{state.replaceAll('_', ' ').toLowerCase()}</span>
+          </Button>
+        </div>
       );
     }
     if (state === 'DISABLED') {
       return (
-        <span className="inline-block badge capitalize bg-lumera-red rounded-lg py-1.5 px-3 text-[12px] text-center mt-1">
-          {state.toLowerCase()}
-        </span>
+        <div className='btn-disabled not-button mt-1 text-[12px] btn-label'>
+          <Button className='small'>
+            <span className='capitalize whitespace-nowrap'>{state.replaceAll('_', ' ').toLowerCase()}</span>
+          </Button>
+        </div>
       );
     }
     return (
-      <span className="inline-block badge capitalize bg-lumera-teal rounded-lg py-1.5 px-3 text-[12px] text-center mt-1">
-        {state.toLowerCase()}
-      </span>
+      <div className='btn-green not-button mt-1 text-[12px] btn-label'>
+        <Button className='small !py-1.5 !px-3'>
+          <span className='capitalize'>{state.toLowerCase()}</span>
+        </Button>
+      </div>
     );
   }
 
@@ -258,7 +281,6 @@ export const SupernodeDetailsScreen = () => {
   const hwCpuBelow = metrics?.cpu_cores != null && (metrics?.cpu_cores as number) < MIN_CPU_CORES;
   const hwMemBelow = metrics?.memory_total_gb != null && (metrics?.memory_total_gb as number) < MIN_MEMORY_GB;
   const hwStorageBelow = metrics?.storage_total_bytes != null && (metrics?.storage_total_bytes as number) < MIN_STORAGE_BYTES;
-  const hwAnyBelow = hwCpuBelow || hwMemBelow || hwStorageBelow;
 
   const cpuPercent = () => {
     const n = metrics?.cpu_usage_percent as any;
@@ -292,11 +314,19 @@ export const SupernodeDetailsScreen = () => {
     const rec = metrics?.p2p_records as any;
     const parts: string[] = [formatBytes(b)];
     if (rec !== undefined && rec !== null && !isNaN(rec)) parts.push(`${formatCount(rec)} records`);
-    return `P2P DB: ${parts.join(' • ')}`;
+    return `P2P DB: ${parts[0]}${parts.length === 2 ? '(' + parts[1] + ')' : ''}`;
   }
 
   return (
     <div>
+      <div>
+        <AppLink
+          href='/supernodes'
+          className="flex items-start gap-2 text-lumera-label hover:text-lumera-green transition-colors mb-4 text-sm"
+        >
+          <ChevronLeft className="w-5 h-5"/>Back to Supernodes
+        </AppLink>
+      </div>
       <Card elevate size="$4" bordered className='w-full p-5 relative'>
         <AppLoading
           isLoading={isValidatorLoading || isLoading}
@@ -306,7 +336,14 @@ export const SupernodeDetailsScreen = () => {
           containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-          <div>
+          <div className='relative'>
+            <AppLoading
+              isLoading={isValidatorLoading || isLoading}
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
             <div className="flex items-start gap-3">
               <div>
                 {validator?.description?.identity ?
@@ -320,6 +357,9 @@ export const SupernodeDetailsScreen = () => {
               </div>
               <div>
                 <div>{validator?.description?.moniker}</div>
+                <div className='text-[12px] text-lumera-gray'>
+                  {balances ? formatTokenDisplay(balances) : '0'} LUME
+                </div>
                 <div className='flex items-start tiny:items-center flex-col tiny:flex-row gap-1'>
                   <span className="flex items-center gap-1">
                     <AppLink
@@ -334,9 +374,6 @@ export const SupernodeDetailsScreen = () => {
                     >
                       <Copy className="w-3 h-3 text-lumera-label"/>
                     </button>
-                  </span>
-                  <span className='text-[12px] text-lumera-label'>
-                    {balances ? formatTokenDisplay(balances, true) : '0'} LUME
                   </span>
                 </div>
                 <div className='flex items-center gap-1'>
@@ -361,11 +398,11 @@ export const SupernodeDetailsScreen = () => {
           </div>
           <div className="flex items-center md:justify-end gap-2">
             <div className="text-right mr-4">
-              <div className="text-xs text-lumera-label flex items-center justify-end gap-1 whitespace-nowrap">
+              <div className="text-xs text-lumera-gray flex items-center justify-end gap-1 whitespace-nowrap">
                 <ChartLine className="w-4 h-4"/>
                 <span>Network Activity</span>
               </div>
-              <div className="text-lg font-semibold text-lumera-label">
+              <div className="text-lg font-semibold text-lumera-gray">
                 {networkActivityPercent ? `${networkActivityPercent.toFixed(2)}%` : 'N/A'}
               </div>
             </div>
@@ -377,7 +414,7 @@ export const SupernodeDetailsScreen = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start mt-3">
-          <div className='text-base text-lumera-label'>
+          <div className='text-base text-lumera-gray'>
             <div className="flex flex-wrap items-center gap-1 tiny:gap-3 text-sm">
               <div className='flex gap-1 items-center min-w-32'>
                 <Network className='w-4 h-4' />
@@ -481,19 +518,19 @@ export const SupernodeDetailsScreen = () => {
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 flex-col tiny:flex-row">
                 <div className="flex items-center gap-1">
-                  <span className="text-gray-500">Action:</span>
+                  <span className="text-lumera-gray">Action:</span>
                   <span>
                     {actionLume() !== null ? formatLume(actionLume()) : actionRewardsText()}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="text-gray-500">Fees:</span>
+                  <span className="text-lumera-gray">Fees:</span>
                   <span>
                     {feesLume() !== null ? formatLume(feesLume()) : finalizeFeesText()}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="text-gray-500">Profit:</span>
+                  <span className="text-lumera-gray">Profit:</span>
                   <span className={profitLume() != null && Number(profitLume()) < 0 ? 'text-error' : 'text-base-content'}>
                     {formatLume(profitLume())}
                   </span>
@@ -502,22 +539,22 @@ export const SupernodeDetailsScreen = () => {
             </div>
 
           </div>
-          <div className='text-lumera-label'>
+          <div className='text-lumera-gray'>
             <div className='flex gap-1 items-center min-w-32'>
               <Server className='w-4 h-4' />
               <span>Payments</span>
             </div>
             {hardwareSummaryLine() ?
-              <div className='text-sm font-medium mt-2'>{hardwareSummaryLine()}</div> : null
+              <div className='text-sm font-medium mt-2 text-lumera-label'>{hardwareSummaryLine()}</div> : null
             }
             <div className='mt-2 text-sm'>
               <div className="mb-1 flex items-center justify-between">
-                <span className={`flex items-center gap-1 ${hwCpuBelow ? 'text-error tooltip tooltip-error' : 'text-gray-500'}`}
+                <span className={`flex items-center gap-1 ${hwCpuBelow ? 'text-error tooltip tooltip-error' : 'text-lumera-gray'}`}
                 >
                   <Cpu className="w-4 h-4" />
                   CPU
                 </span>
-                <span>{metrics?.cpu_cores ?? '—' } cores • {formatCpuPercent(1)}</span>
+                <span className='text-lumera-label'>{metrics?.cpu_cores ?? '—' } cores • {formatCpuPercent(1)}</span>
               </div>
               <div className="w-full bg-lumera-icon-bg rounded h-2">
                 <div className="h-2 rounded bg-lumera-teal" style={{ width: Math.min(cpuPercent(), 100) + '%' }}></div>
@@ -526,15 +563,15 @@ export const SupernodeDetailsScreen = () => {
             <div className='mt-3 text-sm'>
               <div className="mb-1 flex items-center justify-between">
                 <span
-                  className={`flex items-center gap-1 ${hwMemBelow ? 'text-lumera-red tooltip tooltip-error' : 'text-lumera-label'}`}
+                  className={`flex items-center gap-1 ${hwMemBelow ? 'text-lumera-red tooltip tooltip-error' : 'text-lumera-gray'}`}
                 >
                   <MemoryStick className="w-4 h-4" />
                   Memory
                 </span>
-                <span>
+                <span className='text-lumera-label'>
                   {(metrics?.memory_used_gb ?? 0).toFixed(1)} /
                   {(metrics?.memory_total_gb ?? 0).toFixed(1)} GB
-                  • {formatPercent(metrics?.memory_usage_percent, 1)}
+                  ({formatPercent(metrics?.memory_usage_percent, 1)})
                 </span>
               </div>
               <div className="w-full bg-lumera-icon-bg rounded h-2">
@@ -542,27 +579,26 @@ export const SupernodeDetailsScreen = () => {
               </div>
             </div>
             <div className='text-lumera-label text-sm mt-3'>
-              <div className="mb-1 flex items-center justify-between">
+              <div className="mb-1 flex items-center justify-between text-lumera-gray">
                 <span
-                  className={`flex items-center gap-1 ${hwStorageBelow ? 'text-lumera-red tooltip tooltip-error' : 'text-lumera-label'}`}
+                  className={`flex items-center gap-1 ${hwStorageBelow ? 'text-lumera-red tooltip tooltip-error' : 'text-lumera-gray'}`}
                 >
                   <HardDrive className="w-4 h-4" />
                   Storage
                 </span>
-                <span>
+                <span className='text-lumera-label'>
                   {formatBytes(metrics?.storage_used_bytes || 0)} /
-                  {formatBytes(metrics?.storage_total_bytes || 0)}
-                  • {formatPercent(metrics?.storage_usage_percent, 0)}
+                  {formatBytes(metrics?.storage_total_bytes || 0)}({formatPercent(metrics?.storage_usage_percent, 0)})
                 </span>
               </div>
               <div className="w-full bg-lumera-icon-bg rounded h-2 relative mt-1">
-                <div className={`h-2 w-full rounded ${(metrics?.storage_usage_percent||0) <= 60 ? 'bg-lumera-teal' : ''} ${(metrics?.storage_usage_percent||0) > 60 && (metrics?.storage_usage_percent||0) <= 80? 'bg-lumera-warning' : ''} ${(metrics?.storage_usage_percent||0) > 60 && (metrics?.storage_usage_percent||0) <= 80 ? 'bg-lumera-red' : ''}`}
+                <div className={`h-2 w-full rounded ${(metrics?.storage_usage_percent||0) <= 60 ? 'bg-lumera-teal' : ''} ${(metrics?.storage_usage_percent||0) > 60 && (metrics?.storage_usage_percent||0) <= 80 ? 'bg-lumera-warning' : ''} ${(metrics?.storage_usage_percent||0) > 80 ? 'bg-lumera-red' : ''}`}
                 style={{width: Math.min(metrics?.storage_usage_percent||0, 100) + '%' }}></div>
                 {getP2pBytes() ?
                   <Tooltip>
                     <Tooltip.Trigger>
                       <div
-                        className='absolute -top-3 w-2 h-2 rounded-full bg-lumera-blue-light border border-white tooltip tooltip-info'
+                        className='absolute -top-2 w-2 h-2 rounded-full bg-lumera-blue-light border border-white tooltip tooltip-info'
                         style={{ transform: 'translateX(-50%)', left: getP2pLeftPercent() + '%' }}
                       />
                     </Tooltip.Trigger>
@@ -590,157 +626,157 @@ export const SupernodeDetailsScreen = () => {
                 }
               </div>
               {getP2pBytes() ?
-                <div className="text-xs text-gray-400 mt-1">
+                <div className="text-xs text-gray-400 mt-2 flex">
                   <div>
                     P2P DB: {formatBytes(getP2pBytes() || 0)}
                   </div>
                   {metrics?.p2p_records !== null ?
                     <div>
-                      {formatCount(metrics?.p2p_records)} records
+                      ({formatCount(metrics?.p2p_records)} records)
                     </div> : null
                   }
                 </div> : null
               }
             </div>
-
           </div>
         </div>
-        <div className="mt-3 border-t-[1px] border-lumera-label pt-3">
+        <div className="mt-4 border-t-[1px] border-lumera-label pt-3">
           <span className="text-lumera-label text-sm">This supernode provides Cascade service</span>
         </div>
-      </Card>
-      <div className="mt-6">
-        <Card elevate size="$4" bordered className='w-full p-5 relative'>
-          <button type="button" className="border-0 bg-transparent cursor-pointer" onClick={() => setShowMoreInfo(!showMoreInfo)}>
-            <SectionTitle className='mb-0 flex justify-between items-center'>
-              <div className='flex items-center gap-1.5'>
-                <Info className='w-5 h-5' />
-                <span>More info</span>
-              </div>
-              {showMoreInfo ?
-                <ChevronUp className='w-5 h-5' /> :
-                <ChevronDown className='w-5 h-5' />
-              }
-            </SectionTitle>
-          </button>
-          {showMoreInfo ?
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-3 mt-3'>
-              <Card elevate size="$4" bordered className='w-full estimated-rewards-card p-4 relative'>
-                <AppLoading
-                  isLoading={isLoading}
-                  className="w-10 h-10 !border-2"
-                  iconWidth={20}
-                  iconHeight={20}
-                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
-                />
-                <SectionTitle className='mb-0 !text-sm flex items-center gap-1.5'>
-                  <History className='w-4 h-4' />
-                  <span>State History</span>
-                </SectionTitle>
-                <div className='mt-3'>
-                  {supernode?.states?.length ?
-                    <>
-                      {supernode.states.map((state) => (
-                        <div className="flex justify-between text-sm mb-1 text-lumera-label" key={`${state.state}-${state.height}`}>
-                          <span >{state.state.replace(/^SUPERNODE_STATE_/,'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())}</span>
-                          <span>#{state.height}</span>
-                        </div>
-                      ))}
-                    </> : <div className="text-sm  text-lumera-label">No state history</div>
-                  }
+        <div className="mt-2">
+          <Card elevate size="$4" bordered className='w-full p-3 relative !shadow-none !border-none !px-0'>
+            <button type="button" className="border-0 bg-transparent cursor-pointer" onClick={() => setShowMoreInfo(!showMoreInfo)}>
+              <SectionTitle className='mb-0 flex justify-between items-center text-lumera-gray'>
+                <div className='flex items-center gap-1.5'>
+                  <span className='text-base'>More info</span>
                 </div>
-              </Card>
-              <Card elevate size="$4" bordered className='w-full estimated-rewards-card p-4 relative'>
-                <AppLoading
-                  isLoading={isLoading}
-                  className="w-10 h-10 !border-2"
-                  iconWidth={20}
-                  iconHeight={20}
-                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
-                />
-                <SectionTitle className='mb-0 !text-sm flex items-center gap-1.5'>
-                  <Network className='w-4 h-4' />
-                  <span>IP Changes</span>
-                </SectionTitle>
-                <div className='mt-3'>
-                  {supernode?.prev_ip_addresses?.length ?
-                    <>
-                      {supernode.prev_ip_addresses.map((ip) => (
-                        <div className="flex justify-between text-sm text-lumera-label flex-col tiny:flex-row mb-2 tiny:mb-0" key={`${ip.address}-${ip.height}`}>
-                          <span className="flex items-center gap-2">
-                            <span className="font-mono">{ip.address}</span>
-                            <button
-                              className="p-1 hover:text-white transition-colors cursor-pointer"
-                              onClick={() => copyToClipboard(ip.address || '')}
-                            >
-                              <Copy className="w-4 h-4"/>
-                            </button>
-                          </span>
-                          <span className="font-mono">#{ip.height}</span>
-                        </div>
-                      ))}
-                    </> : <div className="text-sm text-lumera-label">No IP history</div>
-                  }
-                </div>
-              </Card>
-              <Card elevate size="$4" bordered className='w-full estimated-rewards-card p-4 relative'>
-                <AppLoading
-                  isLoading={isLoading}
-                  className="w-10 h-10 !border-2"
-                  iconWidth={20}
-                  iconHeight={20}
-                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
-                />
-                <SectionTitle className='mb-0 !text-sm flex items-center gap-1.5'>
-                  <ChartColumnIncreasing className='w-4 h-4' />
-                  <span>Metrics</span>
-                </SectionTitle>
-                <div className='mt-3'>
-                  {Object.keys(extraMetrics).length > 0 ? (
-                    <div className="grid grid-cols-1 gap-2 text-sm">
-                      {Object.entries(extraMetrics).map(([key, val]) => (
-                        <div
-                          key={String(key)}
-                          className="flex justify-between text-sm  text-lumera-label"
-                        >
-                          <span className="text-gray-500">{key}</span>
-                          <span className="font-mono break-all">
-                            {typeof val === 'object' && val !== null
-                              ? JSON.stringify(val)
-                              : String(val)}
-                          </span>
-                        </div>
-                      ))}
+                {showMoreInfo ?
+                  <ChevronUp className='w-5 h-5' /> :
+                  <ChevronDown className='w-5 h-5' />
+                }
+              </SectionTitle>
+            </button>
+            {showMoreInfo ?
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3 mt-3'>
+                <Card elevate size="$4" bordered className='w-full estimated-rewards-card p-4 relative'>
+                  <AppLoading
+                    isLoading={isLoading}
+                    className="w-10 h-10 !border-2"
+                    iconWidth={20}
+                    iconHeight={20}
+                    containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                  />
+                  <SectionTitle className='mb-0 !text-sm flex items-center gap-1.5'>
+                    <History className='w-4 h-4' />
+                    <span>State History</span>
+                  </SectionTitle>
+                  <div className='mt-3 h-[392px] overflow-auto'>
+                    {supernode?.states?.length ?
+                      <>
+                        {supernode.states.map((state) => (
+                          <div className="flex justify-between text-sm mb-1 text-lumera-gray" key={`${state.state}-${state.height}`}>
+                            <span >{state.state.replace(/^SUPERNODE_STATE_/,'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())}</span>
+                            <span>#{state.height}</span>
+                          </div>
+                        ))}
+                      </> : <div className="text-sm  text-lumera-gray">No state history</div>
+                    }
+                  </div>
+                </Card>
+                <div className="flex flex-col gap-3">
+                  <Card elevate size="$4" bordered className='w-full estimated-rewards-card p-4 relative'>
+                    <AppLoading
+                      isLoading={isLoading}
+                      className="w-10 h-10 !border-2"
+                      iconWidth={20}
+                      iconHeight={20}
+                      containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                    />
+                    <SectionTitle className='mb-0 !text-sm flex items-center gap-1.5'>
+                      <Network className='w-4 h-4' />
+                      <span>IP Changes</span>
+                    </SectionTitle>
+                    <div className='mt-3 h-[72px] overflow-auto'>
+                      {supernode?.prev_ip_addresses?.length ?
+                        <>
+                          {supernode.prev_ip_addresses.map((ip) => (
+                            <div className="flex justify-between text-sm text-lumera-gray flex-col tiny:flex-row mb-2 tiny:mb-0" key={`${ip.address}-${ip.height}`}>
+                              <span className="flex items-center gap-2">
+                                <span className="font-mono">{ip.address}</span>
+                                <button
+                                  className="p-1 hover:text-white transition-colors cursor-pointer"
+                                  onClick={() => copyToClipboard(ip.address || '')}
+                                >
+                                  <Copy className="w-4 h-4"/>
+                                </button>
+                              </span>
+                              <span className="font-mono">#{ip.height}</span>
+                            </div>
+                          ))}
+                        </> : <div className="text-sm text-lumera-gray">No IP history</div>
+                      }
                     </div>
-                  ) : (
-                    <div className="text-sm text-lumera-label">No metrics</div>
-                  )}
+                  </Card>
+                  <Card elevate size="$4" bordered className='w-full estimated-rewards-card p-4 relative'>
+                    <AppLoading
+                      isLoading={isLoading}
+                      className="w-10 h-10 !border-2"
+                      iconWidth={20}
+                      iconHeight={20}
+                      containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                    />
+                    <SectionTitle className='mb-0 !text-sm flex items-center gap-1.5'>
+                      <ChartColumnIncreasing className='w-4 h-4' />
+                      <span>Metrics</span>
+                    </SectionTitle>
+                    <div className='mt-3 h-14 overflow-auto'>
+                      {Object.keys(extraMetrics).length > 0 ? (
+                        <div className="grid grid-cols-1 gap-2 text-sm">
+                          {Object.entries(extraMetrics).map(([key, val]) => (
+                            <div
+                              key={String(key)}
+                              className="flex justify-between text-sm text-lumera-gray"
+                            >
+                              <span className="text-lumera-gray">{key}</span>
+                              <span className="font-mono break-all">
+                                {typeof val === 'object' && val !== null
+                                  ? JSON.stringify(val)
+                                  : String(val)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-lumera-gray">No metrics</div>
+                      )}
+                    </div>
+                  </Card>
+                  <Card elevate size="$4" bordered className='w-full estimated-rewards-card p-4 relative'>
+                    <AppLoading
+                      isLoading={isLoading}
+                      className="w-10 h-10 !border-2"
+                      iconWidth={20}
+                      iconHeight={20}
+                      containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                    />
+                    <SectionTitle className='mb-0 !text-sm flex items-center gap-1.5'>
+                      <BadgeAlert className='w-4 h-4' />
+                      <span>Evidence</span>
+                    </SectionTitle>
+                    <div className='mt-3'>
+                      {supernode?.evidence?.length ?
+                        <div className="space-y-2 text-sm text-lumera-gray">
+                          <pre className="bg-lumera-icon-bg p-2 rounded overflow-auto h-28"><code>{JSON.stringify(supernode?.evidence, null, 2)}</code></pre>
+                        </div> : <div className="text-sm text-lumera-gray h-28">No evidence</div>
+                      }
+                    </div>
+                  </Card>
                 </div>
-              </Card>
-              <Card elevate size="$4" bordered className='w-full estimated-rewards-card p-4 relative'>
-                <AppLoading
-                  isLoading={isLoading}
-                  className="w-10 h-10 !border-2"
-                  iconWidth={20}
-                  iconHeight={20}
-                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
-                />
-                <SectionTitle className='mb-0 !text-sm flex items-center gap-1.5'>
-                  <BadgeAlert className='w-4 h-4' />
-                  <span>Evidence</span>
-                </SectionTitle>
-                <div className='mt-3'>
-                  {supernode?.evidence?.length ?
-                    <div className="space-y-2 text-sm text-lumera-label">
-                      <pre className="bg-lumera-icon-bg p-2 rounded overflow-auto"><code>{JSON.stringify(supernode?.evidence, null, 2)}</code></pre>
-                    </div> : <div className="text-sm text-lumera-label">No evidence</div>
-                  }
-                </div>
-              </Card>
-            </div> : null
-          }
-        </Card>
-      </div>
+              </div> : null
+            }
+          </Card>
+        </div>
+      </Card>
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card elevate size="$4" bordered className='w-full p-5 relative'>
           <AppLoading
@@ -755,7 +791,7 @@ export const SupernodeDetailsScreen = () => {
           </SectionTitle>
           <div className='mt-3'>
             <div>Total: {formatNumber(cascadeAction?.total || 0, { decimalsLength: 0 })}</div>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-4 text-lumera-label text-sm mt-2">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-4 text-lumera-gray text-sm mt-2">
               <li className='flex justify-between'>
                 <div>Done</div>
                 <div>{formatNumber(cascadeAction?.states?.ACTION_STATE_DONE || 0, { decimalsLength: 0 })}</div>
@@ -788,7 +824,7 @@ export const SupernodeDetailsScreen = () => {
           </SectionTitle>
           <div className='mt-3'>
             <div>Total: {formatNumber(senseAction?.total || 0, { decimalsLength: 0 })}</div>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-4 text-lumera-label text-sm mt-2">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-4 text-lumera-gray text-sm mt-2">
               <li className='flex justify-between mb-1'>
                 <div>Done</div>
                 <div>{formatNumber(senseAction?.states?.ACTION_STATE_DONE || 0, { decimalsLength: 0 })}</div>
@@ -821,8 +857,8 @@ export const SupernodeDetailsScreen = () => {
             iconHeight={20}
             containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
           />
-          <div className='overflow-x-auto mt-6'>
-            <table className='w-full table !min-w-[950px]'>
+          <div className='overflow-auto mt-6 max-h-[550px]'>
+            <table className='w-full table'>
               <thead className='hidden md:table-header-group text-sm'>
                 <tr className='text-sm'>
                   <th align='left' className='text-lumera-label'>Time</th>
@@ -855,7 +891,36 @@ export const SupernodeDetailsScreen = () => {
                       <td className='cursor-pointer text-left'>
                         <div className='block md:hidden text-lumera-label mb-1'>Amount:</div>
                         <div>
-                          {formatNumber(last.action_price, { decimalsLength: 0 })} {last.action_price_denom}
+                          <Tooltip>
+                            <Tooltip.Trigger>
+                              <span>
+                                {formatTokenDisplay({
+                                  amount: last.action_price,
+                                  denom: last.action_price_denom,
+                                })} LUME
+                              </span>
+                            </Tooltip.Trigger>
+                            <Tooltip.Content
+                              enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                              exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                              scale={1}
+                              x={0}
+                              y={0}
+                              opacity={1}
+                              animation={[
+                                'quick',
+                                {
+                                  opacity: {
+                                    overshootClamping: true,
+                                  },
+                                },
+                              ]}
+                            >
+                              <div className='text-white'>
+                                {formatNumber(last.action_price, { decimalsLength: 0 })} {last.action_price_denom}
+                              </div>
+                            </Tooltip.Content>
+                          </Tooltip>
                         </div>
                       </td>
                       <td className='cursor-pointer text-left'>
@@ -863,7 +928,7 @@ export const SupernodeDetailsScreen = () => {
                         <div>
                           <AppLink
                             href={`/tx/${item.finalize_tx_id}`}
-                            className='text-lumera-teal hover:text-lumera-green text-base'
+                            className='text-lumera-teal hover:text-lumera-green'
                           >
                             {item?.finalize_tx_id ? formatAddress(item?.finalize_tx_id, 12, -6) : ''}
                           </AppLink>
@@ -874,7 +939,7 @@ export const SupernodeDetailsScreen = () => {
                         <div>
                           <AppLink
                             href={`/block/${last.height}`}
-                            className='text-lumera-teal hover:text-lumera-green text-base'
+                            className='text-lumera-teal hover:text-lumera-green'
                           >
                             {last.height}
                           </AppLink>
@@ -883,12 +948,21 @@ export const SupernodeDetailsScreen = () => {
                     </tr>
                   )
                 })}
-                {!recentActivities?.length ?
+                {!recentActivities?.length && !isRecentActivityLoading && !recentActivitiesError ?
                   <tr
                     className={`flex flex-col md:table-row text-sm`}
                   >
                     <td className='cursor-pointer text-left' colSpan={10}>
-                      <div className="text-xl font-bold py-0">No data</div>
+                      <div className="text-lg font-bold py-0 text-center">No data</div>
+                    </td>
+                  </tr> : null
+                }
+                {recentActivitiesError && !isRecentActivityLoading ?
+                  <tr
+                    className={`flex flex-col md:table-row text-sm`}
+                  >
+                    <td className='cursor-pointer text-left' colSpan={10}>
+                      <div className="py-0 text-center text-lumera-red">{recentActivitiesError}</div>
                     </td>
                   </tr> : null
                 }

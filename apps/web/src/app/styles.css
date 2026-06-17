@@ -292,6 +292,31 @@
 .btn-red:not(.not-button) .is_Button:hover {
   background-color: #fe6a6a !important;
 }
+.btn-red.not-button .is_Button,
+.btn-yellow.not-button .is_Button,
+.btn-green.not-button .is_Button {
+  cursor: default !important;
+}
+.btn-red.btn-label .is_Button {
+  color: #fe6a6a !important;
+  background-color: #853030 !important;
+}
+.btn-storage-full.btn-label .is_Button {
+  color: #f87272 !important;
+  background-color: #673b3b !important;
+}
+.btn-disabled.btn-label .is_Button {
+  color: #8b94a2 !important;
+  background-color: #29313e !important;
+}
+.btn-red.btn-label .is_Button,
+.btn-yellow.btn-label .is_Button,
+.btn-disabled.btn-label .is_Button,
+.btn-storage-full.btn-label .is_Button,
+.btn-green.btn-label .is_Button {
+  height: auto !important;
+  padding: 4px 8px !important;
+}
 .dropzone-wrapper {
   min-height: 140px;
   background-color: #1a212e;

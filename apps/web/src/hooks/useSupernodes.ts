@@ -175,6 +175,8 @@ const useSupernodes = () => {
   const [etaSecondsApprox, setEtaSecondsApprox] = useState(0);
   const [isTopSupernodeLoading, setTopSupernodeLoading] = useState(false);
   const [topSupernode, setTopSupernode] = useState<TSupernode[]>([]);
+  const [listSuperAccount, setListSuperAccount] = useState<string[]>([]);
+  const [supernodeAvatars, setSupernodeAvatars] = useState<string>('');
 
   const lumeAsset = useMemo(() => {
     const assets = assetList?.assets || [];
@@ -231,6 +233,7 @@ const useSupernodes = () => {
         const parseUrl = url.split('/');
         parseCache[identity] = parseUrl[parseUrl.length - 1];
         localStorage.setItem('supernode-avatars', JSON.stringify(parseCache));
+        getSupernodeAvatars();
       }
     } catch (error) {
       console.error(error);
@@ -392,9 +395,12 @@ const useSupernodes = () => {
     try {
       const { data } = await instance.get('/LumeraProtocol/lumera/supernode/v1/list_super_nodes?pagination.limit=1000&pagination.count_total=true');
       const results: TSuperNodeList = {};
-      for (const item of  data.supernodes) {
-        results[item.supernode_account] = item
+      const items: string[] = [];
+      for (const item of data.supernodes) {
+        results[item.supernode_account] = item;
+        items.push(item.supernode_account);
       }
+      setListSuperAccount(items);
       setListSuperNodes(results);
     } catch (error) {
       console.error(error);
@@ -472,6 +478,40 @@ const useSupernodes = () => {
     setTopSupernodeLoading(false);
   }
 
+  const logo = (identity?: string) => {
+    if (!identity) {
+      return '';
+    }
+    try {
+      const cache = supernodeAvatars;
+      if (cache) {
+        const parseCache = JSON.parse(cache);
+        if (!identity || !parseCache[identity]) {
+          fetchAvatar(identity);
+          return '';
+        }
+        const url = parseCache[identity] || '';
+        return url.startsWith('http')
+          ? url
+          : `https://s3.amazonaws.com/keybase_processed_uploads/${url}`;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    return '';
+  };
+
+  const getSupernodeAvatars = () => {
+    try {
+      const cache = localStorage.getItem('supernode-avatars');
+      if (cache) {
+        setSupernodeAvatars(cache);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   useEffect(() => {
     getSupernodes();
     getSupernodesStats();
@@ -485,11 +525,12 @@ const useSupernodes = () => {
     getSupernodeParams();
     getLatest();
     getTopSupernode();
+    getSupernodeAvatars();
   }, []);
 
   useEffect(() => {
     setSupernodes(getSupernodesByFilter(tab));
-  }, [statusFilter, stateFilter, versionFilter, tab]);
+  }, [statusFilter, stateFilter, versionFilter, tab, listSuperAccount, supernodes, supernodeAvatars]);
 
   useEffect(() => {
     if (lastDistributionHeight && paymentPeriodBlocks) {
@@ -556,6 +597,16 @@ const useSupernodes = () => {
           current_state: '',
         })
       })
+
+    } else {
+      const orderMap = new Map(
+        listSuperAccount.map((account, index) => [account, index])
+      );
+      newSupernodesOriginal = supernodesOriginal.sort((a, b) => {
+        const indexA = orderMap.get(a.supernode_account) ?? Infinity;
+        const indexB = orderMap.get(b.supernode_account) ?? Infinity;
+        return indexA - indexB;
+      });
     }
     switch (currentTab) {
       case 'favorites':
@@ -638,6 +689,7 @@ const useSupernodes = () => {
     blocksRemaining,
     etaSecondsApprox,
     isTopSupernodeLoading,
+    logo,
     handleTabChange,
     toggleFavorite,
     handleStatusFilterChange,

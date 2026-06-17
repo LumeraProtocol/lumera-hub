@@ -183,6 +183,7 @@ const useSupernodeDetails = () => {
   const [supernode, setSupernode] = useState<TSupernode | null>(null);
   const [isRecentActivityLoading, setRecentActivityLoading] = useState(false);
   const [recentActivities, setRecentActivities] = useState<TAction[]>([]);
+  const [recentActivitiesError, setRecentActivitiesError] = useState('');
   const [isCascadeActionLoading, setCascadeActionLoading] = useState(false);
   const [cascadeAction, setCascadeAction] = useState<TCascadeOrSenseAction | null>(null);
   const [isSenseActionLoading, setSenseActionLoading] = useState(false);
@@ -307,12 +308,14 @@ const useSupernodeDetails = () => {
     if (!account) {
       return null;
     }
+    setRecentActivitiesError('');
     setRecentActivityLoading(true);
     try {
       const { data } = await instance.getExternal(`${SNSCOPE_URL}v1/actions?supernode=${account}&limit=50&include_transactions=true`);
       setRecentActivities(data.items.filter((item: TAction) => item.finalize_tx_id));
     } catch (error) {
       console.error(error);
+      setRecentActivitiesError('Failed to fetch');
     }
     setRecentActivityLoading(false);
   }
@@ -489,6 +492,7 @@ const useSupernodeDetails = () => {
     isPaymentInfoLoading,
     paymentInfo,
     lumeExponent,
+    recentActivitiesError,
     setShowMoreInfo,
     copyToClipboard,
     handleRefresh,
