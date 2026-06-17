@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useMemo } from 'react';
 import { useChain } from '@interchain-kit/react';
+import { toast } from 'react-toastify';
 
 import * as instance from '@/utils/api';
 import {
@@ -14,6 +15,7 @@ import {
 import { IValidator } from '@/types/validator';
 import { SNSCOPE_URL } from '@/contants/network';
 import { CHAIN_NAME } from '@/contants/network';
+import useAppRouter from '@/hooks/useAppRouter';
 
 export const STATUS_OPTIONS = [
   {
@@ -49,7 +51,7 @@ export const STATE_OPTIONS = [
   },
 ];
 
-type TSupernodeAvatar = {
+export type TSupernodeAvatar = {
   [key: string]: string;
 }
 
@@ -82,7 +84,7 @@ type TState = {
   state: string;
 }
 
-type TSuperNodeList = {
+export type TSuperNodeList = {
   [key: string]: {
     supernode_account: string;
     validator_address: string;
@@ -134,6 +136,7 @@ let _blocksRemaining = 0
 
 const useSupernodes = () => {
   const { assetList } = useChain(CHAIN_NAME);
+  const { redirect } = useAppRouter();
   const [isSupernodeLoading, setSupernodeLoading] = useState(false);
   const [supernodes, setSupernodes] = useState<TSupernode[]>([]);
   const [supernodesOriginal, setSupernodesOriginal] = useState<TSupernode[]>([]);
@@ -592,6 +595,14 @@ const useSupernodes = () => {
     setSupernodes(getSupernodesByFilter(value));
   }
 
+  const copyToClipboard = (value: string) => {
+    navigator.clipboard.writeText(value);
+    toast.success("Copied to clipboard!", {
+      position: "bottom-right",
+      theme: "dark",
+    });
+  }
+
   return {
     isSupernodeLoading,
     supernodes,
@@ -633,6 +644,8 @@ const useSupernodes = () => {
     handleStateFilterChange,
     handleVersionFilterChange,
     handleRefresh,
+    copyToClipboard,
+    redirect,
   };
 }
 

@@ -92,6 +92,8 @@ export const SupernodesScreen = () => {
     handleStateFilterChange,
     handleVersionFilterChange,
     handleRefresh,
+    copyToClipboard,
+    redirect,
   } = useSupernodes();
 
   const getFreeStorageBytes = () => {
@@ -651,7 +653,7 @@ export const SupernodesScreen = () => {
                       </div>
                     </Tooltip.Content>
                   </Tooltip>
-                  <button className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer">
+                  <button className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => copyToClipboard(supernodeAccount?.base_account?.address || '')}>
                     <Copy className="w-4 h-4"/>
                   </button>
                 </div>
@@ -683,18 +685,6 @@ export const SupernodesScreen = () => {
             </ul>
           </div>
           {getNextPayout()}
-        </Card>
-      </div>
-      <div className="mt-6">
-        <Card elevate size="$4" bordered className='w-full p-5 relative'>
-          <SectionTitle className='mb-0 flex flex-col sm:flex-row items-start sm:items-end gap-2'>
-            <span>Uptime Heatmap</span>
-            <span className='text-sm text-lumera-label font-normal'>Node availability over the last 30 days</span>
-          </SectionTitle>
-          <Card elevate size="$4" bordered className='w-full estimated-rewards-card mt-3 p-6'>
-            <div className="mb-2 text-sm text-center">Uptime Heatmap Panel</div>
-            <div className="text-xs text-center">[Placeholder for embedded uptime heatmap panel]</div>
-          </Card>
         </Card>
       </div>
       <div className="mt-6">
@@ -876,6 +866,7 @@ export const SupernodesScreen = () => {
                     <tr
                       key={supernode.supernode_account}
                       className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col md:table-row text-sm`}
+                      onClick={() => redirect(`/supernodes/${supernode.supernode_account}`)}
                     >
                       <td className='cursor-pointer text-left'>
                         <div className='block md:hidden text-lumera-label mb-1'>Supernode:</div>
@@ -892,13 +883,13 @@ export const SupernodesScreen = () => {
                         </div>
                         <div className='text-lumera-label text-sm flex items-center gap-2 mt-2 whitespace-nowrap'>
                           <span>SN: {formatAddress(supernode.supernode_account, 12, -6)}</span>
-                          <button className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer">
+                          <button className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => copyToClipboard(supernode.supernode_account)}>
                             <Copy className="w-4 h-4"/>
                           </button>
                         </div>
                         <div className='text-lumera-label text-sm flex items-center gap-2 whitespace-nowrap'>
                           <span>Val: {formatAddress(supernode.validator_address, 12, -6)}</span>
-                          <button className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer">
+                          <button className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => copyToClipboard(supernode.validator_address)}>
                             <Copy className="w-4 h-4"/>
                           </button>
                         </div>
