@@ -10,9 +10,9 @@ import { Check, X, ChevronLeft, ChevronDown } from 'lucide-react';
 import dayjs from 'dayjs';
 
 import { AppLoading } from '@/components/Loading';
+import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
 import useReferralStats from '@/hooks/admin/useReferralStats';
-import { formatAddress } from '@/utils/format';
 
 export const ReferralStatsScreen = () => {
   const {
@@ -20,19 +20,50 @@ export const ReferralStatsScreen = () => {
     snagUser,
     totalPages,
     refers,
+    maxRefer,
+    isClaimLoading,
     handlePageClick,
+    handleClaim,
   } = useReferralStats();
+  const getAction = (refer: any, totalClaim: number) => {
+    if (refer?.claim) {
+      return (
+        <span className='text-lumera-teal'>Claimed</span>
+      )
+    }
+    if (totalClaim < Number(maxRefer)) {
+      return (
+        <AppButton
+          onClick={() => handleClaim(refer.lumeraAddress, 'refer')}
+          disabled={isClaimLoading}
+        >
+          Claim
+        </AppButton>
+      )
+    }
+
+    return null;
+  }
 
   const renderRefers = (lumeraAddress: string) => {
     if (!lumeraAddress) {
       return null;
     }
-    const myRefers = refers[lumeraAddress];
-    return myRefers?.map((r, index) => (
-      <div key={r.lumeraAddress}>
-        {index + 1}. {r.lumeraAddress}
-      </div>
-    ))
+    const myRefers = refers[lumeraAddress] || [];
+    const totalClaim = myRefers.filter((r) => r.claim === 1).length;
+    return (
+      <table>
+        <tbody>
+          {myRefers?.map((r, index) => (
+            <tr key={r.lumeraAddress}>
+              <td className='!px-3 !py-1'>{index + 1}.</td>
+              <td className='!px-3 !py-1'>{r.lumeraAddress}</td>
+              <td className='!px-3 !py-1'>{getAction(r, totalClaim)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )
   }
 
   return (

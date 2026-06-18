@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    if (!body?.snagAddress) {
+    if (!body?.snagAddress && !body.lumeraAddress) {
       return NextResponse.json(
         {
           success: false,
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!body?.loyaltyRuleID) {
+    if (!body?.loyaltyRuleID && !body.lumeraAddress) {
       return NextResponse.json(
         {
           success: false,
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       .where('id = :loyaltyRuleID', { loyaltyRuleID: body.loyaltyRuleID })
       .getRawOne();
 
-    if (!loyaltyRule) {
+    if (!loyaltyRule && !body.lumeraAddress) {
       return NextResponse.json(
         {
           success: false,
@@ -59,13 +59,22 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    let maxRefer = 10;
+    if (loyaltyRule?.config) {
+      const config = JSON.parse(loyaltyRule.config);
+      maxRefer = config.referralLink.maxRefer;
+    }
 
-    const config = JSON.parse(loyaltyRule.config)
-
-    const user = await snagUserRepo.createQueryBuilder()
+    let user = await snagUserRepo.createQueryBuilder()
       .select('snagAddress, lumeraAddress, userId')
       .where('snagAddress = :snagAddress', { snagAddress: body.snagAddress })
       .getRawOne();
+    if (!body.snagAddress) {
+      user = await snagUserRepo.createQueryBuilder()
+        .select('snagAddress, lumeraAddress, userId')
+        .where('lumeraAddress = :lumeraAddress', { lumeraAddress: body.lumeraAddress })
+        .getRawOne();
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -80,17 +89,35 @@ export async function POST(req: NextRequest) {
     const refers = await snagReferRepo.createQueryBuilder()
       .select('lumeraAddress')
       .addSelect('referAddress')
+      .addSelect('claim')
+      .addSelect('claimCascade')
       .addSelect('created_at')
       .where('referAddress = :referAddress', { referAddress: user.lumeraAddress })
       .orderBy('created_at', 'DESC')
       .getRawMany();
 
+    let totalClaim = await snagReferRepo
+        .createQueryBuilder()
+        .select('lumeraAddress')
+        .where('referAddress = :referAddress', { referAddress: user.lumeraAddress })
+        .andWhere("claim = '1'")
+        .getCount();
+
+    if (body?.type === 'cascade') {
+        totalClaim = await snagReferRepo
+          .createQueryBuilder()
+          .select('lumeraAddress')
+          .where('referAddress = :referAddress', { referAddress: user.lumeraAddress })
+          .andWhere("claimCascade = '1'")
+          .getCount();
+    }
     return NextResponse.json({
       status: true,
       referCode: user.lumeraAddress,
-      point: loyaltyRule.amount,
-      maxRefer: config.referralLink.maxRefer,
+      point: loyaltyRule?.amount || 50,
+      maxRefer,
       refers,
+      totalClaim: totalClaim || 0,
     });
   } catch (error) {
     console.error(error);

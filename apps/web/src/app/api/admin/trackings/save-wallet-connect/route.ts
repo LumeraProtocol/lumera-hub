@@ -174,18 +174,24 @@ export async function POST(req: NextRequest) {
                 .addSelect('startTime')
                 .addSelect('endTime')
                 .where("config LIKE '%referralLink%'")
+                .andWhere("name LIKE '%connects wallet%'")
+                .andWhere("name LIKE '%Invite%'")
                 .getRawOne();
 
               if (user && loyaltyRule) {
-                await client.post(`/api/loyalty/rules/${loyaltyRule.id}/complete`, {
-                  body: {
-                    userId: user.userId,
-                  },
-                });
-                await snagReferRepo.save({
-                  lumeraAddress: data.address,
-                  claim: 1,
-                });
+                try {
+                  await client.post(`/api/loyalty/rules/${loyaltyRule.id}/complete`, {
+                    body: {
+                      userId: user.userId,
+                    },
+                  });
+                  await snagReferRepo.save({
+                    lumeraAddress: data.address,
+                    claim: 1,
+                  });
+                } catch (error) {
+                  console.error(new Date(), `Wallet connect(rules complete) error. referAddress: ${referAddress}, loyaltyRuleID: ${loyaltyRule?.id}, userId: ${user.userId}. Error details: `, JSON.stringify(error));
+                }
               }
             }
           }

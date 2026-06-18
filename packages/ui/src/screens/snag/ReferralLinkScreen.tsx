@@ -25,9 +25,12 @@ interface IReferralLinkScreen {
   customTitle: string;
   point?: string;
   totalReferralLink?: string;
-  walletAddress?: string;
   refers: TRefer[];
+  type: string;
+  isClaimLoading: boolean;
+  totalClaim: number;
   onCopyReferLink: (link: string) => void;
+  onClaimLink: (address: string, type: string) => void;
 }
 
 export const ReferralLinkScreen = ({
@@ -37,10 +40,53 @@ export const ReferralLinkScreen = ({
   totalReferralLink = '10',
   point = '50 EXP',
   refers,
-  walletAddress,
+  type,
+  isClaimLoading,
+  totalClaim = 0,
+  onClaimLink,
   onCopyReferLink,
 }: IReferralLinkScreen) => {
   const { isConnected } = useWalletConnect();
+
+  const getAction = (refer: TRefer) => {
+    if (type === 'cascade') {
+      if (refer?.claimCascade) {
+        return (
+          <span className='text-lumera-teal'>Claimed</span>
+        )
+      }
+      if (totalClaim < Number(totalReferralLink)) {
+        return (
+          <AppButton
+            onClick={() => onClaimLink(refer.lumeraAddress, type)}
+            disabled={isClaimLoading}
+          >
+            Claim
+          </AppButton>
+        );
+      }
+      return null;
+    }
+
+    if (refer?.claim) {
+      return (
+        <span className='text-lumera-teal'>Claimed</span>
+      )
+    }
+
+    if (totalClaim < Number(totalReferralLink)) {
+      return (
+        <AppButton
+          onClick={() => onClaimLink(refer.lumeraAddress, type)}
+          disabled={isClaimLoading}
+        >
+          Claim
+        </AppButton>
+      )
+    }
+
+    return null;
+  }
 
   return (
     <div className='w-full relative'>
@@ -134,6 +180,7 @@ export const ReferralLinkScreen = ({
                     <tr className='text-sm'>
                       <th align='left' className='!py-2 !px-3'>Address</th>
                       <th align='left' className='!py-2 !px-3'>Created at</th>
+                      <th align='left' className='!py-2 !px-3'>&nbsp;</th>
                     </tr>
                   </thead>
                   <tbody className="text-sm">
@@ -147,6 +194,9 @@ export const ReferralLinkScreen = ({
                         <td className='!py-2 !px-3'>
                           <div className="md:hidden font-semibold text-gray-500 mr-2">Created at: </div>
                           <span className='break-words'>{dayjs(refer.created_at).format('MMMM DD, YYYY')} at {dayjs(refer.created_at).format('HH:mm:ss')}({dayjs(refer.created_at).fromNow()})</span>
+                        </td>
+                        <td className='!py-2 !px-3'>
+                          {getAction(refer)}
                         </td>
                       </tr>
                     ))}

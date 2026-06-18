@@ -479,5 +479,7 @@ export type TActionsStats = {
 export type TRefer = {
   lumeraAddress: string;
   referAddress: string;
+  claim: number;
+  claimCascade: number;
   created_at: string;
 }

@@ -8,7 +8,7 @@ import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { TRefer } from '@/types';
 
-const useSnagReferralLink = () => {
+const useSnagReferralLink = (type = '') => {
   const params = useParams();
   const [isLoading, setLoading] = useState(false);
   const { address } = useWalletConnect();
@@ -16,14 +16,16 @@ const useSnagReferralLink = () => {
     referCode: '',
     point: '50',
     maxRefer: '10',
+    totalClaim: 0,
   });
   const [refers, setRefers] = useState<TRefer[]>([]);
+  const [isClaimLoading, setClaimLoading] = useState(false);
 
   useEffect(() => {
-    if (location?.search) {
+    if (location?.search || address) {
       generateReferLink();
     }
-  }, [location.search])
+  }, [location.search, address]);
 
   const generateReferLink = async () => {
     setLoading(true);
@@ -33,21 +35,20 @@ const useSnagReferralLink = () => {
       const { data } = await instance.postExternal('/api/snag/refer-link', {
         snagAddress: walletAddress,
         loyaltyRuleID: params?.loyaltyRuleID || '',
+        lumeraAddress: address,
+        type,
       });
       if (data?.status) {
         setReferLinkInfo({
           referCode: data.referCode,
           point: data.point,
           maxRefer: data.maxRefer,
+          totalClaim: data.totalClaim,
         });
         setRefers(data.refers)
       }
     } catch (error) {
       console.error(error);
-      // toast.error((error as Error)?.message ||  'An unknown error occurred.', {
-      //   position: "bottom-right",
-      //   theme: "dark",
-      // });
     }
     setLoading(false);
   }
@@ -60,12 +61,38 @@ const useSnagReferralLink = () => {
     })
   }
 
+  const handleClaim = async (userAddress: string, type: string) => {
+    setClaimLoading(true);
+    try {
+      const { data } = await instance.postExternal('/api/snag/claim-refer', {
+        userAddress,
+        type,
+      });
+      if (data?.status) {
+        generateReferLink();
+      }
+      toast.success('Reward claimed successfully!', {
+        position: "bottom-right",
+        theme: "dark",
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error((error as Error)?.message ||  'An unknown error occurred.', {
+        position: "bottom-right",
+        theme: "dark",
+      });
+    }
+    setClaimLoading(false);
+  }
+
   return {
     isLoading,
     referLinkInfo,
     address,
     refers,
+    isClaimLoading,
     handleCopyReferLink,
+    handleClaim,
   }
 }
 

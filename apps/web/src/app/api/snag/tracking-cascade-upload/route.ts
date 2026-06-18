@@ -76,7 +76,9 @@ export async function POST(req: NextRequest) {
           .addSelect('config')
           .addSelect('startTime')
           .addSelect('endTime')
-          .where("config LIKE '%inviteUsersUploadToCascade%'")
+          .where("config LIKE '%referralLink%'")
+          .andWhere("name LIKE '%Invite%'")
+          .andWhere("name LIKE '%uploads to Cascade%'")
           .getRawOne();
 
         if (user && loyaltyRule) {

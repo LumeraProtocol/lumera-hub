@@ -9,10 +9,11 @@ const useTrackingUser = () => {
     setLoading(true);
     try {
       const referrer = sessionStorage.getItem('acquisitionSource');
+      const referralCode = sessionStorage.getItem('referral_code');
       await instance.postExternal(`/api/admin/trackings/save-wallet-connect`, {
         address,
-        acquisitionSource: referrer || 'Direct',
-        referralCode: sessionStorage.getItem('referral_code'),
+        acquisitionSource: referralCode ? 'referralCode' : referrer || 'Direct',
+        referralCode,
       });
     } catch (error) {
       console.error(error);

@@ -16,7 +16,9 @@ export default function Page() {
     referLinkInfo,
     address,
     refers,
+    isClaimLoading,
     handleCopyReferLink,
+    handleClaim,
   } = useSnagReferralLink();
 
   useEffect(() => {
@@ -39,11 +41,14 @@ export default function Page() {
           isLoading={isLoading}
           referLink={`${location.origin}/${address ? '?referral_code=' : ''}${address ? address : referLinkInfo?.referCode || ''}`}
           totalReferralLink={referLinkInfo?.maxRefer || '10'}
+          totalClaim={referLinkInfo?.totalClaim || 0}
           point={referLinkInfo.point}
           onCopyReferLink={handleCopyReferLink}
+          onClaimLink={handleClaim}
           customTitle="Invite Friends"
           refers={refers}
-          walletAddress={address}
+          type="refer"
+          isClaimLoading={isClaimLoading}
         />
       </div>
     </>

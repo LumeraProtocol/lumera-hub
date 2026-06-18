@@ -52,6 +52,8 @@ export async function GET(req: NextRequest) {
       refers = await snagReferRepo.createQueryBuilder()
         .select('lumeraAddress')
         .addSelect('referAddress')
+        .addSelect('claim')
+        .addSelect('claimCascade')
         .where('referAddress IN (:...lumeraAddresses)', { lumeraAddresses })
         .orderBy('created_at', 'DESC')
         .getRawMany();
@@ -61,6 +63,7 @@ export async function GET(req: NextRequest) {
       success: true,
       items: data,
       refers,
+      maxRefer: 10,
       pagination: {
         page,
         limit,
