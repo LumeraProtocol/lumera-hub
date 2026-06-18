@@ -15,6 +15,7 @@ import {
 
 import SectionTitle from '@/components/SectionTitle';
 import { AppLoading } from '@/components/Loading';
+import AppLink from '@/components/AppLink';
 import AppButton from '@/components/AppButton';
 import useSupernodes, { STATUS_OPTIONS, STATE_OPTIONS } from '@/hooks/useSupernodes';
 import {
@@ -331,13 +332,15 @@ export const SupernodesScreen = () => {
       everlightStatus(supernode.validator_address) === 'loading'
     ) {
       return (
-        <AppLoading
-          isLoading
-          className="w-10 h-10 !border-2"
-          iconWidth={20}
-          iconHeight={20}
-          containerClassName='relative w-10 h-10 z-50'
-        />
+        <div className='relative'>
+          <AppLoading
+            isLoading
+            className="w-10 h-10 !border-2"
+            iconWidth={20}
+            iconHeight={20}
+            containerClassName='relative w-10 h-10 z-50'
+          />
+        </div>
       );
     }
 
@@ -898,21 +901,27 @@ export const SupernodesScreen = () => {
                   return (
                     <tr
                       key={supernode.supernode_account}
-                      className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col md:table-row text-sm`}
-                      onClick={() => redirect(`/supernodes/${supernode.supernode_account}`)}
+                      className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col md:table-row text-sm hover:!bg-gray-800/60 transition-colors`}
                     >
-                      <td className='cursor-pointer text-left align-top !pb-2 md:!pb-[10px]'>
+                      <td className='text-left align-top !pb-2 md:!pb-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Supernode:</div>
-                        <div className='flex items-center gap-2'>
-                          {validator?.description?.identity ?
-                            <img
-                              src={logo(validator.description?.identity)}
-                              alt="avatar"
-                              className='w-4 h-4 rounded-full'
-                            /> :
-                            <CircleUser className="w-4 h-4"/>
-                          }
-                          <span className='whitespace-nowrap'>{validator?.description?.moniker || supernode.validator_moniker}</span>
+                        <div>
+                          <AppLink
+                            href={`/supernodes/${supernode.supernode_account}`}
+                            className='text-lumera-teal hover:text-lumera-green'
+                          >
+                            <span className='inline-flex items-center gap-2'>
+                              {validator?.description?.identity ?
+                                <img
+                                  src={logo(validator.description?.identity)}
+                                  alt="avatar"
+                                  className='w-4 h-4 rounded-full'
+                                /> :
+                                <CircleUser className="w-4 h-4"/>
+                              }
+                              <span className='whitespace-nowrap'>{validator?.description?.moniker || supernode.validator_moniker}</span>
+                            </span>
+                          </AppLink>
                         </div>
                         <div className='text-xs text-lumera-label flex items-center gap-2 mt-2 whitespace-nowrap'>
                           <span>SN: {formatAddress(supernode.supernode_account, 12, -6)}</span>
@@ -927,7 +936,7 @@ export const SupernodesScreen = () => {
                           </button>
                         </div>
                       </td>
-                      <td className='cursor-pointer text-left align-top !py-2 md:!py-[10px]'>
+                      <td className='text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>IP Address:</div>
                         <div className='md:max-w-40 break-all'>{supernode.ip_address}</div>
                         <div className='text-xs text-lumera-label'>
@@ -937,7 +946,7 @@ export const SupernodesScreen = () => {
                           <span className='text-lumera-label'>Status: </span> <span className={supernode.is_status_api_available ? 'text-lumera-teal' : 'text-lumera-red'}>{supernode.is_status_api_available ? 'Online' : 'Offline'}</span>
                         </div>
                       </td>
-                      <td className='cursor-pointer text-left align-top !py-2 md:!py-[10px]'>
+                      <td className='text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>State:</div>
                         <div>
                           {getState(supernode)}
@@ -973,7 +982,7 @@ export const SupernodesScreen = () => {
                           }
                         </div>
                       </td>
-                      <td className='cursor-pointer text-left align-top !py-2 md:!py-[10px]'>
+                      <td className='text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Hardware:</div>
                         {!Number(supernode.metrics_report.status.CPUCores) && !Number(supernode.metrics_report.status.CPUCores) && !Number(supernode.metrics_report.status.CPUCores) ?
                           <>—</> :
@@ -990,7 +999,7 @@ export const SupernodesScreen = () => {
                           </>
                         }
                       </td>
-                      <td className='cursor-pointer text-left align-top !py-2 md:!py-[10px]'>
+                      <td className='text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Storage Usage:</div>
                         <div className="w-40 bg-lumera-icon-bg rounded h-2 relative">
                           <div
@@ -1049,15 +1058,15 @@ export const SupernodesScreen = () => {
                           </div> : null
                         }
                       </td>
-                      <td className='cursor-pointer text-left align-top !py-2 md:!py-[10px]'>
+                      <td className='text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Participation:</div>
                         {getParticipationPercent(supernode.supernode_account)}
                       </td>
-                      <td className='cursor-pointer text-left align-top !py-2 md:!py-[10px]'>
+                      <td className='text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Est. Payout:</div>
                         {getEverlightPayout(supernode)}
                       </td>
-                      <td className='cursor-pointer text-left align-top !pt-2 md:!pt-[10px]'>
+                      <td className='text-left align-top !pt-2 md:!pt-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Favorite:</div>
                         <AppButton
                           className='!rounded-full !p-2'
@@ -1074,7 +1083,7 @@ export const SupernodesScreen = () => {
                   <tr
                     className={`flex flex-col md:table-row text-sm`}
                   >
-                    <td className='cursor-pointer text-left' colSpan={6}>
+                    <td className='text-left' colSpan={6}>
                       <div className="text-xl font-bold py-0">No data</div>
                     </td>
                   </tr> : null

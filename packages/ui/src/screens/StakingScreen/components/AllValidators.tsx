@@ -252,9 +252,8 @@ export default function AllValidators({
                         const uptime = getUptime(validator);
                         const uptimePercent = percent(uptime);
                         return (
-                          <tr key={validator.operator_address} className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col md:table-row text-base`}>
+                          <tr key={validator.operator_address} className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col md:table-row text-base hover:!bg-gray-800/60 transition-colors`}>
                             <td
-                              onClick={() => handleValidatorClick(validator.operator_address)}
                               className='cursor-pointer text-left !pb-1'
                             >
                               <div className="md:hidden font-semibold text-gray-500 mr-2">Validator: </div>
@@ -263,7 +262,6 @@ export default function AllValidators({
                               </AppLink>
                             </td>
                             <td
-                              onClick={() => handleValidatorClick(validator.operator_address)}
                               className='cursor-pointer text-left md:text-right !py-1'
                             >
                               <div className="md:hidden font-semibold text-gray-500 mr-2">Staked Amount: </div>
@@ -275,14 +273,12 @@ export default function AllValidators({
                               </span>
                             </td>
                             <td
-                              onClick={() => handleValidatorClick(validator.operator_address)}
                               className='cursor-pointer text-left md:text-right !py-1'
                             >
                               <div className="md:hidden font-semibold text-gray-500 mr-2">Commission: </div>
                               <Text>{formatCommissionRate(validator.commission?.commission_rates?.rate)}</Text>
                             </td>
                             <td
-                              onClick={() => handleValidatorClick(validator.operator_address)}
                               className='cursor-pointertext-left md:text-right !py-1'
                             >
                               <div className="md:hidden font-semibold text-gray-500 mr-2">Voting Power: </div>
