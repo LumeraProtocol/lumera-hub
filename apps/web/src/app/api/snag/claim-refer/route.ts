@@ -113,7 +113,6 @@ export async function POST(req: NextRequest) {
         .getCount();
       limitClaim = 5;
     }
-    console.log(loyaltyRule?.id, user.userId, limitClaim, totalClaim);
 
     if (totalClaim < limitClaim) {
       try {
@@ -122,6 +121,17 @@ export async function POST(req: NextRequest) {
             userId: user.userId,
           },
         });
+        if (body.type === 'casacde') {
+          await snagReferRepo.save({
+            lumeraAddress: body?.userAddress,
+            claimCascade: 1,
+          });
+        } else {
+          await snagReferRepo.save({
+            lumeraAddress: body?.userAddress,
+            claim: 1,
+          });
+        }
       } catch (error) {
         console.error(new Date(), `Auto complete error. userAddress: ${body?.userAddress}, type: ${body?.type}, loyaltyRuleID: ${loyaltyRule?.id}, userId: ${user.userId}. Error details: `, JSON.stringify(error));
         return NextResponse.json({
@@ -132,17 +142,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (body.type === 'casacde') {
-      await snagReferRepo.save({
-        lumeraAddress: body?.userAddress,
-        claimCascade: 1,
-      });
-    } else {
-      await snagReferRepo.save({
-        lumeraAddress: body?.userAddress,
-        claim: 1,
-      });
-    }
 
     return NextResponse.json({
       status: true,
