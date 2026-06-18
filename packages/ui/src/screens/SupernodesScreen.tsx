@@ -133,8 +133,8 @@ export const SupernodesScreen = () => {
     }
     const latestVersion = matrix.latest_version;
     const total = supernodes.length;
-    const compliant = supernodes.filter(n => (n.actual_version || '').toLowerCase() === latestVersion.toLowerCase()).length;
-    return ((compliant / total) * 100).toFixed(1);
+    const compliant = supernodes.filter(n => (n.actual_version || '')?.toLowerCase() === latestVersion?.toLowerCase()).length;
+    return ((compliant / total) * 100)?.toFixed(1);
   }
 
   const latestChainState = (supernode_account: string) => {
@@ -182,7 +182,7 @@ export const SupernodesScreen = () => {
     return (
       <div className='btn-green not-button mt-1 text-[12px] btn-label'>
         <Button className='small !py-1.5 !px-3'>
-          <span className='capitalize'>{state.toLowerCase()}</span>
+          <span className='capitalize'>{state?.toLowerCase()}</span>
         </Button>
       </div>
     );
@@ -919,7 +919,7 @@ export const SupernodesScreen = () => {
                                 /> :
                                 <CircleUser className="w-4 h-4"/>
                               }
-                              <span className='whitespace-nowrap'>{validator?.description?.moniker || supernode.validator_moniker}</span>
+                              <span className='whitespace-nowrap'>{validator?.description?.moniker || supernode.validator_moniker || '-'}</span>
                             </span>
                           </AppLink>
                         </div>
@@ -984,7 +984,7 @@ export const SupernodesScreen = () => {
                       </td>
                       <td className='text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Hardware:</div>
-                        {!Number(supernode.metrics_report.status.CPUCores) && !Number(supernode.metrics_report.status.CPUCores) && !Number(supernode.metrics_report.status.CPUCores) ?
+                        {!Number(supernode?.metrics_report?.status.CPUCores) && !Number(supernode?.metrics_report?.status?.CPUCores) && !Number(supernode?.metrics_report?.status.CPUCores) ?
                           <>—</> :
                           <>
                             <div className='whitespace-nowrap'>
@@ -1037,14 +1037,16 @@ export const SupernodesScreen = () => {
                             </Tooltip> : null
                           }
                         </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-sm font-medium whitespace-nowrap">
-                            {formatBytes(supernode.storage_used_bytes)}
-                            <span className="text-xs text-gray-500 ml-1">
-                              ({(supernode.storage_usage_percent ?? 0).toFixed(0)}%)
+                        {supernode?.storage_used_bytes ?
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-sm font-medium whitespace-nowrap">
+                              {formatBytes(supernode.storage_used_bytes)}
+                              <span className="text-xs text-gray-500 ml-1">
+                                ({(supernode.storage_usage_percent ?? 0).toFixed(0)}%)
+                              </span>
                             </span>
-                          </span>
-                        </div>
+                          </div> : null
+                        }
                         {getP2pBytes(supernode?.p2p_db_size_mb) ?
                           <div className="text-xs text-lumera-label mt-1">
                             <div className='whitespace-nowrap flex gap-1'>
