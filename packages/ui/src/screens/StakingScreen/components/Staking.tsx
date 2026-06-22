@@ -255,14 +255,14 @@ export default function Staking({
                 </div>
               </div>
             ) : null}
-            {accountInfo?.delegations?.sort((a, b) => sortFunc(a, b)).map(delegation => {
+            {accountInfo?.delegations?.sort((a, b) => sortFunc(a, b)).map((delegation, index) => {
               const validator = allValidators.find(v => v.operator_address === delegation.delegation.validator_address);
               const reward = accountInfo?.rewards.find(v => v.validator_address === delegation.delegation.validator_address);
 
               return (
                 <div
                   key={delegation.delegation.validator_address}
-                  className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg"
+                  className={`grid grid-cols-12 gap-[6px] md:gap-4 items-center ${index % 2 === 0 ? 'bg-gray-900' : 'bg-[#161e2a]'} hover:bg-gray-800/60 transition-colors p-4 rounded-lg`}
                 >
                   <div
                     className="col-span-12 md:col-span-2"

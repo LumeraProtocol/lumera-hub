@@ -15,6 +15,7 @@ const useSnagVerify = () => {
   });
   const [txHash, setTxhash] = useState('');
   const [isVerified, setIsVerified] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   const verifyClaimTokens = async () => {
     setLoading(true);
@@ -22,6 +23,13 @@ const useSnagVerify = () => {
       type: '',
       content: '',
     });
+    if (!recaptchaToken) {
+      setMessage({
+        type: 'error',
+        content: 'Please verify the reCAPTCHA.',
+      });
+      return;
+    }
     if (!txHash) {
       setMessage({
         type: 'error',
@@ -37,6 +45,7 @@ const useSnagVerify = () => {
         snagAddress: walletAddress,
         loyaltyRuleID: params?.loyaltyRuleID || '',
         txHash: parseTxHash[parseTxHash.length - 1],
+        recaptchaToken,
       });
       toast.success("Quest is verified!", {
         position: "bottom-right",
@@ -62,6 +71,13 @@ const useSnagVerify = () => {
       type: '',
       content: '',
     });
+    if (!recaptchaToken) {
+      setMessage({
+        type: 'error',
+        content: 'Please verify the reCAPTCHA.',
+      });
+      return;
+    }
     if (!txHash) {
       setMessage({
         type: 'error',
@@ -77,6 +93,7 @@ const useSnagVerify = () => {
         snagAddress: walletAddress,
         loyaltyRuleID: params?.loyaltyRuleID || '',
         txHash: parseTxHash[parseTxHash.length - 1],
+        recaptchaToken,
       });
       toast.success("Quest is verified!", {
         position: "bottom-right",
@@ -102,6 +119,13 @@ const useSnagVerify = () => {
       type: '',
       content: '',
     });
+    if (!recaptchaToken) {
+      setMessage({
+        type: 'error',
+        content: 'Please verify the reCAPTCHA.',
+      });
+      return;
+    }
     if (!txHash) {
       setMessage({
         type: 'error',
@@ -117,6 +141,7 @@ const useSnagVerify = () => {
         snagAddress: walletAddress,
         loyaltyRuleID: params?.loyaltyRuleID || '',
         txHash: parseTxHash[parseTxHash.length - 1],
+        recaptchaToken,
       });
       toast.success("Quest is verified!", {
         position: "bottom-right",
@@ -142,6 +167,13 @@ const useSnagVerify = () => {
       type: '',
       content: '',
     });
+    if (!recaptchaToken) {
+      setMessage({
+        type: 'error',
+        content: 'Please verify the reCAPTCHA.',
+      });
+      return;
+    }
     if (!txHash) {
       setMessage({
         type: 'error',
@@ -182,6 +214,13 @@ const useSnagVerify = () => {
       type: '',
       content: '',
     });
+    if (!recaptchaToken) {
+      setMessage({
+        type: 'error',
+        content: 'Please verify the reCAPTCHA.',
+      });
+      return;
+    }
     if (!txHash) {
       setMessage({
         type: 'error',
@@ -222,6 +261,13 @@ const useSnagVerify = () => {
       type: '',
       content: '',
     });
+    if (!recaptchaToken) {
+      setMessage({
+        type: 'error',
+        content: 'Please verify the reCAPTCHA.',
+      });
+      return;
+    }
     if (!txHash) {
       setMessage({
         type: 'error',
@@ -237,6 +283,7 @@ const useSnagVerify = () => {
         snagAddress: walletAddress,
         loyaltyRuleID: params?.loyaltyRuleID || '',
         txHash: parseTxHash[parseTxHash.length - 1],
+        recaptchaToken,
       });
       toast.success("Quest is verified!", {
         position: "bottom-right",
@@ -262,6 +309,13 @@ const useSnagVerify = () => {
       type: '',
       content: '',
     });
+    if (!recaptchaToken) {
+      setMessage({
+        type: 'error',
+        content: 'Please verify the reCAPTCHA.',
+      });
+      return;
+    }
     if (!txHash) {
       setMessage({
         type: 'error',
@@ -277,6 +331,7 @@ const useSnagVerify = () => {
         snagAddress: walletAddress,
         loyaltyRuleID: params?.loyaltyRuleID || '',
         txHash: parseTxHash[parseTxHash.length - 1],
+        recaptchaToken,
       });
       toast.success("Quest is verified!", {
         position: "bottom-right",
@@ -296,6 +351,11 @@ const useSnagVerify = () => {
     setLoading(false);
   }
 
+  const handleRecaptchaChange = (value: string | null) => {
+    setRecaptchaToken(value);
+    setIsVerified(!!value);
+  };
+
   return {
     isLoading,
     message,
@@ -310,6 +370,7 @@ const useSnagVerify = () => {
     verifyFirstTimeDelegation,
     verifyClaimRewards,
     verifyFirstUploadCascade,
+    handleRecaptchaChange,
   }
 }
 

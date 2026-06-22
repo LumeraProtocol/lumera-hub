@@ -440,8 +440,8 @@ export const WalletScreen = ({
                         Time
                       </div>
                     </div>
-                    {transactions.map((tx) => (
-                      <div key={tx.txhash} className="md:grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors mb-3 md:mb-0 text-base">
+                    {transactions.map((tx, index) => (
+                      <div key={tx.txhash} className={`md:grid grid-cols-12 gap-4 items-center p-4 rounded-lg hover:bg-gray-800/60 transition-colors mb-3 md:mb-2 text-base ${index % 2 === 0 ? 'bg-gray-900' : 'bg-[#161e2a]'}`}>
                         <div className="w-full md:col-span-2">
                           <div className="md:hidden font-semibold text-gray-500 mr-2">Block Height: </div>
                           <div className='flex items-center mt-1 md:mt-0'>

@@ -16,6 +16,7 @@ const useSnagVerifyCompound = () => {
   const [txHash, setTxhash] = useState('');
   const [claimTxHash, setClaimTxhash] = useState('');
   const [isVerified, setIsVerified] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   const verifyClaimCompound = async () => {
     setLoading(true);
@@ -23,6 +24,13 @@ const useSnagVerifyCompound = () => {
       type: '',
       content: '',
     });
+    if (!recaptchaToken) {
+      setMessage({
+        type: 'error',
+        content: 'Please verify the reCAPTCHA.',
+      });
+      return;
+    }
     if (!txHash) {
       setMessage({
         type: 'error',
@@ -47,6 +55,7 @@ const useSnagVerifyCompound = () => {
         loyaltyRuleID: params?.loyaltyRuleID || '',
         txHash: parseTxHash[parseTxHash.length - 1],
         claimTxHash: parseClaimTxHash[parseClaimTxHash.length - 1],
+        recaptchaToken,
       });
       toast.success("Quest is verified!", {
         position: "bottom-right",
@@ -66,6 +75,11 @@ const useSnagVerifyCompound = () => {
     setLoading(false);
   }
 
+  const handleRecaptchaChange = (value: string | null) => {
+    setRecaptchaToken(value);
+    setIsVerified(!!value);
+  };
+
   return {
     isLoading,
     message,
@@ -76,6 +90,7 @@ const useSnagVerifyCompound = () => {
     setClaimTxhash,
     setTxhash,
     verifyClaimCompound,
+    handleRecaptchaChange,
   }
 }
 

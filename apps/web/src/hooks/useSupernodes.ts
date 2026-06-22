@@ -300,16 +300,40 @@ const useSupernodes = () => {
 
   const getSupernodes = async () => {
     setSupernodeLoading(true);
+    setListSuperNodesLoading(true);
     try {
-      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/metrics?limit=200`);
-      setSupernodes(data.nodes);
-      setSupernodesOriginal(data.nodes);
-      getSmoothedWeight(data.nodes);
-      getActionStats(data.nodes);
+      const [metricsRes, supernodeRes] = await Promise.all([
+        instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/metrics?limit=200`),
+        instance.get('/LumeraProtocol/lumera/supernode/v1/list_super_nodes?pagination.limit=1000&pagination.count_total=true'),
+      ]);
+      let newSupernode: TSupernode[] = metricsRes.data.nodes || [];
+      if (!newSupernode?.length) {
+        newSupernode = supernodeRes.data.supernodes?.map((s: any) => {
+          const prevIpAddresses = s.prev_ip_addresses;
+          return ({
+            ...s,
+            ip_address: prevIpAddresses[prevIpAddresses.length - 1].address,
+          })
+        });
+      }
+      setSupernodes(newSupernode);
+      setSupernodesOriginal(newSupernode);
+      getSmoothedWeight(newSupernode);
+      getActionStats(newSupernode);
+
+      const results: TSuperNodeList = {};
+      const items: string[] = [];
+      for (const item of supernodeRes.data.supernodes) {
+        results[item.supernode_account] = item;
+        items.push(item.supernode_account);
+      }
+      setListSuperAccount(items);
+      setListSuperNodes(results);
     } catch (error) {
       console.error(error);
     }
     setSupernodeLoading(false);
+    setListSuperNodesLoading(false);
   }
 
   const getSupernodesBalances = async (account: string) => {
@@ -388,24 +412,6 @@ const useSupernodes = () => {
       console.error(error);
 
     }
-  }
-
-  const getListSuperNodes = async () => {
-    setListSuperNodesLoading(true);
-    try {
-      const { data } = await instance.get('/LumeraProtocol/lumera/supernode/v1/list_super_nodes?pagination.limit=1000&pagination.count_total=true');
-      const results: TSuperNodeList = {};
-      const items: string[] = [];
-      for (const item of data.supernodes) {
-        results[item.supernode_account] = item;
-        items.push(item.supernode_account);
-      }
-      setListSuperAccount(items);
-      setListSuperNodes(results);
-    } catch (error) {
-      console.error(error);
-    }
-    setListSuperNodesLoading(false);
   }
 
   const getMatrix = async () => {
@@ -520,7 +526,6 @@ const useSupernodes = () => {
     getMatrix();
     getActionsStats();
     getValidators();
-    getListSuperNodes();
     getMyFavorites();
     getSupernodeParams();
     getLatest();

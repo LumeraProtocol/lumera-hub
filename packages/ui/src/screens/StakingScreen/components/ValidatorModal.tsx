@@ -97,7 +97,7 @@ export default function ValidatorModal({
                     return (
                       <tr
                         key={validator.operator_address}
-                        className={`cursor-pointer ${index % 2 === 0 ? '!bg-gray-900' : ''}`}
+                        className={`cursor-pointer ${index % 2 === 0 ? '!bg-gray-900' : ''} hover:!bg-gray-800/60 transition-colors`}
                         onClick={() => onSelectValidator(validator.operator_address)}
                       >
                         <td data-label="Validator: ">

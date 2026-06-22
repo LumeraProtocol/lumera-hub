@@ -18,7 +18,7 @@ export default function Page() {
     message,
     txHash,
     isVerified,
-    setIsVerified,
+    handleRecaptchaChange,
     setTxhash,
     verifyFirstTimeDelegation,
   } = useSnagVerify();
@@ -48,7 +48,7 @@ export default function Page() {
             txHash={txHash}
             quest={snag?.quest}
             isVerified={isVerified}
-            onVerified={setIsVerified}
+            oneRecaptchaChange={handleRecaptchaChange}
             onVerifyClick={verifyFirstTimeDelegation}
             onChangeText={setTxhash}
           />

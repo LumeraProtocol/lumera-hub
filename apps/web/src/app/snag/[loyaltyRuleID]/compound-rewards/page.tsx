@@ -19,7 +19,7 @@ export default function Page() {
     txHash,
     claimTxHash,
     isVerified,
-    setIsVerified,
+    handleRecaptchaChange,
     setClaimTxhash,
     setTxhash,
     verifyClaimCompound,
@@ -51,7 +51,7 @@ export default function Page() {
             claimTxHash={claimTxHash}
             quest={snag?.quest}
             isVerified={isVerified}
-            onVerified={setIsVerified}
+            oneRecaptchaChange={handleRecaptchaChange}
             onVerifyClick={verifyClaimCompound}
             onChangeText={setTxhash}
             onClaimTxhashChange={setClaimTxhash}

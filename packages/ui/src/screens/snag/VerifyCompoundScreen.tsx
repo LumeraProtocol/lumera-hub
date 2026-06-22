@@ -20,10 +20,10 @@ interface IVerifyCompoundScreen {
   };
   quest: IQuest | null;
   isVerified: boolean;
-  onVerified: (val: boolean) => void;
   onVerifyClick: () => void;
   onChangeText: (val: string) => void;
   onClaimTxhashChange: (val: string) => void;
+  oneRecaptchaChange: (value: string | null) => void;
 }
 
 export const VerifyCompoundScreen = ({
@@ -33,7 +33,7 @@ export const VerifyCompoundScreen = ({
   message,
   quest,
   isVerified,
-  onVerified,
+  oneRecaptchaChange,
   onVerifyClick,
   onChangeText,
   onClaimTxhashChange,
@@ -78,7 +78,7 @@ export const VerifyCompoundScreen = ({
             </div>
           </div>
           <div className="mt-3">
-            <Recaptcha onChange={() => onVerified(true)} />
+            <Recaptcha onChange={oneRecaptchaChange} />
           </div>
           {message.type === 'error' ?
             <div className='text-red-500 w-full mt-3'>

@@ -19,7 +19,7 @@ interface IVerifyScreen {
   };
   quest: IQuest | null;
   isVerified: boolean;
-  onVerified: (val: boolean) => void;
+  oneRecaptchaChange: (value: string | null) => void;
   onVerifyClick: () => void;
   onChangeText: (val: string) => void;
 }
@@ -30,7 +30,7 @@ export const VerifyScreen = ({
   message,
   quest,
   isVerified,
-  onVerified,
+  oneRecaptchaChange,
   onVerifyClick,
   onChangeText,
 }: IVerifyScreen) => {
@@ -62,7 +62,7 @@ export const VerifyScreen = ({
             </div>
           </div>
           <div className="mt-3">
-            <Recaptcha onChange={() => onVerified(true)} />
+            <Recaptcha onChange={oneRecaptchaChange} />
           </div>
           {message.type === 'error' ?
             <div className='text-red-500 w-full mt-3'>

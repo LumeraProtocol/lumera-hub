@@ -1085,7 +1085,7 @@ export const SupernodesScreen = () => {
                   <tr
                     className={`flex flex-col md:table-row text-sm`}
                   >
-                    <td className='text-left' colSpan={6}>
+                    <td className='text-left' colSpan={8}>
                       <div className="text-xl font-bold py-0">No data</div>
                     </td>
                   </tr> : null

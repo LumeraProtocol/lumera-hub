@@ -19,9 +19,9 @@ interface IStakeForFullSeasonScreen {
   };
   quest: IQuest | null;
   isVerified: boolean;
-  onVerified: (val: boolean) => void;
   onVerifyClick: () => void;
   onChangeText: (val: string) => void;
+  oneRecaptchaChange: (value: string | null) => void;
 }
 
 export const StakeForFullSeasonScreen = ({
@@ -30,9 +30,9 @@ export const StakeForFullSeasonScreen = ({
   message,
   quest,
   isVerified,
-  onVerified,
   onVerifyClick,
   onChangeText,
+  oneRecaptchaChange,
 }: IStakeForFullSeasonScreen) => {
   return (
     <div className='flex items-center justify-center'>
@@ -62,7 +62,7 @@ export const StakeForFullSeasonScreen = ({
             </div>
           </div>
           <div className="mt-3">
-            <Recaptcha onChange={() => onVerified(true)} />
+            <Recaptcha onChange={oneRecaptchaChange} />
           </div>
           {message.type === 'error' ?
             <div className='text-red-500 w-full mt-3'>

@@ -32,6 +32,7 @@ const useSnagTextInput = (callBack?: () => void) => {
   const [quest, setQuest] = useState<IQuest | null>(null);
   const [response, setResponse] = useState<IResponse | null>(null);
   const [isVerified, setIsVerified] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   const getQuest = async () => {
     setLoading(true);
@@ -81,6 +82,20 @@ const useSnagTextInput = (callBack?: () => void) => {
       });
       return;
     }
+    if (!recaptchaToken) {
+      setMessage({
+        type: 'error',
+        content: 'Please verify the reCAPTCHA.',
+      });
+      return;
+    }
+    if (!content) {
+      setMessage({
+        type: 'error',
+        content: 'Content is required.',
+      });
+      return;
+    }
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const walletAddress = urlParams.get('walletAddress');
@@ -88,6 +103,7 @@ const useSnagTextInput = (callBack?: () => void) => {
         snagAddress: walletAddress,
         loyaltyRuleID: params?.loyaltyRuleID || '',
         content,
+        recaptchaToken,
       });
       setMessage({
         type: 'success',
@@ -107,6 +123,11 @@ const useSnagTextInput = (callBack?: () => void) => {
     setLoading(false);
   }
 
+  const handleRecaptchaChange = (value: string | null) => {
+    setRecaptchaToken(value);
+    setIsVerified(!!value);
+  };
+
   return {
     isLoading,
     message,
@@ -117,6 +138,7 @@ const useSnagTextInput = (callBack?: () => void) => {
     setContent,
     verifyTextInput,
     setIsVerified,
+    handleRecaptchaChange,
   }
 }
 

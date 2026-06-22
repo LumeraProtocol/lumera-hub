@@ -1,6 +1,7 @@
 // app/api/snag/balance-verify/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
+import axios from 'axios';
 
 import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
@@ -10,6 +11,59 @@ import { SnagUserResponse } from '@/entities/SnagUserResponse';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+
+    if (!body?.recaptchaToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Missing reCAPTCHA token',
+          type: 'required'
+        },
+        { status: 400 }
+      );
+    }
+    try {
+      const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+      if (!secretKey) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Server error: Missing reCAPTCHA secret key"
+          },
+          { status: 500 }
+        );
+      }
+
+      const { data } = await axios.post(
+        'https://www.google.com/recaptcha/api/siteverify',
+        {
+          secret: secretKey,
+          response: body.recaptchaToken,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
+      if (!data.success) {
+        return NextResponse.json({
+          success: false,
+          error: "reCAPTCHA verification failed",
+          type: 'required'
+        }, { status: 400 });
+      }
+    } catch (error) {
+      console.error("reCAPTCHA verification error:", error);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Server error during reCAPTCHA verification"
+        },
+        { status: 500 }
+      );
+    }
 
     if (!body?.snagAddress) {
       return NextResponse.json(

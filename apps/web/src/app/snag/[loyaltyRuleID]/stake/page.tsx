@@ -36,7 +36,7 @@ export default function Page() {
         <StakeVerifyScreen
           quest={snag?.quest}
           isVerified={snag?.isVerified}
-          onVerified={snag?.setIsVerified}
+          oneRecaptchaChange={snag?.handleRecaptchaChange}
         />
       }
       </div>

@@ -18,7 +18,7 @@ export default function Page() {
     message,
     address,
     isVerified,
-    setIsVerified,
+    handleRecaptchaChange,
     setAddress,
     verifySupernode,
   } = useSnagStakeForFullSeason();
@@ -48,7 +48,7 @@ export default function Page() {
             address={address}
             quest={snag?.quest}
             isVerified={isVerified}
-            onVerified={setIsVerified}
+            oneRecaptchaChange={handleRecaptchaChange}
             onVerifyClick={verifySupernode}
             onChangeText={setAddress}
           />

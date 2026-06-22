@@ -21,3 +21,4 @@ export * from "./SnagSection";
 export * from "./SnagCascadeStorage";
 export * from "./SnagRefer";
 export * from "./SnagUserResponse";
+export * from "./Favorites";

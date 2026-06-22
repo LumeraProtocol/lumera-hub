@@ -23,7 +23,7 @@ export default function Page() {
     isVerified,
     setContent,
     verifyTextInput,
-    setIsVerified,
+    handleRecaptchaChange,
   } = useSnagTextInput(review.getResponses);
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function Page() {
             }}
             onVerifyClick={verifyTextInput}
             onChangeText={setContent}
-            onVerified={setIsVerified}
+            oneRecaptchaChange={handleRecaptchaChange}
           />
         }
       </div>

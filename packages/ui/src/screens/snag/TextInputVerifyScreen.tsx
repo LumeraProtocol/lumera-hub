@@ -27,7 +27,7 @@ interface ITextInputVerifyScreen {
   };
   onVerifyClick: () => void;
   onChangeText: (val: string) => void;
-  onVerified: (val: boolean) => void;
+  oneRecaptchaChange: (value: string | null) => void;
 }
 
 export const TextInputVerifyScreen = ({
@@ -40,7 +40,7 @@ export const TextInputVerifyScreen = ({
   review,
   onVerifyClick,
   onChangeText,
-  onVerified,
+  oneRecaptchaChange,
 }: ITextInputVerifyScreen) => {
   const config = quest?.config ? JSON.parse(quest?.config) : null;
 
@@ -92,7 +92,7 @@ export const TextInputVerifyScreen = ({
                   />
                 </div>
                 <div className="mt-3">
-                  <Recaptcha onChange={() => onVerified(true)} />
+                  <Recaptcha onChange={oneRecaptchaChange} />
                 </div>
                 {message.type === 'error' ?
                   <div className='text-red-500 w-full mt-3'>

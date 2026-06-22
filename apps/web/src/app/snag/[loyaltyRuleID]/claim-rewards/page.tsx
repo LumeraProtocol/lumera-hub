@@ -21,6 +21,7 @@ export default function Page() {
     setIsVerified,
     setTxhash,
     verifyClaimRewards,
+    handleRecaptchaChange,
   } = useSnagVerify();
   const snag = useSnagTextInput();
 
@@ -48,7 +49,7 @@ export default function Page() {
             txHash={txHash}
             quest={snag?.quest}
             isVerified={isVerified}
-            onVerified={setIsVerified}
+            oneRecaptchaChange={handleRecaptchaChange}
             onVerifyClick={verifyClaimRewards}
             onChangeText={setTxhash}
           />

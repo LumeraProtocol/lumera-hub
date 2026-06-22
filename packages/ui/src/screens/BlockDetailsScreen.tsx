@@ -349,11 +349,11 @@ export const BlockDetailsScreen = ({
                         </tr>
                       </thead>
                       <tbody className="text-sm">
-                        {block.block.data.txs.map((t) => {
+                        {block.block.data.txs.map((t, index) => {
                           const hash = hashTx(fromBase64(t));
                           const tx = decodeTxRaw(fromBase64(t));
                           return (
-                            <tr key={hash} className='flex flex-col gap-1 md:table-row'>
+                            <tr key={hash} className={`flex flex-col gap-1 md:table-row ${index % 2 === 0 ? '!bg-gray-900' : ''} hover:!bg-gray-800/60 transition-colors`}>
                               <td>
                                 <div className="md:hidden font-semibold text-gray-500 mr-2">Hash: </div>
                                 <AppLink href={`/tx/${hash}`}>{formatAddress(hash, 15, -6)}</AppLink>

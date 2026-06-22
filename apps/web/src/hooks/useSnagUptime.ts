@@ -15,6 +15,7 @@ const useSnagUptime = () => {
   });
   const [address, setAddress] = useState('');
   const [isVerified, setIsVerified] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   const verifySupernode = async () => {
     setLoading(true);
@@ -22,6 +23,13 @@ const useSnagUptime = () => {
       type: '',
       content: '',
     });
+    if (!recaptchaToken) {
+      setMessage({
+        type: 'error',
+        content: 'Please verify the reCAPTCHA.',
+      });
+      return;
+    }
     if (!address) {
       setMessage({
         type: 'error',
@@ -43,6 +51,7 @@ const useSnagUptime = () => {
         snagAddress: walletAddress,
         loyaltyRuleID: params?.loyaltyRuleID || '',
         address,
+        recaptchaToken,
       });
       toast.success("Quest is verified!", {
         position: "bottom-right",
@@ -62,6 +71,11 @@ const useSnagUptime = () => {
     setLoading(false);
   }
 
+  const handleRecaptchaChange = (value: string | null) => {
+    setRecaptchaToken(value);
+    setIsVerified(!!value);
+  };
+
   return {
     isLoading,
     message,
@@ -70,6 +84,7 @@ const useSnagUptime = () => {
     setIsVerified,
     setAddress,
     verifySupernode,
+    handleRecaptchaChange,
   }
 }
 

@@ -158,8 +158,8 @@ export default function Activities({
             ) : null}
             {activityData?.activities?.length ?
               <>
-                {activityData.activities.sort((a, b) => sortFunc(a, b)).map((tx) => (
-                  <div key={tx.txhash} className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-base">
+                {activityData.activities.sort((a, b) => sortFunc(a, b)).map((tx, index) => (
+                  <div key={tx.txhash} className={`grid grid-cols-12 gap-[6px] md:gap-4 items-center ${index % 2 === 0 ? 'bg-gray-900' : 'bg-[#161e2a]'} hover:bg-gray-800/60 transition-colors p-4 rounded-lg text-base`}>
                     <div className="col-span-12 md:col-span-1 text-gray-300">
                       <div className="md:hidden text-gray-500 mr-2">Block: </div>
                       <AppLink

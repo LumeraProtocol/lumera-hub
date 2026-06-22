@@ -1155,7 +1155,7 @@ const Files = ({
                     </thead>
                     <tbody className='text-base'>
                       {!memoizedFilteredFiles?.length && !isMyFilesLoadMore ? (
-                        <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
+                        <tr className={'!bg-gray-900 hover:!bg-gray-800/60 rounded-lg'}>
                           <td colSpan={9} className='px-2 py-3'>
                             <H3 className='text-2xl'>No files</H3>
                           </td>
@@ -1168,7 +1168,7 @@ const Files = ({
                         const fee = file.fee;
                         const isExpired = file.state === 'ACTION_STATE_EXPIRED';
                         return (
-                          <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row text-base'>
+                          <tr key={index} className={`${index % 2 === 0 ? '!bg-gray-900' : ''} hover:!bg-gray-800/60 transition-colors rounded-lg flex flex-col md:table-row text-base`}>
                             <td className='px-2 pt-3 pb-1 md:py-3'>
                               <div className='flex items-center w-full gap-1'>
                                 <div className='w-7'>

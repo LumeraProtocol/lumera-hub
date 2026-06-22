@@ -14,11 +14,11 @@ import { IQuest } from '@/hooks/useSnagTextInput';
 export const StakeVerifyScreen = ({
   quest,
   isVerified,
-  onVerified,
+  oneRecaptchaChange
 }: {
   quest: IQuest | null;
   isVerified: boolean;
-  onVerified: (val: boolean) => void;
+  oneRecaptchaChange: (value: string | null) => void;
 }) => {
   const {
     isLoading,
@@ -56,7 +56,7 @@ export const StakeVerifyScreen = ({
             </div>
           </div>
           <div className="mt-3">
-            <Recaptcha onChange={() => onVerified(true)} />
+            <Recaptcha onChange={oneRecaptchaChange} />
           </div>
           {message.type === 'error' ?
             <div className='text-red-500 w-full mt-3'>

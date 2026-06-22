@@ -235,13 +235,13 @@ export default memo(function Unstake({
                 </div>
               </div>
             ) : null}
-            {unbonding.unbondingDelegations.sort((a, b) => sortFunc(a, b)).map((delegation, i) => {
+            {unbonding.unbondingDelegations.sort((a, b) => sortFunc(a, b)).map((delegation, index) => {
               const validator = allValidators.find(v => v.operator_address === delegation.validator_address);
 
               return (
                 <div
                   key={`${delegation.type}-${delegation.delegator_address}-${delegation.validator_address}-${delegation.validator_src_address}-${delegation.validator_dst_address}`}
-                  className="grid grid-cols-12 gap-[6px] md:gap-4 items-center bg-gray-900/40 p-4 rounded-lg text-base"
+                  className={`grid grid-cols-12 gap-[6px] md:gap-4 items-center ${index % 2 === 0 ? 'bg-gray-900' : 'bg-[#161e2a]'} hover:bg-gray-800/60 transition-colors p-4 rounded-lg text-base`}
                 >
                   <div className="col-span-12 md:col-span-2 text-white hover:text-lumera-teal cursor-pointer">
                     <div className="md:hidden text-gray-500 mr-2">Validator: </div>

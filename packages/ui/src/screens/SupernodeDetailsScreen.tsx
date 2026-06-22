@@ -423,12 +423,14 @@ export const SupernodeDetailsScreen = () => {
               <div>
                 <span className={`flex items-center gap-2 ${snOpen === false ? 'text-error' : 'text-base-content'}`}>
                   <span className="font-mono">{metrics?.ip_address || '—' }</span>
-                  <button
+                  {metrics?.ip_address ?
+                    <button
                       className="p-1 hover:text-white transition-colors cursor-pointer"
                       onClick={() => copyToClipboard(metrics?.ip_address || '-')}
                     >
                       <Copy className="w-4 h-4"/>
-                    </button>
+                    </button> : null
+                  }
                 </span>
                 {hostOnly && p2pPortEffective ? (
                   <span className={`flex items-center gap-2 ${p2pOpen === false ? 'text-error' : 'text-base-content'}`}>
@@ -874,7 +876,7 @@ export const SupernodeDetailsScreen = () => {
                   return (
                     <tr
                       key={item.register_tx_id}
-                      className={`${index % 2 === 0 ? '!bg-gray-900' : ''} flex flex-col md:table-row text-sm`}
+                      className={`${index % 2 === 0 ? '!bg-gray-900' : ''} hover:!bg-gray-800/60 transition-colors flex flex-col md:table-row text-sm`}
                     >
                       <td className='cursor-pointer text-left'>
                         <div className='block md:hidden text-lumera-label mb-1'>Time:</div>
