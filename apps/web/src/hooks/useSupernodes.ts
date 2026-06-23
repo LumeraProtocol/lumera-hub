@@ -16,6 +16,7 @@ import { IValidator } from '@/types/validator';
 import { SNSCOPE_URL } from '@/contants/network';
 import { CHAIN_NAME } from '@/contants/network';
 import useAppRouter from '@/hooks/useAppRouter';
+import useWalletConnect from '@/hooks/useWalletConnect';
 
 export const STATUS_OPTIONS = [
   {
@@ -137,6 +138,7 @@ let _blocksRemaining = 0
 const useSupernodes = () => {
   const { assetList } = useChain(CHAIN_NAME);
   const { redirect } = useAppRouter();
+  const { address, isConnected } = useWalletConnect();
   const [isSupernodeLoading, setSupernodeLoading] = useState(false);
   const [supernodes, setSupernodes] = useState<TSupernode[]>([]);
   const [supernodesOriginal, setSupernodesOriginal] = useState<TSupernode[]>([]);
@@ -160,7 +162,6 @@ const useSupernodes = () => {
   const [isListSuperNodesLoading, setListSuperNodesLoading] = useState(false);
   const [listSuperNodes, setListSuperNodes] = useState<TSuperNodeList | null>(null);
   const [eligibilityMap, setEligibilityMap] = useState<TEligibilityMap>({});
-  const [myFavorites, setMyFavorites] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState(STATUS_OPTIONS[0].value);
   const [stateFilter, setStateFilter] = useState(STATE_OPTIONS[0].value);
   const [versionFilter, setVersionFilter] = useState('all');
@@ -177,6 +178,7 @@ const useSupernodes = () => {
   const [topSupernode, setTopSupernode] = useState<TSupernode[]>([]);
   const [listSuperAccount, setListSuperAccount] = useState<string[]>([]);
   const [supernodeAvatars, setSupernodeAvatars] = useState<string>('');
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const lumeAsset = useMemo(() => {
     const assets = assetList?.assets || [];
@@ -436,18 +438,6 @@ const useSupernodes = () => {
     setActionsStatsLoading(false);
   }
 
-  const getMyFavorites = () => {
-    const favorites = localStorage.getItem('favorite-supernodes');
-    if (favorites) {
-      try {
-        const currentFavorites = JSON.parse(favorites);
-        setMyFavorites(currentFavorites);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-  }
-
   const getLatest = async () => {
     try {
       const { data } = await instance.get('/cosmos/base/tendermint/v1beta1/blocks/latest');
@@ -518,6 +508,25 @@ const useSupernodes = () => {
     }
   }
 
+  const getFavorites = async () => {
+    if (address && isConnected) {
+      try {
+        const { data } = await instance.getExternal(`/api/supernode/favorites?lumeraAddress=${address}`);
+        setFavorites(new Set(data));
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      const saved = localStorage.getItem('supernode_favorites');
+      if (saved) setFavorites(new Set(JSON.parse(saved)));
+    }
+  }
+
+  const initFavorites = async () => {
+    await getFavorites();
+    await syncFavorites();
+  }
+
   useEffect(() => {
     getSupernodes();
     getSupernodesStats();
@@ -526,12 +535,18 @@ const useSupernodes = () => {
     getMatrix();
     getActionsStats();
     getValidators();
-    getMyFavorites();
     getSupernodeParams();
     getLatest();
     getTopSupernode();
     getSupernodeAvatars();
   }, []);
+
+  useEffect(() => {
+    initFavorites();
+    if (!isConnected && favorites.size > 0) {
+      setFavorites(new Set());
+    }
+  }, [address, isConnected]);
 
   useEffect(() => {
     setSupernodes(getSupernodesByFilter(tab));
@@ -551,26 +566,29 @@ const useSupernodes = () => {
     }
   }, [currentHeightBig, nextPayoutHeight]);
 
-  const toggleFavorite = (account: string) => {
-    const favorites = localStorage.getItem('favorite-supernodes');
-    let index = -1;
-    let currentFavorites: string[] = [];
-    if (favorites) {
-      try {
-        currentFavorites = JSON.parse(favorites);
-        index = currentFavorites.indexOf(account);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    if (index !== -1) {
-        currentFavorites.splice(index, 1);
+  const toggleFavorite = async (account: string) => {
+    const isFavorited = favorites.has(account);
+    const newFavorites = new Set(favorites);
+
+    if (isFavorited) {
+      newFavorites.delete(account);
     } else {
-        currentFavorites.push(account);
+      newFavorites.add(account);
     }
-    setMyFavorites(currentFavorites);
-    localStorage.setItem('favorite-supernodes', JSON.stringify(currentFavorites));
+
+    setFavorites(newFavorites);
+
+    if (!address && !isConnected) {
+      localStorage.setItem('supernode_favorites', JSON.stringify([...newFavorites]));
+    } else {
+      await instance.postExternal('/api/supernode/favorites', {
+        lumeraAddress: address,
+        supernodeAccount: account,
+      });
+    }
   }
+
+  const isFavorited = (id: string) => favorites.has(id);
 
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value);
@@ -615,7 +633,7 @@ const useSupernodes = () => {
     }
     switch (currentTab) {
       case 'favorites':
-        newSupernodesOriginal = newSupernodesOriginal.filter((s) => myFavorites.includes(s.supernode_account))
+        newSupernodesOriginal = newSupernodesOriginal.filter((s) => isFavorited(s.supernode_account))
         break;
       case 'top':
         break;
@@ -659,6 +677,30 @@ const useSupernodes = () => {
     });
   }
 
+  const syncFavorites = async () => {
+    if (!address || !isConnected) return;
+
+    try {
+      const localData = localStorage.getItem('supernode_favorites');
+      const localFavorites: string[] = localData ? JSON.parse(localData) : [];
+
+      if (localFavorites.length === 0) return;
+
+      const { data } = await instance.postExternal('/api/supernode/favorites/sync', {
+        localFavorites,
+        lumeraAddress: address
+      });
+
+      if (data.status) {
+        setFavorites(new Set(data.syncedFavorites));
+
+        localStorage.removeItem('supernode_favorites');
+      }
+    } catch (err) {
+      console.error('Sync failed', err);
+    }
+  };
+
   return {
     isSupernodeLoading,
     supernodes,
@@ -686,7 +728,6 @@ const useSupernodes = () => {
     statusFilter,
     stateFilter,
     versionFilter,
-    myFavorites,
     tab,
     supernodeBalances,
     scheduleError,
@@ -694,6 +735,8 @@ const useSupernodes = () => {
     blocksRemaining,
     etaSecondsApprox,
     isTopSupernodeLoading,
+    favorites,
+    isFavorited,
     logo,
     handleTabChange,
     toggleFavorite,

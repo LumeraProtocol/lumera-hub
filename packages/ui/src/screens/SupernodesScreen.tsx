@@ -79,7 +79,6 @@ export const SupernodesScreen = () => {
     statusFilter,
     stateFilter,
     versionFilter,
-    myFavorites,
     tab,
     listSuperNodes,
     supernodeBalances,
@@ -88,6 +87,7 @@ export const SupernodesScreen = () => {
     blocksRemaining,
     etaSecondsApprox,
     isTopSupernodeLoading,
+    isFavorited,
     logo,
     handleTabChange,
     toggleFavorite,
@@ -1075,7 +1075,7 @@ export const SupernodesScreen = () => {
                           variant='ghost'
                           onClick={() => toggleFavorite(supernode.supernode_account)}
                         >
-                          <Heart className={`w-6 h-6  ${myFavorites?.includes(supernode.supernode_account) ? 'fill-lumera-red border-lumera-red stroke-lumera-red' : 'stroke-lumera-label'}`} />
+                          <Heart className={`w-6 h-6  ${isFavorited(supernode.supernode_account) ? 'fill-lumera-red border-lumera-red stroke-lumera-red' : 'stroke-lumera-label'}`} />
                         </AppButton>
                       </td>
                     </tr>

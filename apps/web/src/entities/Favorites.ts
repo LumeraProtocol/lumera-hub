@@ -1,9 +1,13 @@
 // src/entities/SnagRefer.ts
-import { Entity, PrimaryColumn, Column, Index, CreateDateColumn } from "typeorm";
+import { Entity, Column, Index, CreateDateColumn, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "favorites" })
 export class Favorites {
-  @PrimaryColumn({ type: "varchar", length: 50 })
+  @PrimaryGeneratedColumn()
+  id!: number;
+
+  @Index()
+  @Column({ type: "varchar", length: 50 })
   lumeraAddress: string;
 
   @Index()
