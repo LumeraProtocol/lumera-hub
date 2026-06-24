@@ -115,6 +115,10 @@ type TSupernodeBalance = {
   }
 }
 
+type TValidatorDetails = {
+  [key: string]: IValidator;
+}
+
 const toBigIntSafe = (v: string | number | undefined | null) => {
   if (v === undefined || v === null) return 0n;
   if (typeof v === 'string') {
@@ -179,6 +183,7 @@ const useSupernodes = () => {
   const [listSuperAccount, setListSuperAccount] = useState<string[]>([]);
   const [supernodeAvatars, setSupernodeAvatars] = useState<string>('');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [validatorDetails, setValidatorDetails] = useState<TValidatorDetails | null>(null)
 
   const lumeAsset = useMemo(() => {
     const assets = assetList?.assets || [];
@@ -282,6 +287,22 @@ const useSupernodes = () => {
     setSmoothedWeightLoading(false);
   }
 
+  const getValidatorDetails = async (items: TSupernode[]) => {
+    for (const supernode of items) {
+      try {
+        const { data } = await instance.get(`/cosmos/staking/v1beta1/validators/${supernode.validator_address}`);
+        if (data?.validator) {
+          setValidatorDetails((prev) => ({
+            ...prev,
+            [supernode.validator_address]: data.validator,
+          }))
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+  }
+
   const getActionStats = async (items: TSupernode[]) => {
     setParticipationPercentLoading(true);
     for (const supernode of items) {
@@ -322,6 +343,7 @@ const useSupernodes = () => {
       setSupernodesOriginal(newSupernode);
       getSmoothedWeight(newSupernode);
       getActionStats(newSupernode);
+      getValidatorDetails(newSupernode);
 
       const results: TSuperNodeList = {};
       const items: string[] = [];
@@ -736,6 +758,7 @@ const useSupernodes = () => {
     etaSecondsApprox,
     isTopSupernodeLoading,
     favorites,
+    validatorDetails,
     isFavorited,
     logo,
     handleTabChange,

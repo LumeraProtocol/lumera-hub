@@ -87,6 +87,7 @@ export const SupernodesScreen = () => {
     blocksRemaining,
     etaSecondsApprox,
     isTopSupernodeLoading,
+    validatorDetails,
     isFavorited,
     logo,
     handleTabChange,
@@ -96,7 +97,6 @@ export const SupernodesScreen = () => {
     handleVersionFilterChange,
     handleRefresh,
     copyToClipboard,
-    redirect,
   } = useSupernodes();
 
   const getFreeStorageBytes = () => {
@@ -898,6 +898,7 @@ export const SupernodesScreen = () => {
               <tbody>
                 {supernodes?.map((supernode, index) => {
                   const validator = validators.find((v) => v.operator_address === supernode.validator_address);
+                  const item = validatorDetails ? validatorDetails[supernode.validator_address] : null;
                   return (
                     <tr
                       key={supernode.supernode_account}
@@ -919,7 +920,7 @@ export const SupernodesScreen = () => {
                                 /> :
                                 <CircleUser className="w-4 h-4"/>
                               }
-                              <span className='whitespace-nowrap'>{validator?.description?.moniker || supernode.validator_moniker || '-'}</span>
+                              <span className='whitespace-nowrap'>{validator?.description?.moniker || supernode.validator_moniker || validator?.description?.moniker || item?.description?.moniker || '-'}</span>
                             </span>
                           </AppLink>
                         </div>
