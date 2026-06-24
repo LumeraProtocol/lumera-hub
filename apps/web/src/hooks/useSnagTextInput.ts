@@ -89,13 +89,6 @@ const useSnagTextInput = (callBack?: () => void) => {
       });
       return;
     }
-    if (!content) {
-      setMessage({
-        type: 'error',
-        content: 'Content is required.',
-      });
-      return;
-    }
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const walletAddress = urlParams.get('walletAddress');

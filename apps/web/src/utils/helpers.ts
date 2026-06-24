@@ -329,7 +329,9 @@ export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionTy
 }
 
 export const isValidEmail = (email: string) => {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || email.length > 254) return false;
+
+  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
   return regex.test(email.trim());
 }

@@ -459,7 +459,7 @@ export const GovernanceScreen = ({
               />
             </div> :
             <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 governance-card-wrapper relative'>
-              {!governances?.length && !isLoading ?
+              {!governances?.length ?
                 <div><H3 className='!leading-6'>No data</H3></div> : null
               }
               {governances?.map((item) => {

@@ -504,7 +504,7 @@ const useSupernodes = () => {
       const cache = supernodeAvatars;
       if (cache) {
         const parseCache = JSON.parse(cache);
-        if (!identity || !parseCache[identity]) {
+        if (!parseCache[identity]) {
           fetchAvatar(identity);
           return '';
         }

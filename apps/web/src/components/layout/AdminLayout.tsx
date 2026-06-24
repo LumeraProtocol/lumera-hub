@@ -111,14 +111,12 @@ export default function AdminLayout({ children }: IAdminLayout) {
                 {viewTitle || VIEW_TITLES[activeView]}
               </h1>
             </div>
-            {isLogged ?
-              <div className='flex justify-end gap-2'>
-                {address ?
-                  <span className='btn-address cursor-pointer' onClick={handleCopyAddress}>{formatAddress(address, 5, -4)}</span> : null
-                }
-                <button onClick={handleDisconnect} className='btn-logout'><LogOut className='w-4 h-4' /></button>
-              </div> : null
-            }
+            <div className='flex justify-end gap-2'>
+              {address ?
+                <span className='btn-address cursor-pointer' onClick={handleCopyAddress}>{formatAddress(address, 5, -4)}</span> : null
+              }
+              <button onClick={handleDisconnect} className='btn-logout'><LogOut className='w-4 h-4' /></button>
+            </div>
           </div>
         </div>
 

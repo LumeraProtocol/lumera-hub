@@ -248,7 +248,7 @@ export default function Staking({
               </div>
               <div className="col-span-5"></div>
             </div>
-            {!isAccountInfoLoading && !accountInfo?.delegations?.length ? (
+            {!accountInfo?.delegations?.length ? (
               <div className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg text-base">
                 <div className='col-span-12'>
                   <H3>No data</H3>

@@ -97,7 +97,7 @@ export const TransactionDetailsScreen = ({
               <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
                 <div className='w-full md:w-32'>Status</div>
                 <div className='w-full mt-1 md:mt-0'>
-                  {!isLoading && transaction ?
+                  {transaction ?
                   <>
                     <span className={`text-xs truncate relative py-2 px-4 w-fit mr-2 rounded text-white ${transaction?.tx_response?.code === 0 ? 'bg-lumera-teal' : 'bg-red-800'}`}>
                       { transaction?.tx_response?.code === 0 ? 'Success' : 'Failed' }

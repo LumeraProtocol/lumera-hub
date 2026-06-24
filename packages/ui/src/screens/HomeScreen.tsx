@@ -1091,15 +1091,10 @@ export const HomeScreen = ({
                           />
                         </div> :
                         <H4 className='!text-white !font-bold !text-2xl'>
-                          {loading ?
-                            <Skeleton /> :
-                            <>
-                              {formatTokenDisplay({
-                                amount: `${stacked + liquid}`,
-                                denom: DENOM,
-                              })} <span className='whitespace-nowrap'>LUME</span>
-                            </>
-                          }
+                          {formatTokenDisplay({
+                            amount: `${stacked + liquid}`,
+                            denom: DENOM,
+                          })} <span className='whitespace-nowrap'>LUME</span>
                         </H4>
                       }
                     </div>

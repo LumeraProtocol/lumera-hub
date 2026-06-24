@@ -381,29 +381,16 @@ export const WalletScreen = ({
           </Card>
           <Card className='w-full lg:w-1/3'>
             <SectionTitle className="mb-2">Your Address</SectionTitle>
-            {!walletAddress ?
-              <div className='relative min-h-[144px] mt-4'>
-                <AppLoading
-                  isLoading
-                  className="w-10 h-10 !border-2"
-                  iconWidth={20}
-                  iconHeight={20}
-                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
-                />
-              </div> :
-              <>
-                <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg">
-                  <span className="font-mono text-sm text-gray-300 truncate cursor-pointer" onClick={handleCopyAddress2}>{walletAddress}</span>
-                  <button onClick={handleCopyAddress} className="ml-auto p-1 text-gray-400 hover:text-white transition-colors">
-                    {!isCopied ?
-                      <Copy className="w-4 h-4"/> :
-                      <Check className="w-4 h-4"/>
-                    }
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">This is your unique address. Use it to receive LUME and other assets.</p>
-              </>
-            }
+            <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg">
+              <span className="font-mono text-sm text-gray-300 truncate cursor-pointer" onClick={handleCopyAddress2}>{walletAddress}</span>
+              <button onClick={handleCopyAddress} className="ml-auto p-1 text-gray-400 hover:text-white transition-colors">
+                {!isCopied ?
+                  <Copy className="w-4 h-4"/> :
+                  <Check className="w-4 h-4"/>
+                }
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">This is your unique address. Use it to receive LUME and other assets.</p>
           </Card>
         </div>
 
@@ -474,7 +461,7 @@ export const WalletScreen = ({
                         </div>
                       </div>
                     ))}
-                    {!transactions?.length && !isLoading ?
+                    {!transactions?.length ?
                       <div className="block items-center">
                         <H3>No Transactions</H3>
                       </div> : null
