@@ -70,7 +70,6 @@ export async function POST(req: NextRequest) {
       claimType: body.loyaltyRule.claimType,
     }
     await snagLoyaltyRepo.save([entity]);
-    loyaltyRuleId = loyalty.id;
     return NextResponse.json({
       status: true,
       loyaltyRule: loyalty,

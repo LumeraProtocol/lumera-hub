@@ -632,7 +632,7 @@ const useSupernodes = () => {
   }
 
   const getSupernodesByFilter = (currentTab: string) => {
-    let newSupernodesOriginal = supernodesOriginal;
+    let newSupernodesOriginal: typeof supernodesOriginal;
     if (currentTab === 'top') {
       newSupernodesOriginal = topSupernode.map((t) => {
         const item = supernodesOriginal.find((s) => s.supernode_account === t.supernode_account);

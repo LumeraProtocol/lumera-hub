@@ -469,7 +469,7 @@ export const SupernodesScreen = () => {
       );
     }
 
-    if (nextPayoutHeight && blocksRemaining) {
+    if (nextPayoutHeight) {
       return (
         <div className="text-xs text-lumera-label mt-3">
           <span className="text-lumera-gray">Next payout:</span>
@@ -479,16 +479,18 @@ export const SupernodesScreen = () => {
               <span className="text-xs text-lumera-gray ml-2">(Block {nextPayoutHeight.toString()})</span>
             </> : <>
               <span className="font-semibold ml-1 text-lumera-gray">Block {nextPayoutHeight.toString()}</span>
-              {etaSecondsApprox ?
+              {etaSecondsApprox !== null && etaSecondsApprox !== undefined ?
                 <span className="text-xs text-lumera-label ml-2">
                   ({formatEta(etaSecondsApprox)})
                 </span> : null
               }
             </>
           }
-          <div className="text-xs text-lumera-label mt-1">
-              {blocksRemaining.toString()} blocks remaining
-          </div>
+          {blocksRemaining ?
+            <div className="text-xs text-lumera-label mt-1">
+                {blocksRemaining.toString()} blocks remaining
+            </div> : null
+          }
         </div>
       );
     }

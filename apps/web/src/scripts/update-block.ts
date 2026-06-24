@@ -195,7 +195,7 @@ const updateBlock = async () => {
     const transactionRepo = dataSource.getRepository(Transaction);
     const addressRepo = dataSource.getRepository(Address);
 
-    let startingBlock = 1
+    let startingBlock: number;
     if (!process.argv[2]) {
       const latestDBBlock = await blockRepo.createQueryBuilder()
         .select('height')

@@ -480,7 +480,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     try {
       const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/stats`);
       const snResults = [];
-      let isContinue = true;
+      let isContinue: boolean;
       let cursor = '';
       do {
         try {
@@ -491,7 +491,6 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
           cursor = supernodes.next_cursor;
           isContinue = !!cursor;
         } catch {
-          isContinue = false;
           break;
         }
       } while (isContinue);
@@ -704,7 +703,6 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
             }
           }
           if (!myFilesResults?.nextKey) {
-            isContinue = false;
             break;
           }
           nextCursor = myFilesResults?.nextKey;
