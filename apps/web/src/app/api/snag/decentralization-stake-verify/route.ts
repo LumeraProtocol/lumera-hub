@@ -194,8 +194,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       status: true,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
+    if (error?.statusCode === 500 && error?.message?.indexOf('encoding/hex') !== -1) {
+      return NextResponse.json({
+        error: 'Data not found!',
+      }, {
+        status: 500,
+      });
+    }
     return NextResponse.json({
       error: (error as Error).message,
     }, {

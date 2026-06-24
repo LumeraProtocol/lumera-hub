@@ -317,8 +317,8 @@ export const SupernodesScreen = () => {
   }
 
   const getPayoutByAccount = (account: string) => {
-    const total = smoothedWeight;
-    const pool = getPoolBalanceUlume();
+    const total = Math.trunc(smoothedWeight);
+    const pool = Math.trunc(getPoolBalanceUlume());
     const entry = eligibilityMap[account];
     if (!entry || entry.status !== 'ok' || !entry?.data?.eligible || !entry?.data?.smoothed_weight) {
       return 0n;

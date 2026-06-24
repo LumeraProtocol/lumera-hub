@@ -111,7 +111,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
     const { data } = await instance.getExternal(`${config.urlCheck}${user.lumeraAddress}`);
     const items = data?.items.filter((item: any) => Number(dayjs.utc(item.register_tx_time).format('YYYYMMDD')) >= Number(startTime) && Number(dayjs.utc(item.register_tx_time).format('YYYYMMDD')) <= Number(endTime));
     if (!items?.length) {
@@ -208,8 +207,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       status: true,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
+    if (error?.statusCode === 500 && error?.message?.indexOf('encoding/hex') !== -1) {
+      return NextResponse.json({
+        error: 'Data not found!',
+      }, {
+        status: 500,
+      });
+    }
     return NextResponse.json({
       error: (error as Error).message,
     }, {
