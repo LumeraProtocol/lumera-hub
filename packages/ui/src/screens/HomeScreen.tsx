@@ -40,7 +40,6 @@ import {
 import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import AppButton from '@/components/AppButton';
-import Skeleton from '@/components/Skeleton';
 import { NAV_ITEMS } from '@/components/layout/AppShell';
 import NoWalletConnected from '@/components/NoWalletConnected';
 import SectionTitle from '@/components/SectionTitle';
@@ -654,12 +653,12 @@ export const ClaimableRewardsModal = ({
 }
 
 const Stats = () => {
-  const { isLoading, isLatestBlockLoading, stats, latestBlock } = useStats();
+  const { isLoading, isLatestBlockLoading, stats, latestBlock, redirect } = useStats();
 
   return (
     <div className='grid grid-cols-2 sm:grid-cols-3 1-5xl:grid-cols-6 gap-6'>
-      <Card elevate size="$4" bordered className='w-full'>
-        <div className='p-[18px]'>
+      <Card elevate size="$4" bordered className='w-full hover:!bg-[#171f1f] transition-colors duration-300 cursor-pointer'>
+        <div className='p-[18px]' onClick={() => redirect('/block')}>
           {isLatestBlockLoading ?
             <div className='relative min-h-[100px] block w-full'>
               <AppLoading

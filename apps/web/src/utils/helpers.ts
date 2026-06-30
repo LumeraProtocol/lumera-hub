@@ -1,4 +1,5 @@
 import numeral from 'numeral';
+import dayjs from 'dayjs';
 import {
   fromBase64,
   fromBech32,
@@ -10,6 +11,28 @@ import chainMainnet from 'chain-registry/mainnet'
 import chainTestnet from 'chain-registry/testnet';
 export { parseCoins } from '@cosmjs/stargate';
 import { MsgDelegate } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import updateLocale from 'dayjs/plugin/updateLocale';
+
+dayjs.extend(relativeTime);
+dayjs.extend(updateLocale);
+dayjs.updateLocale('en', {
+  relativeTime: {
+    future: 'in %s',
+    past: '%s ago',
+    s: '%ds',
+    m: '1m',
+    mm: '%dm',
+    h: 'an hour',
+    hh: '%d hours',
+    d: 'a day',
+    dd: '%d days',
+    M: 'a month',
+    MM: '%d months',
+    y: 'a year',
+    yy: '%d years',
+  },
+});
 
 import { IValidator } from '@/types/validator';
 
@@ -334,4 +357,34 @@ export const isValidEmail = (email: string) => {
   const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
   return regex.test(email.trim());
+}
+
+export const validator = (address: string, validators: IValidator[]) => {
+  if (!address) return address;
+
+  const txt = toHex(fromBase64(address)).toUpperCase();
+  const validator = validators.find(
+    (x) => consensusPubkeyToHexAddress(x.consensus_pubkey) === txt
+  );
+  return validator?.description?.moniker;
+}
+
+export const toDay = (time?: string | number| Date, format = 'long') => {
+  if (!time) return '';
+  if (format === 'long') {
+    return dayjs(time).format('YYYY-MM-DD HH:mm');
+  }
+  if (format === 'date') {
+    return dayjs(time).format('YYYY-MM-DD');
+  }
+  if (format === 'time') {
+    return dayjs(time).format('HH:mm:ss');
+  }
+  if (format === 'from') {
+    return dayjs(time).fromNow();
+  }
+  if (format === 'to') {
+    return dayjs(time).toNow();
+  }
+  return dayjs(time).format('YYYY-MM-DD HH:mm:ss');
 }

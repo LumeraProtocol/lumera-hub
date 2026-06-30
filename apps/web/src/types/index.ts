@@ -50,46 +50,57 @@ export type TSignatures = {
 }
 
 export interface IBlock {
-    header: {
-        version: {
-            block: string;
-            app: string;
-        };
-        chain_id: string;
-        height: string;
-        time: string;
-        last_block_id: {
-            hash: string;
-            part_set_header: {
-                total: number;
-                hash: string;
-            };
-        };
-        last_commit_hash: string;
-        data_hash: string;
-        validators_hash: string;
-        next_validators_hash: string;
-        consensus_hash: string;
-        app_hash: string;
-        last_results_hash: string;
-        evidence_hash: string;
-        proposer_address: string;
+  header: {
+      version: {
+          block: string;
+          app: string;
+      };
+      chain_id: string;
+      height: string;
+      time: string;
+      last_block_id: {
+          hash: string;
+          part_set_header: {
+              total: number;
+              hash: string;
+          };
+      };
+      last_commit_hash: string;
+      data_hash: string;
+      validators_hash: string;
+      next_validators_hash: string;
+      consensus_hash: string;
+      app_hash: string;
+      last_results_hash: string;
+      evidence_hash: string;
+      proposer_address: string;
+  };
+  data: {
+      txs: string[];
+  };
+  last_commit: {
+    height: string;
+    round: number;
+    block_id: {
+        hash: string;
+        part_set_header: {
+        total: number;
+        hash: string;
+        }
     };
-    data: {
-        txs: string[];
+    signatures: TSignatures[];
+  }
+}
+
+export interface IBlockResponse {
+  block: IBlock;
+  block_id: {
+    hash: string;
+    part_set_header: {
+      hash: string;
+      total: number;
     };
-    last_commit: {
-        height: string;
-        round: number;
-        block_id: {
-           hash: string;
-           part_set_header: {
-            total: number;
-            hash: string;
-           }
-        };
-        signatures: TSignatures[];
-    }
+  }
 }
 
 export interface IProposal {
@@ -287,6 +298,7 @@ export type ViewId =
   | "block"
   | "user"
   | "tracking"
+  | "blocks"
 
 export interface IFullBlock {
   block: IBlock;
@@ -356,6 +368,7 @@ export const VIEW_TITLES: Record<ViewId, string> = {
   nfts: "NFTs",
   wallet: "Wallet",
   block: "Block Details",
+  blocks: "Blocks",
   user: 'Users',
   tracking: "Active Hub Users",
 }

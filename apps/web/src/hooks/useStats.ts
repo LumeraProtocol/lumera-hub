@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react';
 import * as instance from '@/utils/api';
 import { Coin } from '@/hooks/useAccountInfo';
 import { DENOM } from '@/contants/network';
+import useAppRouter from '@/hooks/useAppRouter';
 import { formatCommissionRate, formatTokens, formatToken } from '@/utils/format';
 
 let timeout: number | null = null;
 
 const useStats = () => {
+  const { redirect } = useAppRouter();
   const [isLoading, setLoading] = useState(false);
   const [isLatestBlockLoading, setLatestBlockLoading] = useState(false);
   const [latestBlock, setLatestBlock] = useState({
@@ -87,6 +89,7 @@ const useStats = () => {
     stats,
     isLatestBlockLoading,
     latestBlock,
+    redirect,
   }
 }
 

@@ -11,6 +11,7 @@ import {
   // Image as ImageIcon,
   BrainCircuit,
   Wallet,
+  Blocks,
 } from '@tamagui/lucide-icons';
 import Image from 'next/image';
 import { Layers, TriangleAlert } from 'lucide-react';
@@ -40,14 +41,15 @@ export const NAV_ITEMS: TNaxItems[] = [
   { id: "wallet", label: "Wallet", url: "/wallet", icon: <Wallet /> },
   { id: "staking", label: "Staking", url: "/staking", icon: <Layers /> },
   { id: "governance", label: "Governance", url: "/governance", icon: <LaptopMinimalCheck /> },
+  { id: "blocks", label: "Blocks", url: "/block", icon: <Blocks /> },
   { id: "cascade", label: "Cascade", url: "/cascade", icon: <Database /> },
   // { id: "sense", label: "Sense", url: "/sense", icon: <ShieldCheck /> },
   { id: "inference", label: "Inference", url: "/inference", icon: <BrainCircuit /> },
   // { id: "nfts", label: "NFTs", url: "/nfts", icon: <ImageIcon /> },
 ]
 
-const ESSENTIALS_NAV_ITEMS: TNaxItems[] = NAV_ITEMS.slice(0, 4);
-const TOOLS_NAV_ITEMS: TNaxItems[] = NAV_ITEMS.slice(4, 6);
+const ESSENTIALS_NAV_ITEMS: TNaxItems[] = NAV_ITEMS.slice(0, 5);
+const TOOLS_NAV_ITEMS: TNaxItems[] = NAV_ITEMS.slice(5, 7);
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
