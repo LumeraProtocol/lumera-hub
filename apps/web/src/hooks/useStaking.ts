@@ -202,9 +202,22 @@ const useStaking = (address = '') => {
 
   useEffect(() => {
     if (location.hash === '#validators') {
-       handleValidatorTabChange('all');
+      handleValidatorTabChange('all');
+      setTimeout(() => {
+        const hash = location.hash;
+        if (hash) {
+          const element = document.getElementById(hash.replace('#', ''));
+
+          if (element) {
+            element.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        }
+      }, 300);
     }
-  }, [location])
+  }, [location.hash])
 
   const handleTabChange = (tab: string) => {
     dispatch(setCurrentTab({
