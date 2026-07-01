@@ -360,13 +360,21 @@ export const isValidEmail = (email: string) => {
 }
 
 export const validator = (address: string, validators: IValidator[]) => {
-  if (!address) return address;
+  if (!address) {
+    return {
+      name: address,
+      identity: '',
+    };
+  }
 
   const txt = toHex(fromBase64(address)).toUpperCase();
   const validator = validators.find(
     (x) => consensusPubkeyToHexAddress(x.consensus_pubkey) === txt
   );
-  return validator?.description?.moniker;
+  return {
+    name: validator?.description?.moniker || '',
+    identity: validator?.description?.identity || '',
+  };
 }
 
 export const toDay = (time?: string | number| Date, format = 'long') => {

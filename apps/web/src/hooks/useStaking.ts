@@ -200,6 +200,12 @@ const useStaking = (address = '') => {
     }
   }, [address, validatorTab, subTab]);
 
+  useEffect(() => {
+    if (location.hash === '#validators') {
+       handleValidatorTabChange('all');
+    }
+  }, [location])
+
   const handleTabChange = (tab: string) => {
     dispatch(setCurrentTab({
       currentTab: tab,

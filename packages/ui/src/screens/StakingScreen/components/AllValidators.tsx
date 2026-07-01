@@ -148,7 +148,8 @@ export default function AllValidators({
   }
 
   return (
-    <Card elevate size="$4" bordered className='w-full mt-6'>
+    <Card elevate size="$4" bordered className='w-full mt-6 relative'>
+      <div id="validators" className='h-0 w-0 absolute -top-16'></div>
       <Card.Header padded>
         <div className='flex justify-between flex-col md:flex-row gap-4 w-full validators-control'>
           <div className='flex flex-col'>
