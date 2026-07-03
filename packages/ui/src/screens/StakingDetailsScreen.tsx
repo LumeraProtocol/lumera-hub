@@ -187,7 +187,7 @@ const LatestBlocks = () => {
             {blocks?.map((block) => (
               <div
                 key={block.last_commit.height}
-                onClick={() => redirect(`/block/${block.last_commit.height}`)}
+                onClick={() => redirect(`/blocks/${block.last_commit.height}`)}
                 className={`h-6 rounded cursor-pointer ${getBlockStatus(block) === 'signed' ? 'bg-green-500' : getBlockStatus(block) === 'proposed' ? 'bg-sky-500' : 'bg-red-500'} transition-colors duration-500`} title={`Block ${block.last_commit.height}: ${getBlockStatus(block)}`}
               />
             ))}

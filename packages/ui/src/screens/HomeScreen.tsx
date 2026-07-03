@@ -658,7 +658,7 @@ const Stats = () => {
   return (
     <div className='grid grid-cols-2 sm:grid-cols-3 1-5xl:grid-cols-6 gap-6'>
       <Card elevate size="$4" bordered className='w-full hover:!bg-[#171f1f] transition-colors duration-300 cursor-pointer hover:!border-lumera-teal'>
-        <div className='p-[18px]' onClick={() => redirect('/block')}>
+        <div className='p-[18px]' onClick={() => redirect('/blocks')}>
           {isLatestBlockLoading ?
             <div className='relative min-h-[100px] block w-full'>
               <AppLoading

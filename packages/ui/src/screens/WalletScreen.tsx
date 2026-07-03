@@ -435,7 +435,7 @@ export const WalletScreen = ({
                             <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
                               {getTxIcon(getMessages(tx.tx.body.messages))}
                             </div>
-                            <AppLink href={`/block/${tx.height}`} className="ml-2 text-lumera-teal hover:text-lumera-green">{tx.height}</AppLink>
+                            <AppLink href={`/blocks/${tx.height}`} className="ml-2 text-lumera-teal hover:text-lumera-green">{tx.height}</AppLink>
                           </div>
                         </div>
                         <div className="w-full md:col-span-2 mt-3 md:mt-0">

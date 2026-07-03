@@ -940,7 +940,7 @@ export const SupernodeDetailsScreen = () => {
                         <div className='block md:hidden text-lumera-label mb-2'>Height:</div>
                         <div>
                           <AppLink
-                            href={`/block/${last.height}`}
+                            href={`/blocks/${last.height}`}
                             className='text-lumera-teal hover:text-lumera-green'
                           >
                             {last.height}

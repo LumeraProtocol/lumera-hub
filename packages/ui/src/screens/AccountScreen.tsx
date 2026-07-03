@@ -816,7 +816,7 @@ export const AccountScreen = () => {
                             <div className="col-span-12 md:col-span-2 text-white">
                               <div className="md:hidden text-gray-500 mr-2">Creation Height: </div>
                               <AppLink
-                                href={`/block/${delegation.entries?.[0]?.creation_height}`}
+                                href={`/blocks/${delegation.entries?.[0]?.creation_height}`}
                                 className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
                               >
                                 {delegation.entries?.[0]?.creation_height}
@@ -884,7 +884,7 @@ export const AccountScreen = () => {
                         <div className="col-span-12 md:col-span-1 text-gray-300">
                           <div className="md:hidden text-gray-500 mr-2">Height: </div>
                           <AppLink
-                            href={`/block/${tx.height}`}
+                            href={`/blocks/${tx.height}`}
                             className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
                           >
                             {tx.height}
@@ -953,7 +953,7 @@ export const AccountScreen = () => {
                         <div className="col-span-12 md:col-span-1 text-gray-300">
                           <div className="md:hidden text-gray-500 mr-2">Height: </div>
                           <AppLink
-                            href={`/block/${tx.height}`}
+                            href={`/blocks/${tx.height}`}
                             className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
                           >
                             {tx.height}

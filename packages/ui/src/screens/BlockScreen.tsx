@@ -60,7 +60,7 @@ const BlockTxsChart = ({ blocks, height = 280 }: IBlockTxsChart) => {
         type: 'category',
         data: displayBlocks.map((b, i) => (b ? `#${b.block.header.height}` : `Block ${i + 1}`)),
         axisLabel: { show: false },
-        axisTick: { show: true },
+        axisTick: { show: false },
       },
       yAxis: {
         type: "value",
@@ -146,7 +146,7 @@ export const BlockScreen = () => {
                 <div className='flex justify-between items-start gap-1'>
                   <div className='text-md font-bold sm:!text-lg'>
                     {item?.block?.header?.height ?
-                      <AppLink href={`/block/${item?.block?.header?.height}`}>{item?.block?.header?.height}</AppLink> : '-'
+                      <AppLink href={`/blocks/${item?.block?.header?.height}`}>{item?.block?.header?.height}</AppLink> : '-'
                     }
                   </div>
                 </div>

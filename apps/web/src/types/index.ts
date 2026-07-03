@@ -299,6 +299,8 @@ export type ViewId =
   | "user"
   | "tracking"
   | "blocks"
+  | "portal"
+  | "injhub"
 
 export interface IFullBlock {
   block: IBlock;
@@ -370,7 +372,9 @@ export const VIEW_TITLES: Record<ViewId, string> = {
   block: "Block Details",
   blocks: "Blocks",
   user: 'Users',
+  portal: 'Portal',
   tracking: "Active Hub Users",
+  injhub: "Injhub",
 }
 
 export type TFromMessage = {

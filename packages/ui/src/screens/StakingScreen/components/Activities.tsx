@@ -163,7 +163,7 @@ export default function Activities({
                     <div className="col-span-12 md:col-span-1 text-gray-300">
                       <div className="md:hidden text-gray-500 mr-2">Block: </div>
                       <AppLink
-                        href={`/block/${tx.height}`}
+                        href={`/blocks/${tx.height}`}
                         className="text-lumera-teal hover:text-lumera-green truncate flex items-center gap-1.5"
                       >
                         {tx.height}<ArrowUpRight className="w-3 h-3"/>

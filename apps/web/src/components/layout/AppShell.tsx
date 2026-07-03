@@ -7,11 +7,11 @@ import {
   BarChart2,
   LaptopMinimalCheck,
   Database,
-  // ShieldCheck,
-  // Image as ImageIcon,
   BrainCircuit,
   Wallet,
   Blocks,
+  ArrowRight,
+  ExternalLink,
 } from '@tamagui/lucide-icons';
 import Image from 'next/image';
 import { Layers, TriangleAlert } from 'lucide-react';
@@ -26,6 +26,7 @@ import { CHAIN_NAME } from '@/contants/network';
 import { useSelector, useDispatch } from '@/redux/hooks';
 import { setActiveView, setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import { setError } from '@/redux/error.slice';
+import LumeraSymbol from '@/assets/img/lumera_symbol.svg';
 
 import { ViewId, VIEW_TITLES } from '@/types';
 
@@ -34,22 +35,31 @@ type TNaxItems = {
   label: string;
   url: string;
   icon: React.ReactNode;
+  newPage?: boolean;
+  newIcon?: React.ReactNode;
 }
 
 export const NAV_ITEMS: TNaxItems[] = [
-  { id: "dashboard", label: "Dashboard", url: "/", icon: <BarChart2 /> },
-  { id: "wallet", label: "Wallet", url: "/wallet", icon: <Wallet /> },
-  { id: "staking", label: "Staking", url: "/staking", icon: <Layers /> },
-  { id: "governance", label: "Governance", url: "/governance", icon: <LaptopMinimalCheck /> },
-  { id: "blocks", label: "Blocks", url: "/block", icon: <Blocks /> },
-  { id: "cascade", label: "Cascade", url: "/cascade", icon: <Database /> },
+  { id: "dashboard", label: "Dashboard", url: "/", icon: <BarChart2 />, newPage: false },
+  { id: "wallet", label: "Wallet", url: "/wallet", icon: <Wallet />, newPage: false },
+  { id: "staking", label: "Staking", url: "/staking", icon: <Layers />, newPage: false },
+  { id: "governance", label: "Governance", url: "/governance", icon: <LaptopMinimalCheck />, newPage: false },
+  { id: "blocks", label: "Blocks", url: "/blocks", icon: <Blocks />, newPage: false },
+  { id: "cascade", label: "Cascade", url: "/cascade", icon: <Database />, newPage: false },
   // { id: "sense", label: "Sense", url: "/sense", icon: <ShieldCheck /> },
-  { id: "inference", label: "Inference", url: "/inference", icon: <BrainCircuit /> },
-  // { id: "nfts", label: "NFTs", url: "/nfts", icon: <ImageIcon /> },
+  { id: "inference", label: "Inference", url: "/inference", icon: <BrainCircuit />, newPage: false },
+  {
+    id: "portal",
+    label: "Portal",
+    url: "https://portal.testnet.lumera.io/",
+    icon: <Image src={LumeraSymbol} width={20} alt="Portal" className="rounded-full" />,
+    newPage: true,
+    newIcon: <ExternalLink size={16} />,
+  },
 ]
 
 const ESSENTIALS_NAV_ITEMS: TNaxItems[] = NAV_ITEMS.slice(0, 5);
-const TOOLS_NAV_ITEMS: TNaxItems[] = NAV_ITEMS.slice(5, 7);
+const TOOLS_NAV_ITEMS: TNaxItems[] = NAV_ITEMS.slice(5, NAV_ITEMS.length);
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
@@ -120,7 +130,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </AppLink>
           <div>
             <div>
-              <div className="text-md px-4 py-6 pb-3 text-lumera-label">Essentials</div>
+              <div className="text-md px-4 py-4 pb-3 text-lumera-label">Essentials</div>
               <nav className="flex-1 px-4 py-6 pt-0 space-y-2">
                 {ESSENTIALS_NAV_ITEMS.map((item) => (
                   <AppLink
@@ -128,6 +138,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     id={item.id}
                     href={item?.url || '#'}
                     className="text-lumera-teal hover:text-lumera-green text-base font-medium block mb-1"
+                    target={item.newPage ? '_blank' : ''}
                   >
                     <span
                       onClick={() => handleMenuItemClick(item)}
@@ -138,14 +149,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       }`}
                     >
                       <span className="inline-block w-6 h-6">{item.icon}</span>
-                      <span>{item.label}</span>
+                      <span className="inline-flex items-center justify-between gap-1 w-full">
+                        {item.label}
+                        {item.newIcon ?
+                          <span className="inline-block w-4 h-4">{item.newIcon}</span> : null
+                        }
+                      </span>
                     </span>
                   </AppLink>
                 ))}
               </nav>
             </div>
             <div>
-              <div className="text-md px-4 py-6 pb-3 text-lumera-label">Tools</div>
+              <div className="text-md px-4 py-3 pb-3 text-lumera-label">Tools</div>
               <nav className="flex-1 px-4 py-6 pt-0 space-y-2">
                 {TOOLS_NAV_ITEMS.map((item) => (
                   <AppLink
@@ -153,6 +169,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     id={item.id}
                     href={item?.url || '#'}
                     className="text-lumera-teal hover:text-lumera-green text-base font-medium block mb-1"
+                    target={item.newPage ? '_blank' : ''}
                   >
                     <span
                       onClick={() => handleMenuItemClick(item)}
@@ -163,7 +180,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       }`}
                     >
                       <span className="inline-block w-6 h-6">{item.icon}</span>
-                      <span>{item.label}</span>
+                      <span className="inline-flex items-center justify-between gap-1 w-full">
+                        {item.label}
+                        {item.newIcon ?
+                          <span className="inline-block w-4 h-4">{item.newIcon}</span> : null
+                        }
+                      </span>
                     </span>
                   </AppLink>
                 ))}
@@ -204,7 +226,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         <AppLink
                           key={item.id}
                           href={item?.url || '#'}
-                          className="text-lumera-teal hover:text-lumera-green text-base font-medium block mb-1">
+                          className="text-lumera-teal hover:text-lumera-green text-base font-medium block mb-1"
+                          target={item.newPage ? '_blank' : ''}
+                        >
                           <span
                             onClick={() => handleMenuItemClick(item)}
                             className={`flex items-center gap-3 px-4 py-3  transition-colors duration-200 rounded-lg w-full ${
@@ -214,7 +238,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                             }`}
                           >
                             <span className="inline-block w-6 h-6">{item.icon}</span>
-                            <span>{item.label}</span>
+                            <span className="inline-flex items-center justify-between gap-1 w-full">
+                              {item.label}
+                              {item.newIcon ?
+                                <span className="inline-block w-4 h-4">{item.newIcon}</span> : null
+                              }
+                            </span>
                           </span>
                         </AppLink>
                       ))}
@@ -237,7 +266,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                             }`}
                           >
                             <span className="inline-block w-6 h-6">{item.icon}</span>
-                            <span>{item.label}</span>
+                            <span className="inline-flex items-center justify-between gap-1 w-full">
+                              {item.label}
+                              {item.newIcon ?
+                                <span className="inline-block w-4 h-4">{item.newIcon}</span> : null
+                              }
+                            </span>
                           </span>
                         </AppLink>
                       ))}

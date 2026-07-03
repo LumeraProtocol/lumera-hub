@@ -89,7 +89,7 @@ export const TransactionDetailsScreen = ({
               <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
                 <div className='w-full md:w-32'>Height</div>
                 <div className='w-full'>
-                  <AppLink href={`/block/${transaction?.tx_response?.height}`} className='text-lumera-teal hover:text-lumera-green'>
+                  <AppLink href={`/blocks/${transaction?.tx_response?.height}`} className='text-lumera-teal hover:text-lumera-green'>
                     {transaction?.tx_response?.height}
                   </AppLink>
                 </div>
