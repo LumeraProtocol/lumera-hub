@@ -132,7 +132,7 @@ export const BlockScreen = () => {
         </div>
       </Card>
       <div className="mt-5 grid grid-cols-1 tiny:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-        {blocks?.map((item, index) => {
+        {blocks?.sort((a, b) => Number(b.block.header.height) - Number(a.block.header.height))?.map((item, index) => {
           const { name, identity } = validator(item?.block?.header?.proposer_address, validators);
           return (
             <Card

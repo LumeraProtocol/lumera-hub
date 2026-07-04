@@ -11,19 +11,19 @@ export default function Page() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    document.title = 'Block - Lumera Hub';
+    document.title = 'Blocks - Lumera Hub';
     dispatch(setCurrentPath({
       currentPath: '/blocks',
     }));
     dispatch(setViewTitle({
-      viewTitle: 'Block',
+      viewTitle: 'Blocks',
     }));
   }, []);
 
   return (
     <>
       <Helmet>
-        <title>Block - Lumera Hub</title>
+        <title>Blocks - Lumera Hub</title>
       </Helmet>
       <div>
         <BlockScreen />

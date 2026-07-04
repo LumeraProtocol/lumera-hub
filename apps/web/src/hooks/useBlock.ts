@@ -19,6 +19,20 @@ const useBlock = () => {
 
   const intervalRef = useRef<number | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const lastHeightRef = useRef<number>(0);
+
+  const fetchBlockByHeight = useCallback(async (height: number): Promise<IBlockResponse | null> => {
+    try {
+      const response = await instance.getWithSignal(
+        `/cosmos/base/tendermint/v1beta1/blocks/${height}`
+      );
+      return response.data;
+    } catch (err: any) {
+      if (axios.isCancel(err)) return null;
+      console.error(`Failed to fetch block ${height}:`, err);
+      return null;
+    }
+  }, []);
 
   const fetchLatestBlock = useCallback(async (useLoading = false) => {
     if (abortControllerRef.current) {
@@ -26,38 +40,49 @@ const useBlock = () => {
     }
 
     abortControllerRef.current = new AbortController();
-    if (useLoading) {
-      setLoading(true);
-    }
+    if (useLoading) setLoading(true);
 
     try {
       const response = await instance.getWithSignal(API_URL);
+      const latestBlock = response.data;
+      const latestHeight = parseInt(latestBlock.block?.header?.height || '0');
 
-      const newBlock = response.data;
-      setBlocks((prev) => {
-        const exists = prev.some(b => b.block_id?.hash === newBlock.block_id?.hash);
+      if (latestHeight === 0) return;
 
-        if (exists) {
-          return prev;
+      const blocksToAdd: IBlockResponse[] = [];
+
+      if (lastHeightRef.current > 0) {
+        for (let h = lastHeightRef.current + 1; h <= latestHeight; h++) {
+          const block = await fetchBlockByHeight(h);
+          if (block) blocksToAdd.push(block);
         }
+      } else {
+        blocksToAdd.push(latestBlock);
+      }
 
-        const updated = [newBlock, ...prev];
+      if (blocksToAdd.length > 0) {
+        setBlocks((prev) => {
+          const newBlocks = [...blocksToAdd, ...prev];
 
-        return updated.slice(0, maxBlocks);
-      });
+          const unique = newBlocks.filter((block, index, self) =>
+            index === self.findIndex(b => b.block_id?.hash === block.block_id?.hash)
+          );
+
+          return unique.slice(0, maxBlocks);
+        });
+
+        lastHeightRef.current = latestHeight;
+      }
 
       setError(null);
     } catch (err: any) {
       if (axios.isCancel(err)) return;
-
       console.error('Failed to fetch latest block:', err);
       setError(err?.response?.data || err?.message || 'Unknown error');
     } finally {
-      if (useLoading) {
-        setLoading(false);
-      }
+      if (useLoading) setLoading(false);
     }
-  }, []);
+  }, [fetchBlockByHeight]);
 
   const fetchAvatar = async (identity: string) => {
     if (!identity) {
