@@ -51,7 +51,7 @@ export const NAV_ITEMS: TNaxItems[] = [
   {
     id: "portal",
     label: "Portal",
-    url: "https://portal.testnet.lumera.io/",
+    url: `https://portal.${process.env.NEXT_PUBLIC_SDK_PRESET === 'testnet' ? 'testnet' : ''}.lumera.io/`,
     icon: <Image src={LumeraSymbol} width={20} alt="Portal" className="rounded-full" />,
     newPage: true,
     newIcon: <ExternalLink size={16} />,
