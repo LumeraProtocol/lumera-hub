@@ -7,7 +7,7 @@ const tamaguiConfigPath = path.resolve(__dirname, '../../tamagui.config.ts')
 
 module.exports = withTamagui({
   config: tamaguiConfigPath,
-  components: ['tamagui', '@lumera-hub/ui'],
+  components: ['tamagui'],
   appDir: true,
 })({
   reactStrictMode: true,

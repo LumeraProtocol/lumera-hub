@@ -98,7 +98,18 @@ export const FILES_TYPE: FileTypeOption[] = [
 
 const GAS_PRICE = '0.025ulume';
 
-const client = new IPLocate(process.env.NEXT_PUBLIC_IPAPI_KEY || '');
+let ipLocateClient: IPLocate | undefined;
+
+const getIpLocateClient = () => {
+  const apiKey = process.env.NEXT_PUBLIC_IPAPI_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  ipLocateClient ??= new IPLocate(apiKey);
+  return ipLocateClient;
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
@@ -164,6 +175,11 @@ const useCascade = ({ lumeraSdk }: { lumeraSdk: any }) => {
 
   const fetchLocationFromIpLocate = async (ip: string) => {
     try {
+      const client = getIpLocateClient();
+      if (!client) {
+        return null;
+      }
+
       const result = await client.lookup(ip);
       return {
         latitude: result?.latitude || null,
