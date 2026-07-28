@@ -19,6 +19,20 @@ pnpm install
 
 ## Development
 
+### Select a network
+
+Copy the web environment template and select one of the local network profiles:
+
+```bash
+cp apps/web/.env.example apps/web/.env.local
+```
+
+```dotenv
+NEXT_PUBLIC_NETWORK_PROFILE=testnet
+```
+
+Supported profiles are `devnet`, `testnet`, and `mainnet`. Their chain IDs and endpoints are defined together in `apps/web/src/contants/network.ts`. Individual `NEXT_PUBLIC_CHAIN_NAME`, `NEXT_PUBLIC_CHAIN_ID`, `NEXT_PUBLIC_RPC_ENDPOINT`, `NEXT_PUBLIC_REST_AI_URL`, `NEXT_PUBLIC_EVM_RPC_ENDPOINT`, `NEXT_PUBLIC_EVM_WS_ENDPOINT`, and `NEXT_PUBLIC_SNAPI_URL` values can still override the selected profile.
+
 ### Run Dev Servers with Watcher
 
 Run all apps in development mode:

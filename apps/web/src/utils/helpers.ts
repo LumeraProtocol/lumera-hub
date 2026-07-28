@@ -12,6 +12,14 @@ export { parseCoins } from '@cosmjs/stargate';
 import { MsgDelegate } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
 
 import { IValidator } from '@/types/validator';
+import {
+  CHAIN_ID,
+  CHAIN_NAME,
+  DENOM,
+  NETWORK_PROFILE,
+  REST_AI_URL,
+  RPC_ENDPOINT,
+} from '@/contants/network';
 
 export const getMessages = (msgs: { '@type'?: string; typeUrl?: string }[]) => {
   if (msgs) {
@@ -83,12 +91,12 @@ export const mapAmount = (events:{type: string, attributes: {key: string, value:
 }
 
 export const getChains = () => {
-  if (process.env.NEXT_PUBLIC_NODE_ENV === 'devnet') {
+  if (NETWORK_PROFILE === 'devnet') {
     const lumeraChain = {
-      chainName: 'lumera-testnet',
+      chainName: CHAIN_NAME,
       status: 'live',
       networkType: 'testnet',
-      chainId: 'lumera-devnet-1',
+      chainId: CHAIN_ID,
       chainType: "cosmos",
       prettyName: 'Lumera Devnet',
       chainSymbol: 'lumera-testnet',
@@ -100,7 +108,7 @@ export const getChains = () => {
       fees: {
         feeTokens: [
           {
-            denom: 'ulume',
+            denom: DENOM,
             fixedMinGasPrice: '0.025',
             lowGasPrice: '0.025',
             averageGasPrice: '0.025',
@@ -114,13 +122,13 @@ export const getChains = () => {
       apis: {
         rpc: [
           {
-            address: 'https://rpc.pastel.network',
+            address: RPC_ENDPOINT,
             provider: 'lumera',
           },
         ],
         rest: [
           {
-            address: 'https://lcd.pastel.network',
+            address: REST_AI_URL,
             provider: 'lumera',
           },
         ],
@@ -135,13 +143,13 @@ export const getChains = () => {
       features: ['cosmwasm'],
     };
     const lumeraAssets = {
-      chainName: 'lumera-testnet',
+      chainName: CHAIN_NAME,
       assets: [
         {
           description: 'Lumera native token on Lumera Devnet',
           denomUnits: [
             {
-              denom: 'ulume',
+              denom: DENOM,
               exponent: 0,
               aliases: ['microlume'],
             },
@@ -169,15 +177,28 @@ export const getChains = () => {
       chains: [lumeraChain],
     }
   }
-  if (process.env.NEXT_PUBLIC_NODE_ENV === 'dev') {
-    return {
-      assetLists: chainTestnet.assetLists,
-      chains: chainTestnet.chains,
-    }
+
+  const registry = NETWORK_PROFILE === 'testnet' ? chainTestnet : chainMainnet;
+  const chain = registry.chains.find(({ chainName }) => chainName === CHAIN_NAME);
+  const assets = registry.assetLists.find(({ chainName }) => chainName === CHAIN_NAME);
+
+  if (!chain || !assets) {
+    return { assetLists: [], chains: [] };
   }
+
   return {
-    assetLists: chainMainnet.assetLists,
-    chains: chainMainnet.chains,
+    assetLists: [assets],
+    chains: [
+      {
+        ...chain,
+        chainId: CHAIN_ID,
+        apis: {
+          ...chain.apis,
+          rpc: [{ address: RPC_ENDPOINT, provider: 'Lumera Hub profile' }],
+          rest: [{ address: REST_AI_URL, provider: 'Lumera Hub profile' }],
+        },
+      },
+    ],
   }
 }
 
