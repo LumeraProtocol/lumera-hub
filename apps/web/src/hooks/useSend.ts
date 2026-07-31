@@ -3,10 +3,16 @@ import {
   MsgSend,
 } from 'cosmjs-types/cosmos/bank/v1beta1/tx';
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { DENOM } from '@/contants/network';
+import { DENOM, IS_EVM_NETWORK } from '@/contants/network';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contants';
 import { Coin } from '@/hooks/useAccountInfo';
 import { extractValidNumber } from '@/utils/helpers';
+import {
+  evmBalanceToMicroLume,
+  getEvmBalance,
+  isEvmAddress,
+  parseEvmAmount,
+} from '@/utils/evm';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -14,7 +20,13 @@ interface UseDepositOptions {
 }
 
 const useSend = (options: UseDepositOptions = {}) => {
-    const { address, getClient, isConnected } = useWalletConnect();
+    const {
+      address,
+      getClient,
+      isConnected,
+      evmProvider,
+      ensureEvmNetwork,
+    } = useWalletConnect();
     const [isLoading, setLoading] = useState(false);
     const [optionsAdvanced, setOptionsAdvanced] = useState({
         senderAddress: address,
@@ -36,6 +48,13 @@ const useSend = (options: UseDepositOptions = {}) => {
         queryBalances();
       }
     }, [isConnected]);
+
+    useEffect(() => {
+      setOptionsAdvanced((current) => ({
+        ...current,
+        senderAddress: address,
+      }));
+    }, [address]);
 
     useEffect(() => {
       if (options?.customMemo) {
@@ -85,16 +104,39 @@ const useSend = (options: UseDepositOptions = {}) => {
           setError('Please enter sender.');
           return
       }
-      if (!optionsAdvanced.fees) {
+      if (!IS_EVM_NETWORK && !optionsAdvanced.fees) {
           setError('Please enter fee.');
           return
       }
-      if (!optionsAdvanced.gas) {
+      if (!IS_EVM_NETWORK && !optionsAdvanced.gas) {
           setError('Please enter gas.');
           return
       }
       setLoading(true);
       try {
+        if (IS_EVM_NETWORK) {
+          if (!isEvmAddress(optionsAdvanced.recipient)) {
+            throw new Error('Enter a valid EVM recipient address.');
+          }
+          if (!evmProvider) {
+            throw new Error('No EVM wallet was detected.');
+          }
+
+          await ensureEvmNetwork();
+          const transactionHash = await evmProvider.request<string>({
+            method: 'eth_sendTransaction',
+            params: [{
+              from: address,
+              to: optionsAdvanced.recipient,
+              value: parseEvmAmount(optionsAdvanced.amount),
+            }],
+          });
+          setTransactionHash(transactionHash);
+          resetData();
+          options.callback?.();
+          return;
+        }
+
         const client = await getClient();
         const msg = {
           typeUrl: '/cosmos.bank.v1beta1.MsgSend',
@@ -136,6 +178,13 @@ const useSend = (options: UseDepositOptions = {}) => {
 
     const queryBalances = async (): Promise<void> => {
       try {
+        if (IS_EVM_NETWORK) {
+          const balance = await getEvmBalance(address);
+          setBalances([{ denom: DENOM, amount: evmBalanceToMicroLume(balance) }]);
+          setSelectedDenom(DENOM);
+          return;
+        }
+
         const client = await getClient();
         if (!client) {
           return

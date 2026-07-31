@@ -9,24 +9,26 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import useTransaction from '@/hooks/useTransaction';
 import useDelegate from '@/hooks/useDelegate';
 import useSend from '@/hooks/useSend';
+import { IS_EVM_NETWORK } from '@/contants/network';
 
 export default function Page() {
   const { address } = useWalletConnect();
+  const account = useAccountInfo();
   const {
     accountInfo,
     selectedModal,
     handleOpenModal,
     handleCloseModal,
-  } = useAccountInfo();
+  } = account;
   const {
-    isLoading,
-    error,
+    isLoading: isTransactionLoading,
+    error: transactionError,
     transactions,
     totalTransactions,
     handlePageClick,
   } = useTransaction();
   const sendOptions = useSend({
-    callback: handleCloseModal,
+    callback: IS_EVM_NETWORK ? account.fetchData : handleCloseModal,
     customMemo: '',
   });
   const delegate = useDelegate();
@@ -42,9 +44,10 @@ export default function Page() {
       <div className="governance-content">
         <WalletScreen
           walletAddress={address}
+          isEvm={IS_EVM_NETWORK}
           accountInfo={accountInfo}
-          isLoading={isLoading}
-          error={error}
+          isLoading={account.loading || isTransactionLoading}
+          error={account.error?.message || transactionError}
           transactions={transactions}
           totalTransactions={totalTransactions}
           selectedModal={selectedModal}
@@ -60,8 +63,11 @@ export default function Page() {
             onSendClick: sendOptions.handleSendClick,
             onInputChange: sendOptions.handleInputChange,
             onAdvancedCheckedChange: sendOptions.handleShowAdvancedChange,
-             transactionHash: sendOptions.transactionHash,
-            onCloseCongratulationsModal: sendOptions.handleCloseCongratulationsModal,
+            transactionHash: sendOptions.transactionHash,
+            onCloseCongratulationsModal: () => {
+              sendOptions.handleCloseCongratulationsModal();
+              handleCloseModal();
+            },
           }}
           delegateOptions={{
             isVoteLoading: delegate.isLoading,

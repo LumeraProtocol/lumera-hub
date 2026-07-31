@@ -31,7 +31,9 @@ cp apps/web/.env.example apps/web/.env.local
 NEXT_PUBLIC_NETWORK_PROFILE=testnet
 ```
 
-Supported profiles are `devnet`, `testnet`, and `mainnet`. Their chain IDs and endpoints are defined together in `apps/web/src/contants/network.ts`. Individual `NEXT_PUBLIC_CHAIN_NAME`, `NEXT_PUBLIC_CHAIN_ID`, `NEXT_PUBLIC_RPC_ENDPOINT`, `NEXT_PUBLIC_REST_AI_URL`, `NEXT_PUBLIC_EVM_RPC_ENDPOINT`, `NEXT_PUBLIC_EVM_WS_ENDPOINT`, and `NEXT_PUBLIC_SNAPI_URL` values can still override the selected profile.
+Supported profiles are `devnet`, `testnet`, and `mainnet`. Their chain IDs and endpoints are defined together in `apps/web/src/contants/network.ts`. Individual `NEXT_PUBLIC_CHAIN_NAME`, `NEXT_PUBLIC_CHAIN_ID`, `NEXT_PUBLIC_RPC_ENDPOINT`, `NEXT_PUBLIC_REST_AI_URL`, `NEXT_PUBLIC_EVM_RPC_ENDPOINT`, `NEXT_PUBLIC_EVM_WS_ENDPOINT`, `NEXT_PUBLIC_EVM_CHAIN_ID`, and `NEXT_PUBLIC_SNAPI_URL` values can still override the selected profile.
+
+Profiles with both an EVM RPC endpoint and EVM chain ID use an injected EIP-1193 wallet for native LUME balances and transfers. Profiles without those values continue to use the legacy Cosmos/Interchain wallet flow.
 
 ### Run Dev Servers with Watcher
 

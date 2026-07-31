@@ -179,18 +179,23 @@ export const getChains = () => {
   }
 
   const registry = NETWORK_PROFILE === 'testnet' ? chainTestnet : chainMainnet;
-  const chain = registry.chains.find(({ chainName }) => chainName === CHAIN_NAME);
-  const assets = registry.assetLists.find(({ chainName }) => chainName === CHAIN_NAME);
+  const chain = registry.chains.find(({ chainName, chainId }) =>
+    chainName === CHAIN_NAME || chainId === CHAIN_ID
+  );
+  const assets = chain
+    ? registry.assetLists.find(({ chainName }) => chainName === chain.chainName)
+    : undefined;
 
   if (!chain || !assets) {
     return { assetLists: [], chains: [] };
   }
 
   return {
-    assetLists: [assets],
+    assetLists: [{ ...assets, chainName: CHAIN_NAME }],
     chains: [
       {
         ...chain,
+        chainName: CHAIN_NAME,
         chainId: CHAIN_ID,
         apis: {
           ...chain.apis,

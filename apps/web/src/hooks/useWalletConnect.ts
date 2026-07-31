@@ -5,13 +5,21 @@ import { useSelector } from '@/redux/hooks';
 import {
   RPC_ENDPOINT,
   CHAIN_NAME,
+  IS_EVM_NETWORK,
 } from '@/contants/network';
+import { useEvmWallet } from '@/app/providers/evm-wallet-provider';
 
 const useWalletConnect = () => {
-    const { chain, wallet } = useChain(CHAIN_NAME);
-  const { isConnected, address, walletName, isModalOpen } = useSelector((state) => state.wallet);
+  const { chain, wallet, address: cosmosAddress } = useChain(CHAIN_NAME);
+  const evmWallet = useEvmWallet();
+  const { walletName, isModalOpen } = useSelector((state) => state.wallet);
+  const address = IS_EVM_NETWORK ? evmWallet.address : cosmosAddress || '';
+  const isConnected = Boolean(address);
 
   const getClient = async () => {
+    if (IS_EVM_NETWORK) {
+      throw new Error('Cosmos signing is unavailable while using an EVM network profile.');
+    }
     if (!wallet || !chain) {
       throw new Error('Please connect wallet before using');
     }
@@ -27,6 +35,9 @@ const useWalletConnect = () => {
   }
 
   const getOfflineSigner = async () => {
+    if (IS_EVM_NETWORK) {
+      throw new Error('Cosmos signing is unavailable while using an EVM network profile.');
+    }
     if (!wallet || !chain) {
       throw new Error('Please connect wallet before using');
     }
@@ -44,6 +55,9 @@ const useWalletConnect = () => {
     isConnected,
     address,
     walletName,
+    isEvm: IS_EVM_NETWORK,
+    evmProvider: evmWallet.provider,
+    ensureEvmNetwork: evmWallet.ensureNetwork,
     getClient,
     getOfflineSigner,
   }

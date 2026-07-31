@@ -23,6 +23,7 @@ import {
 } from '@/contants/network';
 import { getChains } from '@/utils/helpers';
 import { RegistryProvider } from "./RegistryContext";
+import { EvmWalletProvider } from './evm-wallet-provider';
 import store, { persistor } from '@/store';
 
 export function WebWalletProviders({ children }: { children: React.ReactNode }) {
@@ -68,17 +69,19 @@ export function WebWalletProviders({ children }: { children: React.ReactNode }) 
         <HelmetProvider>
           <ThemeProvider>
             <RegistryProvider>
-              {isBrowser && chainData ? (
-                <ChainProvider wallets={walletAdapters} chains={[chainData.chain]} assetLists={[chainData.assets]}>
-                  {children}
-                  <OverlaysManager />
-                </ChainProvider>
-              ) : (
-                // During SSR or while resolving on client, render app shell without ChainProvider to avoid build-time throws
-                <>
-                  {children}
-                </>
-              )}
+              <EvmWalletProvider>
+                {isBrowser && chainData ? (
+                  <ChainProvider wallets={walletAdapters} chains={[chainData.chain]} assetLists={[chainData.assets]}>
+                    {children}
+                    <OverlaysManager />
+                  </ChainProvider>
+                ) : (
+                  // During SSR or while resolving on client, render app shell without ChainProvider to avoid build-time throws
+                  <>
+                    {children}
+                  </>
+                )}
+              </EvmWalletProvider>
             </RegistryProvider>
           </ThemeProvider>
         </HelmetProvider>

@@ -5,7 +5,7 @@ import {
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { DENOM } from '@/contants/network';
+import { DENOM, IS_EVM_NETWORK } from '@/contants/network';
 import { extractValidNumber } from '@/utils/helpers';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contants';
 import {
@@ -39,6 +39,11 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const [selectedModal, setSelectedModal] = useState('');
 
   const fetchValidator = async () => {
+    if (IS_EVM_NETWORK) {
+      setValidators([]);
+      setTotalValidators('0');
+      return;
+    }
     setFetchValidatorLoading(true);
     try {
       const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=1000&status=BOND_STATUS_BONDED&pagination.count_total=true');
@@ -101,6 +106,10 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const handleSendClick = async () => {
     setError('');
     setTransactionHash('');
+    if (IS_EVM_NETWORK) {
+      setError('Staking requires a legacy Cosmos wallet connection.');
+      return;
+    }
     if (!optionsAdvanced?.amount || Number(optionsAdvanced.amount) <= 0) {
       setError('Please enter amount.');
       return

@@ -4,6 +4,7 @@ import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { TLog, TLogEvent, TMessage, TOption, TSignerInfos, TFee } from '@/hooks/useRecentActivity';
 import { Coin } from '@/hooks/useAccountInfo';
+import { IS_EVM_NETWORK } from '@/contants/network';
 
 const LIMIT = 20;
 
@@ -49,6 +50,13 @@ const useTransaction = () => {
     const [totalTransactions, setTotalTransactions] = useState(0);
 
     const fetchTransactions = async (offset = 0) => {
+        if (IS_EVM_NETWORK) {
+            setTransactions([]);
+            setTotalTransactions(0);
+            setError('');
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         setError('');
     

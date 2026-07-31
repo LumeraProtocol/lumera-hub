@@ -1,5 +1,6 @@
 export const NETWORK_PROFILES = {
   devnet: {
+    displayName: 'Lumera Devnet',
     chainName: 'lumera-devnet',
     chainId: 'lumera-devnet-1',
     denom: 'ulume',
@@ -7,9 +8,11 @@ export const NETWORK_PROFILES = {
     restEndpoint: 'https://lcd.pastel.network',
     evmRpcEndpoint: 'https://evm-rpc.pastel.network',
     evmWsEndpoint: null,
+    evmChainId: 76857769,
     snapiUrl: 'http://localhost:3100',
   },
   testnet: {
+    displayName: 'Lumera Testnet',
     chainName: 'lumera-testnet',
     chainId: 'lumera-testnet-2',
     denom: 'ulume',
@@ -17,9 +20,11 @@ export const NETWORK_PROFILES = {
     restEndpoint: 'https://lcd-testnet.lumeraprotocol.com',
     evmRpcEndpoint: 'https://evm-testnet.lumeraprotocol.com',
     evmWsEndpoint: 'https://evm-ws-testnet.lumeraprotocol.com',
+    evmChainId: 76857769,
     snapiUrl: 'http://localhost:3100',
   },
   mainnet: {
+    displayName: 'Lumera Mainnet',
     chainName: 'lumera',
     chainId: 'lumera-mainnet-1',
     denom: 'ulume',
@@ -27,6 +32,7 @@ export const NETWORK_PROFILES = {
     restEndpoint: 'https://lcd.lumera.io',
     evmRpcEndpoint: null,
     evmWsEndpoint: null,
+    evmChainId: null,
     snapiUrl: 'http://localhost:3100',
   },
 } as const;
@@ -61,6 +67,16 @@ export const RPC_ENDPOINT = process.env.NEXT_PUBLIC_RPC_ENDPOINT || ACTIVE_NETWO
 export const REST_AI_URL = process.env.NEXT_PUBLIC_REST_AI_URL || ACTIVE_NETWORK.restEndpoint;
 export const EVM_RPC_ENDPOINT = process.env.NEXT_PUBLIC_EVM_RPC_ENDPOINT || ACTIVE_NETWORK.evmRpcEndpoint;
 export const EVM_WS_ENDPOINT = process.env.NEXT_PUBLIC_EVM_WS_ENDPOINT || ACTIVE_NETWORK.evmWsEndpoint;
+export const EVM_CHAIN_ID = process.env.NEXT_PUBLIC_EVM_CHAIN_ID
+  ? Number(process.env.NEXT_PUBLIC_EVM_CHAIN_ID)
+  : ACTIVE_NETWORK.evmChainId;
+export const EVM_NATIVE_DECIMALS = 18;
+
+if (EVM_CHAIN_ID !== null && (!Number.isSafeInteger(EVM_CHAIN_ID) || EVM_CHAIN_ID <= 0)) {
+  throw new Error('NEXT_PUBLIC_EVM_CHAIN_ID must be a positive integer.');
+}
+
+export const IS_EVM_NETWORK = EVM_RPC_ENDPOINT !== null && EVM_CHAIN_ID !== null;
 export const WALLET_CONNECT_PROJECTID = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECTID || 'fd049c1154d0886fda615b1c2e08ee28';
 export const WALLET_CONNECT_RELAY_URL = process.env.NEXT_PUBLIC_WALLET_CONNECT_RELAY_URL || 'wss://relay.walletconnect.org';
 export const WALLET_CONNECT_NAME = process.env.NEXT_PUBLIC_WALLET_CONNECT_NAME || 'Lumera Hub';

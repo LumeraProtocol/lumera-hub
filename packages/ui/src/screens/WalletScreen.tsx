@@ -42,6 +42,7 @@ import 'react-paginate/theme/basic/react-paginate.css';
 
 interface IWalletScreen {
     walletAddress: string;
+    isEvm: boolean;
     accountInfo: AccountInfoData | null;
     isLoading: boolean;
     error: string;
@@ -95,6 +96,7 @@ interface IWalletScreen {
 
 export const WalletScreen = ({
     walletAddress,
+    isEvm,
     accountInfo,
     isLoading,
     error,
@@ -285,6 +287,7 @@ export const WalletScreen = ({
           walletAddress={walletAddress}
         />
         <SendModal
+          isEvm={isEvm}
           isOpen={selectedModal === 'send'}
           availableAmount={getAvailableBalances() / RATE_VALUE}
           isVoteLoading={sendOptions.isVoteLoading}
@@ -298,21 +301,23 @@ export const WalletScreen = ({
           transactionHash={sendOptions.transactionHash}
           onCloseCongratulationsModal={sendOptions.onCloseCongratulationsModal}
         />
-        <DelegateModal
-          isOpen={selectedModal === 'stake'}
-          availableAmount={getAvailableBalances() / RATE_VALUE}
-          isVoteLoading={delegateOptions.isVoteLoading}
-          onAdvancedCheckedChange={delegateOptions.onAdvancedCheckedChange}
-          onCloseDailogChange={delegateOptions.onCloseDailogChange}
-          onInputChange={delegateOptions.onInputChange}
-          onSendClick={delegateOptions.onSendClick}
-          optionsAdvanced={delegateOptions.optionsAdvanced}
-          showAdvanced={delegateOptions.showAdvanced}
-          error={delegateOptions.error}
-          validators={delegateOptions.validators}
-          transactionHash={delegateOptions.transactionHash}
-          onCloseCongratulationsModal={delegateOptions.onCloseCongratulationsModal}
-        />
+        {!isEvm ? (
+          <DelegateModal
+            isOpen={selectedModal === 'stake'}
+            availableAmount={getAvailableBalances() / RATE_VALUE}
+            isVoteLoading={delegateOptions.isVoteLoading}
+            onAdvancedCheckedChange={delegateOptions.onAdvancedCheckedChange}
+            onCloseDailogChange={delegateOptions.onCloseDailogChange}
+            onInputChange={delegateOptions.onInputChange}
+            onSendClick={delegateOptions.onSendClick}
+            optionsAdvanced={delegateOptions.optionsAdvanced}
+            showAdvanced={delegateOptions.showAdvanced}
+            error={delegateOptions.error}
+            validators={delegateOptions.validators}
+            transactionHash={delegateOptions.transactionHash}
+            onCloseCongratulationsModal={delegateOptions.onCloseCongratulationsModal}
+          />
+        ) : null}
         <div className="flex justify-between gap-8 flex-col lg:flex-row">
           <Card className='w-full lg:w-2/3'>
             <h3 className="font-semibold text-gray-400">Total Wallet Balance</h3>
@@ -328,6 +333,9 @@ export const WalletScreen = ({
                 }
               </p>
             </div>
+            {error && !isLoading ? (
+              <p className='text-sm text-lumera-red-light mt-2'>{error}</p>
+            ) : null}
             <ul className='text-sm flex justify-between flex-wrap gap-x-4 gap-y-1 text-lumera-label mt-2'>
               <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
                 <span className='inline-block'></span> <span>Available: </span>
@@ -336,27 +344,27 @@ export const WalletScreen = ({
                   denom: DENOM,
                   }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
               </li>
-              <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
+              {!isEvm ? <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
                 <span className='inline-block'></span> <span>Staking: </span>
                   {formatTokenDisplay({
                   amount: `${getDelegations()}`,
                   denom: DENOM,
                   }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
-              </li>
-              <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
+              </li> : null}
+              {!isEvm ? <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
                 <span className='inline-block'></span> <span>Rewards: </span>
                 {formatTokenDisplay({
                   amount: `${getRewards()}`,
                   denom: DENOM,
                   }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
-              </li>
-              <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
+              </li> : null}
+              {!isEvm ? <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
                 <span className='inline-block'></span> <span>Unstaking: </span>
                 {formatTokenDisplay({
                   amount: `${getUnbonding()}`,
                   denom: DENOM,
                   }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
-              </li>
+              </li> : null}
             </ul>
             <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className='btn-primary'>
@@ -376,14 +384,14 @@ export const WalletScreen = ({
                 >
                   <ArrowDown className="w-5 h-5"/> Receive
                 </AppButton>
-                <AppButton
+                {!isEvm ? <AppButton
                     variant="secondary"
                   className="w-full cursor-pointer"
                   onClick={() => onOpenModal('stake')}
                   disabled={isLoading}
                 >
                   <Layers className="w-5 h-5"/> Stake
-                </AppButton>
+                </AppButton> : null}
             </div>
           </Card>
           <Card className='w-full lg:w-1/3'>
@@ -401,7 +409,7 @@ export const WalletScreen = ({
           </Card>
         </div>
 
-        <Card>
+        {!isEvm ? <Card>
           <h2 className="text-xl font-semibold text-white mb-4">Transaction History</h2>
           <div className="space-y-2 relative w-full">
             <Loading isLoading={isLoading} />
@@ -480,7 +488,7 @@ export const WalletScreen = ({
               </div> : null
             }
           </div>
-        </Card>
+        </Card> : null}
       </div>
     );
 };

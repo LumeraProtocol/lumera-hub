@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { DENOM } from '@/contants/network';
+import { DENOM, IS_EVM_NETWORK } from '@/contants/network';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
+import { evmBalanceToMicroLume, getEvmBalance } from '@/utils/evm';
 
 export interface Coin {
   denom: string;
@@ -90,6 +91,22 @@ const useAccountInfo = () => {
     setError(null);
 
     try {
+      if (IS_EVM_NETWORK) {
+        const balance = await getEvmBalance(address);
+        const _accountInfo: AccountInfoData = {
+          balances: [{ denom: DENOM, amount: evmBalanceToMicroLume(balance) }],
+          delegations: [],
+          rewards: [],
+          unbonding: [],
+        };
+        setAccountInfo(_accountInfo);
+        setClaimInfo((current) => ({
+          ...current,
+          totalRewards: '0',
+        }));
+        return;
+      }
+
       const [balanceRes, delegationsRes, rewardsRes, resUnbonding] = await Promise.all([
         instance.get(`/cosmos/bank/v1beta1/balances/${address}`),
         instance.get(`/cosmos/staking/v1beta1/delegations/${address}`),
@@ -140,6 +157,10 @@ const useAccountInfo = () => {
 
   const handleClaimButtonClick = async () => {
     setErrorClaim(null);
+    if (IS_EVM_NETWORK) {
+      setErrorClaim('Staking rewards require a legacy Cosmos wallet connection.');
+      return;
+    }
     if (!claimInfo.senderAddress) {
       return;
     }

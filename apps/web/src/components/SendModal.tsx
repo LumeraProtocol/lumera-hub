@@ -17,6 +17,7 @@ import { DENOM } from '@/contants/network';
 import { RATE_VALUE } from '@/contants';
 
 interface IVoteModal {
+  isEvm: boolean;
   isOpen: boolean;
   isVoteLoading: boolean;
   error: string | null;
@@ -40,6 +41,7 @@ interface IVoteModal {
 }
 
 export default function SendModal({
+    isEvm,
     isOpen,
     isVoteLoading,
     error,
@@ -103,7 +105,11 @@ export default function SendModal({
                 <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! send completed successfully.</H3>
               </div>
               <div className='mt-3'>
+                {isEvm ? (
+                  <span className='font-mono text-sm break-all'>{transactionHash}</span>
+                ) : (
                 <AppLink href={`/tx/${transactionHash}`} className='text-lumera-teal hover:text-lumera-green text-sm'>View Transaction</AppLink>
+                )}
               </div>
             </div>
           </Dialog.Content>
@@ -166,6 +172,7 @@ export default function SendModal({
                   placeholder="Sender"
                   className='input'
                   value={optionsAdvanced.senderAddress}
+                  disabled={isEvm}
                   onChangeText={(newValue) => onInputChange('senderAddress', newValue)}
                 />
               </div>
@@ -207,7 +214,7 @@ export default function SendModal({
               </div>
             </div>
 
-            {showAdvanced ?
+            {showAdvanced && !isEvm ?
               <div className='mt-1'>
                 <div>
                   <Label htmlFor="fees" className='text-base'>Fees</Label>
@@ -251,7 +258,7 @@ export default function SendModal({
 
             <YStack space="$2" marginTop="$3">
               <div className='flex justify-between items-center'>
-                <div className='flex gap-3 items-center'>
+                {!isEvm ? <div className='flex gap-3 items-center'>
                   <Checkbox
                     id="advanced"
                     size="$4"
@@ -266,7 +273,7 @@ export default function SendModal({
                   <Label size="$4" htmlFor="advanced">
                     Advanced
                   </Label>
-                </div>
+                </div> : null}
                 <div className='btn-primary flex justify-end mt-3'>
                   <Button onPress={onSendClick} disabled={isVoteLoading}>Send</Button>
                 </div>
