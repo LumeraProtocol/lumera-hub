@@ -23,6 +23,7 @@ import Loading from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
 import CreateProposalModal from '@/components/CreateProposalModal';
 import Skeleton from '@/components/Skeleton';
+import CountDown from '@/components/CountDown';
 import { IProposal } from '@/hooks/useProposals';
 import { formatNumber, formatToken } from '@/utils/format';
 import {
@@ -482,6 +483,11 @@ export const GovernanceScreen = ({
                     <div className='mt-5 min-h-12'>
                       {item.summary}
                     </div>
+                    {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' && item.voting_end_time ? (
+                      <div className='mt-3 text-sm text-lumera-label'>
+                        Voting ends in <CountDown targetDate={new Date(item.voting_end_time)} className='whitespace-nowrap' />
+                      </div>
+                    ) : null}
                     <div className='mt-5'>
                       <div className='status-bar-wrapper'>
                         <div className='status-bar-yes' style={{ width: `${yesPercent}%` }}></div>

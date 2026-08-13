@@ -37,6 +37,7 @@ import Loading from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import Skeleton from '@/components/Skeleton';
+import CountDown from '@/components/CountDown';
 import { AccountInfoData, getTotalRewards } from '@/hooks/useAccountInfo';
 import useAppRouter from '@/hooks/useAppRouter';
 import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity';
@@ -982,6 +983,11 @@ export const HomeScreen = ({
                                     <Text>{item.title}</Text>
                                   </AppLink>
                                   <SizableText className='text-sm text-lumera-label truncate'>{item.proposer}</SizableText>
+                                  {item.voting_end_time ? (
+                                    <SizableText className='text-sm text-lumera-label'>
+                                      Voting ends in <CountDown targetDate={new Date(item.voting_end_time)} className='whitespace-nowrap' />
+                                    </SizableText>
+                                  ) : null}
                                   {currentVoteLabel ? (
                                     <SizableText className='text-sm text-lumera-label'>
                                       Your vote: <strong className='text-white'>{currentVoteLabel}</strong>
