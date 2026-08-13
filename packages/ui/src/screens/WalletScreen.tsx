@@ -37,6 +37,7 @@ import { formatAddress, formatTokenDisplay } from '@/utils/format';
 import { getMessages } from '@/utils/helpers';
 import { IValidator } from '@/types/validator';
 import { DENOM } from '@/contants/network';
+import { evmAddressToCosmosAddress, isEvmAddress } from '@/utils/evm';
 
 import 'react-paginate/theme/basic/react-paginate.css';
 
@@ -109,7 +110,7 @@ export const WalletScreen = ({
     onOpenModal,
     onCloseModal,
 }: IWalletScreen) => {
-  const [isCopied, setCopied] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState('');
 
   const getTxIcon = (type: string) => {
     switch(type) {
@@ -240,24 +241,23 @@ export const WalletScreen = ({
       return total;
     }
 
-    const handleCopyAddress = () => {
-      navigator.clipboard.writeText(walletAddress)
-      setCopied(true);
-      setTimeout(() => {
-        setCopied(false);
-      }, 3000);
-      toast('The address has been copied.', {
-        position: "bottom-center",
-        theme: "dark",
-      });
-    }
-
-    const handleCopyAddress2 = () => {
-      navigator.clipboard.writeText(walletAddress)
-      toast('The address has been copied.', {
-        position: "bottom-center",
-        theme: "dark",
-      });
+    const handleCopyAddress = async (address: string, label: string) => {
+      try {
+        await navigator.clipboard.writeText(address);
+        setCopiedAddress(address);
+        setTimeout(() => {
+          setCopiedAddress((currentAddress) => currentAddress === address ? '' : currentAddress);
+        }, 3000);
+        toast(`${label} copied.`, {
+          position: "bottom-center",
+          theme: "dark",
+        });
+      } catch {
+        toast.error('Unable to copy the address.', {
+          position: "bottom-center",
+          theme: "dark",
+        });
+      }
     }
 
     if (!walletAddress) {
@@ -278,6 +278,16 @@ export const WalletScreen = ({
         </YStack>
       );
     }
+
+    const cosmosStyleEvmAddress = isEvm && isEvmAddress(walletAddress)
+      ? evmAddressToCosmosAddress(walletAddress)
+      : '';
+    const displayedAddresses = isEvm
+      ? [
+        { label: 'Cosmos-style EVM address', value: cosmosStyleEvmAddress },
+        { label: 'ETH hex address', value: walletAddress },
+      ]
+      : [{ label: 'Lumera address', value: walletAddress }];
 
     return (
       <div className="space-y-8">
@@ -395,17 +405,44 @@ export const WalletScreen = ({
             </div>
           </Card>
           <Card className='w-full lg:w-1/3'>
-            <h3 className="font-semibold text-gray-400 mb-2">Your Address</h3>
-              <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg">
-                <span className="font-mono text-sm text-gray-300 truncate cursor-pointer" onClick={handleCopyAddress2}>{walletAddress}</span>
-                <button onClick={handleCopyAddress} className="ml-auto p-1 text-gray-400 hover:text-white transition-colors">
-                  {!isCopied ?
-                    <Copy className="w-4 h-4"/> :
-                    <Check className="w-4 h-4"/>
-                  }
-                </button>
+            <h3 className="font-semibold text-gray-400 mb-2">{isEvm ? 'Your Addresses' : 'Your Address'}</h3>
+            <div className="grid gap-2">
+              {displayedAddresses.filter(({ value }) => value).map(({ label, value }) => (
+                <div className="flex items-start gap-2 bg-gray-900/50 p-3 rounded-lg" key={label}>
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left cursor-pointer"
+                    aria-label={`Copy ${label}`}
+                    onClick={() => void handleCopyAddress(value, label)}
+                  >
+                    {isEvm ? (
+                      <span className="block mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        {label}
+                      </span>
+                    ) : null}
+                    <span className="block font-mono text-sm leading-5 text-gray-300 break-all whitespace-normal">
+                      {value}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Copy ${label}`}
+                    onClick={() => void handleCopyAddress(value, label)}
+                    className="shrink-0 p-1 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    {copiedAddress === value ?
+                      <Check className="w-4 h-4"/> :
+                      <Copy className="w-4 h-4"/>
+                    }
+                  </button>
+                </div>
+              ))}
             </div>
-            <p className="text-xs text-gray-500 mt-2">This is your unique address. Use it to receive LUME and other assets.</p>
+            <p className="text-xs text-gray-500 mt-2">
+              {isEvm
+                ? 'These formats identify the same MetaMask account. Click either address to copy it.'
+                : 'This is your unique address. Use it to receive LUME and other assets.'}
+            </p>
           </Card>
         </div>
 
