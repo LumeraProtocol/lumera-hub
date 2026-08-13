@@ -1,6 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
-import { getCountdownTimeLeft } from './countdown';
+import { getCountdownTimeLeft, getCountdownUnitLabel, type CountdownUnit } from './countdown';
+
+describe('getCountdownUnitLabel', () => {
+  it.each<CountdownUnit>(['day', 'hour', 'minute', 'second'])(
+    'uses the singular form for one %s',
+    (unit) => {
+      expect(getCountdownUnitLabel(1, unit)).toBe(unit);
+    },
+  );
+
+  it.each<CountdownUnit>(['day', 'hour', 'minute', 'second'])(
+    'uses the plural form for zero and values above one: %s',
+    (unit) => {
+      expect(getCountdownUnitLabel(0, unit)).toBe(`${unit}s`);
+      expect(getCountdownUnitLabel(2, unit)).toBe(`${unit}s`);
+    },
+  );
+});
 
 describe('getCountdownTimeLeft', () => {
   it('calculates the remaining voting time', () => {

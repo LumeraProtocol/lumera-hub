@@ -5,6 +5,11 @@ export interface CountdownTimeLeft {
   seconds: number;
 }
 
+export type CountdownUnit = 'day' | 'hour' | 'minute' | 'second';
+
+export const getCountdownUnitLabel = (value: number, unit: CountdownUnit): string =>
+  value === 1 ? unit : `${unit}s`;
+
 const EMPTY_COUNTDOWN: CountdownTimeLeft = {
   days: 0,
   hours: 0,

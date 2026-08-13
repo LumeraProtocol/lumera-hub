@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getCountdownTimeLeft } from '@/utils/countdown';
+import { getCountdownTimeLeft, getCountdownUnitLabel } from '@/utils/countdown';
 
 interface CountdownProps {
   targetDate: Date;
@@ -24,9 +24,14 @@ const CountDown: React.FC<CountdownProps> = ({ targetDate, className = '' }) => 
 
   return (
     <span className={`text-sm text-lumera-label ${className}`}>
-        {timeLeft.days > 0 ? <><span className='text-green-500'>{timeLeft.days}</span> days </> : null}
-        {timeLeft.hours > 0 ? <><span className='text-green-500'>{timeLeft.hours}</span> hours </> : null}
-        <span className='text-green-500'>{timeLeft.minutes}</span> minutes <span className='text-green-500'>{timeLeft.seconds}</span> seconds
+      {timeLeft.days > 0 ? (
+        <><span className='text-green-500'>{timeLeft.days}</span> {getCountdownUnitLabel(timeLeft.days, 'day')} </>
+      ) : null}
+      {timeLeft.hours > 0 ? (
+        <><span className='text-green-500'>{timeLeft.hours}</span> {getCountdownUnitLabel(timeLeft.hours, 'hour')} </>
+      ) : null}
+      <span className='text-green-500'>{timeLeft.minutes}</span> {getCountdownUnitLabel(timeLeft.minutes, 'minute')}{' '}
+      <span className='text-green-500'>{timeLeft.seconds}</span> {getCountdownUnitLabel(timeLeft.seconds, 'second')}
     </span>
   )
 };
