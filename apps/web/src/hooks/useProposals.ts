@@ -10,6 +10,7 @@ import { Coin } from '@/hooks/useAccountInfo'
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 import { assertGovernanceTransactionsAvailable } from '@/utils/cosmos-transactions';
+import { GovernanceVote } from '@/utils/governance-votes';
 
 type TMessage = {
   '@type': string;
@@ -92,6 +93,31 @@ const useProposals = (options: UseDepositOptions = {}) => {
   });
   const [isVoteOpen, setVoteOpen] = useState(false);
   const [transactionHash, setTransactionHash] = useState('');
+  const [userVotes, setUserVotes] = useState<Record<string, GovernanceVote>>({});
+
+  const refreshUserVote = async (proposalId: string) => {
+    if (!address) {
+      return;
+    }
+
+    try {
+      const { data } = await axios.get(
+        `${REST_AI_URL}/cosmos/gov/v1/proposals/${proposalId}/votes/${address}`,
+      );
+      setUserVotes((current) => ({
+        ...current,
+        [proposalId]: data.vote,
+      }));
+    } catch (queryError) {
+      if (axios.isAxiosError(queryError) && queryError.response?.status === 404) {
+        setUserVotes((current) => {
+          const next = { ...current };
+          delete next[proposalId];
+          return next;
+        });
+      }
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -114,6 +140,38 @@ const useProposals = (options: UseDepositOptions = {}) => {
   useEffect(() => {
       fetchData();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!address) {
+      setUserVotes({});
+      return;
+    }
+
+    const fetchUserVotes = async () => {
+      const voteEntries = await Promise.all(proposalsInfo.map(async (proposal) => {
+        try {
+          const { data } = await axios.get(
+            `${REST_AI_URL}/cosmos/gov/v1/proposals/${proposal.id}/votes/${address}`,
+          );
+          return [proposal.id, data.vote] as const;
+        } catch {
+          return null;
+        }
+      }));
+
+      if (!cancelled) {
+        setUserVotes(Object.fromEntries(voteEntries.filter((entry) => entry !== null)));
+      }
+    };
+
+    fetchUserVotes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [address, proposalsInfo]);
 
   useEffect(() => {
     if (options?.customMemo) {
@@ -176,6 +234,7 @@ const useProposals = (options: UseDepositOptions = {}) => {
       const result = await client.signAndBroadcast(address, [msg], fee, voteAdvanced.memo);
       if (result?.transactionHash) {
         setTransactionHash(result?.transactionHash);
+        await refreshUserVote(item.id);
         // setVoteOpen(false);
         fetchData();
         if (options?.callback) {
@@ -215,6 +274,7 @@ const useProposals = (options: UseDepositOptions = {}) => {
     voteAdvanced,
     isVoteOpen,
     transactionHash,
+    userVotes,
     handleCloseCongratulationsModal,
     setVoteOpen,
     handleResetError,

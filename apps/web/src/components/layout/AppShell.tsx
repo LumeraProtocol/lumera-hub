@@ -13,6 +13,7 @@ import {
 } from '@tamagui/lucide-icons';
 import Image from 'next/image';
 import { Layers } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 import AppLink from '@/components/AppLink';
@@ -52,35 +53,40 @@ const VIEW_TITLES: Record<ViewId, string> = {
   block: "Block Details",
 }
 
+function isActive(currentUrl: string, url: string) {
+  if (currentUrl === '/' && currentUrl === url) {
+    return true;
+  }
+  return url !== NAV_ITEMS[0].url && currentUrl.indexOf(url) !== -1;
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch();
   const { activeView, currentPath, viewTitle } = useSelector((state) => state.app);
+  const pathname = usePathname();
   const [isSidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    if (window?.location?.pathname) {
+    if (pathname) {
       dispatch(setCurrentPath({
-        currentPath: window.location.pathname,
+        currentPath: pathname,
       }));
-      const navItem = NAV_ITEMS.find((item) => isActive(currentPath, item.url));
+      const navItem = NAV_ITEMS.find((item) => isActive(pathname, item.url));
       dispatch(setActiveView({
         activeView: navItem?.id || "dashboard",
       }));
     }
-  }, [])
+  }, [dispatch, pathname])
+
+  const isContextualRoute = pathname.startsWith('/tx/') || pathname.startsWith('/block/');
+  const routeNavItem = NAV_ITEMS.find((item) => isActive(pathname, item.url));
+  const shellTitle = isContextualRoute ? viewTitle : routeNavItem?.label || VIEW_TITLES[activeView];
 
   const onNavClick = (id: ViewId) => {
     dispatch(setActiveView({
       activeView: id,
     }));
     setSidebarOpen(false)
-  }
-
-  const isActive = (currentUrl: string, url: string) => {
-    if (currentUrl === '/' && currentUrl === url) {
-      return true;
-    }
-    return url !== NAV_ITEMS[0].url && currentUrl.indexOf(url) !== -1;
   }
 
   const handleMenuItemClick = (item: TNaxItems) => {
@@ -200,7 +206,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           <div className="flex flex-1 justify-between pl-0 pr-4 sm:px-6 lg:px-8">
             <div className="flex items-center">
-              <h1 className="text-base sm:text-2xl font-bold">{viewTitle || VIEW_TITLES[activeView]}</h1>
+              <h1 className="text-base sm:text-2xl font-bold">{shellTitle}</h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6 gap-3">
               {/* Placeholder for wallet actions */}

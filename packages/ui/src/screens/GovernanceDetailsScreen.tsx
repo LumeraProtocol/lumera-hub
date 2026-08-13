@@ -21,6 +21,11 @@ import { IProposal } from '@/hooks/useProposals';
 import { VOTE_LIMIT } from '@/hooks/useGovernanceDetails';
 import { IBlock, IVote } from '@/hooks/useGovernanceDetails';
 import { formatAddress, formatToken } from '@/utils/format';
+import {
+  formatGovernanceVote,
+  getGovernanceVoteValue,
+  GovernanceVote,
+} from '@/utils/governance-votes';
 import { DENOM } from '@/contants/network';
 import { VoteModal } from './HomeScreen';
 
@@ -75,6 +80,7 @@ interface IGovernanceDetailsScreen {
     setVoteOpen: (status: boolean) => void;
     handleResetError: () => void;
     transactionHash: string;
+    currentVote?: GovernanceVote;
     handleCloseCongratulationsModal: () => void;
   };
   block: IBlock | null;
@@ -197,6 +203,10 @@ export const GovernanceDetailsScreen = ({
 
   const handleVotePress = () => {
     vote.handleResetError();
+    const currentVoteValue = getGovernanceVoteValue(vote.currentVote);
+    if (currentVoteValue) {
+      vote.onOptionChange(currentVoteValue);
+    }
     vote.setVoteOpen(true);
   }
 
@@ -211,19 +221,28 @@ export const GovernanceDetailsScreen = ({
     if (['PROPOSAL_STATUS_FAILED', 'PROPOSAL_STATUS_REJECTED'].includes(governance?.status) || (isExpired && governance.status !== 'PROPOSAL_STATUS_VOTING_PERIOD')) {
       return null;
     }
+    const currentVoteLabel = formatGovernanceVote(vote.currentVote);
+
     return (
       <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
-        <div className='btn-primary flex justify-end gap-3'>
-          {governance.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
+        <div className='flex flex-wrap items-center justify-end gap-3'>
+          {currentVoteLabel ? (
+            <span className='mr-auto text-sm text-lumera-label'>Your vote: <strong className='text-white'>{currentVoteLabel}</strong></span>
+          ) : null}
+          {governance.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ? (
+            <div className='btn-primary'>
+              <Button
+                disabled={Boolean(transactionUnavailableReason)}
+                onPress={handleVotePress}
+              >{vote.currentVote ? 'Change vote' : 'Vote'}</Button>
+            </div>
+          ) : null}
+          <div className='btn-primary'>
             <Button
               disabled={Boolean(transactionUnavailableReason)}
-              onPress={handleVotePress}
-            >Vote</Button> : null
-          }
-          <Button
-            disabled={Boolean(transactionUnavailableReason)}
-            onPress={() => handleDepositClick(governance)}
-          >Deposit</Button>
+              onPress={() => handleDepositClick(governance)}
+            >Deposit</Button>
+          </div>
         </div>
         {transactionUnavailableReason ? (
           <p className='text-sm text-left mt-2'>{transactionUnavailableReason}</p>
@@ -673,6 +692,7 @@ export const GovernanceDetailsScreen = ({
         voteAdvanced={vote.voteAdvanced}
         handleVoteAdvancedChange={vote.handleVoteAdvancedChange}
         transactionHash={vote.transactionHash}
+        currentVote={vote.currentVote}
         onCloseCongratulationsModal={vote.handleCloseCongratulationsModal}
       />
       <DepositModal

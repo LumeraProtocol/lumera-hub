@@ -44,6 +44,11 @@ import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/usePropos
 import { formatToken, formatTokenDisplay } from '@/utils/format';
 import { NAV_ITEMS } from '@/components/layout/AppShell';
 import { DENOM } from '@/contants/network';
+import {
+  formatGovernanceVote,
+  getGovernanceVoteValue,
+  GovernanceVote,
+} from '@/utils/governance-votes';
 
 dayjs.extend(relativeTime);
 
@@ -54,6 +59,7 @@ interface IHomeScreen {
   loading: boolean;
   accountInfo: AccountInfoData | null;
   proposals: IProposal[];
+  userVotes: Record<string, GovernanceVote>;
   isProposalLoading: boolean;
   recentActivities: IRecentActivity[];
   isRecentActivityLoading: boolean;
@@ -112,6 +118,7 @@ interface IVoteModal {
   };
   handleVoteAdvancedChange: (name: string, value: string) => void;
   transactionHash?: string;
+  currentVote?: GovernanceVote;
   onCloseCongratulationsModal?: () => void;
 }
 
@@ -216,6 +223,7 @@ export const VoteModal = ({
   voteAdvanced,
   handleVoteAdvancedChange,
   transactionHash,
+  currentVote,
   onCloseCongratulationsModal,
 }: IVoteModal) => {
   if (!isOpen) {
@@ -226,6 +234,9 @@ export const VoteModal = ({
   const handleAdvancedCheckedChange = (checked: boolean) => {
     setShowAdvanced(checked);
   }
+
+  const currentVoteLabel = formatGovernanceVote(currentVote);
+  const currentVoteValue = getGovernanceVoteValue(currentVote);
 
   if (transactionHash) {
     return (
@@ -340,7 +351,12 @@ export const VoteModal = ({
               </div>
               <div className='mt-1'>
                 <Label htmlFor="option" className='text-base'>Option</Label>
-                <RadioGroup aria-labelledby="Select one item" defaultValue="1" name="option" id="option" onValueChange={onOptionChange}>
+                {currentVoteLabel ? (
+                  <p className='mb-2 text-sm text-lumera-label'>
+                    Current vote: <strong className='text-white'>{currentVoteLabel}</strong>. Submitting a new vote replaces it.
+                  </p>
+                ) : null}
+                <RadioGroup aria-labelledby="Select one item" defaultValue={currentVoteValue || '1'} name="option" id="option" onValueChange={onOptionChange}>
                   <div className='flex items-center gap-6'>
                     {VOTE_OPTIONS?.map((item) => (
                       <div className='flex items-center gap-3' key={item.value}>
@@ -639,6 +655,7 @@ export const HomeScreen = ({
   loading,
   accountInfo,
   proposals,
+  userVotes,
   isProposalLoading,
   recentActivities,
   isRecentActivityLoading,
@@ -804,6 +821,10 @@ export const HomeScreen = ({
 
   const handleVotePress = (item: IProposal) => {
     handleResetError();
+    const currentVoteValue = getGovernanceVoteValue(userVotes[item.id]);
+    if (currentVoteValue) {
+      onOptionChange(currentVoteValue);
+    }
     setVoteOpen(true);
     setSelectedItem(item);
   }
@@ -950,21 +971,31 @@ export const HomeScreen = ({
                               <H3 className='text-2xl'>No active proposals</H3>
                             </div> : null
                           }
-                          {proposals?.map((item) => (
-                            <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
-                              <div className='flex flex-col'>
-                                <AppLink href={`/governance/${item.id}`}>
-                                  <Text>{item.title}</Text>
-                                </AppLink>
-                                <SizableText className='text-sm text-lumera-label'>{item.proposer}</SizableText>
+                          {proposals?.map((item) => {
+                            const currentVote = userVotes[item.id];
+                            const currentVoteLabel = formatGovernanceVote(currentVote);
+
+                            return (
+                              <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
+                                <div className='flex flex-col min-w-0'>
+                                  <AppLink href={`/governance/${item.id}`}>
+                                    <Text>{item.title}</Text>
+                                  </AppLink>
+                                  <SizableText className='text-sm text-lumera-label truncate'>{item.proposer}</SizableText>
+                                  {currentVoteLabel ? (
+                                    <SizableText className='text-sm text-lumera-label'>
+                                      Your vote: <strong className='text-white'>{currentVoteLabel}</strong>
+                                    </SizableText>
+                                  ) : null}
+                                </div>
+                                {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
+                                  <div className='btn-primary shrink-0'>
+                                    <Button onPress={() => handleVotePress(item)}>{currentVote ? 'Change vote' : 'Vote Now'}</Button>
+                                  </div> : null
+                                }
                               </div>
-                              {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
-                                <div className='btn-primary'>
-                                  <Button onPress={() => handleVotePress(item)}>Vote Now</Button>
-                                </div> : null
-                              }
-                            </div>
-                          ))}
+                            );
+                          })}
                         </>
                       }
 
@@ -1001,6 +1032,7 @@ export const HomeScreen = ({
             voteAdvanced={voteAdvanced}
             handleVoteAdvancedChange={handleVoteAdvancedChange}
             transactionHash={voteTransactionHash}
+            currentVote={selectedItem ? userVotes[selectedItem.id] : undefined}
             onCloseCongratulationsModal={onCloseVoteCongratulationsModal}
           />
           <ClaimableRewardsModal

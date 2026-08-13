@@ -139,6 +139,7 @@ const useGovernanceDetails = (id: string) => {
       totalVotes,
       errorVote,
       fetchGovernanceDetail,
+      fetchVotes,
       handlePageClick,
     }
 }

@@ -95,6 +95,7 @@ export default function Page() {
           isVoteOpen={proposals.isVoteOpen}
           setVoteOpen={proposals.setVoteOpen}
           voteTransactionHash={proposals.transactionHash}
+          userVotes={proposals.userVotes}
           onCloseVoteCongratulationsModal={proposals.handleCloseCongratulationsModal}
           deposit={{
             isOpen: deposit.isModalOpen,

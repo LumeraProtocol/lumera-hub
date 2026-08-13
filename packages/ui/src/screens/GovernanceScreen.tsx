@@ -25,6 +25,11 @@ import CreateProposalModal from '@/components/CreateProposalModal';
 import Skeleton from '@/components/Skeleton';
 import { IProposal } from '@/hooks/useProposals';
 import { formatNumber, formatToken } from '@/utils/format';
+import {
+  formatGovernanceVote,
+  getGovernanceVoteValue,
+  GovernanceVote,
+} from '@/utils/governance-votes';
 import { VoteModal } from './HomeScreen';
 
 interface IGovernanceScreen {
@@ -96,6 +101,7 @@ interface IGovernanceScreen {
     handleCloseCongratulationsModal: () => void;
   };
   voteTransactionHash?: string;
+  userVotes: Record<string, GovernanceVote>;
   onCloseVoteCongratulationsModal?: () => void;
   createProposal: {
     step: number;
@@ -150,6 +156,7 @@ export const GovernanceScreen = ({
   isSumaryLoading,
   nextKey,
   voteTransactionHash,
+  userVotes,
   selectedItem,
   createProposal,
   setSelectedItem,
@@ -232,19 +239,29 @@ export const GovernanceScreen = ({
     if (['PROPOSAL_STATUS_FAILED', 'PROPOSAL_STATUS_REJECTED'].includes(item?.status) || (isExpired && item.status !== 'PROPOSAL_STATUS_VOTING_PERIOD')) {
       return null;
     }
+    const currentVote = userVotes[item.id];
+    const currentVoteLabel = formatGovernanceVote(currentVote);
+
     return (
       <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
-        <div className='btn-primary flex justify-end gap-3'>
-          {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
+        <div className='flex flex-wrap items-center justify-end gap-3'>
+          {currentVoteLabel ? (
+            <span className='mr-auto text-sm text-lumera-label'>Your vote: <strong className='text-white'>{currentVoteLabel}</strong></span>
+          ) : null}
+          {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ? (
+            <div className='btn-primary'>
+              <Button
+                disabled={Boolean(transactionUnavailableReason)}
+                onPress={() => handleVotePress(item)}
+              >{currentVote ? 'Change vote' : 'Vote'}</Button>
+            </div>
+          ) : null}
+          <div className='btn-primary'>
             <Button
               disabled={Boolean(transactionUnavailableReason)}
-              onPress={() => handleVotePress(item)}
-            >Vote</Button> : null
-          }
-          <Button
-            disabled={Boolean(transactionUnavailableReason)}
-            onPress={() => handleDepositClick(item)}
-          >Deposit</Button>
+              onPress={() => handleDepositClick(item)}
+            >Deposit</Button>
+          </div>
         </div>
         {transactionUnavailableReason ? (
           <p className='text-sm text-left mt-2'>{transactionUnavailableReason}</p>
@@ -265,6 +282,10 @@ export const GovernanceScreen = ({
 
   const handleVotePress = (item: IProposal) => {
     handleResetError();
+    const currentVoteValue = getGovernanceVoteValue(userVotes[item.id]);
+    if (currentVoteValue) {
+      onOptionChange(currentVoteValue);
+    }
     setVoteOpen(true);
     setSelectedItem(item);
   }
@@ -509,6 +530,7 @@ export const GovernanceScreen = ({
           voteAdvanced={voteAdvanced}
           handleVoteAdvancedChange={handleVoteAdvancedChange}
           transactionHash={voteTransactionHash}
+          currentVote={selectedItem ? userVotes[selectedItem.id] : undefined}
           onCloseCongratulationsModal={onCloseVoteCongratulationsModal}
         />
         <DepositModal

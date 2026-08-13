@@ -27,6 +27,7 @@ export default function Page({ params }: Props) {
     isVoteLoading,
     handlePageClick,
     fetchGovernanceDetail,
+    fetchVotes,
   } = useGovernanceDetails(id);
   const deposit = useDeposit({
     callback: () => fetchGovernanceDetail(id),
@@ -34,6 +35,10 @@ export default function Page({ params }: Props) {
   });
   const proposals = useProposals({
     customMemo: governance?.title ? `Vote for the ${governance?.title}` : '',
+    callback: () => {
+      fetchGovernanceDetail(id);
+      fetchVotes();
+    },
   });
   const { address, canSignCosmosTransactions } = useWalletConnect();
 
@@ -84,6 +89,7 @@ export default function Page({ params }: Props) {
             error: proposals.errorVote,
             voteAdvanced: proposals.voteAdvanced,
             transactionHash: proposals.transactionHash,
+            currentVote: proposals.userVotes[id],
             handleVoteAdvancedChange: proposals.handleVoteAdvancedChange,
             handleResetError: proposals.handleResetError,
             isVoteOpen: proposals.isVoteOpen,
