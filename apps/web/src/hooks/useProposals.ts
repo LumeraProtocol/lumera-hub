@@ -9,6 +9,7 @@ import { REST_AI_URL, DENOM } from '@/contants/network';
 import { Coin } from '@/hooks/useAccountInfo'
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
+import { assertGovernanceTransactionsAvailable } from '@/utils/cosmos-transactions';
 
 type TMessage = {
   '@type': string;
@@ -76,7 +77,7 @@ interface UseDepositOptions {
 }
 
 const useProposals = (options: UseDepositOptions = {}) => {
-  const { address, getClient } = useWalletConnect();
+  const { address, canSignCosmosTransactions, getClient } = useWalletConnect();
   const [proposalsInfo, setProposalsInfo] = useState<IProposal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -145,9 +146,10 @@ const useProposals = (options: UseDepositOptions = {}) => {
     if (!item) {
         return null;
     }
-    setVoteLoading(true);
     setErrorVote(null);
     try {
+      assertGovernanceTransactionsAvailable(canSignCosmosTransactions);
+      setVoteLoading(true);
       const client = await getClient();
       const msg = {
         typeUrl: '/cosmos.gov.v1.MsgVote',

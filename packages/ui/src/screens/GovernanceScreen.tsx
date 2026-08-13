@@ -28,6 +28,7 @@ import { formatNumber, formatToken } from '@/utils/format';
 import { VoteModal } from './HomeScreen';
 
 interface IGovernanceScreen {
+  transactionUnavailableReason: string;
   selectedItem: IProposal | null;
   setSelectedItem: (item: IProposal) => void;
   isLoading: boolean,
@@ -135,6 +136,7 @@ interface IGovernanceScreen {
 }
 
 export const GovernanceScreen = ({
+  transactionUnavailableReason,
   isLoading,
   governances,
   sumary,
@@ -234,10 +236,19 @@ export const GovernanceScreen = ({
       <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
         <div className='btn-primary flex justify-end gap-3'>
           {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
-            <Button onPress={() => handleVotePress(item)}>Vote</Button> : null
+            <Button
+              disabled={Boolean(transactionUnavailableReason)}
+              onPress={() => handleVotePress(item)}
+            >Vote</Button> : null
           }
-          <Button onPress={() => handleDepositClick(item)}>Deposit</Button>
+          <Button
+            disabled={Boolean(transactionUnavailableReason)}
+            onPress={() => handleDepositClick(item)}
+          >Deposit</Button>
         </div>
+        {transactionUnavailableReason ? (
+          <p className='text-sm text-left mt-2'>{transactionUnavailableReason}</p>
+        ) : null}
       </div>
     );
   }
@@ -263,11 +274,19 @@ export const GovernanceScreen = ({
       <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
         <H2 className='!font-bold text-white !text-[32px] leading-none'>Governance</H2>
         <div className='btn-primary'>
-          <Button onPress={createProposal.onOpenCreateProposalModalClick}>
+          <Button
+            disabled={Boolean(transactionUnavailableReason)}
+            onPress={createProposal.onOpenCreateProposalModalClick}
+          >
             <span className='font-bold whitespace-nowrap'>Create Proposal</span>
           </Button>
         </div>
       </div>
+      {transactionUnavailableReason ? (
+        <div className='w-full rounded-md bg-lumera-sub-card p-3 text-sm text-lumera-label'>
+          {transactionUnavailableReason}
+        </div>
+      ) : null}
       <div className='relative w-full'>
         <div className='mt-5 grid grid-cols-4 gap-6 w-full governance-overview relative'>
           <Card elevate size="$4" bordered className='w-full'>

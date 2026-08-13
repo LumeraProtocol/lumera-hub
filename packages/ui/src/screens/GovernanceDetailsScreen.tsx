@@ -27,6 +27,7 @@ import { VoteModal } from './HomeScreen';
 import 'react-paginate/theme/basic/react-paginate.css';
 
 interface IGovernanceDetailsScreen {
+  transactionUnavailableReason: string;
   isLoading: boolean;
   isVoteLoading: boolean;
   governance: IProposal | null;
@@ -92,6 +93,7 @@ interface IVoteChartOptions {
 const COLORS = ['#2dd4bf', '#f87171', '#fb923c', '#9ca3af'];
 
 export const GovernanceDetailsScreen = ({
+  transactionUnavailableReason,
   isLoading,
   governance,
   pool,
@@ -213,10 +215,19 @@ export const GovernanceDetailsScreen = ({
       <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
         <div className='btn-primary flex justify-end gap-3'>
           {governance.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
-            <Button onPress={handleVotePress}>Vote</Button> : null
+            <Button
+              disabled={Boolean(transactionUnavailableReason)}
+              onPress={handleVotePress}
+            >Vote</Button> : null
           }
-          <Button onPress={() => handleDepositClick(governance)}>Deposit</Button>
+          <Button
+            disabled={Boolean(transactionUnavailableReason)}
+            onPress={() => handleDepositClick(governance)}
+          >Deposit</Button>
         </div>
+        {transactionUnavailableReason ? (
+          <p className='text-sm text-left mt-2'>{transactionUnavailableReason}</p>
+        ) : null}
       </div>
     );
   }

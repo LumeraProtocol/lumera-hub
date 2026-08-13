@@ -8,6 +8,7 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
 import { RATE_VALUE, GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 import { extractValidNumber } from '@/utils/helpers';
+import { assertGovernanceTransactionsAvailable } from '@/utils/cosmos-transactions';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -15,7 +16,7 @@ interface UseDepositOptions {
 }
 
 const useDeposit = (options: UseDepositOptions = {}) => {
-    const { address, getClient } = useWalletConnect();
+    const { address, canSignCosmosTransactions, getClient } = useWalletConnect();
     const [isLoading, setLoading] = useState(false);
     const [depositAdvanced, setDepositAdvanced] = useState({
         senderAddress: address,
@@ -94,6 +95,12 @@ const useDeposit = (options: UseDepositOptions = {}) => {
     const handleSendClick = async () => {
       setError('');
       setTransactionHash('');
+      try {
+        assertGovernanceTransactionsAvailable(canSignCosmosTransactions);
+      } catch (guardError) {
+        setError(guardError instanceof Error ? guardError.message : 'An unknown error occurred.');
+        return;
+      }
       if (!depositAdvanced.depositAmount) {
           setError('Please enter amount.');
           return

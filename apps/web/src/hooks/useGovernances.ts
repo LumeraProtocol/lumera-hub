@@ -11,6 +11,7 @@ import { RATE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 import { IProposal } from '@/hooks/useProposals';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { extractValidNumber } from '@/utils/helpers';
+import { assertGovernanceTransactionsAvailable } from '@/utils/cosmos-transactions';
 
 const LIMIT = 20;
 
@@ -66,7 +67,7 @@ export const GOVERNANCE_STATS = {
 const EXPEDITED_DEPOSIT_REQUIRED = GOVERNANCE_STATS.expeditedDepositRequired;
 
 const useGovernances = () => {
-  const { address, getClient } = useWalletConnect();
+  const { address, canSignCosmosTransactions, getClient } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [governances, setGovernances] = useState<IProposal[]>([]);
   const [msg, setMsg] = useState({
@@ -261,6 +262,15 @@ const useGovernances = () => {
   }
 
   const handleOpenCreateProposalModal = () => {
+    try {
+      assertGovernanceTransactionsAvailable(canSignCosmosTransactions);
+    } catch (guardError) {
+      setMsg({
+        type: 'error',
+        message: guardError instanceof Error ? guardError.message : 'An unknown error occurred.',
+      });
+      return;
+    }
     resetData();
     setSelectedModal('create');
 
@@ -396,6 +406,7 @@ const useGovernances = () => {
     });
     setCreateProposalLoading(true);
     try {
+      assertGovernanceTransactionsAvailable(canSignCosmosTransactions);
       if (!proposal.title) {
         setMsg({
           type: 'error',

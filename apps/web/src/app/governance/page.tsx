@@ -11,6 +11,7 @@ import useDeposit from '@/hooks/useDeposit';
 import { useDispatch } from '@/redux/hooks';
 import { setActiveView, setCurrentPath } from '@/redux/app.slice';
 import { NAV_ITEMS } from '@/components/layout/AppShell';
+import { GOVERNANCE_TRANSACTION_UNAVAILABLE_MESSAGE } from '@/utils/cosmos-transactions';
 
 export default function Page() {
   const dispatch = useDispatch();
@@ -55,7 +56,7 @@ export default function Page() {
     customMemo: selectedItem ? `Vote for the ${selectedItem.title}` : '',
     callback: fetchData,
   });
-  const { address } = useWalletConnect();
+  const { address, canSignCosmosTransactions } = useWalletConnect();
   const deposit = useDeposit({
     callback: fetchData,
     customMemo: selectedItem ? `Deposit for the ${selectedItem.title}` : '',
@@ -71,6 +72,9 @@ export default function Page() {
           selectedItem={selectedItem}
           setSelectedItem={setSelectedItem}
           address={address}
+          transactionUnavailableReason={
+            canSignCosmosTransactions ? '' : GOVERNANCE_TRANSACTION_UNAVAILABLE_MESSAGE
+          }
           isLoading={isLoading}
           governances={governances}
           msg={msg}

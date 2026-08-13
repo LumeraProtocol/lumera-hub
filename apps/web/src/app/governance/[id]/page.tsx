@@ -8,6 +8,7 @@ import useDeposit from '@/hooks/useDeposit';
 import useProposals from '@/hooks/useProposals';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { GovernanceDetailsScreen } from '@lumera-hub/ui/src/screens/GovernanceDetailsScreen';
+import { GOVERNANCE_TRANSACTION_UNAVAILABLE_MESSAGE } from '@/utils/cosmos-transactions';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -34,7 +35,7 @@ export default function Page({ params }: Props) {
   const proposals = useProposals({
     customMemo: governance?.title ? `Vote for the ${governance?.title}` : '',
   });
-  const { address } = useWalletConnect();
+  const { address, canSignCosmosTransactions } = useWalletConnect();
 
   useEffect(() => {
     document.title = `${governance?.title || 'Governance Details'} - Lumera Hub`;
@@ -48,6 +49,9 @@ export default function Page({ params }: Props) {
       <div className="governance-content-details">
         <GovernanceDetailsScreen
           isLoading={isLoading}
+          transactionUnavailableReason={
+            canSignCosmosTransactions ? '' : GOVERNANCE_TRANSACTION_UNAVAILABLE_MESSAGE
+          }
           governance={governance}
           pool={pool}
           block={latestBlock}

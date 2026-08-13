@@ -1,3 +1,5 @@
+import { parseBooleanEnvironmentValue } from '@/utils/env';
+
 export const NETWORK_PROFILES = {
   devnet: {
     displayName: 'Lumera Devnet',
@@ -71,6 +73,10 @@ export const EVM_CHAIN_ID = process.env.NEXT_PUBLIC_EVM_CHAIN_ID
   ? Number(process.env.NEXT_PUBLIC_EVM_CHAIN_ID)
   : ACTIVE_NETWORK.evmChainId;
 export const EVM_NATIVE_DECIMALS = 18;
+export const COSMOS_EIP712_ENABLED = parseBooleanEnvironmentValue(
+  process.env.NEXT_PUBLIC_COSMOS_EIP712_ENABLED,
+  'NEXT_PUBLIC_COSMOS_EIP712_ENABLED'
+);
 
 if (EVM_CHAIN_ID !== null && (!Number.isSafeInteger(EVM_CHAIN_ID) || EVM_CHAIN_ID <= 0)) {
   throw new Error('NEXT_PUBLIC_EVM_CHAIN_ID must be a positive integer.');

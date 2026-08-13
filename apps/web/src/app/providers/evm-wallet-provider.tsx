@@ -8,7 +8,7 @@ import {
   EVM_RPC_ENDPOINT,
   IS_EVM_NETWORK,
 } from '@/contants/network';
-import { toHexChainId } from '@/utils/evm';
+import { getEvmAccountForChain, toHexChainId } from '@/utils/evm';
 import type { Eip1193Provider } from '@/types/window';
 
 interface EvmProviderError extends Error {
@@ -32,7 +32,16 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
   const [address, setAddress] = useState('');
   const [isConnecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
-  const provider = typeof window === 'undefined' ? null : window.ethereum || null;
+  const [provider, setProvider] = useState<Eip1193Provider | null>(
+    typeof window === 'undefined' ? null : window.ethereum || null
+  );
+
+  useEffect(() => {
+    const detectProvider = () => setProvider(window.ethereum || null);
+    detectProvider();
+    window.addEventListener('ethereum#initialized', detectProvider, { once: true });
+    return () => window.removeEventListener('ethereum#initialized', detectProvider);
+  }, []);
 
   const ensureNetwork = useCallback(async () => {
     if (!IS_EVM_NETWORK || !EVM_CHAIN_ID || !EVM_RPC_ENDPOINT) {
@@ -68,6 +77,15 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
           rpcUrls: [EVM_RPC_ENDPOINT],
         }],
       });
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId }],
+      });
+    }
+
+    const activeChainId = await provider.request<string>({ method: 'eth_chainId' });
+    if (activeChainId.toLowerCase() !== chainId.toLowerCase()) {
+      throw new Error(`Wallet did not switch to ${ACTIVE_NETWORK.displayName}.`);
     }
   }, [provider]);
 
@@ -78,9 +96,12 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
       if (!provider) {
         throw new Error('No EVM wallet was detected. Install MetaMask or another compatible wallet.');
       }
-      const accounts = await provider.request<string[]>({ method: 'eth_requestAccounts' });
+      await provider.request<string[]>({ method: 'eth_requestAccounts' });
       await ensureNetwork();
-      setAddress(accounts[0] || '');
+      if (!EVM_CHAIN_ID) {
+        throw new Error('The active network does not define an EVM chain ID.');
+      }
+      setAddress(await getEvmAccountForChain(provider, EVM_CHAIN_ID));
     } catch (connectError) {
       const message = connectError instanceof Error ? connectError.message : 'Unable to connect EVM wallet.';
       setError(message);
@@ -109,15 +130,7 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
 
     const syncAccounts = async () => {
       try {
-        const [accounts, chainId] = await Promise.all([
-          provider.request<string[]>({ method: 'eth_accounts' }),
-          provider.request<string>({ method: 'eth_chainId' }),
-        ]);
-        setAddress(
-          chainId.toLowerCase() === toHexChainId(expectedChainId).toLowerCase()
-            ? accounts[0] || ''
-            : ''
-        );
+        setAddress(await getEvmAccountForChain(provider, expectedChainId));
       } catch {
         setAddress('');
       }

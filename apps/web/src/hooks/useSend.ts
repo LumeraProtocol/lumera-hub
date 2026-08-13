@@ -3,13 +3,14 @@ import {
   MsgSend,
 } from 'cosmjs-types/cosmos/bank/v1beta1/tx';
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { DENOM, IS_EVM_NETWORK } from '@/contants/network';
+import { DENOM, EVM_CHAIN_ID, IS_EVM_NETWORK } from '@/contants/network';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contants';
 import { Coin } from '@/hooks/useAccountInfo';
 import { extractValidNumber } from '@/utils/helpers';
 import {
   evmBalanceToMicroLume,
   getEvmBalance,
+  assertEvmAccountForChain,
   isEvmAddress,
   parseEvmAmount,
 } from '@/utils/evm';
@@ -44,10 +45,12 @@ const useSend = (options: UseDepositOptions = {}) => {
     const [transactionHash, setTransactionHash] = useState('');
 
     useEffect(() => {
-      if (isConnected) {
-        queryBalances();
+      if (!isConnected || !address) {
+        setBalances([]);
+        return;
       }
-    }, [isConnected]);
+      void queryBalances();
+    }, [address, isConnected]);
 
     useEffect(() => {
       setOptionsAdvanced((current) => ({
@@ -121,12 +124,20 @@ const useSend = (options: UseDepositOptions = {}) => {
           if (!evmProvider) {
             throw new Error('No EVM wallet was detected.');
           }
+          if (!EVM_CHAIN_ID) {
+            throw new Error('The active network does not define an EVM chain ID.');
+          }
 
           await ensureEvmNetwork();
+          const activeAddress = await assertEvmAccountForChain(
+            evmProvider,
+            address,
+            EVM_CHAIN_ID
+          );
           const transactionHash = await evmProvider.request<string>({
             method: 'eth_sendTransaction',
             params: [{
-              from: address,
+              from: activeAddress,
               to: optionsAdvanced.recipient,
               value: parseEvmAmount(optionsAdvanced.amount),
             }],

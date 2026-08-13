@@ -2,6 +2,7 @@ import {
   EVM_NATIVE_DECIMALS,
   EVM_RPC_ENDPOINT,
 } from '@/contants/network';
+import type { Eip1193Provider } from '@/types/window';
 
 interface EvmRpcResponse<T> {
   result?: T;
@@ -15,7 +16,43 @@ export const isEvmAddress = (value: string) => /^0x[0-9a-fA-F]{40}$/.test(value)
 
 export const toHexChainId = (chainId: number) => `0x${chainId.toString(16)}`;
 
+export const getEvmAccountForChain = async (
+  provider: Eip1193Provider,
+  expectedChainId: number
+) => {
+  const [accounts, chainId] = await Promise.all([
+    provider.request<string[]>({ method: 'eth_accounts' }),
+    provider.request<string>({ method: 'eth_chainId' }),
+  ]);
+
+  if (chainId.toLowerCase() !== toHexChainId(expectedChainId).toLowerCase()) {
+    throw new Error('The wallet is connected to a different network.');
+  }
+
+  const account = accounts[0] || '';
+  if (!isEvmAddress(account)) {
+    throw new Error('No EVM wallet account is connected.');
+  }
+
+  return account;
+};
+
+export const assertEvmAccountForChain = async (
+  provider: Eip1193Provider,
+  expectedAddress: string,
+  expectedChainId: number
+) => {
+  const account = await getEvmAccountForChain(provider, expectedChainId);
+  if (account.toLowerCase() !== expectedAddress.toLowerCase()) {
+    throw new Error('The active wallet account changed. Please retry the transaction.');
+  }
+  return account;
+};
+
 export const parseEvmAmount = (value: string, decimals = EVM_NATIVE_DECIMALS) => {
+  if (!Number.isSafeInteger(decimals) || decimals < 0) {
+    throw new Error('Token decimals must be a non-negative integer.');
+  }
   const normalized = value.trim();
   if (!/^\d+(\.\d+)?$/.test(normalized)) {
     throw new Error('Enter a valid amount.');
@@ -37,6 +74,9 @@ export const parseEvmAmount = (value: string, decimals = EVM_NATIVE_DECIMALS) =>
 };
 
 export const evmBalanceToMicroLume = (balance: string) => {
+  if (!/^0x[0-9a-fA-F]+$/.test(balance)) {
+    throw new Error('EVM RPC returned an invalid balance.');
+  }
   const wei = BigInt(balance);
   const microLumeDivisor = BigInt(10) ** BigInt(EVM_NATIVE_DECIMALS - 6);
   return (wei / microLumeDivisor).toString();
@@ -73,5 +113,13 @@ export const requestEvmRpc = async <T>(method: string, params: unknown[] = []): 
   return payload.result;
 };
 
-export const getEvmBalance = (address: string) =>
-  requestEvmRpc<string>('eth_getBalance', [address, 'latest']);
+export const getEvmBalance = async (address: string) => {
+  if (!isEvmAddress(address)) {
+    throw new Error('Cannot query the balance of an invalid EVM address.');
+  }
+  const balance = await requestEvmRpc<string>('eth_getBalance', [address, 'latest']);
+  if (typeof balance !== 'string' || !/^0x[0-9a-fA-F]+$/.test(balance)) {
+    throw new Error('EVM RPC returned an invalid balance.');
+  }
+  return balance;
+};
