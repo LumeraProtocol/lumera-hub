@@ -43,6 +43,7 @@ interface IAllValidators {
   totalPower: number;
   getUptime: (validator: IValidator) => number;
   delegateOptions: {
+    canDelegate: boolean;
     onOpenModal: (validator: string, customMemo?: string) => void;
     validators: IValidator[];
     onSelectValidator: (validator: string) => void;
@@ -300,9 +301,10 @@ export default function AllValidators({
                                   </div> :
                                   <div className='btn-primary'>
                                     <Button
+                                      disabled={!delegateOptions.canDelegate}
                                       onPress={() => delegateOptions.onSelectValidator(validator.operator_address)}
                                     >
-                                      Delegate
+                                      {delegateOptions.canDelegate ? 'Delegate' : 'Keplr required'}
                                     </Button>
                                   </div>
                                 }

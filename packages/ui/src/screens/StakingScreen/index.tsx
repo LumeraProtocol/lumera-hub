@@ -47,6 +47,7 @@ import Activities from './components/Activities';
 interface IStakingScreen {
   address: string;
   delegateOptions: {
+    canDelegate: boolean;
     isVoteLoading: boolean;
     error: string | null;
     optionsAdvanced: {
@@ -376,6 +377,7 @@ export const StakingScreen = ({
             <RewardsCalculator
               apr={staking.apr}
               availableAmount={getTotalBalances(accountInfo)}
+              canDelegate={delegateOptions.canDelegate}
               onStakingButtonClick={delegateOptions.onStakingButtonClick}
               onRefreshBalance={onRefreshBalance}
               isLoading={isAccountInfoLoading}

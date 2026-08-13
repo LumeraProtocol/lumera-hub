@@ -63,6 +63,7 @@ export default function Page() {
           isAccountInfoLoading={loading}
           onRefreshBalance={fetchData}
           delegateOptions={{
+            canDelegate: delegate.canDelegate,
             isVoteLoading: delegate.isLoading,
             error: delegate.error,
             optionsAdvanced: delegate.optionsAdvanced,

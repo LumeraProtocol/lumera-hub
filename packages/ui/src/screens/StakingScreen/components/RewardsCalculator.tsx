@@ -19,6 +19,7 @@ import { formatTokenDisplay } from '@/utils/format';
 interface IRewardsCalculator {
   apr: number;
   availableAmount: number;
+  canDelegate: boolean;
   isLoading: boolean;
   onStakingButtonClick: (amount: string) => void;
   onRefreshBalance: () => void;
@@ -27,6 +28,7 @@ interface IRewardsCalculator {
 export default function RewardsCalculator({
   apr,
   availableAmount,
+  canDelegate,
   isLoading,
   onStakingButtonClick,
   onRefreshBalance,
@@ -119,9 +121,9 @@ export default function RewardsCalculator({
               {error ?
                 <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
               }
-              <div className={`${!amount || amount === '0' ? 'btn-secondary' : 'btn-primary'} mt-5`}>
-                <Button onPress={handleStakingClick} disabled={!amount || amount === '0'}>
-                  <span className='font-bold'>Continue to Staking</span>
+              <div className={`${!canDelegate || !amount || amount === '0' ? 'btn-secondary' : 'btn-primary'} mt-5`}>
+                <Button onPress={handleStakingClick} disabled={!canDelegate || !amount || amount === '0'}>
+                  <span className='font-bold'>{canDelegate ? 'Continue to Staking' : 'Connect Keplr to stake'}</span>
                 </Button>
               </div>
             </div>

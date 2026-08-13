@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   MsgDelegate,
 } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
 
-import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
 import { extractValidNumber } from '@/utils/helpers';
@@ -11,6 +10,7 @@ import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contan
 import {
   IValidator,
 } from '@/types';
+import { fetchBondedValidators } from '@/utils/staking-validators';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -38,26 +38,21 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const [transactionHash, setTransactionHash] = useState('');
   const [selectedModal, setSelectedModal] = useState('');
 
-  const fetchValidator = async () => {
-    if (isEvm) {
-      setValidators([]);
-      setTotalValidators('0');
-      return;
-    }
+  const fetchValidator = useCallback(async () => {
     setFetchValidatorLoading(true);
     try {
-      const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=1000&status=BOND_STATUS_BONDED&pagination.count_total=true');
+      const data = await fetchBondedValidators();
       setValidators(data.validators);
       setTotalValidators(data.pagination.total);
     } catch (e) {
       console.error('API Error:', e);
     }
     setFetchValidatorLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
     fetchValidator();
-  }, [isEvm]);
+  }, [fetchValidator]);
 
   useEffect(() => {
     if (options?.customMemo) {
@@ -228,6 +223,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   }
 
   return {
+    canDelegate: !isEvm,
     error,
     showAdvanced,
     isLoading,
