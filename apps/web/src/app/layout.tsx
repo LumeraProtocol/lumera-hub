@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta property="og:site_name" content="Lumera Hub - Web3 infrastructure built for scale." />
         <meta property="title" content="Lumera Hub - Web3 infrastructure built for scale." />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <ClientRoot>
           <AppShell>{children}</AppShell>
         </ClientRoot>
