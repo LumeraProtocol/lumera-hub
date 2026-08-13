@@ -11,6 +11,14 @@ export const canWalletSignCosmosTransactions = ({
   hasEvmCosmosSigner: boolean;
 }) => !isEvmNetwork || (chainEip712Enabled && hasEvmCosmosSigner);
 
+export const canQueryCosmosAccountData = ({
+  address,
+  isEvmNetwork,
+}: {
+  address: string;
+  isEvmNetwork: boolean;
+}) => Boolean(address) && !isEvmNetwork;
+
 export const assertGovernanceTransactionsAvailable = (canSignCosmosTransactions: boolean) => {
   if (!canSignCosmosTransactions) {
     throw new Error(GOVERNANCE_TRANSACTION_UNAVAILABLE_MESSAGE);

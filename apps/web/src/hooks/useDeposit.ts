@@ -8,7 +8,10 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
 import { RATE_VALUE, GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 import { extractValidNumber } from '@/utils/helpers';
-import { assertGovernanceTransactionsAvailable } from '@/utils/cosmos-transactions';
+import {
+  assertGovernanceTransactionsAvailable,
+  canQueryCosmosAccountData,
+} from '@/utils/cosmos-transactions';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -16,7 +19,7 @@ interface UseDepositOptions {
 }
 
 const useDeposit = (options: UseDepositOptions = {}) => {
-    const { address, canSignCosmosTransactions, getClient } = useWalletConnect();
+    const { address, canSignCosmosTransactions, getClient, isEvm } = useWalletConnect();
     const [isLoading, setLoading] = useState(false);
     const [depositAdvanced, setDepositAdvanced] = useState({
         senderAddress: address,
@@ -33,6 +36,10 @@ const useDeposit = (options: UseDepositOptions = {}) => {
     const [transactionHash, setTransactionHash] = useState('');
 
     const fetchData = async () => {
+        if (!canQueryCosmosAccountData({ address, isEvmNetwork: isEvm })) {
+          setAvailableAmount(0);
+          return;
+        }
         try {
           const { data } = await instance.get(`/cosmos/bank/v1beta1/balances/${address}`);
           let total = 0;
@@ -42,16 +49,18 @@ const useDeposit = (options: UseDepositOptions = {}) => {
             }
           }
           setAvailableAmount(Number((total / RATE_VALUE).toFixed(6)));
-        } catch (e) {
-          console.error('API Error:', e);
+        } catch {
+          setAvailableAmount(0);
         }
     };
 
     useEffect(() => {
-        if (address) {
+        if (canQueryCosmosAccountData({ address, isEvmNetwork: isEvm })) {
             fetchData();
+        } else {
+            setAvailableAmount(0);
         }
-    }, [address]);
+    }, [address, isEvm]);
 
     useEffect(() => {
       if (options?.customMemo) {

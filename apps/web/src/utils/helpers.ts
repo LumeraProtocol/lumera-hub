@@ -6,8 +6,8 @@ import {
   toHex,
 } from '@cosmjs/encoding';
 import { Ripemd160, sha256 } from '@cosmjs/crypto';
-import chainMainnet from 'chain-registry/mainnet'
-import chainTestnet from 'chain-registry/testnet';
+import { assetList as mainnetAssets, chain as mainnetChain } from 'chain-registry/mainnet/lumera';
+import { assetList as testnetAssets, chain as testnetChain } from 'chain-registry/testnet/lumeratestnet';
 export { parseCoins } from '@cosmjs/stargate';
 import { MsgDelegate } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
 
@@ -178,17 +178,9 @@ export const getChains = () => {
     }
   }
 
-  const registry = NETWORK_PROFILE === 'testnet' ? chainTestnet : chainMainnet;
-  const chain = registry.chains.find(({ chainName, chainId }) =>
-    chainName === CHAIN_NAME || chainId === CHAIN_ID
-  );
-  const assets = chain
-    ? registry.assetLists.find(({ chainName }) => chainName === chain.chainName)
-    : undefined;
-
-  if (!chain || !assets) {
-    return { assetLists: [], chains: [] };
-  }
+  const { chain, assets } = NETWORK_PROFILE === 'testnet'
+    ? { chain: testnetChain, assets: testnetAssets }
+    : { chain: mainnetChain, assets: mainnetAssets };
 
   return {
     assetLists: [{ ...assets, chainName: CHAIN_NAME }],

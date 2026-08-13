@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   assertGovernanceTransactionsAvailable,
+  canQueryCosmosAccountData,
   canWalletSignCosmosTransactions,
   GOVERNANCE_TRANSACTION_UNAVAILABLE_MESSAGE,
 } from './cosmos-transactions';
@@ -38,5 +39,25 @@ describe('canWalletSignCosmosTransactions', () => {
       chainEip712Enabled: true,
       hasEvmCosmosSigner: true,
     })).toBe(true);
+  });
+});
+
+describe('canQueryCosmosAccountData', () => {
+  it('requires a connected Cosmos account', () => {
+    expect(canQueryCosmosAccountData({
+      address: '',
+      isEvmNetwork: false,
+    })).toBe(false);
+    expect(canQueryCosmosAccountData({
+      address: 'lumera1account',
+      isEvmNetwork: false,
+    })).toBe(true);
+  });
+
+  it('never sends an EVM address to Cosmos account endpoints', () => {
+    expect(canQueryCosmosAccountData({
+      address: '0x1234567890abcdef',
+      isEvmNetwork: true,
+    })).toBe(false);
   });
 });
