@@ -3,7 +3,6 @@
 import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { Provider } from 'react-redux';
-import { WCWallet } from '@interchain-kit/core';
 import { PersistGate } from 'redux-persist/integration/react';
 import { ChainProvider } from '@interchain-kit/react';
 import { keplrWallet } from '@interchain-kit/keplr-extension';
@@ -22,6 +21,7 @@ import {
   WALLET_CONNECT_ICON,
 } from '@/contants/network';
 import { getChains } from '@/utils/helpers';
+import { getWalletConnectWallet } from '@/utils/wallet-connect';
 import { RegistryProvider } from "./RegistryContext";
 import { EvmWalletProvider } from './evm-wallet-provider';
 import store, { persistor } from '@/store';
@@ -49,7 +49,7 @@ export function WebWalletProviders({ children }: { children: React.ReactNode }) 
     setChainData({ chain: foundChain, assets: foundAssets });
   }, [isBrowser, chains, assetLists]);
   // Setup WalletConnect with custom metadata
-  const walletConnect = React.useMemo(() => new WCWallet(undefined, {
+  const walletConnect = getWalletConnectWallet({
     projectId: WALLET_CONNECT_PROJECTID,
     relayUrl: WALLET_CONNECT_RELAY_URL,
     metadata: {
@@ -58,10 +58,13 @@ export function WebWalletProviders({ children }: { children: React.ReactNode }) 
       url: WALLET_CONNECT_URL,
       icons: [WALLET_CONNECT_ICON],
     },
-  }), []);
+  });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const walletAdapters: any = [keplrWallet, leapWallet, cosmostationWallet, walletConnect];
+  const walletAdapters: any = React.useMemo(
+    () => [keplrWallet, leapWallet, cosmostationWallet, walletConnect],
+    [walletConnect],
+  );
 
   return (
     <Provider store={store}>
