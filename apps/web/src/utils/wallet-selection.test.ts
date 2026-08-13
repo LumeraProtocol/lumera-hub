@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getActiveWalletAddress,
   getActiveWalletMode,
+  getAlternativeWalletName,
   getPreferredWalletSelection,
   KEPLR_WALLET_NAME,
   METAMASK_WALLET_NAME,
@@ -77,6 +78,34 @@ describe('preferred wallet selection', () => {
       currentSelection: '',
       isKeplrInstalled: false,
       isMetaMaskInstalled: false,
+    })).toBe('');
+  });
+});
+
+describe('alternative wallet selection', () => {
+  it('offers MetaMask to a Keplr user only when MetaMask is installed', () => {
+    expect(getAlternativeWalletName({
+      currentWallet: KEPLR_WALLET_NAME,
+      isKeplrInstalled: true,
+      isMetaMaskInstalled: true,
+    })).toBe(METAMASK_WALLET_NAME);
+    expect(getAlternativeWalletName({
+      currentWallet: KEPLR_WALLET_NAME,
+      isKeplrInstalled: true,
+      isMetaMaskInstalled: false,
+    })).toBe('');
+  });
+
+  it('offers Keplr to a MetaMask user only when Keplr is installed', () => {
+    expect(getAlternativeWalletName({
+      currentWallet: METAMASK_WALLET_NAME,
+      isKeplrInstalled: true,
+      isMetaMaskInstalled: true,
+    })).toBe(KEPLR_WALLET_NAME);
+    expect(getAlternativeWalletName({
+      currentWallet: METAMASK_WALLET_NAME,
+      isKeplrInstalled: false,
+      isMetaMaskInstalled: true,
     })).toBe('');
   });
 });

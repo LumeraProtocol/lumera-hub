@@ -9,6 +9,7 @@ vi.mock('@/contants/network', () => ({
 
 import {
   assertEvmAccountForChain,
+  evmAddressToCosmosAddress,
   evmBalanceToMicroLume,
   getEvmAccountForChain,
   getEvmBalance,
@@ -72,6 +73,12 @@ describe('EVM value helpers', () => {
     expect(isEvmAddress(ADDRESS)).toBe(true);
     expect(isEvmAddress(`${ADDRESS}00`)).toBe(false);
     expect(isEvmAddress('lumera1abc')).toBe(false);
+  });
+
+  it('converts an EVM account to its Lumera Bech32 representation', () => {
+    expect(evmAddressToCosmosAddress(ADDRESS))
+      .toBe('lumera1qy352euf40x77qfrg4ncn27dauqjx3t83egcev');
+    expect(() => evmAddressToCosmosAddress('not-an-address')).toThrow('invalid EVM address');
   });
 
   it('converts decimal LUME amounts to exact wei hex values', () => {

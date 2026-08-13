@@ -55,3 +55,23 @@ export const getPreferredWalletSelection = ({
   if (isMetaMaskInstalled) return METAMASK_WALLET_NAME;
   return '';
 };
+
+interface AlternativeWalletOptions {
+  currentWallet: string;
+  isKeplrInstalled: boolean;
+  isMetaMaskInstalled: boolean;
+}
+
+export const getAlternativeWalletName = ({
+  currentWallet,
+  isKeplrInstalled,
+  isMetaMaskInstalled,
+}: AlternativeWalletOptions) => {
+  if (currentWallet === KEPLR_WALLET_NAME && isMetaMaskInstalled) {
+    return METAMASK_WALLET_NAME;
+  }
+  if (currentWallet === METAMASK_WALLET_NAME && isKeplrInstalled) {
+    return KEPLR_WALLET_NAME;
+  }
+  return '';
+};

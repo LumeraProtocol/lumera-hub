@@ -1,14 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
-import { Wallet, LogOut } from '@tamagui/lucide-icons';
+import { Wallet } from '@tamagui/lucide-icons';
 import { InterchainWalletModal, useChain, useChainWallet } from '@interchain-kit/react';
+import { ChevronDown, Copy, LogOut, RefreshCw } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 import { useDispatch, useSelector } from '@/redux/hooks';
-import { formatAddress } from '@/utils/format';
 import { CHAIN_NAME, IS_EVM_NETWORK } from '@/contants/network';
 import {
   setAddress,
@@ -18,9 +18,11 @@ import {
 } from '@/redux/wallet.slice';
 import { useEvmWallet } from '@/app/providers/evm-wallet-provider';
 import useWalletConnect from '@/hooks/useWalletConnect';
+import { evmAddressToCosmosAddress } from '@/utils/evm';
 import {
   getActiveWalletAddress,
   getActiveWalletMode,
+  getAlternativeWalletName,
   getPreferredWalletSelection,
   KEPLR_WALLET_NAME,
   METAMASK_WALLET_NAME,
@@ -199,12 +201,39 @@ export function ConnectWallet() {
   const dispatch = useDispatch();
   const { disconnect: disconnectCosmos, openView } = useChain(CHAIN_NAME);
   const keplrWallet = useChainWallet(CHAIN_NAME, KEPLR_WALLET_NAME);
-  const { disconnect: disconnectEvm } = useEvmWallet();
+  const evmWallet = useEvmWallet();
   const { address, walletName } = useWalletConnect();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [isMenuOpen, setMenuOpen] = useState(false);
+  const [isKeplrInstalled, setKeplrInstalled] = useState(false);
+  const isMetaMaskInstalled = Boolean(evmWallet.provider);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    setKeplrInstalled(Boolean(window.keplr));
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (!address) setMenuOpen(false);
+  }, [address]);
 
   const handleDisconnect = async () => {
+    setMenuOpen(false);
     if (IS_EVM_NETWORK && walletName === METAMASK_WALLET_NAME) {
-      await disconnectEvm();
+      await evmWallet.disconnect();
     } else if (IS_EVM_NETWORK && walletName === KEPLR_WALLET_NAME) {
       await keplrWallet.disconnect();
     } else {
@@ -223,39 +252,114 @@ export function ConnectWallet() {
     }
   };
 
-  const handleCopyAddress = () => {
-    void navigator.clipboard.writeText(address);
-    toast('The address has been copied.', {
-      position: 'bottom-center',
-      theme: 'dark',
-    });
+  const handleCopyAddress = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast(`${label} copied.`, {
+        position: 'bottom-center',
+        theme: 'dark',
+      });
+    } catch {
+      toast.error('Unable to copy the address.', {
+        position: 'bottom-center',
+        theme: 'dark',
+      });
+    }
   };
 
   const walletLabel = walletName === METAMASK_WALLET_NAME ? 'MetaMask' : 'Keplr';
+  const alternativeWallet = IS_EVM_NETWORK ? getAlternativeWalletName({
+    currentWallet: walletName,
+    isKeplrInstalled,
+    isMetaMaskInstalled,
+  }) : '';
+  const metaMaskCosmosAddress = walletName === METAMASK_WALLET_NAME && evmWallet.address
+    ? evmAddressToCosmosAddress(evmWallet.address)
+    : '';
+  const addressItems = walletName === METAMASK_WALLET_NAME
+    ? [
+      { label: 'Cosmos-style EVM address', value: metaMaskCosmosAddress },
+      { label: 'ETH hex address', value: evmWallet.address },
+    ]
+    : [{ label: 'Lumera address', value: address }];
 
   return (
-    <div style={{ display: 'flex', gap: 8 }}>
+    <div className={styles.accountControls}>
       {!address ?
         <button
+          type="button"
           onClick={handleConnect}
           className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors flex cursor-pointer"
         >
           <Wallet size="$1" /> <div className="ml-1 connect-wallet-label">Connect Wallet</div>
-        </button> :
-        <>
-          {IS_EVM_NETWORK && (
+        </button> : (
+          <div className={styles.accountMenuRoot} ref={menuRef}>
             <button
               type="button"
-              onClick={handleConnect}
-              title="Switch wallet"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors cursor-pointer"
+              className={styles.accountMenuTrigger}
+              aria-haspopup="menu"
+              aria-expanded={isMenuOpen}
+              onClick={() => setMenuOpen((open) => !open)}
             >
-              {walletLabel}
+              <span>{walletLabel}</span>
+              <ChevronDown
+                aria-hidden="true"
+                className={`${styles.triggerChevron} ${isMenuOpen ? styles.triggerChevronOpen : ''}`}
+                size={17}
+              />
             </button>
-          )}
-          <span className='btn-address cursor-pointer' onClick={handleCopyAddress}>{formatAddress(address, 5, -4)}</span>
-          <button onClick={() => void handleDisconnect()} className='btn-logout'><LogOut /></button>
-        </>
+
+            {isMenuOpen && (
+              <div className={styles.accountMenu} role="menu" aria-label={`${walletLabel} wallet menu`}>
+                <div className={styles.accountMenuHeading}>{walletLabel} wallet</div>
+                <div className={styles.addressList}>
+                  {addressItems.filter((item) => item.value).map((item) => (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.addressItem}
+                      aria-label={`Copy ${item.label}`}
+                      key={item.label}
+                      onClick={() => void handleCopyAddress(item.value, item.label)}
+                    >
+                      <span className={styles.addressContent}>
+                        <span className={styles.addressLabel}>{item.label}</span>
+                        <span className={styles.fullAddress}>{item.value}</span>
+                      </span>
+                      <Copy className={styles.menuIcon} aria-hidden="true" size={17} />
+                    </button>
+                  ))}
+                </div>
+
+                <div className={styles.menuActions}>
+                  {alternativeWallet && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.menuAction}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        handleConnect();
+                      }}
+                    >
+                      <RefreshCw aria-hidden="true" size={18} />
+                      <span>Switch wallet</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={`${styles.menuAction} ${styles.disconnectAction}`}
+                    onClick={() => void handleDisconnect()}
+                  >
+                    <LogOut aria-hidden="true" size={18} />
+                    <span>Disconnect</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )
       }
     </div>
   );
