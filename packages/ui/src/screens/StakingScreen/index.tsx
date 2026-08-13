@@ -75,6 +75,7 @@ interface IStakingScreen {
     onCloseContinueToStakingModal: () => void;
     onSelectValidator: (validator: string) => void;
     onStakingAmountChange: (amount: string) => void;
+    onSwitchWallet: () => void;
   };
   staking: {
     validators: IValidator[];

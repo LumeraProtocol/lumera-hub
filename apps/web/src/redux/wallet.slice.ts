@@ -5,6 +5,7 @@ interface IWalletState {
   address: string;
   isConnected: boolean;
   walletName: string;
+  preferredWalletName: string;
   isModalOpen: boolean;
 }
 
@@ -13,6 +14,7 @@ const initialState: IWalletState = {
   isConnected: false,
   isModalOpen: false,
   walletName: '',
+  preferredWalletName: '',
 };
 
 type TAddressAction = {
@@ -25,6 +27,7 @@ type TConnectedAction = {
 
 type TModalOpenAction = {
   status: boolean;
+  preferredWalletName?: string;
 };
 
 type TWalletnameAction = {
@@ -46,6 +49,7 @@ export const walletSlice = createSlice({
     },
     setModalOpen: (state, { payload }: PayloadAction<TModalOpenAction>) => {
       state.isModalOpen = payload.status;
+      state.preferredWalletName = payload.status ? payload.preferredWalletName || '' : '';
     },
   },
 });

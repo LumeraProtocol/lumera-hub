@@ -47,6 +47,7 @@ interface IAllValidators {
     onOpenModal: (validator: string, customMemo?: string) => void;
     validators: IValidator[];
     onSelectValidator: (validator: string) => void;
+    onSwitchWallet: () => void;
   }
 }
 
@@ -171,6 +172,24 @@ export default function AllValidators({
           </div>
         </div>
         <div className='mt-5 relative'>
+          {!delegateOptions.canDelegate ? (
+            <div
+              role="alert"
+              className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-amber-400/30 bg-amber-400/10 px-4 py-3"
+            >
+              <div>
+                <p className="font-semibold text-amber-200">Staking is not currently supported with MetaMask.</p>
+                <p className="mt-0.5 text-sm text-amber-100/70">Switch to a Keplr wallet to delegate LUME.</p>
+              </div>
+              <button
+                type="button"
+                className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 cursor-pointer"
+                onClick={delegateOptions.onSwitchWallet}
+              >
+                Switch to Keplr
+              </button>
+            </div>
+          ) : null}
           {staking.isLoading || !staking?.params?.bond_denom ? (
               <div className='my-2 min-h-11'>
                 <Loading isLoading />
@@ -298,15 +317,14 @@ export default function AllValidators({
                                 {validator.jailed ?
                                   <div className='btn-jailed'>
                                     <Button>Jailed</Button>
-                                  </div> :
+                                  </div> : delegateOptions.canDelegate ?
                                   <div className='btn-primary'>
                                     <Button
-                                      disabled={!delegateOptions.canDelegate}
                                       onPress={() => delegateOptions.onSelectValidator(validator.operator_address)}
                                     >
-                                      {delegateOptions.canDelegate ? 'Delegate' : 'Keplr required'}
+                                      Delegate
                                     </Button>
-                                  </div>
+                                  </div> : null
                                 }
                               </div>
                             </td>

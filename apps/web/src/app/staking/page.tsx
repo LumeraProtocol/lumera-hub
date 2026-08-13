@@ -10,8 +10,12 @@ import useStaking from '@/hooks/useStaking';
 import useAccountInfo from '@/hooks/useAccountInfo';
 import useUnbond from '@/hooks/useUnbond';
 import useRedelegate from '@/hooks/useRedelegate';
+import { useDispatch } from '@/redux/hooks';
+import { setModalOpen } from '@/redux/wallet.slice';
+import { KEPLR_WALLET_NAME } from '@/utils/wallet-selection';
 
 export default function Page() {
+  const dispatch = useDispatch();
   const { address, isEvm } = useWalletConnect();
   const staking = useStaking(address, isEvm);
   const {
@@ -84,6 +88,10 @@ export default function Page() {
             onCloseContinueToStakingModal: delegate.handleCloseContinueToStakingModal,
             onSelectValidator: delegate.handleSelectValidator,
             onStakingAmountChange: delegate.handleStakingAmountChange,
+            onSwitchWallet: () => dispatch(setModalOpen({
+              status: true,
+              preferredWalletName: KEPLR_WALLET_NAME,
+            })),
           }}
           staking={{
             totalValidators: staking.totalValidators,

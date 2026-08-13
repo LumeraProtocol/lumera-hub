@@ -31,7 +31,7 @@ import styles from './ConnectWallet.module.css';
 
 function WalletChoiceModal() {
   const dispatch = useDispatch();
-  const { isModalOpen, walletName } = useSelector((state) => state.wallet);
+  const { isModalOpen, preferredWalletName, walletName } = useSelector((state) => state.wallet);
   const evmWallet = useEvmWallet();
   const keplrWallet = useChainWallet(CHAIN_NAME, KEPLR_WALLET_NAME);
   const [isKeplrInstalled, setKeplrInstalled] = useState(false);
@@ -46,12 +46,12 @@ function WalletChoiceModal() {
     const keplrInstalled = Boolean(window.keplr);
     setKeplrInstalled(keplrInstalled);
     setSelectedWallet(getPreferredWalletSelection({
-      currentSelection: walletName,
+      currentSelection: preferredWalletName || walletName,
       isKeplrInstalled: keplrInstalled,
       isMetaMaskInstalled,
     }));
     setWalletError('');
-  }, [isMetaMaskInstalled, isModalOpen, walletName]);
+  }, [isMetaMaskInstalled, isModalOpen, preferredWalletName, walletName]);
 
   useEffect(() => {
     if (!isModalOpen) return;
