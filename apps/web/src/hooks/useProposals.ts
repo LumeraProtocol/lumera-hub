@@ -78,7 +78,12 @@ interface UseDepositOptions {
 }
 
 const useProposals = (options: UseDepositOptions = {}) => {
-  const { address, canSignCosmosTransactions, getClient } = useWalletConnect();
+  const {
+    address,
+    bech32Address,
+    canSignCosmosTransactions,
+    getClient,
+  } = useWalletConnect();
   const [proposalsInfo, setProposalsInfo] = useState<IProposal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -96,13 +101,13 @@ const useProposals = (options: UseDepositOptions = {}) => {
   const [userVotes, setUserVotes] = useState<Record<string, GovernanceVote>>({});
 
   const refreshUserVote = async (proposalId: string) => {
-    if (!address) {
+    if (!bech32Address) {
       return;
     }
 
     try {
       const { data } = await axios.get(
-        `${REST_AI_URL}/cosmos/gov/v1/proposals/${proposalId}/votes/${address}`,
+        `${REST_AI_URL}/cosmos/gov/v1/proposals/${proposalId}/votes/${bech32Address}`,
       );
       setUserVotes((current) => ({
         ...current,
@@ -144,7 +149,7 @@ const useProposals = (options: UseDepositOptions = {}) => {
   useEffect(() => {
     let cancelled = false;
 
-    if (!address) {
+    if (!bech32Address) {
       setUserVotes({});
       return;
     }
@@ -153,7 +158,7 @@ const useProposals = (options: UseDepositOptions = {}) => {
       const voteEntries = await Promise.all(proposalsInfo.map(async (proposal) => {
         try {
           const { data } = await axios.get(
-            `${REST_AI_URL}/cosmos/gov/v1/proposals/${proposal.id}/votes/${address}`,
+            `${REST_AI_URL}/cosmos/gov/v1/proposals/${proposal.id}/votes/${bech32Address}`,
           );
           return [proposal.id, data.vote] as const;
         } catch {
@@ -171,7 +176,7 @@ const useProposals = (options: UseDepositOptions = {}) => {
     return () => {
       cancelled = true;
     };
-  }, [address, proposalsInfo]);
+  }, [bech32Address, proposalsInfo]);
 
   useEffect(() => {
     if (options?.customMemo) {
