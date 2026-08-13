@@ -33,3 +33,25 @@ export const getActiveWalletAddress = ({
   if (mode === 'cosmos') return cosmosAddress || '';
   return '';
 };
+
+interface PreferredWalletSelectionOptions {
+  currentSelection: string;
+  isKeplrInstalled: boolean;
+  isMetaMaskInstalled: boolean;
+}
+
+export const getPreferredWalletSelection = ({
+  currentSelection,
+  isKeplrInstalled,
+  isMetaMaskInstalled,
+}: PreferredWalletSelectionOptions) => {
+  if (currentSelection === KEPLR_WALLET_NAME && isKeplrInstalled) {
+    return KEPLR_WALLET_NAME;
+  }
+  if (currentSelection === METAMASK_WALLET_NAME && isMetaMaskInstalled) {
+    return METAMASK_WALLET_NAME;
+  }
+  if (isKeplrInstalled) return KEPLR_WALLET_NAME;
+  if (isMetaMaskInstalled) return METAMASK_WALLET_NAME;
+  return '';
+};

@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { createPortal } from 'react-dom';
 import { Wallet, LogOut } from '@tamagui/lucide-icons';
 import { InterchainWalletModal, useChain, useChainWallet } from '@interchain-kit/react';
 import { toast } from 'react-toastify';
@@ -19,165 +21,155 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import {
   getActiveWalletAddress,
   getActiveWalletMode,
+  getPreferredWalletSelection,
   KEPLR_WALLET_NAME,
   METAMASK_WALLET_NAME,
 } from '@/utils/wallet-selection';
-
-const showWalletError = (error: unknown, fallback: string) => {
-  toast.error(error instanceof Error ? error.message : fallback, {
-    position: 'bottom-center',
-    theme: 'dark',
-  });
-};
+import styles from './ConnectWallet.module.css';
 
 function WalletChoiceModal() {
   const dispatch = useDispatch();
-  const isModalOpen = useSelector((state) => state.wallet.isModalOpen);
+  const { isModalOpen, walletName } = useSelector((state) => state.wallet);
   const evmWallet = useEvmWallet();
   const keplrWallet = useChainWallet(CHAIN_NAME, KEPLR_WALLET_NAME);
   const [isKeplrInstalled, setKeplrInstalled] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState('');
   const [connectingWallet, setConnectingWallet] = useState('');
+  const [walletError, setWalletError] = useState('');
+  const isMetaMaskInstalled = Boolean(evmWallet.provider);
 
   useEffect(() => {
-    if (isModalOpen) setKeplrInstalled(Boolean(window.keplr));
-  }, [isModalOpen]);
+    if (!isModalOpen) return;
 
-  if (!isModalOpen) return null;
+    const keplrInstalled = Boolean(window.keplr);
+    setKeplrInstalled(keplrInstalled);
+    setSelectedWallet(getPreferredWalletSelection({
+      currentSelection: walletName,
+      isKeplrInstalled: keplrInstalled,
+      isMetaMaskInstalled,
+    }));
+    setWalletError('');
+  }, [isMetaMaskInstalled, isModalOpen, walletName]);
+
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !connectingWallet) {
+        dispatch(setModalOpen({ status: false }));
+      }
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [connectingWallet, dispatch, isModalOpen]);
+
+  if (!isModalOpen || typeof document === 'undefined') return null;
 
   const close = () => dispatch(setModalOpen({ status: false }));
 
-  const connectMetaMask = async () => {
-    setConnectingWallet(METAMASK_WALLET_NAME);
+  const connectSelectedWallet = async () => {
+    if (!selectedWallet) return;
+
+    setConnectingWallet(selectedWallet);
+    setWalletError('');
     try {
-      await evmWallet.connect();
-      dispatch(setWalletName({ walletName: METAMASK_WALLET_NAME }));
+      if (selectedWallet === METAMASK_WALLET_NAME) {
+        if (!isMetaMaskInstalled) throw new Error('MetaMask was not detected.');
+        await evmWallet.connect();
+      } else {
+        if (!isKeplrInstalled) throw new Error('Keplr was not detected.');
+        await keplrWallet.connect();
+      }
+      dispatch(setWalletName({ walletName: selectedWallet }));
       close();
     } catch (error) {
-      showWalletError(error, 'Unable to connect MetaMask.');
+      setWalletError(error instanceof Error ? error.message : 'Unable to connect wallet.');
     } finally {
       setConnectingWallet('');
     }
   };
 
-  const connectKeplr = async () => {
-    setConnectingWallet(KEPLR_WALLET_NAME);
-    try {
-      await keplrWallet.connect();
-      dispatch(setWalletName({ walletName: KEPLR_WALLET_NAME }));
-      close();
-    } catch (error) {
-      showWalletError(error, 'Unable to connect Keplr.');
-    } finally {
-      setConnectingWallet('');
-    }
-  };
+  const walletOptions = [
+    {
+      name: 'Keplr',
+      walletName: KEPLR_WALLET_NAME,
+      logo: '/keplr.svg',
+      installed: isKeplrInstalled,
+    },
+    {
+      name: 'MetaMask',
+      walletName: METAMASK_WALLET_NAME,
+      logo: '/metamask.svg',
+      installed: isMetaMaskInstalled,
+    },
+  ];
 
-  const walletButton = (
-    name: string,
-    description: string,
-    installed: boolean,
-    onClick: () => Promise<void>,
-    walletName: string
-  ) => (
-    <button
-      type="button"
-      onClick={() => void onClick()}
-      disabled={!installed || Boolean(connectingWallet)}
-      style={{
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        padding: 16,
-        borderRadius: 12,
-        border: '1px solid #353b55',
-        background: '#171b2d',
-        color: '#fff',
-        cursor: installed && !connectingWallet ? 'pointer' : 'not-allowed',
-        opacity: installed ? 1 : 0.55,
-        textAlign: 'left',
-      }}
-    >
-      <span>
-        <strong style={{ display: 'block', fontSize: 16 }}>{name}</strong>
-        <span style={{ display: 'block', marginTop: 4, color: '#aeb5ca', fontSize: 13 }}>
-          {description}
-        </span>
-      </span>
-      <span style={{ color: installed ? '#8b9cff' : '#aeb5ca', fontSize: 12, whiteSpace: 'nowrap' }}>
-        {connectingWallet === walletName ? 'Connecting...' : installed ? 'Installed' : 'Not detected'}
-      </span>
-    </button>
-  );
-
-  return (
+  return createPortal(
     <div
       role="presentation"
+      className={styles.overlay}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) close();
-      }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
-        background: 'rgba(5, 7, 15, 0.72)',
+        if (event.target === event.currentTarget && !connectingWallet) close();
       }}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="wallet-choice-title"
-        style={{
-          width: '100%',
-          maxWidth: 440,
-          padding: 24,
-          borderRadius: 16,
-          border: '1px solid #353b55',
-          background: '#101322',
-          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.45)',
-        }}
+        className={styles.dialog}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h2 id="wallet-choice-title" style={{ margin: 0, color: '#fff', fontSize: 20 }}>
-              Choose wallet
-            </h2>
-            <p style={{ margin: '6px 0 0', color: '#aeb5ca', fontSize: 14 }}>
-              Select how you want to use Lumera Hub.
-            </p>
-          </div>
-          <button
-            type="button"
-            aria-label="Close wallet selection"
-            onClick={close}
-            style={{ border: 0, background: 'transparent', color: '#aeb5ca', cursor: 'pointer', fontSize: 24 }}
-          >
-            ×
-          </button>
-        </div>
-        <div style={{ display: 'grid', gap: 12, marginTop: 20 }}>
-          {walletButton(
-            'MetaMask',
-            'EVM address and native LUME transfers',
-            Boolean(evmWallet.provider),
-            connectMetaMask,
-            METAMASK_WALLET_NAME
-          )}
-          {walletButton(
-            'Keplr',
-            'Cosmos transfers, staking, and governance',
-            isKeplrInstalled,
-            connectKeplr,
-            KEPLR_WALLET_NAME
-          )}
-        </div>
+        <h2 id="wallet-choice-title" className={styles.title}>Connect Wallet</h2>
+        <button
+          type="button"
+          aria-label="Close wallet selection"
+          className={styles.closeButton}
+          disabled={Boolean(connectingWallet)}
+          onClick={close}
+        >
+          ×
+        </button>
+        <ul className={styles.walletList} aria-label="Available wallets">
+          {walletOptions.map((option) => {
+            const isSelected = option.walletName === selectedWallet;
+            return (
+              <li key={option.walletName}>
+                <button
+                  type="button"
+                  className={`${styles.walletOption} ${isSelected ? styles.walletOptionSelected : ''}`}
+                  aria-pressed={isSelected}
+                  disabled={!option.installed || Boolean(connectingWallet)}
+                  onClick={() => {
+                    setSelectedWallet(option.walletName);
+                    setWalletError('');
+                  }}
+                >
+                  <Image className={styles.walletLogo} src={option.logo} alt="" width={50} height={50} />
+                  <span className={styles.walletName}>{option.name}</span>
+                  {!option.installed && <span className={styles.walletStatus}>Not detected</span>}
+                  {isSelected && option.installed && <span className={styles.selectedMark}>✓</span>}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        {walletError && <p className={styles.error} role="alert">{walletError}</p>}
+        <button
+          type="button"
+          className={styles.connectButton}
+          disabled={!selectedWallet || Boolean(connectingWallet)}
+          onClick={() => void connectSelectedWallet()}
+        >
+          {connectingWallet ? 'Connecting…' : 'Connect'}
+        </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
