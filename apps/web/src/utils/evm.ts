@@ -44,6 +44,23 @@ export const cosmosAddressToEvmAddress = (address: string) => {
   return `0x${toHex(decoded.data)}`;
 };
 
+export const normalizeEvmRecipientAddress = (address: string, prefix = 'lumera') => {
+  const normalized = address.trim();
+  if (isEvmAddress(normalized)) {
+    return normalized;
+  }
+
+  try {
+    const decoded = fromBech32(normalized);
+    if (decoded.prefix !== prefix || decoded.data.length !== 20) {
+      throw new Error('Invalid account address.');
+    }
+    return `0x${toHex(decoded.data)}`;
+  } catch {
+    throw new Error(`Enter a valid ${prefix} Bech32 or EVM recipient address.`);
+  }
+};
+
 export const getEvmAddressFormats = (address: string, isEvmNetwork: boolean) => {
   if (!address) {
     return { bech32Address: '', ethAddress: '' };

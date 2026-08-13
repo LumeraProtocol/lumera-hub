@@ -44,10 +44,60 @@ export interface AccountInfoData {
   balances: Coin[];
   delegations: DelegationResponse[];
   rewards: ValidatorRewards[];
+  rewardTotal?: Coin[];
   unbonding: ValidatorUnbonding[];
 }
 
+interface AccountInfoApiResponse<T> {
+  data: T;
+}
+
+interface FetchEvmAccountInfoOptions {
+  ethAddress: string;
+  bech32Address: string;
+  getBalance?: (address: string) => Promise<string>;
+  get?: (path: string) => Promise<AccountInfoApiResponse<unknown>>;
+}
+
+export const fetchEvmAccountInfo = async ({
+  ethAddress,
+  bech32Address,
+  getBalance = getEvmBalance,
+  get = instance.get,
+}: FetchEvmAccountInfoOptions): Promise<AccountInfoData> => {
+  if (!bech32Address) {
+    throw new Error('Cannot query staking data without a Bech32 address.');
+  }
+
+  const [balance, delegationsRes, rewardsRes, unbondingRes] = await Promise.all([
+    getBalance(ethAddress),
+    get(`/cosmos/staking/v1beta1/delegations/${bech32Address}`),
+    get(`/cosmos/distribution/v1beta1/delegators/${bech32Address}/rewards`),
+    get(`/cosmos/staking/v1beta1/delegators/${bech32Address}/unbonding_delegations`),
+  ]);
+  const delegationsData = delegationsRes.data as { delegation_responses?: DelegationResponse[] };
+  const rewardsData = rewardsRes.data as { rewards?: ValidatorRewards[]; total?: Coin[] };
+  const unbondingData = unbondingRes.data as { unbonding_responses?: ValidatorUnbonding[] };
+
+  return {
+    balances: [{ denom: DENOM, amount: evmBalanceToMicroLume(balance) }],
+    delegations: delegationsData.delegation_responses || [],
+    rewards: rewardsData.rewards || [],
+    rewardTotal: rewardsData.total || [],
+    unbonding: unbondingData.unbonding_responses || [],
+  };
+};
+
 export const getTotalRewards = (accountInfo: AccountInfoData | null) => {
+  if (accountInfo?.rewardTotal) {
+    return accountInfo.rewardTotal.reduce((total, reward) => {
+      if (reward.denom === DENOM) {
+        return total + Number(reward.amount);
+      }
+      return total;
+    }, 0);
+  }
+
   let total = 0;
   if (accountInfo?.rewards?.length) {
     for (const item of accountInfo?.rewards) {
@@ -62,7 +112,7 @@ export const getTotalRewards = (accountInfo: AccountInfoData | null) => {
 }
 
 const useAccountInfo = () => {
-  const { address, getClient, isEvm } = useWalletConnect();
+  const { address, bech32Address, getClient, isEvm } = useWalletConnect();
 
   const [accountInfo, setAccountInfo] = useState<AccountInfoData | null>({
     balances: [],
@@ -92,17 +142,14 @@ const useAccountInfo = () => {
 
     try {
       if (isEvm) {
-        const balance = await getEvmBalance(address);
-        const _accountInfo: AccountInfoData = {
-          balances: [{ denom: DENOM, amount: evmBalanceToMicroLume(balance) }],
-          delegations: [],
-          rewards: [],
-          unbonding: [],
-        };
+        const _accountInfo = await fetchEvmAccountInfo({
+          ethAddress: address,
+          bech32Address,
+        });
         setAccountInfo(_accountInfo);
         setClaimInfo((current) => ({
           ...current,
-          totalRewards: '0',
+          totalRewards: `${getTotalRewards(_accountInfo)}`,
         }));
         return;
       }
@@ -121,6 +168,7 @@ const useAccountInfo = () => {
         balances: balanceData.balances,
         delegations: delegationsData.delegation_responses,
         rewards: rewardsData.rewards,
+        rewardTotal: rewardsData.total,
         unbonding: resUnbonding.unbonding_responses,
       }
       setAccountInfo(_accountInfo);
@@ -153,7 +201,7 @@ const useAccountInfo = () => {
       });
     }
     fetchData();
-  }, [address, isEvm]);
+  }, [address, bech32Address, isEvm]);
 
   const handleClaimButtonClick = async () => {
     setErrorClaim(null);

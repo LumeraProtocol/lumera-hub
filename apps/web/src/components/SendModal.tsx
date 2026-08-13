@@ -182,7 +182,7 @@ export default function SendModal({
               <div className='input-wrapper'>
                 <Input
                   id="recipient"
-                  placeholder="Recipient"
+                  placeholder={isEvm ? 'Lumera or 0x address' : 'Recipient'}
                   className='input'
                   value={optionsAdvanced.recipient}
                   onChangeText={(newValue) => onInputChange('recipient', newValue)}

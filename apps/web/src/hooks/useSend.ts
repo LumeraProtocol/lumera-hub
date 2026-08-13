@@ -11,7 +11,7 @@ import {
   evmBalanceToMicroLume,
   getEvmBalance,
   assertEvmAccountForChain,
-  isEvmAddress,
+  normalizeEvmRecipientAddress,
   parseEvmAmount,
 } from '@/utils/evm';
 
@@ -119,9 +119,7 @@ const useSend = (options: UseDepositOptions = {}) => {
       setLoading(true);
       try {
         if (isEvm) {
-          if (!isEvmAddress(optionsAdvanced.recipient)) {
-            throw new Error('Enter a valid EVM recipient address.');
-          }
+          const recipient = normalizeEvmRecipientAddress(optionsAdvanced.recipient);
           if (!evmProvider) {
             throw new Error('No EVM wallet was detected.');
           }
@@ -139,7 +137,7 @@ const useSend = (options: UseDepositOptions = {}) => {
             method: 'eth_sendTransaction',
             params: [{
               from: activeAddress,
-              to: optionsAdvanced.recipient,
+              to: recipient,
               value: parseEvmAmount(optionsAdvanced.amount),
             }],
           });

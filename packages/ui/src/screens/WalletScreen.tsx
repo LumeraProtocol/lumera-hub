@@ -37,6 +37,7 @@ import { formatAddress, formatTokenDisplay } from '@/utils/format';
 import { getMessages } from '@/utils/helpers';
 import { IValidator } from '@/types/validator';
 import { DENOM } from '@/contants/network';
+import { isTransactionSuccessful } from '@/utils/transaction-history';
 
 import 'react-paginate/theme/basic/react-paginate.css';
 
@@ -447,7 +448,7 @@ export const WalletScreen = ({
           </Card>
         </div>
 
-        {!isEvm ? <Card>
+        <Card>
           <h2 className="text-xl font-semibold text-white mb-4">Transaction History</h2>
           <div className="space-y-2 relative w-full">
             <Loading isLoading={isLoading} />
@@ -493,8 +494,8 @@ export const WalletScreen = ({
                     </div>
                     <div className="w-full md:col-span-2 text-left whitespace-nowrap mt-3 md:mt-0">
                       <div className="md:hidden font-semibold text-gray-500 mr-2">Transaction Status: </div>
-                      <span className={`truncate relative w-fit rounded ${tx?.code === 0 ? 'text-lumera-teal' : 'text-red-500'}`}>
-                        {tx?.code === 0 ? 'Success' : 'Failed'}
+                      <span className={`truncate relative w-fit rounded ${isTransactionSuccessful(tx) ? 'text-lumera-teal' : 'text-red-500'}`}>
+                        {isTransactionSuccessful(tx) ? 'Success' : 'Failed'}
                       </span>
                     </div>
                     <div className="w-full md:col-span-3 text-sm text-gray-500 md:flex justify-end mt-3 md:mt-0">
@@ -526,7 +527,7 @@ export const WalletScreen = ({
               </div> : null
             }
           </div>
-        </Card> : null}
+        </Card>
       </div>
     );
 };

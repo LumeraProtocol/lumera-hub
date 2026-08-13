@@ -4,6 +4,7 @@ import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { TLog, TLogEvent, TMessage, TOption, TSignerInfos, TFee } from '@/hooks/useRecentActivity';
 import { Coin } from '@/hooks/useAccountInfo';
+import { getTransactionHistoryAddress } from '@/utils/transaction-history';
 
 const LIMIT = 20;
 
@@ -42,14 +43,15 @@ export interface ITransaction {
 }
 
 const useTransaction = () => {
-    const { address, isEvm } = useWalletConnect();
+    const { address, bech32Address, isEvm } = useWalletConnect();
+    const transactionAddress = getTransactionHistoryAddress({ address, bech32Address, isEvm });
     const [isLoading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [transactions, setTransactions] = useState<ITransaction[]>([]);
     const [totalTransactions, setTotalTransactions] = useState(0);
 
     const fetchTransactions = async (offset = 0) => {
-        if (isEvm) {
+        if (!transactionAddress) {
             setTransactions([]);
             setTotalTransactions(0);
             setError('');
@@ -60,9 +62,9 @@ const useTransaction = () => {
         setError('');
     
         try {
-            const { data } = await instance.get(`/cosmos/tx/v1beta1/txs?query=message.sender=%27${address}%27&pagination.limit=${LIMIT}&pagination.offset=${offset}&order_by=ORDER_BY_DESC`);
+            const { data } = await instance.get(`/cosmos/tx/v1beta1/txs?query=message.sender=%27${transactionAddress}%27&pagination.limit=${LIMIT}&pagination.offset=${offset}&order_by=ORDER_BY_DESC`);
             setTotalTransactions(Math.ceil(Number(data.total) / LIMIT));
-            setTransactions(data.tx_responses);
+            setTransactions(data.tx_responses || []);
         } catch (e) {
             setError(e instanceof Error ? e.message : 'An unknown error occurred.');
         } finally {
@@ -71,10 +73,15 @@ const useTransaction = () => {
     }
 
     useEffect(() => {
-        if (address) {
+        if (transactionAddress) {
             fetchTransactions();
+        } else {
+            setTransactions([]);
+            setTotalTransactions(0);
+            setError('');
+            setLoading(false);
         }
-    }, [address, isEvm]);
+    }, [transactionAddress]);
 
     const handlePageClick = ({ selected }: { selected: number }) => {
         const offset = selected * LIMIT;

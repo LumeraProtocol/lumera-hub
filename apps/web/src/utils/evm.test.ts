@@ -18,6 +18,7 @@ import {
   getEvmAddressFormats,
   getMetaMaskProvider,
   isEvmAddress,
+  normalizeEvmRecipientAddress,
   parseEvmAmount,
   requestEvmRpc,
   toHexChainId,
@@ -98,6 +99,20 @@ describe('EVM account address formats', () => {
       .toThrow('invalid Bech32 address');
     expect(() => cosmosAddressToEvmAddress(toBech32('lumera', new Uint8Array([1]))))
       .toThrow('not 20 bytes');
+  });
+
+  it('normalizes Lumera Bech32 and EVM transaction recipients', () => {
+    expect(normalizeEvmRecipientAddress(bech32Address)).toBe(ADDRESS);
+    expect(normalizeEvmRecipientAddress(`  ${ADDRESS}  `)).toBe(ADDRESS);
+  });
+
+  it('rejects malformed and foreign-prefix transaction recipients', () => {
+    const cosmosAddress = toBech32('cosmos', new Uint8Array(20));
+
+    expect(() => normalizeEvmRecipientAddress('not-an-address'))
+      .toThrow('valid lumera Bech32 or EVM recipient address');
+    expect(() => normalizeEvmRecipientAddress(cosmosAddress))
+      .toThrow('valid lumera Bech32 or EVM recipient address');
   });
 });
 

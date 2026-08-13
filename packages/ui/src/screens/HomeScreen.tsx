@@ -45,6 +45,7 @@ import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/usePropos
 import { formatToken, formatTokenDisplay } from '@/utils/format';
 import { NAV_ITEMS } from '@/components/layout/AppShell';
 import { DENOM } from '@/contants/network';
+import { getPortfolioData } from '@/utils/portfolio';
 import {
   formatGovernanceVote,
   getGovernanceVoteValue,
@@ -170,19 +171,6 @@ const getOption = (data: IPortfolioOverviewChart) => {
         ]
       }
     ]
-  }
-}
-
-const getPortfolioData = (accountInfo: AccountInfoData | null) => {
-  let stacked = 0;
-  let liquid = 0;
-  if (accountInfo) {
-    stacked = accountInfo.delegations.reduce((total, item) => Number(item.balance.amount) + total, 0)
-    liquid = accountInfo.balances.reduce((total, item) => Number(item.amount) + total, 0)
-  }
-  return {
-    stacked,
-    liquid,
   }
 }
 
@@ -861,14 +849,8 @@ export const HomeScreen = ({
                     <div className='w-1/2 relative'>
                       <Loading isLoading={loading} />
                       <ReactECharts option={getOption({
-                        stacked: Number(formatTokenDisplay({
-                                amount: `${stacked}`,
-                                denom: DENOM,
-                              }, false, '0,0.[000000]')),
-                        liquid: Number(formatTokenDisplay({
-                                amount: `${liquid}`,
-                                denom: DENOM,
-                              }, false, '0,0.[000000]'))
+                        stacked,
+                        liquid,
                         })} style={{ height: '200px', width: '100%' }} />
                     </div>
                     <div className='w-1/2'>
