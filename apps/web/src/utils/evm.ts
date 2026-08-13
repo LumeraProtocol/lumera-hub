@@ -12,6 +12,15 @@ interface EvmRpcResponse<T> {
   };
 }
 
+export const getMetaMaskProvider = (provider?: Eip1193Provider | null) => {
+  if (!provider) return null;
+  if (provider.providers?.length) {
+    return provider.providers.find((candidate) => candidate.isMetaMask)
+      || (provider.isMetaMask ? provider : null);
+  }
+  return provider.isMetaMask ? provider : null;
+};
+
 export const isEvmAddress = (value: string) => /^0x[0-9a-fA-F]{40}$/.test(value);
 
 export const toHexChainId = (chainId: number) => `0x${chainId.toString(16)}`;

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { DENOM, IS_EVM_NETWORK } from '@/contants/network';
+import { DENOM } from '@/contants/network';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 import { evmBalanceToMicroLume, getEvmBalance } from '@/utils/evm';
 
@@ -62,7 +62,7 @@ export const getTotalRewards = (accountInfo: AccountInfoData | null) => {
 }
 
 const useAccountInfo = () => {
-  const { address, getClient } = useWalletConnect();
+  const { address, getClient, isEvm } = useWalletConnect();
 
   const [accountInfo, setAccountInfo] = useState<AccountInfoData | null>({
     balances: [],
@@ -91,7 +91,7 @@ const useAccountInfo = () => {
     setError(null);
 
     try {
-      if (IS_EVM_NETWORK) {
+      if (isEvm) {
         const balance = await getEvmBalance(address);
         const _accountInfo: AccountInfoData = {
           balances: [{ denom: DENOM, amount: evmBalanceToMicroLume(balance) }],
@@ -153,12 +153,12 @@ const useAccountInfo = () => {
       });
     }
     fetchData();
-  }, [address]);
+  }, [address, isEvm]);
 
   const handleClaimButtonClick = async () => {
     setErrorClaim(null);
-    if (IS_EVM_NETWORK) {
-      setErrorClaim('Staking rewards require a legacy Cosmos wallet connection.');
+    if (isEvm) {
+      setErrorClaim('Staking rewards require a Keplr wallet connection.');
       return;
     }
     if (!claimInfo.senderAddress) {

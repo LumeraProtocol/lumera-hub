@@ -5,11 +5,12 @@ import * as instance from '@/utils/api';
 import { DENOM } from '@/contants/network';
 import { useSelector, useDispatch } from '@/redux/hooks';
 import { isNumber } from '@/utils/helpers';
+import { canQueryCosmosAccountData } from '@/utils/cosmos-transactions';
 import { setCurrentTab, setValidatorTab, setSubTab } from '@/redux/app.slice';
 import { IValidator } from '@/types/validator';
 import { TUnbondingDelegation } from '@/types';
 
-const useStaking = (address = '') => {
+const useStaking = (address = '', isEvm = false) => {
   const dispatch = useDispatch();
   const { currentTab, validatorTab, subTab } = useSelector((state) => state.app);
   const [isLoading, setLoading] = useState(false);
@@ -84,15 +85,25 @@ const useStaking = (address = '') => {
   }
 
   const fetchRewards = async () => {
+    if (!canQueryCosmosAccountData({ address, isEvmNetwork: isEvm })) {
+      setRewards([]);
+      return;
+    }
     try {
       const { data } = await instance.get(`/cosmos/distribution/v1beta1/delegators/${address}/rewards`);
       setRewards(data.rewards);
-    } catch (error) {
-      console.error(error instanceof Error ? error.message : 'An unknown error occurred.');
+    } catch {
+      setRewards([]);
     }
   }
 
   const fetchActivities = useCallback(async () => {
+    if (!canQueryCosmosAccountData({ address, isEvmNetwork: isEvm })) {
+      setActivities([]);
+      setActivitiesLoading(false);
+      setActivitiesError('');
+      return;
+    }
     setActivitiesLoading(true);
     setActivitiesError('');
     try {
@@ -102,9 +113,15 @@ const useStaking = (address = '') => {
       setActivitiesError(error instanceof Error ? error.message : 'An unknown error occurred.');
     }
     setActivitiesLoading(false);
-  }, [])
+  }, [address, isEvm])
 
   const fetchUnbondingDelegations = useCallback(async () => {
+    if (!canQueryCosmosAccountData({ address, isEvmNetwork: isEvm })) {
+      setUnbondingDelegations([]);
+      setUnbondingDelegationsLoading(false);
+      setUnbondingDelegationsError('');
+      return;
+    }
     setUnbondingDelegationsLoading(true);
     setUnbondingDelegationsError('');
     try {
@@ -140,7 +157,7 @@ const useStaking = (address = '') => {
       setUnbondingDelegationsError(error instanceof Error ? error.message : 'An unknown error occurred.');
     }
     setUnbondingDelegationsLoading(false);
-  }, []);
+  }, [address, isEvm]);
 
   const fetchDataForAPR = async () => {
     setAPRLoading(true);
@@ -192,13 +209,21 @@ const useStaking = (address = '') => {
   }, [validatorTab]);
 
   useEffect(() => {
-    if (address) {
+    if (canQueryCosmosAccountData({ address, isEvmNetwork: isEvm })) {
       if (validatorTab === 'my') {
         handleFetchDataForSubTab(subTab);
       }
       fetchRewards();
+    } else {
+      setRewards([]);
+      setActivities([]);
+      setActivitiesLoading(false);
+      setActivitiesError('');
+      setUnbondingDelegations([]);
+      setUnbondingDelegationsLoading(false);
+      setUnbondingDelegationsError('');
     }
-  }, [address, validatorTab, subTab]);
+  }, [address, isEvm, validatorTab, subTab]);
 
   const handleTabChange = (tab: string) => {
     dispatch(setCurrentTab({

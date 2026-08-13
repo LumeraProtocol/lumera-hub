@@ -5,7 +5,7 @@ import {
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { DENOM, IS_EVM_NETWORK } from '@/contants/network';
+import { DENOM } from '@/contants/network';
 import { extractValidNumber } from '@/utils/helpers';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contants';
 import {
@@ -19,7 +19,7 @@ interface UseDepositOptions {
 }
 
 const useDelegate = (options: UseDepositOptions = {}) => {
-  const { address, getClient } = useWalletConnect();
+  const { address, getClient, isEvm } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [optionsAdvanced, setOptionsAdvanced] = useState({
     senderAddress: address,
@@ -39,7 +39,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const [selectedModal, setSelectedModal] = useState('');
 
   const fetchValidator = async () => {
-    if (IS_EVM_NETWORK) {
+    if (isEvm) {
       setValidators([]);
       setTotalValidators('0');
       return;
@@ -57,7 +57,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
 
   useEffect(() => {
     fetchValidator();
-  }, []);
+  }, [isEvm]);
 
   useEffect(() => {
     if (options?.customMemo) {
@@ -106,8 +106,8 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const handleSendClick = async () => {
     setError('');
     setTransactionHash('');
-    if (IS_EVM_NETWORK) {
-      setError('Staking requires a legacy Cosmos wallet connection.');
+    if (isEvm) {
+      setError('Staking requires a Keplr wallet connection.');
       return;
     }
     if (!optionsAdvanced?.amount || Number(optionsAdvanced.amount) <= 0) {

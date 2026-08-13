@@ -10,23 +10,35 @@ import {
 } from '@/contants/network';
 import { useEvmWallet } from '@/app/providers/evm-wallet-provider';
 import { canWalletSignCosmosTransactions } from '@/utils/cosmos-transactions';
+import { getActiveWalletAddress, getActiveWalletMode } from '@/utils/wallet-selection';
 
 const useWalletConnect = () => {
   const { chain, wallet, address: cosmosAddress } = useChain(CHAIN_NAME);
   const evmWallet = useEvmWallet();
   const { walletName, isModalOpen } = useSelector((state) => state.wallet);
-  const address = IS_EVM_NETWORK ? evmWallet.address : cosmosAddress || '';
+  const walletMode = getActiveWalletMode({
+    selectedWallet: walletName,
+    isEvmNetwork: IS_EVM_NETWORK,
+  });
+  const address = getActiveWalletAddress({
+    mode: walletMode,
+    evmAddress: evmWallet.address,
+    cosmosAddress,
+  });
   const isConnected = Boolean(address);
   // Phase 2 will source this from the MetaMask Cosmos signer once it is implemented.
   const hasEvmCosmosSigner = false;
   const canSignCosmosTransactions = canWalletSignCosmosTransactions({
-    isEvmNetwork: IS_EVM_NETWORK,
+    isEvmNetwork: walletMode === 'evm',
     chainEip712Enabled: COSMOS_EIP712_ENABLED,
     hasEvmCosmosSigner,
   });
 
   const getClient = async () => {
-    if (IS_EVM_NETWORK) {
+    if (walletMode === 'none') {
+      throw new Error('Please connect wallet before using');
+    }
+    if (walletMode === 'evm') {
       if (!canSignCosmosTransactions) {
         throw new Error('Cosmos transactions are temporarily unavailable with MetaMask on this network.');
       }
@@ -47,8 +59,11 @@ const useWalletConnect = () => {
   }
 
   const getOfflineSigner = async () => {
-    if (IS_EVM_NETWORK) {
-      throw new Error('Cosmos signing is unavailable while using an EVM network profile.');
+    if (walletMode === 'none') {
+      throw new Error('Please connect wallet before using');
+    }
+    if (walletMode === 'evm') {
+      throw new Error('Cosmos signing is unavailable while using MetaMask.');
     }
     if (!wallet || !chain) {
       throw new Error('Please connect wallet before using');
@@ -67,8 +82,9 @@ const useWalletConnect = () => {
     isConnected,
     address,
     walletName,
+    walletMode,
     canSignCosmosTransactions,
-    isEvm: IS_EVM_NETWORK,
+    isEvm: walletMode === 'evm',
     evmProvider: evmWallet.provider,
     ensureEvmNetwork: evmWallet.ensureNetwork,
     getClient,

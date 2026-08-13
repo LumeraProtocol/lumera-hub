@@ -12,6 +12,7 @@ import {
   evmBalanceToMicroLume,
   getEvmAccountForChain,
   getEvmBalance,
+  getMetaMaskProvider,
   isEvmAddress,
   parseEvmAmount,
   requestEvmRpc,
@@ -28,6 +29,39 @@ const createProvider = (accounts = [ADDRESS], chainId = toHexChainId(CHAIN_ID)) 
     throw new Error(`Unexpected method ${method}`);
   }),
 }) as unknown as Eip1193Provider;
+
+describe('MetaMask provider selection', () => {
+  it('finds MetaMask in a multi-provider browser', () => {
+    const keplrProvider = { request: vi.fn(), isMetaMask: false } as unknown as Eip1193Provider;
+    const metaMaskProvider = { request: vi.fn(), isMetaMask: true } as unknown as Eip1193Provider;
+    const aggregateProvider = {
+      request: vi.fn(),
+      providers: [keplrProvider, metaMaskProvider],
+    } as unknown as Eip1193Provider;
+
+    expect(getMetaMaskProvider(aggregateProvider)).toBe(metaMaskProvider);
+  });
+
+  it('accepts a direct MetaMask provider and rejects other injected providers', () => {
+    const metaMaskProvider = { request: vi.fn(), isMetaMask: true } as unknown as Eip1193Provider;
+    const otherProvider = { request: vi.fn() } as unknown as Eip1193Provider;
+
+    expect(getMetaMaskProvider(metaMaskProvider)).toBe(metaMaskProvider);
+    expect(getMetaMaskProvider(otherProvider)).toBeNull();
+    expect(getMetaMaskProvider()).toBeNull();
+  });
+
+  it('falls back to an aggregate provider that identifies itself as MetaMask', () => {
+    const otherProvider = { request: vi.fn() } as unknown as Eip1193Provider;
+    const aggregateMetaMask = {
+      request: vi.fn(),
+      isMetaMask: true,
+      providers: [otherProvider],
+    } as unknown as Eip1193Provider;
+
+    expect(getMetaMaskProvider(aggregateMetaMask)).toBe(aggregateMetaMask);
+  });
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();

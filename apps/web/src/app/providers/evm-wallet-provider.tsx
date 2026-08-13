@@ -8,11 +8,15 @@ import {
   EVM_RPC_ENDPOINT,
   IS_EVM_NETWORK,
 } from '@/contants/network';
-import { getEvmAccountForChain, toHexChainId } from '@/utils/evm';
+import { getEvmAccountForChain, getMetaMaskProvider, toHexChainId } from '@/utils/evm';
 import type { Eip1193Provider } from '@/types/window';
 
 interface EvmProviderError extends Error {
   code?: number;
+}
+
+interface Eip6963ProviderDetail {
+  provider?: Eip1193Provider;
 }
 
 interface EvmWalletContextValue {
@@ -33,14 +37,29 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
   const [isConnecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
   const [provider, setProvider] = useState<Eip1193Provider | null>(
-    typeof window === 'undefined' ? null : window.ethereum || null
+    typeof window === 'undefined' ? null : getMetaMaskProvider(window.ethereum)
   );
 
   useEffect(() => {
-    const detectProvider = () => setProvider(window.ethereum || null);
+    const detectProvider = () => {
+      const detectedProvider = getMetaMaskProvider(window.ethereum);
+      setProvider((currentProvider) => detectedProvider || currentProvider);
+    };
+    const handleProviderAnnouncement = (event: Event) => {
+      const announcedProvider = getMetaMaskProvider(
+        (event as CustomEvent<Eip6963ProviderDetail>).detail?.provider
+      );
+      if (announcedProvider) setProvider(announcedProvider);
+    };
+
     detectProvider();
     window.addEventListener('ethereum#initialized', detectProvider, { once: true });
-    return () => window.removeEventListener('ethereum#initialized', detectProvider);
+    window.addEventListener('eip6963:announceProvider', handleProviderAnnouncement);
+    window.dispatchEvent(new Event('eip6963:requestProvider'));
+    return () => {
+      window.removeEventListener('ethereum#initialized', detectProvider);
+      window.removeEventListener('eip6963:announceProvider', handleProviderAnnouncement);
+    };
   }, []);
 
   const ensureNetwork = useCallback(async () => {
@@ -48,7 +67,7 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
       throw new Error('The active network does not support EVM wallets.');
     }
     if (!provider) {
-      throw new Error('No EVM wallet was detected. Install MetaMask or another compatible wallet.');
+      throw new Error('MetaMask was not detected. Install or enable the MetaMask extension.');
     }
 
     const chainId = toHexChainId(EVM_CHAIN_ID);
@@ -94,7 +113,7 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
     setConnecting(true);
     try {
       if (!provider) {
-        throw new Error('No EVM wallet was detected. Install MetaMask or another compatible wallet.');
+        throw new Error('MetaMask was not detected. Install or enable the MetaMask extension.');
       }
       await provider.request<string[]>({ method: 'eth_requestAccounts' });
       await ensureNetwork();

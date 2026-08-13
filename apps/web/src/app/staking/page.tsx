@@ -12,8 +12,8 @@ import useUnbond from '@/hooks/useUnbond';
 import useRedelegate from '@/hooks/useRedelegate';
 
 export default function Page() {
-  const { address } = useWalletConnect();
-  const staking = useStaking(address);
+  const { address, isEvm } = useWalletConnect();
+  const staking = useStaking(address, isEvm);
   const {
     loading,
     accountInfo,

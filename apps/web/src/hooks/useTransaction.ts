@@ -4,7 +4,6 @@ import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { TLog, TLogEvent, TMessage, TOption, TSignerInfos, TFee } from '@/hooks/useRecentActivity';
 import { Coin } from '@/hooks/useAccountInfo';
-import { IS_EVM_NETWORK } from '@/contants/network';
 
 const LIMIT = 20;
 
@@ -43,14 +42,14 @@ export interface ITransaction {
 }
 
 const useTransaction = () => {
-    const { address } = useWalletConnect();
+    const { address, isEvm } = useWalletConnect();
     const [isLoading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [transactions, setTransactions] = useState<ITransaction[]>([]);
     const [totalTransactions, setTotalTransactions] = useState(0);
 
     const fetchTransactions = async (offset = 0) => {
-        if (IS_EVM_NETWORK) {
+        if (isEvm) {
             setTransactions([]);
             setTotalTransactions(0);
             setError('');
@@ -75,7 +74,7 @@ const useTransaction = () => {
         if (address) {
             fetchTransactions();
         }
-    }, [address]);
+    }, [address, isEvm]);
 
     const handlePageClick = ({ selected }: { selected: number }) => {
         const offset = selected * LIMIT;

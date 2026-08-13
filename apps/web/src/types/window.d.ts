@@ -13,6 +13,8 @@ interface Leap {
 }
 
 export interface Eip1193Provider {
+  isMetaMask?: boolean;
+  providers?: Eip1193Provider[];
   request<T = unknown>(args: { method: string; params?: unknown[] | object }): Promise<T>;
   on?(event: string, listener: (...args: unknown[]) => void): void;
   removeListener?(event: string, listener: (...args: unknown[]) => void): void;

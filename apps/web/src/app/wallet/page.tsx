@@ -9,10 +9,9 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import useTransaction from '@/hooks/useTransaction';
 import useDelegate from '@/hooks/useDelegate';
 import useSend from '@/hooks/useSend';
-import { IS_EVM_NETWORK } from '@/contants/network';
 
 export default function Page() {
-  const { address } = useWalletConnect();
+  const { address, isEvm } = useWalletConnect();
   const account = useAccountInfo();
   const {
     accountInfo,
@@ -28,7 +27,7 @@ export default function Page() {
     handlePageClick,
   } = useTransaction();
   const sendOptions = useSend({
-    callback: IS_EVM_NETWORK ? account.fetchData : handleCloseModal,
+    callback: isEvm ? account.fetchData : handleCloseModal,
     customMemo: '',
   });
   const delegate = useDelegate();
@@ -44,7 +43,7 @@ export default function Page() {
       <div className="governance-content">
         <WalletScreen
           walletAddress={address}
-          isEvm={IS_EVM_NETWORK}
+          isEvm={isEvm}
           accountInfo={accountInfo}
           isLoading={account.loading || isTransactionLoading}
           error={account.error?.message || transactionError}
