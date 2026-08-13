@@ -18,7 +18,6 @@ import {
 } from '@/redux/wallet.slice';
 import { useEvmWallet } from '@/app/providers/evm-wallet-provider';
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { evmAddressToCosmosAddress } from '@/utils/evm';
 import {
   getActiveWalletAddress,
   getActiveWalletMode,
@@ -202,7 +201,7 @@ export function ConnectWallet() {
   const { disconnect: disconnectCosmos, openView } = useChain(CHAIN_NAME);
   const keplrWallet = useChainWallet(CHAIN_NAME, KEPLR_WALLET_NAME);
   const evmWallet = useEvmWallet();
-  const { address, walletName } = useWalletConnect();
+  const { address, bech32Address, ethAddress, walletName } = useWalletConnect();
   const menuRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [isKeplrInstalled, setKeplrInstalled] = useState(false);
@@ -273,15 +272,12 @@ export function ConnectWallet() {
     isKeplrInstalled,
     isMetaMaskInstalled,
   }) : '';
-  const metaMaskCosmosAddress = walletName === METAMASK_WALLET_NAME && evmWallet.address
-    ? evmAddressToCosmosAddress(evmWallet.address)
-    : '';
-  const addressItems = walletName === METAMASK_WALLET_NAME
+  const addressItems = IS_EVM_NETWORK
     ? [
-      { label: 'Cosmos-style EVM address', value: metaMaskCosmosAddress },
-      { label: 'ETH hex address', value: evmWallet.address },
+      { label: 'Bech32 address', value: bech32Address },
+      { label: 'ETH hex address', value: ethAddress },
     ]
-    : [{ label: 'Lumera address', value: address }];
+    : [{ label: 'Bech32 address', value: address }];
 
   return (
     <div className={styles.accountControls}>

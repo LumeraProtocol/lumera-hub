@@ -11,6 +11,7 @@ import {
 import { useEvmWallet } from '@/app/providers/evm-wallet-provider';
 import { canWalletSignCosmosTransactions } from '@/utils/cosmos-transactions';
 import { getActiveWalletAddress, getActiveWalletMode } from '@/utils/wallet-selection';
+import { getEvmAddressFormats } from '@/utils/evm';
 
 const useWalletConnect = () => {
   const { chain, wallet, address: cosmosAddress } = useChain(CHAIN_NAME);
@@ -25,6 +26,7 @@ const useWalletConnect = () => {
     evmAddress: evmWallet.address,
     cosmosAddress,
   });
+  const { bech32Address, ethAddress } = getEvmAddressFormats(address, IS_EVM_NETWORK);
   const isConnected = Boolean(address);
   // Phase 2 will source this from the MetaMask Cosmos signer once it is implemented.
   const hasEvmCosmosSigner = false;
@@ -81,6 +83,8 @@ const useWalletConnect = () => {
     isModalOpen,
     isConnected,
     address,
+    bech32Address,
+    ethAddress,
     walletName,
     walletMode,
     canSignCosmosTransactions,

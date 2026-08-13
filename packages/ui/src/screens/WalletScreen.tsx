@@ -37,12 +37,13 @@ import { formatAddress, formatTokenDisplay } from '@/utils/format';
 import { getMessages } from '@/utils/helpers';
 import { IValidator } from '@/types/validator';
 import { DENOM } from '@/contants/network';
-import { evmAddressToCosmosAddress, isEvmAddress } from '@/utils/evm';
 
 import 'react-paginate/theme/basic/react-paginate.css';
 
 interface IWalletScreen {
     walletAddress: string;
+    bech32Address: string;
+    ethAddress: string;
     isEvm: boolean;
     accountInfo: AccountInfoData | null;
     isLoading: boolean;
@@ -97,6 +98,8 @@ interface IWalletScreen {
 
 export const WalletScreen = ({
     walletAddress,
+    bech32Address,
+    ethAddress,
     isEvm,
     accountInfo,
     isLoading,
@@ -279,15 +282,13 @@ export const WalletScreen = ({
       );
     }
 
-    const cosmosStyleEvmAddress = isEvm && isEvmAddress(walletAddress)
-      ? evmAddressToCosmosAddress(walletAddress)
-      : '';
-    const displayedAddresses = isEvm
+    const hasEvmAddressFormats = Boolean(ethAddress);
+    const displayedAddresses = hasEvmAddressFormats
       ? [
-        { label: 'Cosmos-style EVM address', value: cosmosStyleEvmAddress },
-        { label: 'ETH hex address', value: walletAddress },
+        { label: 'Bech32 address', value: bech32Address },
+        { label: 'ETH hex address', value: ethAddress },
       ]
-      : [{ label: 'Lumera address', value: walletAddress }];
+      : [{ label: 'Bech32 address', value: bech32Address || walletAddress }];
 
     return (
       <div className="space-y-8">
@@ -405,7 +406,7 @@ export const WalletScreen = ({
             </div>
           </Card>
           <Card className='w-full xl:w-96 xl:shrink-0'>
-            <h3 className="font-semibold text-gray-400 mb-2">{isEvm ? 'Your Addresses' : 'Your Address'}</h3>
+            <h3 className="font-semibold text-gray-400 mb-2">{hasEvmAddressFormats ? 'Your Addresses' : 'Your Address'}</h3>
             <div className="grid gap-2">
               {displayedAddresses.filter(({ value }) => value).map(({ label, value }) => (
                 <div className="flex items-start gap-2 bg-gray-900/50 p-3 rounded-lg" key={label}>
@@ -415,7 +416,7 @@ export const WalletScreen = ({
                     aria-label={`Copy ${label}`}
                     onClick={() => void handleCopyAddress(value, label)}
                   >
-                    {isEvm ? (
+                    {hasEvmAddressFormats ? (
                       <span className="block mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         {label}
                       </span>
@@ -439,8 +440,8 @@ export const WalletScreen = ({
               ))}
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              {isEvm
-                ? 'These formats identify the same MetaMask account. Click either address to copy it.'
+              {hasEvmAddressFormats
+                ? 'These formats identify the same account. Click either address to copy it.'
                 : 'This is your unique address. Use it to receive LUME and other assets.'}
             </p>
           </Card>

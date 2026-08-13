@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { toBech32 } from '@cosmjs/encoding';
 
 import type { Eip1193Provider } from '@/types/window';
 
@@ -9,10 +10,12 @@ vi.mock('@/contants/network', () => ({
 
 import {
   assertEvmAccountForChain,
+  cosmosAddressToEvmAddress,
   evmAddressToCosmosAddress,
   evmBalanceToMicroLume,
   getEvmAccountForChain,
   getEvmBalance,
+  getEvmAddressFormats,
   getMetaMaskProvider,
   isEvmAddress,
   parseEvmAmount,
@@ -61,6 +64,40 @@ describe('MetaMask provider selection', () => {
     } as unknown as Eip1193Provider;
 
     expect(getMetaMaskProvider(aggregateMetaMask)).toBe(aggregateMetaMask);
+  });
+});
+
+describe('EVM account address formats', () => {
+  const bech32Address = 'lumera1qy352euf40x77qfrg4ncn27dauqjx3t83egcev';
+
+  it('converts between the Bech32 and ETH hex representations', () => {
+    expect(evmAddressToCosmosAddress(ADDRESS)).toBe(bech32Address);
+    expect(cosmosAddressToEvmAddress(bech32Address)).toBe(ADDRESS);
+  });
+
+  it('returns both formats for either wallet mode on an EVM-enabled chain', () => {
+    expect(getEvmAddressFormats(ADDRESS, true)).toEqual({
+      bech32Address,
+      ethAddress: ADDRESS,
+    });
+    expect(getEvmAddressFormats(bech32Address, true)).toEqual({
+      bech32Address,
+      ethAddress: ADDRESS,
+    });
+  });
+
+  it('does not invent an ETH address on a non-EVM chain', () => {
+    expect(getEvmAddressFormats(bech32Address, false)).toEqual({
+      bech32Address,
+      ethAddress: '',
+    });
+  });
+
+  it('rejects malformed and non-account Bech32 values', () => {
+    expect(() => cosmosAddressToEvmAddress('not-an-address'))
+      .toThrow('invalid Bech32 address');
+    expect(() => cosmosAddressToEvmAddress(toBech32('lumera', new Uint8Array([1]))))
+      .toThrow('not 20 bytes');
   });
 });
 

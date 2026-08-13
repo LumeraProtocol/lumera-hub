@@ -11,7 +11,7 @@ import useDelegate from '@/hooks/useDelegate';
 import useSend from '@/hooks/useSend';
 
 export default function Page() {
-  const { address, isEvm } = useWalletConnect();
+  const { address, bech32Address, ethAddress, isEvm } = useWalletConnect();
   const account = useAccountInfo();
   const {
     accountInfo,
@@ -43,6 +43,8 @@ export default function Page() {
       <div className="governance-content">
         <WalletScreen
           walletAddress={address}
+          bech32Address={bech32Address}
+          ethAddress={ethAddress}
           isEvm={isEvm}
           accountInfo={accountInfo}
           isLoading={account.loading || isTransactionLoading}

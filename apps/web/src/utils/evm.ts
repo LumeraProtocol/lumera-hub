@@ -2,7 +2,7 @@ import {
   EVM_NATIVE_DECIMALS,
   EVM_RPC_ENDPOINT,
 } from '@/contants/network';
-import { fromHex, toBech32 } from '@cosmjs/encoding';
+import { fromBech32, fromHex, toBech32, toHex } from '@cosmjs/encoding';
 import type { Eip1193Provider } from '@/types/window';
 
 interface EvmRpcResponse<T> {
@@ -29,6 +29,38 @@ export const evmAddressToCosmosAddress = (address: string, prefix = 'lumera') =>
     throw new Error('Cannot convert an invalid EVM address.');
   }
   return toBech32(prefix, fromHex(address.slice(2)));
+};
+
+export const cosmosAddressToEvmAddress = (address: string) => {
+  let decoded: ReturnType<typeof fromBech32>;
+  try {
+    decoded = fromBech32(address);
+  } catch {
+    throw new Error('Cannot convert an invalid Bech32 address.');
+  }
+  if (decoded.data.length !== 20) {
+    throw new Error('Cannot convert a Bech32 address that is not 20 bytes.');
+  }
+  return `0x${toHex(decoded.data)}`;
+};
+
+export const getEvmAddressFormats = (address: string, isEvmNetwork: boolean) => {
+  if (!address) {
+    return { bech32Address: '', ethAddress: '' };
+  }
+  if (!isEvmNetwork) {
+    return { bech32Address: address, ethAddress: '' };
+  }
+  if (isEvmAddress(address)) {
+    return {
+      bech32Address: evmAddressToCosmosAddress(address),
+      ethAddress: address,
+    };
+  }
+  return {
+    bech32Address: address,
+    ethAddress: cosmosAddressToEvmAddress(address),
+  };
 };
 
 export const toHexChainId = (chainId: number) => `0x${chainId.toString(16)}`;
