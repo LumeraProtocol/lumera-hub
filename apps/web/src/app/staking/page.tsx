@@ -37,6 +37,9 @@ export default function Page() {
   const delegate = useDelegate({
     availableAmount: `${getTotalBalances(accountInfo)}`,
     callback: fetchData,
+    validators: staking.activeValidators,
+    totalValidators: staking.totalValidators,
+    isValidatorDataLoading: staking.isLoading,
   });
   const unbond = useUnbond({
     callback: () => {
@@ -99,6 +102,10 @@ export default function Page() {
             currentTab: staking.currentTab,
             params: staking.params,
             isLoading: staking.isLoading,
+            isRefreshing: staking.isRefreshing,
+            refreshProgress: staking.refreshProgress,
+            lastUpdated: staking.lastUpdated,
+            refreshError: staking.error,
             slashingParams: staking.slashingParams,
             signingInfos: staking.signingInfos,
             validatorTab: staking.validatorTab,
@@ -115,6 +122,7 @@ export default function Page() {
             handleOpenModal: staking.handleOpenModal,
             handleCloseModal: staking.handleCloseModal,
             handleShowConfirmModal: staking.handleShowConfirmModal,
+            onRefresh: staking.refreshOverview,
           }}
           claim={{
             onClaimButtonClick: handleClaimButtonClick,

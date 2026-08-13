@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   YStack,
   H2,
@@ -82,6 +83,10 @@ interface IStakingScreen {
     totalValidators: string;
     currentTab: string;
     isLoading: boolean;
+    isRefreshing: boolean;
+    refreshProgress: number;
+    lastUpdated: number | null;
+    refreshError: string;
     params: {
       bond_denom: string;
       historical_entries: number;
@@ -123,6 +128,7 @@ interface IStakingScreen {
       customMemo: string,
       rewards: string,
     ) => void;
+    onRefresh: () => Promise<void>;
   };
   accountInfo: AccountInfoData | null;
   claim: {
@@ -244,6 +250,27 @@ export const StakingScreen = ({
 
   const totalPower = calculateTotalPower(getValidators());
 
+  const validatorUptime = useMemo(() => {
+    const signingByAddress = new Map(
+      staking.signingInfos.map((item) => [valconsToBase64(item.address), item]),
+    );
+    const window = Number(staking.slashingParams.signed_blocks_window || 0);
+    const uptimeByOperator = new Map<string, number>();
+
+    for (const validator of [...delegateOptions.validators, ...staking.validators]) {
+      const hex = consensusPubkeyToHexAddress(validator.consensus_pubkey);
+      const signing = hex ? signingByAddress.get(toBase64(fromHex(hex))) : undefined;
+      uptimeByOperator.set(
+        validator.operator_address,
+        signing && window > 0
+          ? (window - Number(signing.missed_blocks_counter)) / window
+          : 0,
+      );
+    }
+
+    return uptimeByOperator;
+  }, [delegateOptions.validators, staking.signingInfos, staking.slashingParams.signed_blocks_window, staking.validators]);
+
   const getMyTotalStaked = () => {
     if (staking.validatorTab === 'my') {
       return accountInfo?.delegations?.reduce((total, item) => Number(item.balance.amount) + total, 0) || 0;
@@ -252,16 +279,7 @@ export const StakingScreen = ({
   }
 
   const getUptime = (validator: IValidator) => {
-    const slashingParams = staking.slashingParams;
-    const signingInfos = staking.signingInfos;
-    const hex = consensusPubkeyToHexAddress(validator.consensus_pubkey);
-    const window = Number(slashingParams.signed_blocks_window || 0);
-    const signing = signingInfos.find((item) => {
-      return toBase64(fromHex(hex)) === valconsToBase64(item.address)
-    });
-    return signing && window > 0
-      ? (window - Number(signing.missed_blocks_counter)) / window
-      : 0
+    return validatorUptime.get(validator.operator_address) ?? 0;
   }
 
   const getTotalRewards = () => {

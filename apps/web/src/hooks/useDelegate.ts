@@ -16,6 +16,9 @@ interface UseDepositOptions {
   callback?: () => void;
   customMemo?: string;
   availableAmount?: string;
+  validators?: IValidator[];
+  totalValidators?: string;
+  isValidatorDataLoading?: boolean;
 }
 
 const useDelegate = (options: UseDepositOptions = {}) => {
@@ -37,6 +40,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const [isFetchValidatorLoading, setFetchValidatorLoading] = useState(false);
   const [transactionHash, setTransactionHash] = useState('');
   const [selectedModal, setSelectedModal] = useState('');
+  const effectiveValidators = options.validators ?? validators;
 
   const fetchValidator = useCallback(async () => {
     setFetchValidatorLoading(true);
@@ -51,8 +55,10 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   }, []);
 
   useEffect(() => {
-    fetchValidator();
-  }, [fetchValidator]);
+    if (options.validators === undefined) {
+      fetchValidator();
+    }
+  }, [fetchValidator, options.validators]);
 
   useEffect(() => {
     if (options?.customMemo) {
@@ -80,7 +86,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const handleInputChange = (name: string, value: string) => {
     let newOptionsAdvanced = optionsAdvanced;
     if (name === 'validator') {
-      const item = validators.find((v) => v.operator_address === value);
+      const item = effectiveValidators.find((v) => v.operator_address === value);
       if (item) {
         newOptionsAdvanced = {
           ...newOptionsAdvanced,
@@ -228,10 +234,10 @@ const useDelegate = (options: UseDepositOptions = {}) => {
     showAdvanced,
     isLoading,
     optionsAdvanced,
-    validators,
+    validators: effectiveValidators,
     isOpenModal,
-    totalValidators,
-    isFetchValidatorLoading,
+    totalValidators: options.totalValidators ?? totalValidators,
+    isFetchValidatorLoading: options.isValidatorDataLoading ?? isFetchValidatorLoading,
     transactionHash,
     selectedModal,
     handleStakingAmountChange,
