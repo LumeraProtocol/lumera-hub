@@ -14,6 +14,7 @@ import {
   readStakingOverviewCache,
   writeStakingOverviewCache,
   getStakingRefreshProgress,
+  getStakingAutoRefreshDelay,
   type StakingOverviewCache,
   type StakingParams,
   type SlashingParams,
@@ -61,6 +62,7 @@ const useStaking = (address = '', isEvm = false) => {
   const [isRefreshing, setRefreshing] = useState(false);
   const [refreshProgress, setRefreshProgress] = useState(0);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [isCacheReady, setCacheReady] = useState(false);
   const refreshingRef = useRef(false);
   const initializedRef = useRef(false);
   const [rewards, setRewards] = useState([]);
@@ -287,8 +289,18 @@ const useStaking = (address = '', isEvm = false) => {
 
     const cachedOverview = readStakingOverviewCache(window.localStorage, CHAIN_ID);
     if (cachedOverview) applyOverview(cachedOverview);
-    void refreshOverview();
-  }, [applyOverview, refreshOverview]);
+    setCacheReady(true);
+  }, [applyOverview]);
+
+  useEffect(() => {
+    if (!isCacheReady) return;
+
+    const refreshTimer = window.setTimeout(() => {
+      void refreshOverview();
+    }, getStakingAutoRefreshDelay(lastUpdated));
+
+    return () => window.clearTimeout(refreshTimer);
+  }, [isCacheReady, lastUpdated, refreshOverview]);
 
   useEffect(() => {
     if (canQueryCosmosAccountData({ address, isEvmNetwork: isEvm })) {

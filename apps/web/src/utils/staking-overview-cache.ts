@@ -31,6 +31,8 @@ export interface StakingOverviewCache {
   bondedTokens: number;
 }
 
+export const STAKING_AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+
 interface CacheStorage {
   getItem: (key: string) => string | null;
   setItem: (key: string, value: string) => void;
@@ -42,6 +44,22 @@ export const getStakingOverviewCacheKey = (chainId: string) =>
 export const getStakingRefreshProgress = (completed: number, total: number): number => {
   if (!Number.isFinite(completed) || !Number.isFinite(total) || total <= 0) return 0;
   return Math.min(100, Math.max(0, Math.round((completed / total) * 100)));
+};
+
+export const getStakingAutoRefreshDelay = (
+  lastUpdated: number | null,
+  now = Date.now(),
+  refreshInterval = STAKING_AUTO_REFRESH_INTERVAL_MS,
+): number => {
+  if (lastUpdated === null
+    || !Number.isFinite(lastUpdated)
+    || !Number.isFinite(now)
+    || !Number.isFinite(refreshInterval)
+    || refreshInterval <= 0) {
+    return 0;
+  }
+
+  return Math.max(0, lastUpdated + refreshInterval - now);
 };
 
 export const isStakingOverviewCache = (value: unknown): value is StakingOverviewCache => {

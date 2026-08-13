@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   getStakingOverviewCacheKey,
+  getStakingAutoRefreshDelay,
   getStakingRefreshProgress,
   readStakingOverviewCache,
   writeStakingOverviewCache,
@@ -73,5 +74,16 @@ describe('staking overview cache', () => {
     expect(getStakingRefreshProgress(10, 10)).toBe(100);
     expect(getStakingRefreshProgress(11, 10)).toBe(100);
     expect(getStakingRefreshProgress(1, 0)).toBe(0);
+  });
+
+  it('waits until cached data is stale before refreshing automatically', () => {
+    const now = 1_786_640_000_000;
+    const fiveMinutes = 5 * 60 * 1000;
+
+    expect(getStakingAutoRefreshDelay(now, now, fiveMinutes)).toBe(fiveMinutes);
+    expect(getStakingAutoRefreshDelay(now - 60_000, now, fiveMinutes))
+      .toBe(fiveMinutes - 60_000);
+    expect(getStakingAutoRefreshDelay(now - fiveMinutes, now, fiveMinutes)).toBe(0);
+    expect(getStakingAutoRefreshDelay(null, now, fiveMinutes)).toBe(0);
   });
 });
