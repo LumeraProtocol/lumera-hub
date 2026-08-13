@@ -328,8 +328,8 @@ export const WalletScreen = ({
             onCloseCongratulationsModal={delegateOptions.onCloseCongratulationsModal}
           />
         ) : null}
-        <div className="flex justify-between gap-8 flex-col lg:flex-row">
-          <Card className='w-full lg:w-2/3'>
+        <div className="flex justify-between gap-8 flex-col xl:flex-row">
+          <Card className='w-full xl:flex-1'>
             <h3 className="font-semibold text-gray-400">Total Wallet Balance</h3>
             <div className='w-full flex justify-between'>
               <p className="text-3xl sm:text-4xl xl:text-5xl font-bold text-white mt-2">
@@ -404,7 +404,7 @@ export const WalletScreen = ({
                 </AppButton> : null}
             </div>
           </Card>
-          <Card className='w-full lg:w-1/3'>
+          <Card className='w-full xl:w-96 xl:shrink-0'>
             <h3 className="font-semibold text-gray-400 mb-2">{isEvm ? 'Your Addresses' : 'Your Address'}</h3>
             <div className="grid gap-2">
               {displayedAddresses.filter(({ value }) => value).map(({ label, value }) => (
@@ -420,7 +420,7 @@ export const WalletScreen = ({
                         {label}
                       </span>
                     ) : null}
-                    <span className="block font-mono text-sm leading-5 text-gray-300 break-all whitespace-normal">
+                    <span className="block font-mono text-xs leading-5 text-gray-300 break-all whitespace-normal">
                       {value}
                     </span>
                   </button>
