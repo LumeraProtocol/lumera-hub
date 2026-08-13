@@ -105,7 +105,7 @@ function WalletChoiceModal() {
     {
       name: 'MetaMask',
       walletName: METAMASK_WALLET_NAME,
-      logo: '/metamask.svg',
+      logo: '/metamask.png',
       installed: isMetaMaskInstalled,
     },
   ];
