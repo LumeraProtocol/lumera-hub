@@ -34,5 +34,14 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
+  },
+  "pnpm": {
+    "packageExtensions": {
+      "@interchainjs/utils@*": {
+        "dependencies": {
+          "@noble/hashes": "^1.8.0"
+        }
+      }
+    }
   }
 }

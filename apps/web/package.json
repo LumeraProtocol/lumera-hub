@@ -10,10 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@cosmjs/crypto": "^0.36.1",
-    "@cosmjs/encoding": "^0.36.1",
-    "@cosmjs/proto-signing": "^0.36.1",
-    "@cosmjs/stargate": "^0.36.1",
+    "@cosmjs/crypto": "^0.39.0",
+    "@cosmjs/encoding": "^0.39.0",
+    "@cosmjs/proto-signing": "^0.39.0",
+    "@cosmjs/stargate": "^0.39.0",
     "@interchain-kit/core": "^0.3.43",
     "@interchain-kit/cosmostation-extension": "^0.3.55",
     "@interchain-kit/keplr-extension": "^0.3.55",
@@ -29,7 +29,7 @@
     "@tamagui/lucide-icons": "^1.132.20",
     "axios": "^1.12.0",
     "chain-registry": "^2.0.42",
-    "cosmjs-types": "^0.10.1",
+    "cosmjs-types": "^0.11.0",
     "dayjs": "^1.11.18",
     "jszip": "^3.10.1",
     "lucide-react": "^0.545.0",
