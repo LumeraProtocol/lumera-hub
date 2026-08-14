@@ -1,9 +1,21 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const path = require('path')
+const { execSync } = require('child_process')
 const { withTamagui } = require('@tamagui/next-plugin')
 
 const isDesktopExport = process.env.NEXT_OUTPUT === 'export'
 const tamaguiConfigPath = path.resolve(__dirname, '../../tamagui.config.ts')
+
+// Git tag if one exists, otherwise the short commit hash.
+const getHubVersion = () => {
+  try {
+    return execSync('git describe --tags --always', { cwd: __dirname })
+      .toString()
+      .trim()
+  } catch {
+    return 'unknown'
+  }
+}
 
 module.exports = withTamagui({
   config: tamaguiConfigPath,
@@ -11,6 +23,9 @@ module.exports = withTamagui({
   appDir: true,
 })({
   reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_HUB_VERSION: getHubVersion(),
+  },
   transpilePackages: [
     'tamagui',
     '@tamagui',

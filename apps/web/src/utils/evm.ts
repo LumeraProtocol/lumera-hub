@@ -13,6 +13,46 @@ interface EvmRpcResponse<T> {
   };
 }
 
+interface EvmBlockIdentity {
+  hash?: string | null;
+}
+
+type EvmRpcRequester = <T>(method: string, params?: unknown[]) => Promise<T>;
+
+interface EvmRpcIdentityOptions {
+  requestRpc?: EvmRpcRequester;
+  rpcEndpoint?: string;
+  maxBlockDrift?: number;
+}
+
+interface EvmWalletNetworkOptions extends EvmRpcIdentityOptions {
+  chainId: number;
+  chainName: string;
+  rpcEndpoint: string;
+  suggestProfileOnMismatch?: boolean;
+}
+
+export class EvmNetworkMismatchError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EvmNetworkMismatchError';
+  }
+}
+
+export const getEvmConnectionErrorMessage = (
+  error: unknown,
+  networkName: string,
+) => {
+  const message = error instanceof Error ? error.message : 'Unable to connect EVM wallet.';
+  if (
+    /failed to fetch|network request failed|could not fetch chain id|rpc request failed with status (?:429|5\d\d)/i
+      .test(message)
+  ) {
+    return `${networkName} is temporarily unavailable. Your wallet is fine—please try again in a few minutes.`;
+  }
+  return message;
+};
+
 export const getMetaMaskProvider = (provider?: Eip1193Provider | null) => {
   if (!provider) return null;
   if (provider.providers?.length) {
@@ -177,6 +217,128 @@ export const requestEvmRpc = async <T>(method: string, params: unknown[] = []): 
   }
 
   return payload.result;
+};
+
+const parseRpcBlockNumber = (value: string) => {
+  if (!/^0x[0-9a-fA-F]+$/.test(value)) {
+    throw new Error('EVM RPC returned an invalid block number.');
+  }
+  return Number.parseInt(value, 16);
+};
+
+export const assertEvmProviderMatchesRpc = async (
+  provider: Eip1193Provider,
+  {
+    requestRpc = requestEvmRpc,
+    rpcEndpoint = EVM_RPC_ENDPOINT || 'the configured network RPC',
+    maxBlockDrift = 100,
+  }: EvmRpcIdentityOptions = {},
+) => {
+  const networkMismatch = () => new EvmNetworkMismatchError(
+    `MetaMask is connected to a different Lumera network. In MetaMask, set the RPC URL to ${rpcEndpoint}.`,
+  );
+  const [providerBlockValue, configuredBlockValue] = await Promise.all([
+    provider.request<string>({ method: 'eth_blockNumber' }),
+    requestRpc<string>('eth_blockNumber'),
+  ]);
+  const providerBlock = parseRpcBlockNumber(providerBlockValue);
+  const configuredBlock = parseRpcBlockNumber(configuredBlockValue);
+
+  if (Math.abs(providerBlock - configuredBlock) > maxBlockDrift) {
+    throw networkMismatch();
+  }
+
+  const comparisonBlock = Math.max(0, Math.min(providerBlock, configuredBlock) - 12);
+  const blockTag = `0x${comparisonBlock.toString(16)}`;
+  const [providerIdentity, configuredIdentity] = await Promise.all([
+    provider.request<EvmBlockIdentity>({ method: 'eth_getBlockByNumber', params: [blockTag, false] }),
+    requestRpc<EvmBlockIdentity>('eth_getBlockByNumber', [blockTag, false]),
+  ]);
+
+  if (
+    !providerIdentity?.hash
+    || !configuredIdentity?.hash
+    || providerIdentity.hash.toLowerCase() !== configuredIdentity.hash.toLowerCase()
+  ) {
+    throw networkMismatch();
+  }
+};
+
+const isUnrecognizedChainError = (error: unknown) => {
+  const providerError = error as { code?: number; data?: { originalError?: { code?: number } } };
+  return providerError.code === 4902 || providerError.data?.originalError?.code === 4902;
+};
+
+export const ensureEvmWalletNetwork = async (
+  provider: Eip1193Provider,
+  {
+    chainId,
+    chainName,
+    rpcEndpoint,
+    suggestProfileOnMismatch = false,
+    requestRpc,
+    maxBlockDrift,
+  }: EvmWalletNetworkOptions,
+) => {
+  const expectedChainId = toHexChainId(chainId);
+  const addProfile = () => provider.request({
+    method: 'wallet_addEthereumChain',
+    params: [{
+      chainId: expectedChainId,
+      chainName,
+      nativeCurrency: {
+        name: 'LUME',
+        symbol: 'LUME',
+        decimals: EVM_NATIVE_DECIMALS,
+      },
+      rpcUrls: [rpcEndpoint],
+    }],
+  });
+  const switchProfile = () => provider.request({
+    method: 'wallet_switchEthereumChain',
+    params: [{ chainId: expectedChainId }],
+  });
+
+  const currentChainId = await provider.request<string>({ method: 'eth_chainId' });
+  if (currentChainId.toLowerCase() !== expectedChainId.toLowerCase()) {
+    try {
+      await switchProfile();
+    } catch (switchError) {
+      if (!isUnrecognizedChainError(switchError)) throw switchError;
+      await addProfile();
+      await switchProfile();
+    }
+  }
+
+  const activeChainId = await provider.request<string>({ method: 'eth_chainId' });
+  if (activeChainId.toLowerCase() !== expectedChainId.toLowerCase()) {
+    throw new Error(`Wallet did not switch to ${chainName}.`);
+  }
+
+  const verifyIdentity = () => assertEvmProviderMatchesRpc(provider, {
+    requestRpc,
+    rpcEndpoint,
+    maxBlockDrift,
+  });
+
+  try {
+    await verifyIdentity();
+  } catch (identityError) {
+    if (!(identityError instanceof EvmNetworkMismatchError) || !suggestProfileOnMismatch) {
+      throw identityError;
+    }
+
+    try {
+      await addProfile();
+      await switchProfile();
+    } catch (profileError) {
+      const detail = profileError instanceof Error ? ` ${profileError.message}` : '';
+      throw new Error(
+        `MetaMask could not configure ${chainName}. Remove or update the conflicting Lumera network, then add ${chainName} with RPC URL ${rpcEndpoint}.${detail}`,
+      );
+    }
+    await verifyIdentity();
+  }
 };
 
 export const getEvmBalance = async (address: string) => {

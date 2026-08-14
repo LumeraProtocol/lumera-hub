@@ -5,15 +5,18 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import {
   ACTIVE_NETWORK,
   EVM_CHAIN_ID,
+  EVM_PROFILE_NAME,
   EVM_RPC_ENDPOINT,
   IS_EVM_NETWORK,
 } from '@/contants/network';
-import { getEvmAccountForChain, getMetaMaskProvider, toHexChainId } from '@/utils/evm';
+import {
+  assertEvmProviderMatchesRpc,
+  ensureEvmWalletNetwork,
+  getEvmAccountForChain,
+  getEvmConnectionErrorMessage,
+  getMetaMaskProvider,
+} from '@/utils/evm';
 import type { Eip1193Provider } from '@/types/window';
-
-interface EvmProviderError extends Error {
-  code?: number;
-}
 
 interface Eip6963ProviderDetail {
   provider?: Eip1193Provider;
@@ -62,51 +65,26 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const ensureNetwork = useCallback(async () => {
-    if (!IS_EVM_NETWORK || !EVM_CHAIN_ID || !EVM_RPC_ENDPOINT) {
+  const ensureConfiguredNetwork = useCallback(async (suggestProfileOnMismatch: boolean) => {
+    if (!IS_EVM_NETWORK || !EVM_CHAIN_ID || !EVM_PROFILE_NAME || !EVM_RPC_ENDPOINT) {
       throw new Error('The active network does not support EVM wallets.');
     }
     if (!provider) {
       throw new Error('MetaMask was not detected. Install or enable the MetaMask extension.');
     }
 
-    const chainId = toHexChainId(EVM_CHAIN_ID);
-    const currentChainId = await provider.request<string>({ method: 'eth_chainId' });
-    if (currentChainId.toLowerCase() === chainId.toLowerCase()) return;
-
-    try {
-      await provider.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId }],
-      });
-    } catch (switchError) {
-      const typedError = switchError as EvmProviderError;
-      if (typedError.code !== 4902) throw switchError;
-
-      await provider.request({
-        method: 'wallet_addEthereumChain',
-        params: [{
-          chainId,
-          chainName: ACTIVE_NETWORK.displayName,
-          nativeCurrency: {
-            name: 'Lumera',
-            symbol: 'LUME',
-            decimals: 18,
-          },
-          rpcUrls: [EVM_RPC_ENDPOINT],
-        }],
-      });
-      await provider.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId }],
-      });
-    }
-
-    const activeChainId = await provider.request<string>({ method: 'eth_chainId' });
-    if (activeChainId.toLowerCase() !== chainId.toLowerCase()) {
-      throw new Error(`Wallet did not switch to ${ACTIVE_NETWORK.displayName}.`);
-    }
+    await ensureEvmWalletNetwork(provider, {
+      chainId: EVM_CHAIN_ID,
+      chainName: EVM_PROFILE_NAME,
+      rpcEndpoint: EVM_RPC_ENDPOINT,
+      suggestProfileOnMismatch,
+    });
   }, [provider]);
+
+  const ensureNetwork = useCallback(
+    () => ensureConfiguredNetwork(false),
+    [ensureConfiguredNetwork],
+  );
 
   const connect = useCallback(async () => {
     setError('');
@@ -116,19 +94,22 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
         throw new Error('MetaMask was not detected. Install or enable the MetaMask extension.');
       }
       await provider.request<string[]>({ method: 'eth_requestAccounts' });
-      await ensureNetwork();
+      await ensureConfiguredNetwork(true);
       if (!EVM_CHAIN_ID) {
         throw new Error('The active network does not define an EVM chain ID.');
       }
       setAddress(await getEvmAccountForChain(provider, EVM_CHAIN_ID));
     } catch (connectError) {
-      const message = connectError instanceof Error ? connectError.message : 'Unable to connect EVM wallet.';
+      const message = getEvmConnectionErrorMessage(
+        connectError,
+        ACTIVE_NETWORK.displayName,
+      );
       setError(message);
       throw new Error(message);
     } finally {
       setConnecting(false);
     }
-  }, [ensureNetwork, provider]);
+  }, [ensureConfiguredNetwork, provider]);
 
   const disconnect = useCallback(async () => {
     try {
@@ -149,9 +130,13 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
 
     const syncAccounts = async () => {
       try {
-        setAddress(await getEvmAccountForChain(provider, expectedChainId));
-      } catch {
+        const activeAddress = await getEvmAccountForChain(provider, expectedChainId);
+        await assertEvmProviderMatchesRpc(provider, { rpcEndpoint: EVM_RPC_ENDPOINT || undefined });
+        setAddress(activeAddress);
+        setError('');
+      } catch (syncError) {
         setAddress('');
+        setError(syncError instanceof Error ? syncError.message : 'Unable to verify the MetaMask network.');
       }
     };
 

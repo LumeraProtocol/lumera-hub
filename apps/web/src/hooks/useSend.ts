@@ -16,7 +16,7 @@ import {
 } from '@/utils/evm';
 
 interface UseDepositOptions {
-  callback?: () => void;
+  callback?: (transactionHash?: string) => void;
   customMemo?: string;
 }
 
@@ -143,7 +143,7 @@ const useSend = (options: UseDepositOptions = {}) => {
           });
           setTransactionHash(transactionHash);
           resetData();
-          options.callback?.();
+          options.callback?.(transactionHash);
           return;
         }
 
@@ -177,7 +177,7 @@ const useSend = (options: UseDepositOptions = {}) => {
           setTransactionHash(result?.transactionHash);
           resetData();
           if (options?.callback) {
-            options.callback();
+            options.callback(result.transactionHash);
           }
         }
       } catch (error) {

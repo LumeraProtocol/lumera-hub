@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { TLog, TLogEvent, TMessage, TOption, TSignerInfos, TFee } from '@/hooks/useRecentActivity';
 import { Coin } from '@/hooks/useAccountInfo';
-import { getTransactionHistoryAddress } from '@/utils/transaction-history';
+import {
+  buildTxHistoryPath,
+  getTransactionHistoryAddress,
+  TxHistoryDirection,
+} from '@/utils/transaction-history';
 
 const LIMIT = 20;
 
@@ -42,35 +46,52 @@ export interface ITransaction {
     txhash: string;
 }
 
-const useTransaction = () => {
+interface UseTransactionOptions {
+    address?: string;
+    direction?: TxHistoryDirection;
+}
+
+const useTransaction = ({ address: addressOverride, direction }: UseTransactionOptions = {}) => {
     const { address, bech32Address, isEvm } = useWalletConnect();
-    const transactionAddress = getTransactionHistoryAddress({ address, bech32Address, isEvm });
+    const transactionAddress = addressOverride
+        ?? getTransactionHistoryAddress({ address, bech32Address, isEvm });
     const [isLoading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [transactions, setTransactions] = useState<ITransaction[]>([]);
     const [totalTransactions, setTotalTransactions] = useState(0);
 
-    const fetchTransactions = async (offset = 0) => {
+    const fetchTransactions = useCallback(async (offset = 0, showLoading = true) => {
         if (!transactionAddress) {
             setTransactions([]);
             setTotalTransactions(0);
             setError('');
             setLoading(false);
-            return;
+            return [];
         }
-        setLoading(true);
+        if (showLoading) {
+            setLoading(true);
+        }
         setError('');
     
         try {
-            const { data } = await instance.get(`/cosmos/tx/v1beta1/txs?query=message.sender=%27${transactionAddress}%27&pagination.limit=${LIMIT}&pagination.offset=${offset}&order_by=ORDER_BY_DESC`);
+            const { data } = await instance.get(buildTxHistoryPath({
+                address: transactionAddress,
+                direction,
+                limit: LIMIT,
+                offset,
+            }));
             setTotalTransactions(Math.ceil(Number(data.total) / LIMIT));
             setTransactions(data.tx_responses || []);
+            return data.tx_responses || [];
         } catch (e) {
             setError(e instanceof Error ? e.message : 'An unknown error occurred.');
+            return [];
         } finally {
-            setLoading(false);
+            if (showLoading) {
+                setLoading(false);
+            }
         }
-    }
+    }, [transactionAddress, direction]);
 
     useEffect(() => {
         if (transactionAddress) {
@@ -81,12 +102,17 @@ const useTransaction = () => {
             setError('');
             setLoading(false);
         }
-    }, [transactionAddress]);
+    }, [fetchTransactions, transactionAddress]);
 
     const handlePageClick = ({ selected }: { selected: number }) => {
         const offset = selected * LIMIT;
         fetchTransactions(offset);
     }
+
+    const refreshTransactions = useCallback(
+        () => fetchTransactions(0, false),
+        [fetchTransactions],
+    );
 
     return {
         isLoading,
@@ -94,6 +120,7 @@ const useTransaction = () => {
         transactions,
         totalTransactions,
         handlePageClick,
+        refreshTransactions,
     }
 }
 

@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { Wallet } from '@tamagui/lucide-icons';
-import { InterchainWalletModal, useChain, useChainWallet } from '@interchain-kit/react';
+import {
+  InterchainWalletModal,
+  useChain,
+  useChainWallet,
+} from '@interchain-kit/react';
 import { ChevronDown, Copy, LogOut, RefreshCw } from 'lucide-react';
 import { toast } from 'react-toastify';
 

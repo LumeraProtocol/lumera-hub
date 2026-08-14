@@ -5,6 +5,7 @@ import {
   getActiveWalletMode,
   getAlternativeWalletName,
   getPreferredWalletSelection,
+  disconnectPersistedInterchainWallet,
   KEPLR_WALLET_NAME,
   METAMASK_WALLET_NAME,
 } from './wallet-selection';
@@ -107,5 +108,74 @@ describe('alternative wallet selection', () => {
       isKeplrInstalled: false,
       isMetaMaskInstalled: true,
     })).toBe('');
+  });
+});
+
+describe('persisted Cosmos wallet isolation', () => {
+  it('disconnects a restored Keplr session when MetaMask is the active wallet', () => {
+    const persisted = JSON.stringify({
+      state: {
+        chainWalletState: [
+          {
+            chainName: 'lumera-testnet',
+            walletName: KEPLR_WALLET_NAME,
+            walletState: 'Connected',
+            account: { address: 'lumera1abc' },
+          },
+          {
+            chainName: 'lumera-testnet',
+            walletName: 'leap-extension',
+            walletState: 'Connected',
+            account: { address: 'lumera1def' },
+          },
+        ],
+        currentWalletName: KEPLR_WALLET_NAME,
+        currentChainName: 'lumera-testnet',
+      },
+      version: 0,
+    });
+
+    expect(JSON.parse(disconnectPersistedInterchainWallet(
+      persisted,
+      KEPLR_WALLET_NAME,
+    ))).toEqual({
+      state: {
+        chainWalletState: [
+          {
+            chainName: 'lumera-testnet',
+            walletName: KEPLR_WALLET_NAME,
+            walletState: 'Disconnected',
+            account: null,
+          },
+          {
+            chainName: 'lumera-testnet',
+            walletName: 'leap-extension',
+            walletState: 'Connected',
+            account: { address: 'lumera1def' },
+          },
+        ],
+        currentWalletName: '',
+        currentChainName: '',
+      },
+      version: 0,
+    });
+  });
+
+  it('leaves malformed and already-disconnected state untouched', () => {
+    expect(disconnectPersistedInterchainWallet('{invalid', KEPLR_WALLET_NAME))
+      .toBe('{invalid');
+
+    const disconnected = JSON.stringify({
+      state: {
+        chainWalletState: [{
+          walletName: KEPLR_WALLET_NAME,
+          walletState: 'Disconnected',
+          account: null,
+        }],
+        currentWalletName: '',
+      },
+    });
+    expect(disconnectPersistedInterchainWallet(disconnected, KEPLR_WALLET_NAME))
+      .toBe(disconnected);
   });
 });

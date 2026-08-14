@@ -4,6 +4,7 @@ export const NETWORK_PROFILES = {
   devnet: {
     displayName: 'Lumera Devnet',
     chainName: 'lumera-devnet',
+    evmProfileName: 'lumera-devnet-evm',
     chainId: 'lumera-devnet-1',
     denom: 'ulume',
     rpcEndpoint: 'https://rpc.pastel.network',
@@ -16,6 +17,7 @@ export const NETWORK_PROFILES = {
   testnet: {
     displayName: 'Lumera Testnet',
     chainName: 'lumera-testnet',
+    evmProfileName: 'lumera-testnet-evm',
     chainId: 'lumera-testnet-2',
     denom: 'ulume',
     rpcEndpoint: 'https://rpc-testnet.lumeraprotocol.com',
@@ -28,6 +30,7 @@ export const NETWORK_PROFILES = {
   mainnet: {
     displayName: 'Lumera Mainnet',
     chainName: 'lumera',
+    evmProfileName: null,
     chainId: 'lumera-mainnet-1',
     denom: 'ulume',
     rpcEndpoint: 'https://rpc.lumera.io',
@@ -69,6 +72,7 @@ export const RPC_ENDPOINT = process.env.NEXT_PUBLIC_RPC_ENDPOINT || ACTIVE_NETWO
 export const REST_AI_URL = process.env.NEXT_PUBLIC_REST_AI_URL || ACTIVE_NETWORK.restEndpoint;
 export const EVM_RPC_ENDPOINT = process.env.NEXT_PUBLIC_EVM_RPC_ENDPOINT || ACTIVE_NETWORK.evmRpcEndpoint;
 export const EVM_WS_ENDPOINT = process.env.NEXT_PUBLIC_EVM_WS_ENDPOINT || ACTIVE_NETWORK.evmWsEndpoint;
+export const EVM_PROFILE_NAME = process.env.NEXT_PUBLIC_EVM_PROFILE_NAME || ACTIVE_NETWORK.evmProfileName;
 export const EVM_CHAIN_ID = process.env.NEXT_PUBLIC_EVM_CHAIN_ID
   ? Number(process.env.NEXT_PUBLIC_EVM_CHAIN_ID)
   : ACTIVE_NETWORK.evmChainId;

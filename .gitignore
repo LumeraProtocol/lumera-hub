@@ -38,3 +38,6 @@ yarn-error.log*
 *.pem
 
 #.tamagui/
+
+# Superdesign local design context and temporary templates
+.superdesign/

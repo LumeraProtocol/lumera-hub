@@ -35,6 +35,7 @@ import {
 
 import Loading from '@/components/Loading';
 import AppLink from '@/components/AppLink';
+import VersionsInfo from '@/components/VersionsInfo';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
 import Skeleton from '@/components/Skeleton';
 import CountDown from '@/components/CountDown';
@@ -1045,6 +1046,7 @@ export const HomeScreen = ({
           />
         </>
       }
+      <VersionsInfo />
     </YStack>
   )
 }

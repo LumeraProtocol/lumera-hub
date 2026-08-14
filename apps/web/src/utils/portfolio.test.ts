@@ -1,6 +1,81 @@
 import { describe, expect, it } from 'vitest';
 
-import { getPortfolioData } from './portfolio';
+import {
+  getPortfolioData,
+  getAvailableBalances,
+  getDelegations,
+  getRewards,
+  getUnbonding,
+  getTotalBalances,
+} from './portfolio';
+import type { AccountInfoData } from '@/hooks/useAccountInfo';
+
+const unbondingEntry = (balance: string) => ({
+  balance,
+  completion_time: '2026-08-21T00:00:00Z',
+  creation_height: '100',
+  initial_balance: balance,
+  unbonding_id: '1',
+  unbonding_on_hold_ref_count: '0',
+});
+
+const ACCOUNT_INFO: AccountInfoData = {
+  balances: [
+    { denom: 'ulume', amount: '5000000' },
+    { denom: 'lume', amount: '2' },
+    { denom: 'ibc/other', amount: '999' },
+  ],
+  delegations: [{
+    delegation: {
+      delegator_address: 'lumera1account',
+      validator_address: 'lumeravaloper1validator',
+      shares: '3000000.000000000000000000',
+    },
+    balance: { denom: 'ulume', amount: '3000000' },
+  }],
+  rewards: [{
+    validator_address: 'lumeravaloper1validator',
+    reward: [
+      { denom: 'ulume', amount: '250000' },
+      { denom: 'ibc/other', amount: '999' },
+    ],
+  }],
+  unbonding: [{
+    delegator_address: 'lumera1account',
+    validator_address: 'lumeravaloper1validator',
+    entries: [unbondingEntry('100000'), unbondingEntry('50000')],
+  }],
+};
+
+describe('balance aggregation helpers', () => {
+  it('sums available balances in micro denom, converting display denom', () => {
+    expect(getAvailableBalances(ACCOUNT_INFO)).toBe(7000000);
+  });
+
+  it('sums delegated balances', () => {
+    expect(getDelegations(ACCOUNT_INFO)).toBe(3000000);
+  });
+
+  it('sums rewards across validators, ignoring foreign denoms', () => {
+    expect(getRewards(ACCOUNT_INFO)).toBe(250000);
+  });
+
+  it('sums unbonding entries', () => {
+    expect(getUnbonding(ACCOUNT_INFO)).toBe(150000);
+  });
+
+  it('totals available plus delegated balances', () => {
+    expect(getTotalBalances(ACCOUNT_INFO)).toBe(10000000);
+  });
+
+  it('returns zero for null account info', () => {
+    expect(getAvailableBalances(null)).toBe(0);
+    expect(getDelegations(null)).toBe(0);
+    expect(getRewards(null)).toBe(0);
+    expect(getUnbonding(null)).toBe(0);
+    expect(getTotalBalances(null)).toBe(0);
+  });
+});
 
 describe('getPortfolioData', () => {
   it('returns raw numeric LUME amounts suitable for chart values', () => {

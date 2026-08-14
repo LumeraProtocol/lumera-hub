@@ -1,6 +1,6 @@
 // apps/web/src/app/wallet/page.tsx
 'use client'
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 
 import { WalletScreen } from '@lumera-hub/ui/src/screens/WalletScreen'
@@ -9,8 +9,12 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import useTransaction from '@/hooks/useTransaction';
 import useDelegate from '@/hooks/useDelegate';
 import useSend from '@/hooks/useSend';
+import { hasEthereumTransactionHash } from '@/utils/transaction-history';
+
+const EVM_HISTORY_REFRESH_DELAYS = [0, 2_000, 5_000, 10_000, 20_000];
 
 export default function Page() {
+  const [submittedEvmTransactionHash, setSubmittedEvmTransactionHash] = useState('');
   const { address, bech32Address, ethAddress, isEvm } = useWalletConnect();
   const account = useAccountInfo();
   const {
@@ -25,15 +29,57 @@ export default function Page() {
     transactions,
     totalTransactions,
     handlePageClick,
+    refreshTransactions,
   } = useTransaction();
   const sendOptions = useSend({
-    callback: isEvm ? account.fetchData : handleCloseModal,
+    callback: (transactionHash) => {
+      if (!isEvm) {
+        handleCloseModal();
+        return;
+      }
+      void account.fetchData();
+      setSubmittedEvmTransactionHash(transactionHash || '');
+    },
     customMemo: '',
   });
   const delegate = useDelegate();
   useEffect(() => {
     document.title = 'Wallet - Lumera Hub';
   }, []);
+
+  useEffect(() => {
+    if (!submittedEvmTransactionHash) {
+      return;
+    }
+
+    let cancelled = false;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+
+    const refresh = async (attempt: number) => {
+      const refreshedTransactions = await refreshTransactions();
+      if (cancelled) return;
+
+      if (hasEthereumTransactionHash(refreshedTransactions, submittedEvmTransactionHash)) {
+        setSubmittedEvmTransactionHash('');
+        return;
+      }
+
+      const nextAttempt = attempt + 1;
+      if (nextAttempt < EVM_HISTORY_REFRESH_DELAYS.length) {
+        timeout = setTimeout(
+          () => void refresh(nextAttempt),
+          EVM_HISTORY_REFRESH_DELAYS[nextAttempt],
+        );
+      }
+    };
+
+    timeout = setTimeout(() => void refresh(0), EVM_HISTORY_REFRESH_DELAYS[0]);
+
+    return () => {
+      cancelled = true;
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [refreshTransactions, submittedEvmTransactionHash]);
 
   return (
     <>

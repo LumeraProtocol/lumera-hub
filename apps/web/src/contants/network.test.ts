@@ -10,6 +10,7 @@ const ENVIRONMENT_KEYS = [
   'NEXT_PUBLIC_REST_AI_URL',
   'NEXT_PUBLIC_EVM_RPC_ENDPOINT',
   'NEXT_PUBLIC_EVM_WS_ENDPOINT',
+  'NEXT_PUBLIC_EVM_PROFILE_NAME',
   'NEXT_PUBLIC_EVM_CHAIN_ID',
   'NEXT_PUBLIC_COSMOS_EIP712_ENABLED',
 ] as const;
@@ -44,6 +45,8 @@ describe('network profiles', () => {
     const network = await import('./network');
     expect(network.CHAIN_ID).toBe('lumera-testnet-2');
     expect(network.EVM_CHAIN_ID).toBe(76857769);
+    expect(network.EVM_PROFILE_NAME).toBe('lumera-testnet-evm');
+    expect(network.EVM_RPC_ENDPOINT).toBe('https://evm-testnet.lumeraprotocol.com');
     expect(network.IS_EVM_NETWORK).toBe(true);
   });
 

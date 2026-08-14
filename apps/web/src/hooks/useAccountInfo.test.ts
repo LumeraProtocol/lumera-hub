@@ -1,6 +1,59 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fetchEvmAccountInfo, getTotalRewards } from './useAccountInfo';
+import { fetchAccountInfo, fetchEvmAccountInfo, getTotalRewards } from './useAccountInfo';
+
+describe('fetchAccountInfo', () => {
+  it('queries balances and staking data for the given address', async () => {
+    const delegation = {
+      delegation: {
+        delegator_address: 'lumera1account',
+        validator_address: 'lumeravaloper1validator',
+        shares: '2500000.000000000000000000',
+      },
+      balance: { denom: 'ulume', amount: '2500000' },
+    };
+    const reward = {
+      validator_address: 'lumeravaloper1validator',
+      reward: [{ denom: 'ulume', amount: '125000.5' }],
+    };
+    const rewardTotal = [{ denom: 'ulume', amount: '124999.75' }];
+    const get = vi.fn()
+      .mockResolvedValueOnce({ data: { balances: [{ denom: 'ulume', amount: '7000000' }] } })
+      .mockResolvedValueOnce({ data: { delegation_responses: [delegation] } })
+      .mockResolvedValueOnce({ data: { rewards: [reward], total: rewardTotal } })
+      .mockResolvedValueOnce({ data: { unbonding_responses: [] } });
+
+    const accountInfo = await fetchAccountInfo('lumera1account', { get });
+
+    expect(get.mock.calls.map(([path]) => path)).toEqual([
+      '/cosmos/bank/v1beta1/balances/lumera1account',
+      '/cosmos/staking/v1beta1/delegations/lumera1account',
+      '/cosmos/distribution/v1beta1/delegators/lumera1account/rewards',
+      '/cosmos/staking/v1beta1/delegators/lumera1account/unbonding_delegations',
+    ]);
+    expect(accountInfo).toEqual({
+      balances: [{ denom: 'ulume', amount: '7000000' }],
+      delegations: [delegation],
+      rewards: [reward],
+      rewardTotal,
+      unbonding: [],
+    });
+  });
+
+  it('defaults missing response collections to empty arrays', async () => {
+    const get = vi.fn().mockResolvedValue({ data: {} });
+
+    const accountInfo = await fetchAccountInfo('lumera1account', { get });
+
+    expect(accountInfo).toEqual({
+      balances: [],
+      delegations: [],
+      rewards: [],
+      rewardTotal: [],
+      unbonding: [],
+    });
+  });
+});
 
 describe('fetchEvmAccountInfo', () => {
   it('combines the EVM balance with staking data queried by Bech32 address', async () => {

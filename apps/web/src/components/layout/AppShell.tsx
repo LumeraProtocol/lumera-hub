@@ -17,6 +17,7 @@ import { usePathname } from 'next/navigation';
 
 import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 import AppLink from '@/components/AppLink';
+import SearchDialog from '@/components/SearchDialog';
 
 import { useSelector, useDispatch } from '@/redux/hooks';
 import { setActiveView, setCurrentPath, setViewTitle } from '@/redux/app.slice';
@@ -78,7 +79,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [dispatch, pathname])
 
-  const isContextualRoute = pathname.startsWith('/tx/') || pathname.startsWith('/block/');
+  const isContextualRoute = pathname.startsWith('/tx/') || pathname.startsWith('/block/') || pathname.startsWith('/account/');
   const routeNavItem = NAV_ITEMS.find((item) => isActive(pathname, item.url));
   const shellTitle = isContextualRoute ? viewTitle : routeNavItem?.label || VIEW_TITLES[activeView];
 
@@ -105,7 +106,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-lumera-navy text-white">
       {/* Sidebar (desktop) */}
-      <div className="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 z-50">
+      <div className="hidden lg:flex lg:w-56 lg:flex-col lg:fixed lg:inset-y-0 z-50">
         <div className="flex flex-col flex-grow bg-lumera-navy border-r border-gray-800/50">
           <AppLink href="/">
             <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800">
@@ -188,7 +189,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Content area */}
-      <div className="lg:pl-72 relative z-10">
+      <div className="lg:pl-56 relative z-10">
         {/* Top bar */}
         <div className="sticky top-0 !z-50 flex h-16 flex-shrink-0 bg-lumera-navy backdrop-blur-lg border-b border-gray-800">
           <button
@@ -209,6 +210,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <h1 className="text-base sm:text-2xl font-bold">{shellTitle}</h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6 gap-3">
+              <SearchDialog />
               {/* Placeholder for wallet actions */}
               <ConnectWallet />
               <WalletModalComponent />

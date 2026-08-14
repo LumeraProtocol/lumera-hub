@@ -1,45 +1,36 @@
 import { useState } from 'react';
 import {
-  XCircle,
-  ArrowUpRight,
   Copy,
-  Coins,
   Send,
   ArrowDown,
-  ArrowLeftRight,
-  ArrowDownLeft,
   Check,
   Layers,
-  ClockPlus,
-  Unlink,
-  Star,
 } from 'lucide-react';
-import { YStack, H2, Paragraph, Card as TamaguiCard, H3 } from 'tamagui';
-import ReactPaginate from 'react-paginate';
-import dayjs from 'dayjs';
+import { YStack, H2, Paragraph, Card as TamaguiCard } from 'tamagui';
 import { Wallet } from '@tamagui/lucide-icons';
 import { toast } from 'react-toastify';
 
-import AppLink from '@/components/AppLink';
 import { ConnectWalletButton } from '@/components/ConnectWallet';
-import Loading from '@/components/Loading';
-import PastTime from '@/components/PastTime';
 import Card from '@/components/Card';
 import ReceiveModal from '@/components/ReceiveModal';
 import DelegateModal from '@/components/DelegateModal';
 import SendModal from '@/components/SendModal';
 import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
+import TransactionHistory from '@/components/TransactionHistory';
 import { AccountInfoData } from '@/hooks/useAccountInfo';
 import { RATE_VALUE } from '@/contants';
 import { ITransaction } from '@/hooks/useTransaction';
-import { formatAddress, formatTokenDisplay } from '@/utils/format';
-import { getMessages } from '@/utils/helpers';
+import { formatTokenDisplay } from '@/utils/format';
 import { IValidator } from '@/types/validator';
 import { DENOM } from '@/contants/network';
-import { isTransactionSuccessful } from '@/utils/transaction-history';
-
-import 'react-paginate/theme/basic/react-paginate.css';
+import {
+  getAvailableBalances,
+  getDelegations,
+  getRewards,
+  getUnbonding,
+  getTotalBalances,
+} from '@/utils/portfolio';
 
 interface IWalletScreen {
     walletAddress: string;
@@ -116,135 +107,6 @@ export const WalletScreen = ({
 }: IWalletScreen) => {
   const [copiedAddress, setCopiedAddress] = useState('');
 
-  const getTxIcon = (type: string) => {
-    switch(type) {
-      case 'Send':
-        return <ArrowUpRight className="w-5 h-5 text-red-400" />;
-      case 'Received':
-        return <ArrowDownLeft className="w-5 h-5 text-green-400" />;
-      case 'BeginRedelegate':
-        return <ClockPlus className="w-5 h-5 text-indigo-400" />;
-      case 'Delegate':
-        return <Layers className="w-5 h-5 text-indigo-400" />;
-      case 'Failed':
-        return <XCircle className="w-5 h-5 text-gray-500" />;
-      case 'Undelegate':
-        return <Unlink className='w-5 h-5 text-red-600' />;
-      default:
-        if (type.indexOf('WithdrawDelegatorReward') !== -1) {
-          return <Star className='w-5 h-5 text-amber-400' />;
-        }
-        return <ArrowLeftRight className="w-5 h-5 text-gray-400" />;
-    }
-  };
-
-  const getColor = (type: string) => {
-    switch(type) {
-      case 'Send':
-      case 'Failed':
-        return 'bg-red-500/20';
-      case 'Delegate':
-      case 'BeginRedelegate':
-        return 'bg-green-400/20';
-      case 'Received':
-        return 'bg-green-500/20';
-      default:
-         if (type.indexOf('WithdrawDelegatorReward') !== -1) {
-          return 'recent-activity-icon';
-        }
-        return 'bg-red-500/20';
-    }
-  }
-
-    const getTotalBalances = () => {
-      let total = 0;
-      if (accountInfo?.balances?.length) {
-        for (const item of accountInfo?.balances) {
-          if (item.denom === DENOM) {
-            total += Number(item.amount);
-          }
-          if (item.denom === 'lume') {
-            total += Number(item.amount) * RATE_VALUE;
-          }
-        }
-      }
-      if (accountInfo?.delegations?.length) {
-        for (const item of accountInfo?.delegations) {
-          if (item.balance.denom === DENOM) {
-            total += Number(item.balance.amount);
-          }
-          if (item.balance.denom === 'lume') {
-            total += Number(item.balance.amount) * RATE_VALUE;
-          }
-        }
-      }
-
-      return total;
-    }
-
-    const getAvailableBalances = () => {
-      let total = 0;
-      if (accountInfo?.balances?.length) {
-        for (const item of accountInfo?.balances) {
-          if (item.denom === DENOM) {
-            total += Number(item.amount);
-          }
-          if (item.denom === 'lume') {
-            total += Number(item.amount) * RATE_VALUE;
-          }
-        }
-      }
-
-      return total;
-    }
-
-    const getDelegations = () => {
-      let total = 0;
-      if (accountInfo?.delegations?.length) {
-        for (const item of accountInfo?.delegations) {
-          if (item.balance.denom === DENOM) {
-            total += Number(item.balance.amount);
-          }
-          if (item.balance.denom === 'lume') {
-            total += Number(item.balance.amount) * RATE_VALUE;
-          }
-        }
-      }
-
-      return total;
-    }
-
-    const getRewards = () => {
-      let total = 0;
-      if (accountInfo?.rewards?.length) {
-        for (const item of accountInfo?.rewards) {
-          for (const reward of item.reward) {
-            if (reward.denom === DENOM) {
-              total += Number(reward.amount);
-            }
-            if (reward.denom === 'lume') {
-              total += Number(reward.amount) * RATE_VALUE;
-            }
-          }
-        }
-      }
-
-      return total;
-    }
-
-    const getUnbonding = () => {
-      let total = 0;
-      if (accountInfo?.unbonding?.length) {
-        for (const item of accountInfo?.unbonding) {
-          for (const reward of item.entries) {
-            total += Number(reward.balance);
-          }
-        }
-      }
-
-      return total;
-    }
-
     const handleCopyAddress = async (address: string, label: string) => {
       try {
         await navigator.clipboard.writeText(address);
@@ -301,7 +163,7 @@ export const WalletScreen = ({
         <SendModal
           isEvm={isEvm}
           isOpen={selectedModal === 'send'}
-          availableAmount={getAvailableBalances() / RATE_VALUE}
+          availableAmount={getAvailableBalances(accountInfo) / RATE_VALUE}
           isVoteLoading={sendOptions.isVoteLoading}
           onAdvancedCheckedChange={sendOptions.onAdvancedCheckedChange}
           onCloseDailogChange={sendOptions.onCloseDailogChange}
@@ -316,7 +178,7 @@ export const WalletScreen = ({
         {!isEvm ? (
           <DelegateModal
             isOpen={selectedModal === 'stake'}
-            availableAmount={getAvailableBalances() / RATE_VALUE}
+            availableAmount={getAvailableBalances(accountInfo) / RATE_VALUE}
             isVoteLoading={delegateOptions.isVoteLoading}
             onAdvancedCheckedChange={delegateOptions.onAdvancedCheckedChange}
             onCloseDailogChange={delegateOptions.onCloseDailogChange}
@@ -338,7 +200,7 @@ export const WalletScreen = ({
                 {isLoading ?
                   <Skeleton /> : <>
                     {formatTokenDisplay({
-                    amount: `${getTotalBalances()}`,
+                    amount: `${getTotalBalances(accountInfo)}`,
                     denom: DENOM,
                     }, false, '0,0.[00000]')} <span className='text-xl sm:text-2xl'>LUME</span>
                   </>
@@ -352,28 +214,28 @@ export const WalletScreen = ({
               <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
                 <span className='inline-block'></span> <span>Available: </span>
                 {formatTokenDisplay({
-                  amount: `${getAvailableBalances()}`,
+                  amount: `${getAvailableBalances(accountInfo)}`,
                   denom: DENOM,
                   }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
               </li>
               {!isEvm ? <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
                 <span className='inline-block'></span> <span>Staking: </span>
                   {formatTokenDisplay({
-                  amount: `${getDelegations()}`,
+                  amount: `${getDelegations(accountInfo)}`,
                   denom: DENOM,
                   }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
               </li> : null}
               {!isEvm ? <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
                 <span className='inline-block'></span> <span>Rewards: </span>
                 {formatTokenDisplay({
-                  amount: `${getRewards()}`,
+                  amount: `${getRewards(accountInfo)}`,
                   denom: DENOM,
                   }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
               </li> : null}
               {!isEvm ? <li className='w-full sm:w-[48%] lg:w-full 2lg:w-[48%]'>
                 <span className='inline-block'></span> <span>Unstaking: </span>
                 {formatTokenDisplay({
-                  amount: `${getUnbonding()}`,
+                  amount: `${getUnbonding(accountInfo)}`,
                   denom: DENOM,
                   }, false, '0,0.[00000]')} <span className='text-[11px]'>LUME</span>
               </li> : null}
@@ -450,83 +312,12 @@ export const WalletScreen = ({
 
         <Card>
           <h2 className="text-xl font-semibold text-white mb-4">Transaction History</h2>
-          <div className="space-y-2 relative w-full">
-            <Loading isLoading={isLoading} />
-            <div className='w-full overflow-x-auto'>
-              <div className='w-full md:min-w-[968px] text-base'>
-                <div className="hidden md:grid grid-cols-12 gap-4 items-center p-4">
-                  <div className="col-span-2 flex items-center text-gray-500">
-                    Block Height
-                  </div>
-                  <div className="col-span-2 text-gray-500">
-                    TX Hash
-                  </div>
-                  <div className="col-span-3 text-gray-500 text-left whitespace-nowrap">
-                    Transaction Type
-                  </div>
-                  <div className="col-span-2 text-gray-500 text-left whitespace-nowrap">
-                    Transaction Status
-                  </div>
-                  <div className="col-span-3 text-gray-500 flex justify-end">
-                    Time
-                  </div>
-                </div>
-                {transactions.map((tx) => (
-                  <div key={tx.txhash} className="md:grid grid-cols-12 gap-4 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors mb-3 md:mb-0">
-                    <div className="w-full md:col-span-2">
-                      <div className="md:hidden font-semibold text-gray-500 mr-2">Block Height: </div>
-                      <div className='flex items-center mt-1 md:mt-0'>
-                        <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
-                          {getTxIcon(getMessages(tx.tx.body.messages))}
-                        </div>
-                        <AppLink href={`/block/${tx.height}`} className="text-white ml-2 hover:text-lumera-green">{tx.height}</AppLink>
-                      </div>
-                    </div>
-                    <div className="w-full md:col-span-2 mt-3 md:mt-0">
-                      <div className="md:hidden font-semibold text-gray-500 mr-2">TX Hash: </div>
-                      <AppLink href={`/tx/${tx.txhash}`} className="text-white whitespace-nowrap hover:text-lumera-green">
-                        {formatAddress(tx.txhash, 10, -4)}
-                      </AppLink>
-                    </div>
-                    <div className="w-full md:col-span-3 text-left whitespace-nowrap mt-3 md:mt-0">
-                      <div className="md:hidden font-semibold text-gray-500 mr-2">Transaction Type: </div>
-                      {getMessages(tx.tx.body.messages)}
-                    </div>
-                    <div className="w-full md:col-span-2 text-left whitespace-nowrap mt-3 md:mt-0">
-                      <div className="md:hidden font-semibold text-gray-500 mr-2">Transaction Status: </div>
-                      <span className={`truncate relative w-fit rounded ${isTransactionSuccessful(tx) ? 'text-lumera-teal' : 'text-red-500'}`}>
-                        {isTransactionSuccessful(tx) ? 'Success' : 'Failed'}
-                      </span>
-                    </div>
-                    <div className="w-full md:col-span-3 text-sm text-gray-500 md:flex justify-end mt-3 md:mt-0">
-                      <div className="md:hidden font-semibold text-gray-500 mr-2">Time: </div>
-                      <span className="text-white pr-1 whitespace-nowrap">{dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}</span>
-                      (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm whitespace-nowrap' />)
-                    </div>
-                  </div>
-                ))}
-                {!transactions?.length && !isLoading ?
-                  <div className="block items-center">
-                    <H3>No Transactions</H3>
-                  </div> : null
-                }
-              </div>
-            </div>
-            {totalTransactions > 1 ?
-              <div className="paginate-wrapper pt-3">
-                <ReactPaginate
-                  breakLabel="..."
-                  nextLabel=">"
-                  onPageChange={handlePageClick}
-                  pageRangeDisplayed={3}
-                  pageCount={totalTransactions}
-                  previousLabel="<"
-                  renderOnZeroPageCount={null}
-                  className='react-paginate'
-                />
-              </div> : null
-            }
-          </div>
+          <TransactionHistory
+            transactions={transactions}
+            totalTransactions={totalTransactions}
+            isLoading={isLoading}
+            handlePageClick={handlePageClick}
+          />
         </Card>
       </div>
     );
