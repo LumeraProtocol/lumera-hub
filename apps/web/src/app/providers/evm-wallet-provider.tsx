@@ -12,6 +12,7 @@ import {
 import {
   assertEvmProviderMatchesRpc,
   ensureEvmWalletNetwork,
+  EvmNetworkMismatchError,
   getEvmAccountForChain,
   getEvmConnectionErrorMessage,
   getMetaMaskProvider,
@@ -128,16 +129,54 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
     if (!IS_EVM_NETWORK || !provider || !EVM_CHAIN_ID) return;
     const expectedChainId = EVM_CHAIN_ID;
 
+    // `accountsChanged` and `chainChanged` can overlap, and each sync awaits
+    // several RPC round trips. Without a sequence guard the slowest response
+    // wins and can restore state the newer event already superseded.
+    let cancelled = false;
+    let latestSyncId = 0;
+
     const syncAccounts = async () => {
+      const syncId = latestSyncId + 1;
+      latestSyncId = syncId;
+      const isStale = () => cancelled || syncId !== latestSyncId;
+
+      let activeAddress: string;
       try {
-        const activeAddress = await getEvmAccountForChain(provider, expectedChainId);
-        await assertEvmProviderMatchesRpc(provider, { rpcEndpoint: EVM_RPC_ENDPOINT || undefined });
-        setAddress(activeAddress);
-        setError('');
-      } catch (syncError) {
+        activeAddress = await getEvmAccountForChain(provider, expectedChainId);
+      } catch (accountError) {
+        // The wallet reports no usable account for this chain, so there is
+        // genuinely nothing connected.
+        if (isStale()) return;
         setAddress('');
-        setError(syncError instanceof Error ? syncError.message : 'Unable to verify the MetaMask network.');
+        setError(accountError instanceof Error
+          ? accountError.message
+          : 'Unable to read the MetaMask account.');
+        return;
       }
+
+      try {
+        await assertEvmProviderMatchesRpc(provider, { rpcEndpoint: EVM_RPC_ENDPOINT || undefined });
+      } catch (verifyError) {
+        if (isStale()) return;
+        if (verifyError instanceof EvmNetworkMismatchError) {
+          setAddress('');
+          setError(verifyError.message);
+          return;
+        }
+        // Verification could not complete (a transient RPC failure rather than
+        // a real mismatch). Keep the connected address so the wallet does not
+        // appear to disconnect, and surface why it is unverified. Signing paths
+        // re-run this check via `ensureNetwork`, so nothing is signed unverified.
+        setAddress(activeAddress);
+        setError(verifyError instanceof Error
+          ? verifyError.message
+          : 'Unable to verify the MetaMask network.');
+        return;
+      }
+
+      if (isStale()) return;
+      setAddress(activeAddress);
+      setError('');
     };
 
     const handleAccountsChanged = () => void syncAccounts();
@@ -148,6 +187,7 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
     provider.on?.('chainChanged', handleChainChanged);
 
     return () => {
+      cancelled = true;
       provider.removeListener?.('accountsChanged', handleAccountsChanged);
       provider.removeListener?.('chainChanged', handleChainChanged);
     };

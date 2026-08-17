@@ -1,6 +1,16 @@
 import { RATE_VALUE } from '@/contants';
 import { DENOM } from '@/contants/network';
+import { formatTokenDisplay } from '@/utils/format';
 import type { AccountInfoData, Coin } from '@/hooks/useAccountInfo';
+
+const PORTFOLIO_AMOUNT_FORMAT = '0,0.[000000]';
+
+/**
+ * Formats a micro-denom portfolio total the same way the figures beside the
+ * chart are formatted, so chart tooltips do not show raw micro-LUME.
+ */
+export const formatPortfolioAmount = (microAmount: number) =>
+  formatTokenDisplay({ amount: `${microAmount}`, denom: DENOM }, false, PORTFOLIO_AMOUNT_FORMAT);
 
 const toMicroLume = (coin: Coin) => {
   if (coin.denom === DENOM) {

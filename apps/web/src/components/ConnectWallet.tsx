@@ -9,7 +9,7 @@ import {
   useChain,
   useChainWallet,
 } from '@interchain-kit/react';
-import { ChevronDown, Copy, LogOut, RefreshCw } from 'lucide-react';
+import { ChevronDown, Copy, LogOut, RefreshCw, TriangleAlert } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 import { useDispatch, useSelector } from '@/redux/hooks';
@@ -282,9 +282,20 @@ export function ConnectWallet() {
       { label: 'ETH hex address', value: ethAddress },
     ]
     : [{ label: 'Bech32 address', value: address }];
+  // Surface MetaMask sync/verification problems, which otherwise leave the
+  // header looking simply disconnected with no explanation.
+  const evmWalletError = IS_EVM_NETWORK && walletName !== KEPLR_WALLET_NAME
+    ? evmWallet.error
+    : '';
 
   return (
     <div className={styles.accountControls}>
+      {evmWalletError && (
+        <p className={styles.walletAlert} role="alert" title={evmWalletError}>
+          <TriangleAlert aria-hidden="true" size={15} />
+          <span className={styles.walletAlertText}>{evmWalletError}</span>
+        </p>
+      )}
       {!address ?
         <button
           type="button"

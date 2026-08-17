@@ -46,7 +46,7 @@ import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/usePropos
 import { formatToken, formatTokenDisplay } from '@/utils/format';
 import { NAV_ITEMS } from '@/components/layout/AppShell';
 import { DENOM } from '@/contants/network';
-import { getPortfolioData } from '@/utils/portfolio';
+import { formatPortfolioAmount, getPortfolioData } from '@/utils/portfolio';
 import {
   formatGovernanceVote,
   getGovernanceVoteValue,
@@ -104,6 +104,13 @@ interface IPortfolioOverviewChart {
   liquid: number;
 }
 
+interface IPortfolioTooltipParams {
+  marker?: string;
+  name?: string;
+  value?: number;
+  percent?: number;
+}
+
 interface IVoteModal {
   isOpen: boolean;
   setOpen: (status: boolean) => void;
@@ -151,7 +158,14 @@ interface IClaimableRewardsModal {
 const getOption = (data: IPortfolioOverviewChart) => {
   return {
     tooltip: {
-      trigger: 'item'
+      trigger: 'item',
+      // The series carries micro-denom totals, so format the value instead of
+      // letting the default tooltip print raw micro-LUME.
+      formatter: (params: IPortfolioTooltipParams) => [
+        `${params.marker || ''}${params.name || ''}:`,
+        `<strong>${formatPortfolioAmount(Number(params.value || 0))} LUME</strong>`,
+        `(${params.percent || 0}%)`,
+      ].join(' '),
     },
     color: COLORS,
     series: [

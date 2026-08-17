@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  formatPortfolioAmount,
   getPortfolioData,
   getAvailableBalances,
   getDelegations,
@@ -116,5 +117,20 @@ describe('getPortfolioData', () => {
     });
 
     expect(result).toEqual({ stacked: 0, liquid: 1500000 });
+  });
+});
+
+describe('formatPortfolioAmount', () => {
+  it('converts micro-denom chart values to display LUME', () => {
+    expect(formatPortfolioAmount(2500000)).toBe('2.5');
+    expect(formatPortfolioAmount(1500000)).toBe('1.5');
+  });
+
+  it('does not render a micro-denom total as a raw integer', () => {
+    expect(formatPortfolioAmount(152539032533)).not.toBe('152539032533');
+  });
+
+  it('formats a zero total', () => {
+    expect(formatPortfolioAmount(0)).toBe('0');
   });
 });

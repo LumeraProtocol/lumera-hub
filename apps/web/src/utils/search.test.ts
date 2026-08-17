@@ -12,6 +12,16 @@ describe('parseSearchQuery', () => {
     expect(parseSearchQuery('123456')).toBe('/block/123456');
   });
 
+  it('normalizes leading zeros in a block height', () => {
+    expect(parseSearchQuery('007')).toBe('/block/7');
+    expect(parseSearchQuery('0123456')).toBe('/block/123456');
+  });
+
+  it('rejects an all-zero block height', () => {
+    expect(parseSearchQuery('0')).toBeNull();
+    expect(parseSearchQuery('0000')).toBeNull();
+  });
+
   it('routes a transaction hash to the transaction inspector uppercased', () => {
     expect(parseSearchQuery(TX_HASH)).toBe(`/tx/${TX_HASH.toUpperCase()}`);
   });

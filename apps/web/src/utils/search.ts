@@ -9,7 +9,10 @@ export const parseSearchQuery = (input: string): string | null => {
   if (!query) return null;
 
   if (/^\d+$/.test(query)) {
-    return `/block/${query}`;
+    // Block heights are canonical positive integers, so drop leading zeros and
+    // reject an all-zero height rather than routing to /block/0 or /block/007.
+    const height = query.replace(/^0+/, '');
+    return height ? `/block/${height}` : null;
   }
 
   const hash = query.startsWith('0x') || query.startsWith('0X')
