@@ -15,6 +15,7 @@ import {
   writeStakingOverviewCache,
   getStakingRefreshProgress,
   getStakingAutoRefreshDelay,
+  STAKING_REFRESH_RETRY_DELAY_MS,
   type StakingOverviewCache,
   type StakingParams,
   type SlashingParams,
@@ -306,7 +307,6 @@ const useStaking = (address = '', isEvm = false) => {
 
     return () => window.clearTimeout(refreshTimer);
   }, [isCacheReady, lastUpdated, refreshAttempt, refreshOverview]);
-  }, [isCacheReady, lastUpdated, refreshOverview]);
 
   useEffect(() => {
     if (canQueryCosmosAccountData({ address, isEvmNetwork: isEvm })) {

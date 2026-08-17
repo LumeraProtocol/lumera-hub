@@ -56,6 +56,8 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.1.11",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
     "@types/numeral": "^2.0.5",
     "@types/react": "^19",
@@ -63,6 +65,7 @@
     "@types/react-paginate": "^7.1.4",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
+    "jsdom": "^30.0.1",
     "typescript": "^5",
     "vitest": "^3.2.4"
   },
