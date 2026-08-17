@@ -184,6 +184,35 @@ const summarizeTypes = (types: string[]) => {
   return [...counts].map(([type, count]) => count > 1 ? `${type}×${count}` : type).join(', ');
 };
 
+const TRANSACTION_TYPE_PRIORITY = [
+  'Failed',
+  'EthereumTx Send',
+  'EthereumTx Recv',
+  'EthereumTx Self',
+  'Send',
+  'Recv',
+  'Self Transfer',
+  'Vote',
+  'SubmitProposal',
+  'Deposit',
+  'BeginRedelegate',
+  'Undelegate',
+  'Delegate',
+  'WithdrawDelegatorReward',
+  'MultiSend',
+  'Transfer',
+  'EthereumTx',
+] as const;
+
+export const getPrimaryTransactionType = (transactionType: string) => {
+  const transactionTypes = transactionType
+    .split(',')
+    .map((type) => type.trim().replace(/×\d+$/, ''));
+  return TRANSACTION_TYPE_PRIORITY.find((type) => transactionTypes.includes(type))
+    ?? transactionTypes[0]
+    ?? 'unknown';
+};
+
 export const getTransactionDisplayType = (
   transaction: DirectionalTransaction,
   { bech32Address, ethAddress }: TransactionAddresses,

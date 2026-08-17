@@ -3,10 +3,18 @@ import {
   ArrowUpRight,
   ArrowLeftRight,
   ArrowDownLeft,
-  Layers,
-  ClockPlus,
-  Unlink,
-  Star,
+  BadgeDollarSign,
+  CircleArrowDown,
+  CircleArrowUp,
+  CircleDotDashed,
+  CircleMinus,
+  FilePlus2,
+  Gift,
+  HandCoins,
+  Receipt,
+  Repeat2,
+  Vote,
+  Waypoints,
 } from 'lucide-react';
 import { H3 } from 'tamagui';
 import ReactPaginate from 'react-paginate';
@@ -17,6 +25,7 @@ import Loading from '@/components/Loading';
 import PastTime from '@/components/PastTime';
 import { ITransaction } from '@/hooks/useTransaction';
 import {
+  getPrimaryTransactionType,
   getTransactionDisplayType,
   isTransactionSuccessful,
 } from '@/utils/transaction-history';
@@ -33,54 +42,76 @@ interface ITransactionHistory {
 }
 
 const getTxIcon = (type: string) => {
-  const normalizedType = type.replace(/×\d+$/, '');
-  switch(normalizedType) {
+  switch(getPrimaryTransactionType(type)) {
     case 'Send':
-    case 'EthereumTx Send':
       return <ArrowUpRight className="w-5 h-5 text-red-400" />;
+    case 'EthereumTx Send':
+      return <CircleArrowUp className="w-5 h-5 text-red-400" />;
     case 'Recv':
-    case 'EthereumTx Recv':
       return <ArrowDownLeft className="w-5 h-5 text-green-400" />;
+    case 'EthereumTx Recv':
+      return <CircleArrowDown className="w-5 h-5 text-green-400" />;
     case 'Self Transfer':
-    case 'EthereumTx Self':
       return <ArrowLeftRight className="w-5 h-5 text-blue-400" />;
+    case 'EthereumTx Self':
+      return <CircleDotDashed className="w-5 h-5 text-blue-400" />;
+    case 'Vote':
+      return <Vote className="w-5 h-5 text-violet-400" />;
+    case 'SubmitProposal':
+      return <FilePlus2 className="w-5 h-5 text-purple-400" />;
+    case 'Deposit':
+      return <BadgeDollarSign className="w-5 h-5 text-sky-400" />;
     case 'BeginRedelegate':
-      return <ClockPlus className="w-5 h-5 text-indigo-400" />;
+      return <Repeat2 className="w-5 h-5 text-cyan-400" />;
     case 'Delegate':
-      return <Layers className="w-5 h-5 text-indigo-400" />;
+      return <HandCoins className="w-5 h-5 text-indigo-400" />;
+    case 'Undelegate':
+      return <CircleMinus className="w-5 h-5 text-orange-400" />;
+    case 'WithdrawDelegatorReward':
+      return <Gift className="w-5 h-5 text-amber-400" />;
+    case 'MultiSend':
+    case 'Transfer':
+      return <Waypoints className="w-5 h-5 text-blue-400" />;
+    case 'EthereumTx':
+      return <Receipt className="w-5 h-5 text-gray-400" />;
     case 'Failed':
       return <XCircle className="w-5 h-5 text-gray-500" />;
-    case 'Undelegate':
-      return <Unlink className='w-5 h-5 text-red-600' />;
     default:
-      if (type.indexOf('WithdrawDelegatorReward') !== -1) {
-        return <Star className='w-5 h-5 text-amber-400' />;
-      }
       return <ArrowLeftRight className="w-5 h-5 text-gray-400" />;
   }
 };
 
 const getColor = (type: string) => {
-  const normalizedType = type.replace(/×\d+$/, '');
-  switch(normalizedType) {
+  switch(getPrimaryTransactionType(type)) {
     case 'Send':
     case 'EthereumTx Send':
     case 'Failed':
       return 'bg-red-500/20';
-    case 'Delegate':
-    case 'BeginRedelegate':
-      return 'bg-green-400/20';
     case 'Recv':
     case 'EthereumTx Recv':
       return 'bg-green-500/20';
     case 'Self Transfer':
     case 'EthereumTx Self':
       return 'bg-blue-500/20';
+    case 'Vote':
+      return 'bg-violet-500/20';
+    case 'SubmitProposal':
+      return 'bg-purple-500/20';
+    case 'Deposit':
+      return 'bg-sky-500/20';
+    case 'Delegate':
+      return 'bg-indigo-500/20';
+    case 'BeginRedelegate':
+      return 'bg-cyan-500/20';
+    case 'Undelegate':
+      return 'bg-orange-500/20';
+    case 'WithdrawDelegatorReward':
+      return 'recent-activity-icon';
+    case 'MultiSend':
+    case 'Transfer':
+      return 'bg-blue-500/20';
     default:
-       if (type.indexOf('WithdrawDelegatorReward') !== -1) {
-        return 'recent-activity-icon';
-      }
-      return 'bg-red-500/20';
+      return 'bg-gray-500/20';
   }
 }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildTxHistoryPath,
+  getPrimaryTransactionType,
   getTransactionHistoryAddress,
   getTransactionDisplayType,
   hasEthereumTransactionHash,
@@ -265,6 +266,13 @@ describe('transaction history', () => {
     }, {
       ethAddress: '0x1111111111111111111111111111111111111111',
     })).toBe('EthereumTx, Delegate');
+  });
+
+  it('selects semantic icon types for repeated and compound transactions', () => {
+    expect(getPrimaryTransactionType('Vote×2')).toBe('Vote');
+    expect(getPrimaryTransactionType('WithdrawDelegatorReward, Undelegate')).toBe('Undelegate');
+    expect(getPrimaryTransactionType('WithdrawDelegatorReward, BeginRedelegate')).toBe('BeginRedelegate');
+    expect(getPrimaryTransactionType('EthereumTx Recv')).toBe('EthereumTx Recv');
   });
 
 });
