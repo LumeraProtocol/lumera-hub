@@ -812,9 +812,7 @@ export const HomeScreen = ({
   const handleVotePress = (item: IProposal) => {
     handleResetError();
     const currentVoteValue = getGovernanceVoteValue(userVotes[item.id]);
-    if (currentVoteValue) {
-      onOptionChange(currentVoteValue);
-    }
+    onOptionChange(currentVoteValue || '1');
     setVoteOpen(true);
     setSelectedItem(item);
   }
