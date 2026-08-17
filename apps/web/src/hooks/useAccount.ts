@@ -123,12 +123,12 @@ const useAccount = () => {
   const [myBalance, setBalance] = useState<number>(0);
 
   const getBalances = async () => {
-    if (!params?.validator) {
+    if (!params?.address) {
       return;
     }
     setBalancesLoading(true);
     try {
-      const { data } = await instance.get(`/cosmos/bank/v1beta1/balances/${params?.validator}`);
+      const { data } = await instance.get(`/cosmos/bank/v1beta1/balances/${params?.address}`);
       setBalances(data?.balances);
     } catch (error) {
       console.error(error);
@@ -154,12 +154,12 @@ const useAccount = () => {
   }
 
   const getAccountInfo = async () => {
-    if (!params?.validator) {
+    if (!params?.address) {
       return;
     }
     setAccountLoading(true);
     try {
-      const { data } = await instance.get(`/cosmos/auth/v1beta1/accounts/${params?.validator}`);
+      const { data } = await instance.get(`/cosmos/auth/v1beta1/accounts/${params?.address}`);
       setAccount(data?.account);
     } catch (error) {
       console.error(error);
@@ -168,12 +168,12 @@ const useAccount = () => {
   }
 
   const getDelegationsInfo = async () => {
-    if (!params?.validator) {
+    if (!params?.address) {
       return;
     }
     setDelegationsLoading(true);
     try {
-      const { data } = await instance.get(`/cosmos/staking/v1beta1/delegations/${params?.validator}`);
+      const { data } = await instance.get(`/cosmos/staking/v1beta1/delegations/${params?.address}`);
       setDelegations(data?.delegation_responses);
     } catch (error) {
       console.error(error);
@@ -200,12 +200,12 @@ const useAccount = () => {
   }
 
   const getRewards = async () => {
-    if (!params?.validator) {
+    if (!params?.address) {
       return;
     }
     setRewardsLoading(true);
     try {
-      const { data } = await instance.get(`/cosmos/distribution/v1beta1/delegators/${params?.validator}/rewards`);
+      const { data } = await instance.get(`/cosmos/distribution/v1beta1/delegators/${params?.address}/rewards`);
       setRewards(data?.rewards);
     } catch (error) {
       console.error(error);
@@ -214,12 +214,12 @@ const useAccount = () => {
   }
 
   const getUnbondingDelegations = async () => {
-    if (!params?.validator) {
+    if (!params?.address) {
       return;
     }
     setUnbondingDelegationsLoading(true);
     try {
-      const { data } = await instance.get(`/cosmos/staking/v1beta1/delegators/${params?.validator}/unbonding_delegations`);
+      const { data } = await instance.get(`/cosmos/staking/v1beta1/delegators/${params?.address}/unbonding_delegations`);
       setUnbondingDelegations(data?.unbonding_responses);
     } catch (error) {
       console.error(error);
@@ -243,12 +243,12 @@ const useAccount = () => {
   }
 
   const getTransactions = async () => {
-    if (!params?.validator) {
+    if (!params?.address) {
       return;
     }
     setTransactionsLoading(true);
     try {
-      const { data } = await instance.get(`/cosmos/tx/v1beta1/txs?query=message.sender=%27${params?.validator}%27&pagination.limit=20&pagination.offset=0`);
+      const { data } = await instance.get(`/cosmos/tx/v1beta1/txs?query=message.sender=%27${params?.address}%27&pagination.limit=20&pagination.offset=0`);
       setTransactions(data.tx_responses);
     } catch (e) {
       console.error('API Error:', e);
@@ -257,12 +257,12 @@ const useAccount = () => {
   }
 
   const getRecentReceived = async () => {
-    if (!params?.validator) {
+    if (!params?.address) {
       return;
     }
     setRecentReceivedLoading(true);
     try {
-      const { data } = await instance.get(`/cosmos/tx/v1beta1/txs?&pagination.reverse=true&query=coin_received.receiver=%27${params?.validator}%27&pagination.limit=5&pagination.limit=20&pagination.count_total=true`);
+      const { data } = await instance.get(`/cosmos/tx/v1beta1/txs?&pagination.reverse=true&query=coin_received.receiver=%27${params?.address}%27&pagination.limit=5&pagination.limit=20&pagination.count_total=true`);
       setRecentReceived(data.tx_responses);
     } catch (e) {
       console.error('API Error:', e);
@@ -307,12 +307,12 @@ const useAccount = () => {
   }
 
   const getCascadeFiles = async () => {
-    if (!params?.validator) {
+    if (!params?.address) {
       return;
     }
     setCascadeFilesLoading(true);
     try {
-      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=50&creator=${params?.validator}`);
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=50&creator=${params?.address}`);
       const results = [];
       for (const item of data.items) {
         const { fee } = await getAction(item.id);
@@ -338,7 +338,7 @@ const useAccount = () => {
     getValidators();
     getAccountInfo();
     getDelegationsInfo();
-  }, [params?.validator]);
+  }, [params?.address]);
 
   useEffect(() => {
     getMyStakings();
@@ -355,7 +355,7 @@ const useAccount = () => {
     delegations,
     account,
     validators,
-    address: params?.validator,
+    address: params?.address,
     isRewardsLoading,
     rewards,
     isUnbondingDelegationsLoading,

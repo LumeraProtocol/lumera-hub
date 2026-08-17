@@ -11,6 +11,7 @@ import { RATE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 import { IProposal } from '@/hooks/useProposals';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { extractValidNumber } from '@/utils/helpers';
+import { assertGovernanceTransactionsAvailable } from '@/utils/cosmos-transactions';
 import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 
 const LIMIT = 20;
@@ -68,7 +69,7 @@ const EXPEDITED_DEPOSIT_REQUIRED = GOVERNANCE_STATS.expeditedDepositRequired;
 
 const useGovernances = () => {
   const { trackingHubTransaction } = useTrackingHubTransaction();
-  const { address, getClient } = useWalletConnect();
+  const { address, canSignCosmosTransactions, getClient } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [governances, setGovernances] = useState<IProposal[]>([]);
   const [msg, setMsg] = useState({
@@ -160,7 +161,7 @@ const useGovernances = () => {
     } catch (error) {
       setMsg({
         type: 'gov-error',
-        message: (error as Error)?.message ||  'An unknown error occurred.',
+        message: error instanceof Error ? error.message : 'An unknown error occurred.',
       });
     }
     setSumaryLoading(false);
@@ -202,7 +203,7 @@ const useGovernances = () => {
     } catch (error) {
       setMsg({
         type: 'gov-error',
-        message: (error as Error)?.message ||  'An unknown error occurred.',
+        message: error instanceof Error ? error.message : 'An unknown error occurred.',
       });
     }
     setLoading(false);
@@ -263,6 +264,15 @@ const useGovernances = () => {
   }
 
   const handleOpenCreateProposalModal = () => {
+    try {
+      assertGovernanceTransactionsAvailable(canSignCosmosTransactions);
+    } catch (guardError) {
+      setMsg({
+        type: 'error',
+        message: guardError instanceof Error ? guardError.message : 'An unknown error occurred.',
+      });
+      return;
+    }
     resetData();
     setSelectedModal('create');
 
@@ -387,7 +397,7 @@ const useGovernances = () => {
       return latestBlock?.header?.height + bufferBlocks;
     } catch (error) {
       console.error(error);
-      throw new Error((error as Error)?.message ||  'An unknown error occurred.');
+      throw new Error(error instanceof Error ? error.message : 'An unknown error occurred.');
     }
   }
 
@@ -398,6 +408,7 @@ const useGovernances = () => {
     });
     setCreateProposalLoading(true);
     try {
+      assertGovernanceTransactionsAvailable(canSignCosmosTransactions);
       if (!proposal.title) {
         setMsg({
           type: 'error',
@@ -499,7 +510,7 @@ const useGovernances = () => {
           } catch (error) {
             setMsg({
               type: 'error',
-              message: `Failed to retrieve block height for software upgrade proposal: ${(error as Error)?.message ||  'An unknown error occurred.'}`,
+              message: `Failed to retrieve block height for software upgrade proposal: ${error instanceof Error ? error.message : String(error)}`,
             });
             return;
           }
@@ -547,7 +558,7 @@ const useGovernances = () => {
           type: 'success',
           message: 'Create Proposal Successfully',
         });
-        setTransactionHash(result.transactionHash);
+        setTransactionHash(result?.transactionHash);
         fetchData();
         await trackingHubTransaction({
           hash: result.transactionHash,
@@ -564,7 +575,7 @@ const useGovernances = () => {
     } catch(error) {
       setMsg({
         type: 'error',
-        message: (error as Error)?.message ||  'An unknown error occurred.',
+        message: error instanceof Error ? error.message : 'An unknown error occurred.',
       });
       console.error('error', error);
     }

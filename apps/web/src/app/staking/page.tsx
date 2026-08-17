@@ -10,10 +10,14 @@ import useStaking from '@/hooks/useStaking';
 import useAccountInfo from '@/hooks/useAccountInfo';
 import useUnbond from '@/hooks/useUnbond';
 import useRedelegate from '@/hooks/useRedelegate';
+import { useDispatch } from '@/redux/hooks';
+import { setModalOpen } from '@/redux/wallet.slice';
+import { KEPLR_WALLET_NAME } from '@/utils/wallet-selection';
 
 export default function Page() {
-  const { address } = useWalletConnect();
-  const staking = useStaking(address);
+  const dispatch = useDispatch();
+  const { address, isEvm } = useWalletConnect();
+  const staking = useStaking(address, isEvm);
   const {
     loading,
     accountInfo,
@@ -34,6 +38,9 @@ export default function Page() {
   const delegate = useDelegate({
     availableAmount: `${getTotalBalances(accountInfo)}`,
     callback: fetchData,
+    validators: staking.activeValidators,
+    totalValidators: staking.totalValidators,
+    isValidatorDataLoading: staking.isLoading,
   });
   const unbond = useUnbond({
     callback: () => {
@@ -65,6 +72,7 @@ export default function Page() {
           isAccountInfoLoading={loading}
           onRefreshBalance={fetchData}
           delegateOptions={{
+            canDelegate: delegate.canDelegate,
             isVoteLoading: delegate.isLoading,
             error: delegate.error,
             optionsAdvanced: delegate.optionsAdvanced,
@@ -85,6 +93,10 @@ export default function Page() {
             onCloseContinueToStakingModal: delegate.handleCloseContinueToStakingModal,
             onSelectValidator: delegate.handleSelectValidator,
             onStakingAmountChange: delegate.handleStakingAmountChange,
+            onSwitchWallet: () => dispatch(setModalOpen({
+              status: true,
+              preferredWalletName: KEPLR_WALLET_NAME,
+            })),
           }}
           staking={{
             totalValidators: staking.totalValidators,
@@ -92,6 +104,10 @@ export default function Page() {
             currentTab: staking.currentTab,
             params: staking.params,
             isLoading: staking.isLoading,
+            isRefreshing: staking.isRefreshing,
+            refreshProgress: staking.refreshProgress,
+            lastUpdated: staking.lastUpdated,
+            refreshError: staking.error,
             slashingParams: staking.slashingParams,
             signingInfos: staking.signingInfos,
             validatorTab: staking.validatorTab,
@@ -108,6 +124,7 @@ export default function Page() {
             handleOpenModal: staking.handleOpenModal,
             handleCloseModal: staking.handleCloseModal,
             handleShowConfirmModal: staking.handleShowConfirmModal,
+            onRefresh: staking.refreshOverview,
           }}
           claim={{
             onClaimButtonClick: handleClaimButtonClick,

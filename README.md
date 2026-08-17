@@ -24,6 +24,37 @@ At its core, **Lumera** combines scalable infrastructure with programmable econo
 - For desktop: Rust toolchain
 - For mobile: Xcode (macOS) or Android Studio
 
+### Quick Start (Make)
+
+The fastest way to run the web app is through the Makefile. Each network target
+installs dependencies, creates `apps/web/.env.local` from the template when it
+is missing, and pins the complete network profile — no manual env editing needed:
+
+```bash
+make devnet    # run the dev server against Lumera devnet
+make testnet   # run the dev server against Lumera testnet
+make mainnet   # run the dev server against Lumera mainnet
+```
+
+All targets (replace `<net>` with `devnet`, `testnet`, or `mainnet`):
+
+| Target | What it does |
+| --- | --- |
+| `make <net>` | Install, configure, and run the development server |
+| `make <net>-build` | Create a production build configured for that network |
+| `make <net>-check` | Run tests, type checking, and a production build |
+| `make <net>-preview` | Build and serve a production bundle |
+| `make setup` | Install dependencies and create `.env.local` when missing |
+| `make test` | Run web unit tests |
+| `make typecheck` | Run web TypeScript checks |
+| `make help` | List available commands (also the default target) |
+
+The dev and preview servers listen on port 3000; override it with `PORT`:
+
+```bash
+make testnet PORT=3001
+```
+
 ### Installation
 
 ```bash
@@ -31,6 +62,24 @@ pnpm install
 ```
 
 ## Development
+
+### Select a network
+
+The Make targets above set the network profile for you. When running the app
+directly with pnpm instead, copy the web environment template and select one of
+the local network profiles:
+
+```bash
+cp apps/web/.env.example apps/web/.env.local
+```
+
+```dotenv
+NEXT_PUBLIC_NETWORK_PROFILE=testnet
+```
+
+Supported profiles are `devnet`, `testnet`, and `mainnet`. Their chain IDs and endpoints are defined together in `apps/web/src/contants/network.ts`. Individual `NEXT_PUBLIC_CHAIN_NAME`, `NEXT_PUBLIC_CHAIN_ID`, `NEXT_PUBLIC_RPC_ENDPOINT`, `NEXT_PUBLIC_REST_AI_URL`, `NEXT_PUBLIC_EVM_RPC_ENDPOINT`, `NEXT_PUBLIC_EVM_WS_ENDPOINT`, `NEXT_PUBLIC_EVM_CHAIN_ID`, and `NEXT_PUBLIC_SNAPI_URL` values can still override the selected profile.
+
+Profiles with both an EVM RPC endpoint and EVM chain ID use an injected EIP-1193 wallet for native LUME balances and transfers. Profiles without those values continue to use the legacy Cosmos/Interchain wallet flow.
 
 ### Run Dev Servers with Watcher
 

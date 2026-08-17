@@ -9,6 +9,8 @@ import { REST_AI_URL, DENOM } from '@/contants/network';
 import { Coin } from '@/hooks/useAccountInfo'
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
+import { assertGovernanceTransactionsAvailable } from '@/utils/cosmos-transactions';
+import { GovernanceVote } from '@/utils/governance-votes';
 import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 
 type TMessage = {
@@ -78,7 +80,12 @@ interface UseDepositOptions {
 
 const useProposals = (options: UseDepositOptions = {}) => {
   const { trackingHubTransaction } = useTrackingHubTransaction();
-  const { address, getClient } = useWalletConnect();
+  const {
+    address,
+    bech32Address,
+    canSignCosmosTransactions,
+    getClient,
+  } = useWalletConnect();
   const [proposalsInfo, setProposalsInfo] = useState<IProposal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -93,6 +100,31 @@ const useProposals = (options: UseDepositOptions = {}) => {
   });
   const [isVoteOpen, setVoteOpen] = useState(false);
   const [transactionHash, setTransactionHash] = useState('');
+  const [userVotes, setUserVotes] = useState<Record<string, GovernanceVote>>({});
+
+  const refreshUserVote = async (proposalId: string) => {
+    if (!bech32Address) {
+      return;
+    }
+
+    try {
+      const { data } = await axios.get(
+        `${REST_AI_URL}/cosmos/gov/v1/proposals/${proposalId}/votes/${bech32Address}`,
+      );
+      setUserVotes((current) => ({
+        ...current,
+        [proposalId]: data.vote,
+      }));
+    } catch (queryError) {
+      if (axios.isAxiosError(queryError) && queryError.response?.status === 404) {
+        setUserVotes((current) => {
+          const next = { ...current };
+          delete next[proposalId];
+          return next;
+        });
+      }
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -115,6 +147,38 @@ const useProposals = (options: UseDepositOptions = {}) => {
   useEffect(() => {
       fetchData();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!bech32Address) {
+      setUserVotes({});
+      return;
+    }
+
+    const fetchUserVotes = async () => {
+      const voteEntries = await Promise.all(proposalsInfo.map(async (proposal) => {
+        try {
+          const { data } = await axios.get(
+            `${REST_AI_URL}/cosmos/gov/v1/proposals/${proposal.id}/votes/${bech32Address}`,
+          );
+          return [proposal.id, data.vote] as const;
+        } catch {
+          return null;
+        }
+      }));
+
+      if (!cancelled) {
+        setUserVotes(Object.fromEntries(voteEntries.filter((entry) => entry !== null)));
+      }
+    };
+
+    fetchUserVotes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [bech32Address, proposalsInfo]);
 
   useEffect(() => {
     if (options?.customMemo) {
@@ -147,9 +211,10 @@ const useProposals = (options: UseDepositOptions = {}) => {
     if (!item) {
         return null;
     }
-    setVoteLoading(true);
     setErrorVote(null);
     try {
+      assertGovernanceTransactionsAvailable(canSignCosmosTransactions);
+      setVoteLoading(true);
       const client = await getClient();
       const msg = {
         typeUrl: '/cosmos.gov.v1.MsgVote',
@@ -176,6 +241,7 @@ const useProposals = (options: UseDepositOptions = {}) => {
       const result = await client.signAndBroadcast(address, [msg], fee, voteAdvanced.memo);
       if (result?.transactionHash) {
         setTransactionHash(result?.transactionHash);
+        await refreshUserVote(item.id);
         // setVoteOpen(false);
         fetchData();
         if (options?.callback) {
@@ -189,7 +255,7 @@ const useProposals = (options: UseDepositOptions = {}) => {
         });
       }
     } catch (error) {
-      setErrorVote((error as Error)?.message ||  'An unknown error occurred.')
+      setErrorVote(error instanceof Error ? error?.message : 'An unknown error occurred.')
     } finally {
       setVoteLoading(false);
     }
@@ -221,6 +287,7 @@ const useProposals = (options: UseDepositOptions = {}) => {
     voteAdvanced,
     isVoteOpen,
     transactionHash,
+    userVotes,
     handleCloseCongratulationsModal,
     setVoteOpen,
     handleResetError,

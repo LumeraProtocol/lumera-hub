@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   X,
   BarChart2,
@@ -19,6 +19,7 @@ import { useChain } from '@interchain-kit/react';
 
 import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 import AppLink from '@/components/AppLink';
+import SearchDialog from '@/components/SearchDialog';
 import Tooltip from '@/components/Tooltip';
 import GetStarted from '@/components/GetStarted';
 import { CHAIN_NAME } from '@/contants/network';
@@ -61,7 +62,15 @@ export const NAV_ITEMS: TNaxItems[] = [
 const ESSENTIALS_NAV_ITEMS: TNaxItems[] = NAV_ITEMS.slice(0, 5);
 const TOOLS_NAV_ITEMS: TNaxItems[] = NAV_ITEMS.slice(5, NAV_ITEMS.length);
 
+function isActive(currentUrl: string, url: string) {
+  if (currentUrl === '/' && currentUrl === url) {
+    return true;
+  }
+  return url !== NAV_ITEMS[0].url && currentUrl.indexOf(url) !== -1;
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const { address } = useChain(CHAIN_NAME);
@@ -74,33 +83,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       message: null,
       status: null,
     }))
-    if (window?.location?.pathname) {
-      dispatch(setCurrentPath({
-        currentPath: window.location.pathname,
-      }));
-      const navItem = NAV_ITEMS.find((item) => isActive(currentPath, item.url));
-      dispatch(setActiveView({
-        activeView: navItem?.id || "dashboard",
-      }));
-    }
     const referrer = sessionStorage.getItem('acquisitionSource');
     if (!referrer) {
       sessionStorage.setItem('acquisitionSource', searchParams.get('utm_source') || document.referrer || 'Direct');
     }
   }, []);
 
+  useEffect(() => {
+    if (pathname) {
+      dispatch(setCurrentPath({
+        currentPath: pathname,
+      }));
+      const navItem = NAV_ITEMS.find((item) => isActive(pathname, item.url));
+      dispatch(setActiveView({
+        activeView: navItem?.id || "dashboard",
+      }));
+    }
+  }, [dispatch, pathname]);
+
   const onNavClick = (id: ViewId) => {
     dispatch(setActiveView({
       activeView: id,
     }));
     setSidebarOpen(false)
-  }
-
-  const isActive = (currentUrl: string, url: string) => {
-    if (currentUrl === '/' && currentUrl === url) {
-      return true;
-    }
-    return url !== NAV_ITEMS[0].url && currentUrl.indexOf(url) !== -1;
   }
 
   const handleMenuItemClick = (item: TNaxItems) => {
@@ -123,8 +128,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col flex-grow bg-lumera-navy border-r border-gray-800/50">
           <AppLink href="/">
             <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800">
-              <div className="w-[104px] h-6 grid place-items-center">
-                <Image src="/logo.svg" alt="Lumera" width={104} height={24} />
+              <div className="w-[104px] h-[25px] grid place-items-center">
+                <Image className="w-[104px] h-auto" src="/logo.svg" alt="Lumera" width={104} height={25} />
               </div>
             </div>
           </AppLink>
@@ -210,8 +215,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <div className="flex justify-between items-center w-full">
                 <AppLink href="/" className="text-lumera-teal hover:text-lumera-green w-full">
                   <div className="flex items-center gap-3 px-6 h-16 border-b border-gray-800 w-full">
-                    <div className="w-[104px] h-6 grid place-items-center">
-                      <Image src="/logo.svg" alt="Lumera" width={104} height={24} />
+                    <div className="w-[104px] h-[25px] grid place-items-center">
+                      <Image className="w-[104px] h-auto" src="/logo.svg" alt="Lumera" width={104} height={25} />
                     </div>
                   </div>
                 </AppLink>
@@ -320,6 +325,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <GetStarted />
                 </div> : null
               }
+              <SearchDialog />
               {/* Placeholder for wallet actions */}
               <ConnectWallet />
               <WalletModalComponent />

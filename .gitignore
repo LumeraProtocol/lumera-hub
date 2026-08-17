@@ -43,3 +43,6 @@ yarn-error.log*
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
+
+# Superdesign local design context and temporary templates
+.superdesign/

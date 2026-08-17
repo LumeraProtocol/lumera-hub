@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </> : null
         }
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {googleTagManagerKey ?
           <noscript><iframe src={`https://www.googletagmanager.com/ns.html?id=${googleTagManagerKey}`}
           height="0" width="0" style={{ display:'none', visibility:'hidden' }}></iframe></noscript> : null

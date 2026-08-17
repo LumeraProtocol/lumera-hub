@@ -5,12 +5,12 @@ import {
   Input,
   Text,
   Progress,
-  Button,
 } from 'tamagui';
 import { Search } from '@tamagui/lucide-icons';
 import {
   ArrowUp,
   ArrowDown,
+  RefreshCw,
 } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
@@ -29,6 +29,10 @@ import { calculatePercent } from '@/utils/helpers';
 interface IAllValidators {
   staking: {
     isLoading: boolean;
+    isRefreshing: boolean;
+    refreshProgress: number;
+    lastUpdated: number | null;
+    refreshError: string;
     params: {
       bond_denom: string;
       historical_entries: number;
@@ -39,14 +43,17 @@ interface IAllValidators {
     };
     currentTab: string;
     onTabChange: (tab: string) => void;
+    onRefresh: () => Promise<void>;
     validators: IValidator[];
   }
   totalPower: number;
   getUptime: (validator: IValidator) => number;
   delegateOptions: {
+    canDelegate: boolean;
     onOpenModal: (validator: string, customMemo?: string) => void;
     validators: IValidator[];
     onSelectValidator: (validator: string) => void;
+    onSwitchWallet: () => void;
   }
 }
 
@@ -60,6 +67,7 @@ export default function AllValidators({
   const [keyword, setKeyword] = useState('');
   const [sortBy, setSortBy] = useState('uptime');
   const [sort, setSort] = useState('DESC');
+  const refreshProgress = Math.min(100, Math.max(0, staking.refreshProgress));
 
   useEffect(() => {
     setSortBy('uptime');
@@ -102,7 +110,7 @@ export default function AllValidators({
     if (keyword) {
       validators = validators.filter((validator) => validator.description.moniker.toLowerCase().indexOf(keyword.toLowerCase()) !== -1);
     }
-    return [...validators.sort((a, b) => sortFunc(a, b))];
+    return [...validators].sort((a, b) => sortFunc(a, b));
   }
 
   const handleInputChange = (text: string) => {
@@ -156,6 +164,52 @@ export default function AllValidators({
             <SectionTitle className='mb-0'>All Validators</SectionTitle>
             <SizableText className='text-lumera-label !text-base'>Delegate your stake to a validator to earn rewards.</SizableText>
           </div>
+          <div className='flex flex-col sm:flex-row sm:items-center gap-3 md:justify-end'>
+            <div className='text-left sm:text-right text-sm text-lumera-label' aria-live='polite'>
+              <div>
+                Last updated: {staking.lastUpdated
+                  ? new Date(staking.lastUpdated).toLocaleString()
+                  : 'Not yet updated'}
+              </div>
+              {staking.isRefreshing ? (
+                <div className='text-lumera-teal'>Updating {refreshProgress}%</div>
+              ) : null}
+              {!staking.isRefreshing && staking.refreshError ? (
+                <div className='text-red-400'>
+                  {staking.lastUpdated
+                    ? 'Update failed. Showing cached data.'
+                    : 'Unable to load staking data.'}
+                </div>
+              ) : null}
+            </div>
+            <button
+              type='button'
+              className='inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border border-lumera-teal/50 px-4 text-sm font-semibold text-lumera-teal transition-colors hover:bg-lumera-teal/10 disabled:cursor-not-allowed disabled:opacity-60'
+              onClick={() => void staking.onRefresh()}
+              disabled={staking.isRefreshing}
+              aria-busy={staking.isRefreshing}
+            >
+              <RefreshCw className={`h-4 w-4 ${staking.isRefreshing ? 'animate-spin' : ''}`} aria-hidden='true' />
+              Refresh
+            </button>
+          </div>
+        </div>
+        {staking.isRefreshing ? (
+          <div
+            className='mt-4 h-1.5 w-full overflow-hidden rounded-full bg-slate-700'
+            role='progressbar'
+            aria-label='Updating staking data'
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={refreshProgress}
+          >
+            <div
+              className='h-full rounded-full bg-lumera-teal transition-[width] duration-300'
+              style={{ width: `${refreshProgress}%` }}
+            />
+          </div>
+        ) : null}
+        <div className='mt-4 flex justify-end'>
           <div className='w-full sm:w-80'>
             <div className='input-wrapper'>
               <Input
@@ -172,6 +226,24 @@ export default function AllValidators({
           </div>
         </div>
         <div className='mt-5 relative'>
+          {!delegateOptions.canDelegate ? (
+            <div
+              role="alert"
+              className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-amber-400/30 bg-amber-400/10 px-4 py-3"
+            >
+              <div>
+                <p className="font-semibold text-amber-200">Staking is not currently supported with MetaMask.</p>
+                <p className="mt-0.5 text-sm text-amber-100/70">Switch to a Keplr wallet to delegate LUME.</p>
+              </div>
+              <button
+                type="button"
+                className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 cursor-pointer"
+                onClick={delegateOptions.onSwitchWallet}
+              >
+                Switch to Keplr
+              </button>
+            </div>
+          ) : null}
           {staking.isLoading || !staking?.params?.bond_denom ? (
               <div className='relative my-2 min-h-60'>
                 <AppLoading
@@ -299,12 +371,12 @@ export default function AllValidators({
                                   </Text>
                                 </div>
                                 {validator.jailed ?
-                                  <AppButton variant='third' className='min-w-[96px]'>Jailed</AppButton> :
+                                  <AppButton variant='third' className='min-w-[96px]'>Jailed</AppButton> : delegateOptions.canDelegate ?
                                   <AppButton
                                     onClick={() => delegateOptions.onSelectValidator(validator.operator_address)}
                                   >
                                     Delegate
-                                  </AppButton>
+                                  </AppButton> : null
                                 }
                               </div>
                             </td>

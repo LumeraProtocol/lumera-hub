@@ -5,6 +5,7 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 import { DENOM } from '@/contants/network';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
+import { evmBalanceToMicroLume, getEvmBalance } from '@/utils/evm';
 
 export interface Coin {
   denom: string;
@@ -44,10 +45,88 @@ export interface AccountInfoData {
   balances: Coin[];
   delegations: DelegationResponse[];
   rewards: ValidatorRewards[];
+  rewardTotal?: Coin[];
   unbonding: ValidatorUnbonding[];
 }
 
+interface AccountInfoApiResponse<T> {
+  data: T;
+}
+
+interface FetchEvmAccountInfoOptions {
+  ethAddress: string;
+  bech32Address: string;
+  getBalance?: (address: string) => Promise<string>;
+  get?: (path: string) => Promise<AccountInfoApiResponse<unknown>>;
+}
+
+export const fetchEvmAccountInfo = async ({
+  ethAddress,
+  bech32Address,
+  getBalance = getEvmBalance,
+  get = instance.get,
+}: FetchEvmAccountInfoOptions): Promise<AccountInfoData> => {
+  if (!bech32Address) {
+    throw new Error('Cannot query staking data without a Bech32 address.');
+  }
+
+  const [balance, delegationsRes, rewardsRes, unbondingRes] = await Promise.all([
+    getBalance(ethAddress),
+    get(`/cosmos/staking/v1beta1/delegations/${bech32Address}`),
+    get(`/cosmos/distribution/v1beta1/delegators/${bech32Address}/rewards`),
+    get(`/cosmos/staking/v1beta1/delegators/${bech32Address}/unbonding_delegations`),
+  ]);
+  const delegationsData = delegationsRes.data as { delegation_responses?: DelegationResponse[] };
+  const rewardsData = rewardsRes.data as { rewards?: ValidatorRewards[]; total?: Coin[] };
+  const unbondingData = unbondingRes.data as { unbonding_responses?: ValidatorUnbonding[] };
+
+  return {
+    balances: [{ denom: DENOM, amount: evmBalanceToMicroLume(balance) }],
+    delegations: delegationsData.delegation_responses || [],
+    rewards: rewardsData.rewards || [],
+    rewardTotal: rewardsData.total || [],
+    unbonding: unbondingData.unbonding_responses || [],
+  };
+};
+
+interface FetchAccountInfoOptions {
+  get?: (path: string) => Promise<AccountInfoApiResponse<unknown>>;
+}
+
+export const fetchAccountInfo = async (
+  address: string,
+  { get = instance.get }: FetchAccountInfoOptions = {},
+): Promise<AccountInfoData> => {
+  const [balanceRes, delegationsRes, rewardsRes, unbondingRes] = await Promise.all([
+    get(`/cosmos/bank/v1beta1/balances/${address}`),
+    get(`/cosmos/staking/v1beta1/delegations/${address}`),
+    get(`/cosmos/distribution/v1beta1/delegators/${address}/rewards`),
+    get(`/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`),
+  ]);
+  const balanceData = balanceRes.data as { balances?: Coin[] };
+  const delegationsData = delegationsRes.data as { delegation_responses?: DelegationResponse[] };
+  const rewardsData = rewardsRes.data as { rewards?: ValidatorRewards[]; total?: Coin[] };
+  const unbondingData = unbondingRes.data as { unbonding_responses?: ValidatorUnbonding[] };
+
+  return {
+    balances: balanceData.balances || [],
+    delegations: delegationsData.delegation_responses || [],
+    rewards: rewardsData.rewards || [],
+    rewardTotal: rewardsData.total || [],
+    unbonding: unbondingData.unbonding_responses || [],
+  };
+};
+
 export const getTotalRewards = (accountInfo: AccountInfoData | null) => {
+  if (accountInfo?.rewardTotal) {
+    return accountInfo.rewardTotal.reduce((total, reward) => {
+      if (reward.denom === DENOM) {
+        return total + Number(reward.amount);
+      }
+      return total;
+    }, 0);
+  }
+
   let total = 0;
   if (accountInfo?.rewards?.length) {
     for (const item of accountInfo?.rewards) {
@@ -63,7 +142,7 @@ export const getTotalRewards = (accountInfo: AccountInfoData | null) => {
 
 const useAccountInfo = () => {
   const { trackingHubTransaction } = useTrackingHubTransaction();
-  const { address, getClient } = useWalletConnect();
+  const { address, bech32Address, getClient, isEvm } = useWalletConnect();
 
   const [accountInfo, setAccountInfo] = useState<AccountInfoData | null>({
     balances: [],
@@ -92,22 +171,20 @@ const useAccountInfo = () => {
     setError(null);
 
     try {
-      const [balanceRes, delegationsRes, rewardsRes, resUnbonding] = await Promise.all([
-        instance.get(`/cosmos/bank/v1beta1/balances/${address}`),
-        instance.get(`/cosmos/staking/v1beta1/delegations/${address}`),
-        instance.get(`/cosmos/distribution/v1beta1/delegators/${address}/rewards`),
-        instance.get(`/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`),
-      ]);
-
-      const balanceData = balanceRes.data;
-      const delegationsData = delegationsRes.data;
-      const rewardsData = rewardsRes.data;
-      const _accountInfo = {
-        balances: balanceData.balances,
-        delegations: delegationsData.delegation_responses,
-        rewards: rewardsData.rewards,
-        unbonding: resUnbonding.unbonding_responses,
+      if (isEvm) {
+        const _accountInfo = await fetchEvmAccountInfo({
+          ethAddress: address,
+          bech32Address,
+        });
+        setAccountInfo(_accountInfo);
+        setClaimInfo((current) => ({
+          ...current,
+          totalRewards: `${getTotalRewards(_accountInfo)}`,
+        }));
+        return;
       }
+
+      const _accountInfo = await fetchAccountInfo(address);
       setAccountInfo(_accountInfo);
       setClaimInfo({
         ...claimInfo,
@@ -138,10 +215,14 @@ const useAccountInfo = () => {
       });
     }
     fetchData();
-  }, [address]);
+  }, [address, bech32Address, isEvm]);
 
   const handleClaimButtonClick = async () => {
     setErrorClaim(null);
+    if (isEvm) {
+      setErrorClaim('Staking rewards require a Keplr wallet connection.');
+      return;
+    }
     if (!claimInfo.senderAddress) {
       return;
     }

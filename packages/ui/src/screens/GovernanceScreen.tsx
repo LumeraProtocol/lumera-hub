@@ -21,11 +21,18 @@ import SectionTitle from '@/components/SectionTitle';
 import { AppLoading } from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
 import CreateProposalModal from '@/components/CreateProposalModal';
+import CountDown from '@/components/CountDown';
 import { IProposal } from '@/hooks/useProposals';
 import { formatNumber, formatToken } from '@/utils/format';
+import {
+  formatGovernanceVote,
+  getGovernanceVoteValue,
+  GovernanceVote,
+} from '@/utils/governance-votes';
 import { VoteModal } from './HomeScreen';
 
 interface IGovernanceScreen {
+  transactionUnavailableReason: string;
   selectedItem: IProposal | null;
   setSelectedItem: (item: IProposal) => void;
   isLoading: boolean,
@@ -93,6 +100,7 @@ interface IGovernanceScreen {
     handleCloseCongratulationsModal: () => void;
   };
   voteTransactionHash?: string;
+  userVotes: Record<string, GovernanceVote>;
   onCloseVoteCongratulationsModal?: () => void;
   createProposal: {
     step: number;
@@ -133,6 +141,7 @@ interface IGovernanceScreen {
 }
 
 export const GovernanceScreen = ({
+  transactionUnavailableReason,
   isLoading,
   governances,
   sumary,
@@ -146,6 +155,7 @@ export const GovernanceScreen = ({
   isSumaryLoading,
   nextKey,
   voteTransactionHash,
+  userVotes,
   selectedItem,
   createProposal,
   setSelectedItem,
@@ -228,14 +238,29 @@ export const GovernanceScreen = ({
     if (['PROPOSAL_STATUS_FAILED', 'PROPOSAL_STATUS_REJECTED'].includes(item?.status) || (isExpired && item.status !== 'PROPOSAL_STATUS_VOTING_PERIOD')) {
       return null;
     }
+    const currentVote = userVotes[item.id];
+    const currentVoteLabel = formatGovernanceVote(currentVote);
+
     return (
       <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
-        <div className='btn-primary flex justify-end gap-3'>
+        <div className='flex flex-wrap items-center justify-end gap-3'>
+          {currentVoteLabel ? (
+            <span className='mr-auto text-sm text-lumera-label'>Your vote: <strong className='text-white'>{currentVoteLabel}</strong></span>
+          ) : null}
           {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
-            <AppButton onClick={() => handleVotePress(item)}>Vote</AppButton> : null
+            <AppButton
+              disabled={Boolean(transactionUnavailableReason)}
+              onClick={() => handleVotePress(item)}
+            >{currentVote ? 'Change vote' : 'Vote'}</AppButton> : null
           }
-          <AppButton onClick={() => handleDepositClick(item)}>Deposit</AppButton>
+          <AppButton
+            disabled={Boolean(transactionUnavailableReason)}
+            onClick={() => handleDepositClick(item)}
+          >Deposit</AppButton>
         </div>
+        {transactionUnavailableReason ? (
+          <p className='text-sm text-left mt-2'>{transactionUnavailableReason}</p>
+        ) : null}
       </div>
     );
   }
@@ -252,6 +277,8 @@ export const GovernanceScreen = ({
 
   const handleVotePress = (item: IProposal) => {
     handleResetError();
+    const currentVoteValue = getGovernanceVoteValue(userVotes[item.id]);
+    onOptionChange(currentVoteValue || '1');
     setVoteOpen(true);
     setSelectedItem(item);
   }
@@ -259,10 +286,18 @@ export const GovernanceScreen = ({
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
       <div className='flex justify-end gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
-        <AppButton onClick={createProposal.onOpenCreateProposalModalClick} disabled={!address}>
+        <AppButton
+          onClick={createProposal.onOpenCreateProposalModalClick}
+          disabled={!address || Boolean(transactionUnavailableReason)}
+        >
           <span className='whitespace-nowrap'>Create Proposal</span>
         </AppButton>
       </div>
+      {transactionUnavailableReason ? (
+        <div className='w-full rounded-md bg-lumera-sub-card p-3 text-sm text-lumera-label'>
+          {transactionUnavailableReason}
+        </div>
+      ) : null}
       <div className='relative w-full'>
         <div className='mt-5 grid grid-cols-4 gap-6 w-full governance-overview relative'>
           <Card elevate size="$4" bordered className='w-full'>
@@ -478,6 +513,11 @@ export const GovernanceScreen = ({
                       <div className='mt-5 min-h-12 text-base'>
                         {item.summary}
                       </div>
+                      {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' && item.voting_end_time ? (
+                        <div className='mt-3 text-sm text-lumera-label'>
+                          Voting ends in <CountDown targetDate={new Date(item.voting_end_time)} className='whitespace-nowrap' />
+                        </div>
+                      ) : null}
                       <div className='mt-5'>
                         <div className='status-bar-wrapper'>
                           <div className='status-bar-yes' style={{ width: `${yesPercent}%` }}></div>
@@ -527,6 +567,7 @@ export const GovernanceScreen = ({
           voteAdvanced={voteAdvanced}
           handleVoteAdvancedChange={handleVoteAdvancedChange}
           transactionHash={voteTransactionHash}
+          currentVote={selectedItem ? userVotes[selectedItem.id] : undefined}
           onCloseCongratulationsModal={onCloseVoteCongratulationsModal}
         />
         <DepositModal

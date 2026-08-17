@@ -9,6 +9,10 @@ import { DENOM } from '@/contants/network';
 import { RATE_VALUE, GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 import { extractValidNumber } from '@/utils/helpers';
 import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
+import {
+  assertGovernanceTransactionsAvailable,
+  canQueryCosmosAccountData,
+} from '@/utils/cosmos-transactions';
 
 interface UseDepositOptions {
   callback?: () => void;
@@ -17,7 +21,7 @@ interface UseDepositOptions {
 
 const useDeposit = (options: UseDepositOptions = {}) => {
   const { trackingHubTransaction } = useTrackingHubTransaction();
-  const { address, getClient } = useWalletConnect();
+  const { address, canSignCosmosTransactions, getClient, isEvm } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [depositAdvanced, setDepositAdvanced] = useState({
       senderAddress: address,
@@ -34,6 +38,10 @@ const useDeposit = (options: UseDepositOptions = {}) => {
   const [transactionHash, setTransactionHash] = useState('');
 
   const fetchData = async () => {
+      if (!canQueryCosmosAccountData({ address, isEvmNetwork: isEvm })) {
+        setAvailableAmount(0);
+        return;
+      }
       try {
         const { data } = await instance.get(`/cosmos/bank/v1beta1/balances/${address}`);
         let total = 0;
@@ -49,10 +57,13 @@ const useDeposit = (options: UseDepositOptions = {}) => {
   };
 
   useEffect(() => {
-      if (address) {
+      if (canQueryCosmosAccountData({ address, isEvmNetwork: isEvm })) {
           fetchData();
+      } else {
+          setAvailableAmount(0);
       }
-  }, [address]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, isEvm]);
 
   useEffect(() => {
     if (options?.customMemo) {
@@ -96,6 +107,12 @@ const useDeposit = (options: UseDepositOptions = {}) => {
   const handleSendClick = async () => {
     setError('');
     setTransactionHash('');
+    try {
+      assertGovernanceTransactionsAvailable(canSignCosmosTransactions);
+    } catch (guardError) {
+      setError(guardError instanceof Error ? guardError.message : 'An unknown error occurred.');
+      return;
+    }
     if (!depositAdvanced.depositAmount) {
         setError('Please enter amount.');
         return

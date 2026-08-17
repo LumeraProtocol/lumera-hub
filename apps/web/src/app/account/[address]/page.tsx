@@ -1,4 +1,4 @@
-// apps/web/src/app/inference/page.tsx
+// apps/web/src/app/account/[address]/page.tsx
 'use client'
 import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";

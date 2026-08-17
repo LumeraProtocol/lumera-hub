@@ -56,6 +56,7 @@ export default function Page() {
           loading={loading}
           accountInfo={accountInfo}
           proposals={proposals.proposalsInfo}
+          userVotes={proposals.userVotes}
           isProposalLoading={proposals.loading}
           recentActivities={recentActivityData.recentActivity}
           isRecentActivityLoading={recentActivityData.loading}
@@ -82,4 +83,3 @@ export default function Page() {
     </>
   )
 }
-

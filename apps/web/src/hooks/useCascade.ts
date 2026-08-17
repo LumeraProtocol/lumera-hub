@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import JSZip from 'jszip';
 import { useChain } from '@interchain-kit/react';
 import dayjs from 'dayjs';
+import IPLocate from 'node-iplocate';
 
 import { useSelector } from '@/redux/hooks';
 import useTrackingCascadeDownload from '@/hooks/useTrackingCascadeDownload';
@@ -238,8 +239,21 @@ export const getFileType = (filename: string) => {
 }
 
 export const ITEM_PER_PAGE = 10;
-const GAS_PRICE = '025ulume';
+const GAS_PRICE = '0.025ulume';
 const storeName = 'lumera-cascade-files';
+
+let ipLocateClient: IPLocate | undefined;
+
+const getIpLocateClient = () => {
+  const apiKey = process.env.NEXT_PUBLIC_IPAPI_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  ipLocateClient ??= new IPLocate(apiKey);
+  return ipLocateClient;
+};
 
 export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
   const tx = txs?.find((t) => t.height.toString() === file.height.toString() && t.tx.body.messages.some((m) => m.metadata?.indexOf(file.datahash) !== -1));
@@ -386,6 +400,45 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
   }
 
+  const fetchLocationFromIpLocate = async (ip: string) => {
+    try {
+      const client = getIpLocateClient();
+      if (!client) {
+        return null;
+      }
+
+      const result = await client.lookup(ip);
+      return {
+        latitude: result?.latitude || null,
+        longitude: result?.longitude || null,
+        subdivision: result?.subdivision || null,
+        city: result?.city || null,
+        country: result?.country || null,
+        continent: result?.continent || null,
+        country_code: result?.country_code || null,
+      };
+    } catch (error) {
+      throw new Error((error as Error)?.message ||  'An unknown error occurred.')
+    }
+  }
+
+  const fetchLocationFromAbstractApi = async (ip: string) => {
+    try {
+      const { data } = await instance.getExternal(`https://ip-intelligence.abstractapi.com/v1/?api_key=${process.env.NEXT_PUBLIC_ABSTRACTAPI_KEY || ''}&ip_address=${ip}`);
+      return {
+        latitude: data?.location?.latitude || null,
+        longitude: data?.location?.longitude || null,
+        subdivision: data?.location?.region || null,
+        city: data?.location?.city || null,
+        country: data?.location?.country || null,
+        continent: data?.location?.continent || null,
+        country_code: data?.location?.country_code || null,
+      };
+    } catch (error) {
+      throw new Error((error as Error)?.message ||  'An unknown error occurred.')
+    }
+  }
+
   const fetchLocationForIP = async (ip: string) => {
     let data = null;
     try {
@@ -395,6 +448,26 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       }
     } catch {
       // noop
+    }
+    if (!data) {
+      try {
+        const result = await fetchLocationFromIpLocate(ip);
+        if (result) {
+          data = result;
+        }
+      } catch {
+        // noop
+      }
+    }
+    if (!data) {
+      try {
+        const result = await fetchLocationFromAbstractApi(ip);
+        if (result) {
+          data = result;
+        }
+      } catch {
+        // noop
+      }
     }
     return data;
   }
