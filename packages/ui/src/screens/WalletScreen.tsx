@@ -317,6 +317,8 @@ export const WalletScreen = ({
             totalTransactions={totalTransactions}
             isLoading={isLoading}
             handlePageClick={handlePageClick}
+            bech32Address={bech32Address || walletAddress}
+            ethAddress={ethAddress}
           />
         </Card>
       </div>

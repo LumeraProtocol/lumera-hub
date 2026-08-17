@@ -232,6 +232,8 @@ export const AccountScreen = ({
           totalTransactions={activeTransactions.totalTransactions}
           isLoading={activeTransactions.isLoading}
           handlePageClick={activeTransactions.handlePageClick}
+          bech32Address={bech32Address}
+          ethAddress={ethAddress}
         />
       </Card>
     </div>

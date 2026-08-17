@@ -16,8 +16,10 @@ import AppLink from '@/components/AppLink';
 import Loading from '@/components/Loading';
 import PastTime from '@/components/PastTime';
 import { ITransaction } from '@/hooks/useTransaction';
-import { getMessages } from '@/utils/helpers';
-import { isTransactionSuccessful } from '@/utils/transaction-history';
+import {
+  getTransactionDisplayType,
+  isTransactionSuccessful,
+} from '@/utils/transaction-history';
 
 import 'react-paginate/theme/basic/react-paginate.css';
 
@@ -26,14 +28,22 @@ interface ITransactionHistory {
   totalTransactions: number;
   isLoading: boolean;
   handlePageClick: ({ selected }: { selected: number }) => void;
+  bech32Address?: string;
+  ethAddress?: string;
 }
 
 const getTxIcon = (type: string) => {
-  switch(type) {
+  const normalizedType = type.replace(/×\d+$/, '');
+  switch(normalizedType) {
     case 'Send':
+    case 'EthereumTx Send':
       return <ArrowUpRight className="w-5 h-5 text-red-400" />;
-    case 'Received':
+    case 'Recv':
+    case 'EthereumTx Recv':
       return <ArrowDownLeft className="w-5 h-5 text-green-400" />;
+    case 'Self Transfer':
+    case 'EthereumTx Self':
+      return <ArrowLeftRight className="w-5 h-5 text-blue-400" />;
     case 'BeginRedelegate':
       return <ClockPlus className="w-5 h-5 text-indigo-400" />;
     case 'Delegate':
@@ -51,15 +61,21 @@ const getTxIcon = (type: string) => {
 };
 
 const getColor = (type: string) => {
-  switch(type) {
+  const normalizedType = type.replace(/×\d+$/, '');
+  switch(normalizedType) {
     case 'Send':
+    case 'EthereumTx Send':
     case 'Failed':
       return 'bg-red-500/20';
     case 'Delegate':
     case 'BeginRedelegate':
       return 'bg-green-400/20';
-    case 'Received':
+    case 'Recv':
+    case 'EthereumTx Recv':
       return 'bg-green-500/20';
+    case 'Self Transfer':
+    case 'EthereumTx Self':
+      return 'bg-blue-500/20';
     default:
        if (type.indexOf('WithdrawDelegatorReward') !== -1) {
         return 'recent-activity-icon';
@@ -73,6 +89,8 @@ export default function TransactionHistory({
   totalTransactions,
   isLoading,
   handlePageClick,
+  bech32Address,
+  ethAddress,
 }: ITransactionHistory) {
   return (
     <div className="space-y-2 relative w-full">
@@ -96,13 +114,19 @@ export default function TransactionHistory({
               Time
             </div>
           </div>
-          {transactions.map((tx) => (
-            <div key={tx.txhash} className="md:grid md:grid-cols-[9rem_minmax(20rem,1fr)_9rem_6rem_17rem] gap-3 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors mb-3 md:mb-0">
+          {transactions.map((tx) => {
+            const transactionType = getTransactionDisplayType(tx, {
+              bech32Address,
+              ethAddress,
+            });
+
+            return (
+              <div key={tx.txhash} className="md:grid md:grid-cols-[9rem_minmax(20rem,1fr)_9rem_6rem_17rem] gap-3 items-center bg-gray-900/40 p-4 rounded-lg hover:bg-gray-800/60 transition-colors mb-3 md:mb-0">
               <div className="w-full">
                 <div className="md:hidden font-semibold text-gray-500 mr-2">Block Height: </div>
                 <div className='flex items-center mt-1 md:mt-0'>
-                  <div className={`p-2 rounded-full inline-block ${getColor(getMessages(tx.tx.body.messages))}`}>
-                    {getTxIcon(getMessages(tx.tx.body.messages))}
+                  <div className={`p-2 rounded-full inline-block ${getColor(transactionType)}`}>
+                    {getTxIcon(transactionType)}
                   </div>
                   <AppLink href={`/block/${tx.height}`} className="text-white ml-2 hover:text-lumera-green">{tx.height}</AppLink>
                 </div>
@@ -118,10 +142,10 @@ export default function TransactionHistory({
               </div>
               <div
                 className="w-full overflow-hidden text-ellipsis text-left whitespace-nowrap mt-3 md:mt-0"
-                title={getMessages(tx.tx.body.messages)}
+                title={transactionType}
               >
                 <div className="md:hidden font-semibold text-gray-500 mr-2">TX Type: </div>
-                {getMessages(tx.tx.body.messages)}
+                {transactionType}
               </div>
               <div className="w-full text-left whitespace-nowrap mt-3 md:mt-0">
                 <div className="md:hidden font-semibold text-gray-500 mr-2">TX Status: </div>
@@ -134,8 +158,9 @@ export default function TransactionHistory({
                 <span className="text-white pr-1 whitespace-nowrap">{dayjs(tx.timestamp).format('MMMM DD, YYYY')} at {dayjs(tx.timestamp).format('HH:mm:ss')}</span>
                 (<PastTime pastDate={new Date(tx.timestamp)} className='text-sm whitespace-nowrap' />)
               </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
           {!transactions?.length && !isLoading ?
             <div className="block items-center">
               <H3>No Transactions</H3>
