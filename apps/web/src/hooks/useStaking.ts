@@ -64,6 +64,7 @@ const useStaking = (address = '', isEvm = false) => {
   const [refreshProgress, setRefreshProgress] = useState(0);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   const [isCacheReady, setCacheReady] = useState(false);
+  const [refreshAttempt, setRefreshAttempt] = useState(0);
   const refreshingRef = useRef(false);
   const initializedRef = useRef(false);
   const [rewards, setRewards] = useState([]);
