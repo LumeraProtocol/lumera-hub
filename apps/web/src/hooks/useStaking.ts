@@ -15,7 +15,6 @@ import {
   writeStakingOverviewCache,
   getStakingRefreshProgress,
   getStakingAutoRefreshDelay,
-  STAKING_REFRESH_RETRY_DELAY_MS,
   type StakingOverviewCache,
   type StakingParams,
   type SlashingParams,
