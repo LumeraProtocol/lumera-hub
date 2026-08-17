@@ -60,6 +60,11 @@ module.exports = withTamagui({
     // Turn off source maps in development to suppress missing .css.map requests
     if (dev) {
       config.devtool = false
+
+      // react-lumera-sdk embeds multi-megabyte WASM data URLs. Next restores
+      // its development source maps after this hook, and Webpack's filesystem
+      // cache otherwise serializes those payloads as repeated 2-4 MiB strings.
+      config.cache = { type: 'memory' }
     }
 
     return config
