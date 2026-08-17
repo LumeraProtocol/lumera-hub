@@ -154,4 +154,22 @@ describe('useStaking auto-refresh recovery', () => {
     await advance(STAKING_AUTO_REFRESH_INTERVAL_MS);
     expect(get).toHaveBeenCalledTimes(PUBLIC_REQUESTS_PER_REFRESH * 2);
   });
+
+  it('refreshes normally when browser storage access is blocked', async () => {
+    Object.defineProperty(window, 'localStorage', {
+      get: () => { throw new DOMException('Access denied', 'SecurityError'); },
+      configurable: true,
+    });
+    get.mockImplementation(async (path: string) => publicOverviewResponse(path));
+
+    const { result } = renderHook(() => useStaking());
+    await advance(0);
+
+    expect(get).toHaveBeenCalledTimes(PUBLIC_REQUESTS_PER_REFRESH);
+    expect(result.current.error).toBe('');
+    expect(result.current.isLoading).toBe(false);
+
+    await advance(STAKING_REFRESH_RETRY_DELAY_MS);
+    expect(get).toHaveBeenCalledTimes(PUBLIC_REQUESTS_PER_REFRESH);
+  });
 });

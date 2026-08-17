@@ -49,6 +49,16 @@ interface ValidatorsResponse {
   pagination?: { total?: string };
 }
 
+const getBrowserLocalStorage = (): Storage | null => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    return window.localStorage ?? null;
+  } catch {
+    return null;
+  }
+};
+
 const useStaking = (address = '', isEvm = false) => {
   const dispatch = useDispatch();
   const { currentTab, validatorTab, subTab } = useSelector((state) => state.app);
@@ -187,7 +197,8 @@ const useStaking = (address = '', isEvm = false) => {
       };
 
       applyOverview(updatedOverview);
-      writeStakingOverviewCache(window.localStorage, CHAIN_ID, updatedOverview);
+      const storage = getBrowserLocalStorage();
+      if (storage) writeStakingOverviewCache(storage, CHAIN_ID, updatedOverview);
       setRefreshAttempt(0);
     } catch (refreshError) {
       setError(refreshError instanceof Error ? refreshError.message : 'Unable to update staking data.');
@@ -291,7 +302,10 @@ const useStaking = (address = '', isEvm = false) => {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    const cachedOverview = readStakingOverviewCache(window.localStorage, CHAIN_ID);
+    const storage = getBrowserLocalStorage();
+    const cachedOverview = storage
+      ? readStakingOverviewCache(storage, CHAIN_ID)
+      : null;
     if (cachedOverview) applyOverview(cachedOverview);
     setCacheReady(true);
   }, [applyOverview]);
