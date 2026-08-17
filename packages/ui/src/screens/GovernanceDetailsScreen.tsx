@@ -204,9 +204,7 @@ export const GovernanceDetailsScreen = ({
   const handleVotePress = () => {
     vote.handleResetError();
     const currentVoteValue = getGovernanceVoteValue(vote.currentVote);
-    if (currentVoteValue) {
-      vote.onOptionChange(currentVoteValue);
-    }
+    vote.onOptionChange(currentVoteValue || '1');
     vote.setVoteOpen(true);
   }
 
