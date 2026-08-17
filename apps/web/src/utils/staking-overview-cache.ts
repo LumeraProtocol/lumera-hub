@@ -32,6 +32,7 @@ export interface StakingOverviewCache {
 }
 
 export const STAKING_AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+export const STAKING_REFRESH_RETRY_DELAY_MS = 30 * 1000;
 
 interface CacheStorage {
   getItem: (key: string) => string | null;
