@@ -188,9 +188,11 @@ const useStaking = (address = '', isEvm = false) => {
 
       applyOverview(updatedOverview);
       writeStakingOverviewCache(window.localStorage, CHAIN_ID, updatedOverview);
+      setRefreshAttempt(0);
     } catch (refreshError) {
       setError(refreshError instanceof Error ? refreshError.message : 'Unable to update staking data.');
       setHasLoadedOverview(true);
+      setRefreshAttempt((attempt) => attempt + 1);
     } finally {
       setRefreshing(false);
       refreshingRef.current = false;
