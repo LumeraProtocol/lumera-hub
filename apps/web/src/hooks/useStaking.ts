@@ -295,15 +295,18 @@ const useStaking = (address = '', isEvm = false) => {
     if (cachedOverview) applyOverview(cachedOverview);
     setCacheReady(true);
   }, [applyOverview]);
-
   useEffect(() => {
     if (!isCacheReady) return;
 
     const refreshTimer = window.setTimeout(() => {
       void refreshOverview();
-    }, getStakingAutoRefreshDelay(lastUpdated));
+    }, Math.max(
+      getStakingAutoRefreshDelay(lastUpdated),
+      refreshAttempt > 0 ? STAKING_REFRESH_RETRY_DELAY_MS : 0,
+    ));
 
     return () => window.clearTimeout(refreshTimer);
+  }, [isCacheReady, lastUpdated, refreshAttempt, refreshOverview]);
   }, [isCacheReady, lastUpdated, refreshOverview]);
 
   useEffect(() => {
