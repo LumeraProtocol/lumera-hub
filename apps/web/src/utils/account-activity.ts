@@ -49,7 +49,7 @@ export interface ConnectedStaking {
   validatorAddresses: string[];
   /** Staked amount per validator address, in micro-denom. */
   stakedBalances: Record<string, string>;
-  /** Spendable balance of the connected wallet, in display LUME. */
+  /** Total bank balance of the connected wallet: every coin amount summed, in display LUME. */
   availableBalance: number;
 }
 

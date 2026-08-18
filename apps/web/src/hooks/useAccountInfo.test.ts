@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   fetchAccountInfo,
@@ -57,6 +57,135 @@ describe('fetchAccountInfo', () => {
       rewardTotal: [],
       unbonding: [],
     });
+  });
+});
+
+describe('one failing endpoint', () => {
+  const delegation = {
+    delegation: {
+      delegator_address: 'lumera1account',
+      validator_address: 'lumeravaloper1validator',
+      shares: '2500000.000000000000000000',
+    },
+    balance: { denom: 'ulume', amount: '2500000' },
+  };
+  const unbonding = {
+    delegator_address: 'lumera1account',
+    validator_address: 'lumeravaloper1validator',
+    entries: [{
+      balance: '750000',
+      completion_time: '2026-09-01T00:00:00Z',
+      creation_height: '1',
+      initial_balance: '750000',
+      unbonding_id: '1',
+      unbonding_on_hold_ref_count: '0',
+    }],
+  };
+  const reward = {
+    validator_address: 'lumeravaloper1validator',
+    reward: [{ denom: 'ulume', amount: '125000.5' }],
+  };
+  const balances = [{ denom: 'ulume', amount: '7000000' }];
+
+  // A slice failing is logged, not swallowed; keep the run readable.
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const respondExcept = (failingPath: string) => vi.fn(async (path: string) => {
+    if (path.includes(failingPath)) {
+      throw new Error(`${failingPath} is down`);
+    }
+    if (path.includes('/bank/')) return { data: { balances } };
+    if (path.includes('/staking/v1beta1/delegations/')) {
+      return { data: { delegation_responses: [delegation] } };
+    }
+    if (path.includes('/rewards')) {
+      return { data: { rewards: [reward], total: [{ denom: 'ulume', amount: '124999.75' }] } };
+    }
+    if (path.includes('/unbonding_delegations')) {
+      return { data: { unbonding_responses: [unbonding] } };
+    }
+    throw new Error(`unexpected path ${path}`);
+  });
+
+  it('keeps balances, delegations and unbonding when the rewards endpoint fails', async () => {
+    const get = respondExcept('/rewards');
+
+    const accountInfo = await fetchAccountInfo('lumera1account', { get });
+
+    expect(accountInfo.balances).toEqual(balances);
+    expect(accountInfo.delegations).toEqual([delegation]);
+    expect(accountInfo.unbonding).toEqual([unbonding]);
+    expect(accountInfo.rewards).toEqual([]);
+    expect(accountInfo.rewardTotal).toEqual([]);
+    expect(console.error).toHaveBeenCalledWith('API Error:', expect.any(Error));
+  });
+
+  it('keeps the staking slices when the balances endpoint fails', async () => {
+    const get = respondExcept('/bank/');
+
+    const accountInfo = await fetchAccountInfo('lumera1account', { get });
+
+    expect(accountInfo.balances).toEqual([]);
+    expect(accountInfo.delegations).toEqual([delegation]);
+    expect(accountInfo.rewards).toEqual([reward]);
+    expect(accountInfo.unbonding).toEqual([unbonding]);
+  });
+
+  it('keeps the other slices when the delegations endpoint fails', async () => {
+    const accountInfo = await fetchAccountInfo('lumera1account', {
+      get: respondExcept('/staking/v1beta1/delegations/'),
+    });
+
+    expect(accountInfo.delegations).toEqual([]);
+    expect(accountInfo.balances).toEqual(balances);
+    expect(accountInfo.rewards).toEqual([reward]);
+    expect(accountInfo.unbonding).toEqual([unbonding]);
+  });
+
+  it('keeps the other slices when the unbonding endpoint fails', async () => {
+    const accountInfo = await fetchAccountInfo('lumera1account', {
+      get: respondExcept('/unbonding_delegations'),
+    });
+
+    expect(accountInfo.unbonding).toEqual([]);
+    expect(accountInfo.balances).toEqual(balances);
+    expect(accountInfo.delegations).toEqual([delegation]);
+    expect(accountInfo.rewards).toEqual([reward]);
+  });
+
+  it('keeps the EVM balance when a staking endpoint fails', async () => {
+    const accountInfo = await fetchEvmAccountInfo({
+      ethAddress: '0x0123456789012345678901234567890123456789',
+      bech32Address: 'lumera1account',
+      getBalance: vi.fn().mockResolvedValue('0xde0b6b3a7640000'),
+      get: respondExcept('/rewards'),
+    });
+
+    expect(accountInfo.balances).toEqual([{ denom: 'ulume', amount: '1000000' }]);
+    expect(accountInfo.delegations).toEqual([delegation]);
+    expect(accountInfo.unbonding).toEqual([unbonding]);
+    expect(accountInfo.rewards).toEqual([]);
+  });
+
+  it('keeps the EVM staking slices when the EVM balance query fails', async () => {
+    const accountInfo = await fetchEvmAccountInfo({
+      ethAddress: '0x0123456789012345678901234567890123456789',
+      bech32Address: 'lumera1account',
+      getBalance: vi.fn().mockRejectedValue(new Error('evm rpc down')),
+      get: respondExcept('none'),
+    });
+
+    // No balance rather than a confident zero.
+    expect(accountInfo.balances).toEqual([]);
+    expect(accountInfo.delegations).toEqual([delegation]);
+    expect(accountInfo.rewards).toEqual([reward]);
+    expect(accountInfo.unbonding).toEqual([unbonding]);
   });
 });
 

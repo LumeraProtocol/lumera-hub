@@ -135,7 +135,7 @@ describe('fetchAccountActivity', () => {
     ]);
   });
 
-  it('reports each slice to the caller as it settles so sections render progressively', async () => {
+  it('reports every slice, including one that failed, to the caller', async () => {
     const onSlice = {
       validators: vi.fn(),
       sentTransactions: vi.fn(),
@@ -154,6 +154,53 @@ describe('fetchAccountActivity', () => {
     expect(onSlice.sentTransactions).toHaveBeenCalledWith([transaction('A')]);
     expect(onSlice.receivedTransactions).toHaveBeenCalledWith([transaction('A')]);
     expect(onSlice.cascadeHistory).toHaveBeenCalledWith([]);
+  });
+
+  it('reports a fast slice before the aggregate call resolves, so sections render progressively', async () => {
+    let releaseCascade = () => {};
+    const cascadePending = new Promise<void>((resolve) => { releaseCascade = resolve; });
+    let markValidatorsReported = () => {};
+    const validatorsReported = new Promise<void>((resolve) => { markValidatorsReported = resolve; });
+
+    const api = stubApi({
+      validators: vi.fn().mockResolvedValue([validator('lumeravaloper1a')]),
+      // The slow source the account page must not wait on.
+      cascade: vi.fn(async () => {
+        await cascadePending;
+        return [];
+      }),
+    });
+
+    let aggregateSettled = false;
+    const reportedValidators: IValidator[][] = [];
+    const pending = fetchAccountActivity(ACCOUNT, {
+      api,
+      onSlice: {
+        validators: (items) => {
+          reportedValidators.push(items);
+          markValidatorsReported();
+        },
+      },
+    }).then((activity) => {
+      aggregateSettled = true;
+      return activity;
+    });
+
+    // Bounded so losing progressiveness fails with a message rather than a timeout.
+    await Promise.race([
+      validatorsReported,
+      new Promise((_, reject) => setTimeout(
+        () => reject(new Error('validators slice was never reported while Cascade was still in flight')),
+        1000,
+      )),
+    ]);
+    expect(reportedValidators[0].map((item) => item.operator_address)).toEqual(['lumeravaloper1a']);
+    // The validators section is already renderable while Cascade is still in flight.
+    expect(aggregateSettled).toBe(false);
+
+    releaseCascade();
+    await pending;
+    expect(aggregateSettled).toBe(true);
   });
 
   it('resolves the connected wallet staking state when a connected address is given', async () => {

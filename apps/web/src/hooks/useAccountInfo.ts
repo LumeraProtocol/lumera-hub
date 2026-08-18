@@ -65,6 +65,27 @@ interface AccountInfoApiResponse<T> {
   data: T;
 }
 
+/**
+ * Value of one settled account slice. A slice whose source failed falls back to
+ * `fallback` and logs, so the slices that did load keep their real data instead
+ * of the whole account reading as empty — a rewards 500 is commonplace on Cosmos
+ * LCDs and used to blank balances, delegations and unbonding along with it.
+ */
+const settledValue = <T>(result: PromiseSettledResult<T>, fallback: T): T => {
+  if (result.status === 'rejected') {
+    console.error('API Error:', result.reason);
+    return fallback;
+  }
+  return result.value;
+};
+
+const EMPTY_RESPONSE: AccountInfoApiResponse<unknown> = { data: {} };
+
+/** Response payload of one settled slice, or an empty payload if it failed. */
+const settledSliceData = <T extends object>(
+  result: PromiseSettledResult<AccountInfoApiResponse<unknown>>,
+): Partial<T> => (settledValue(result, EMPTY_RESPONSE).data ?? {}) as Partial<T>;
+
 interface FetchEvmAccountInfoOptions {
   ethAddress: string;
   bech32Address: string;
@@ -82,18 +103,20 @@ export const fetchEvmAccountInfo = async ({
     throw new Error('Cannot query staking data without a Bech32 address.');
   }
 
-  const [balance, delegationsRes, rewardsRes, unbondingRes] = await Promise.all([
+  const [balanceRes, delegationsRes, rewardsRes, unbondingRes] = await Promise.allSettled([
     getBalance(ethAddress),
     get(`/cosmos/staking/v1beta1/delegations/${bech32Address}`),
     get(`/cosmos/distribution/v1beta1/delegators/${bech32Address}/rewards`),
     get(`/cosmos/staking/v1beta1/delegators/${bech32Address}/unbonding_delegations`),
   ]);
-  const delegationsData = delegationsRes.data as { delegation_responses?: DelegationResponse[] };
-  const rewardsData = rewardsRes.data as { rewards?: ValidatorRewards[]; total?: Coin[] };
-  const unbondingData = unbondingRes.data as { unbonding_responses?: ValidatorUnbonding[] };
+  const balance = settledValue<string | null>(balanceRes, null);
+  const delegationsData = settledSliceData<{ delegation_responses: DelegationResponse[] }>(delegationsRes);
+  const rewardsData = settledSliceData<{ rewards: ValidatorRewards[]; total: Coin[] }>(rewardsRes);
+  const unbondingData = settledSliceData<{ unbonding_responses: ValidatorUnbonding[] }>(unbondingRes);
 
   return {
-    balances: [{ denom: DENOM, amount: evmBalanceToMicroLume(balance) }],
+    // No balance rather than a confident zero when the EVM node did not answer.
+    balances: balance === null ? [] : [{ denom: DENOM, amount: evmBalanceToMicroLume(balance) }],
     delegations: delegationsData.delegation_responses || [],
     rewards: rewardsData.rewards || [],
     rewardTotal: rewardsData.total || [],
@@ -109,16 +132,16 @@ export const fetchAccountInfo = async (
   address: string,
   { get = instance.get }: FetchAccountInfoOptions = {},
 ): Promise<AccountInfoData> => {
-  const [balanceRes, delegationsRes, rewardsRes, unbondingRes] = await Promise.all([
+  const [balanceRes, delegationsRes, rewardsRes, unbondingRes] = await Promise.allSettled([
     get(`/cosmos/bank/v1beta1/balances/${address}`),
     get(`/cosmos/staking/v1beta1/delegations/${address}`),
     get(`/cosmos/distribution/v1beta1/delegators/${address}/rewards`),
     get(`/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`),
   ]);
-  const balanceData = balanceRes.data as { balances?: Coin[] };
-  const delegationsData = delegationsRes.data as { delegation_responses?: DelegationResponse[] };
-  const rewardsData = rewardsRes.data as { rewards?: ValidatorRewards[]; total?: Coin[] };
-  const unbondingData = unbondingRes.data as { unbonding_responses?: ValidatorUnbonding[] };
+  const balanceData = settledSliceData<{ balances: Coin[] }>(balanceRes);
+  const delegationsData = settledSliceData<{ delegation_responses: DelegationResponse[] }>(delegationsRes);
+  const rewardsData = settledSliceData<{ rewards: ValidatorRewards[]; total: Coin[] }>(rewardsRes);
+  const unbondingData = settledSliceData<{ unbonding_responses: ValidatorUnbonding[] }>(unbondingRes);
 
   return {
     balances: balanceData.balances || [],
