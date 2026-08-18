@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 
 import { WalletScreen } from '@lumera-hub/ui/src/screens/WalletScreen'
-import useAccountInfo from '@/hooks/useAccountInfo';
+import useAccountInfo, { describeAccountInfoGaps } from '@/hooks/useAccountInfo';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import useTransaction from '@/hooks/useTransaction';
 import useDelegate from '@/hooks/useDelegate';
@@ -94,7 +94,13 @@ export default function Page() {
           isEvm={isEvm}
           accountInfo={accountInfo}
           isLoading={account.loading || isTransactionLoading}
-          error={account.error?.message || transactionError}
+          error={
+            account.error?.message
+            // A partly-loaded account still renders; say so rather than letting a
+            // failed balance query read as a genuine zero.
+            || describeAccountInfoGaps(accountInfo)
+            || transactionError
+          }
           transactions={transactions}
           totalTransactions={totalTransactions}
           selectedModal={selectedModal}

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  describeAccountInfoGaps,
   fetchAccountInfo,
   fetchBaseAccount,
   fetchEvmAccountInfo,
@@ -42,6 +43,7 @@ describe('fetchAccountInfo', () => {
       rewards: [reward],
       rewardTotal,
       unbonding: [],
+      unavailable: [],
     });
   });
 
@@ -56,6 +58,8 @@ describe('fetchAccountInfo', () => {
       rewards: [],
       rewardTotal: [],
       unbonding: [],
+      // Empty responses are not failures: nothing must be reported as unavailable.
+      unavailable: [],
     });
   });
 });
@@ -123,6 +127,7 @@ describe('one failing endpoint', () => {
     expect(accountInfo.unbonding).toEqual([unbonding]);
     expect(accountInfo.rewards).toEqual([]);
     expect(accountInfo.rewardTotal).toEqual([]);
+    expect(accountInfo.unavailable).toEqual(['rewards']);
     expect(console.error).toHaveBeenCalledWith('API Error:', expect.any(Error));
   });
 
@@ -135,6 +140,7 @@ describe('one failing endpoint', () => {
     expect(accountInfo.delegations).toEqual([delegation]);
     expect(accountInfo.rewards).toEqual([reward]);
     expect(accountInfo.unbonding).toEqual([unbonding]);
+    expect(accountInfo.unavailable).toEqual(['balances']);
   });
 
   it('keeps the other slices when the delegations endpoint fails', async () => {
@@ -146,6 +152,7 @@ describe('one failing endpoint', () => {
     expect(accountInfo.balances).toEqual(balances);
     expect(accountInfo.rewards).toEqual([reward]);
     expect(accountInfo.unbonding).toEqual([unbonding]);
+    expect(accountInfo.unavailable).toEqual(['delegations']);
   });
 
   it('keeps the other slices when the unbonding endpoint fails', async () => {
@@ -157,6 +164,7 @@ describe('one failing endpoint', () => {
     expect(accountInfo.balances).toEqual(balances);
     expect(accountInfo.delegations).toEqual([delegation]);
     expect(accountInfo.rewards).toEqual([reward]);
+    expect(accountInfo.unavailable).toEqual(['unbonding']);
   });
 
   it('keeps the EVM balance when a staking endpoint fails', async () => {
@@ -171,6 +179,44 @@ describe('one failing endpoint', () => {
     expect(accountInfo.delegations).toEqual([delegation]);
     expect(accountInfo.unbonding).toEqual([unbonding]);
     expect(accountInfo.rewards).toEqual([]);
+    expect(accountInfo.unavailable).toEqual(['rewards']);
+  });
+
+  it('reports nothing as unavailable when every endpoint answers', async () => {
+    const accountInfo = await fetchAccountInfo('lumera1account', { get: respondExcept('none') });
+
+    expect(accountInfo.unavailable).toEqual([]);
+    expect(describeAccountInfoGaps(accountInfo)).toBe('');
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  it('reports nothing as unavailable on the EVM happy path', async () => {
+    const accountInfo = await fetchEvmAccountInfo({
+      ethAddress: '0x0123456789012345678901234567890123456789',
+      bech32Address: 'lumera1account',
+      getBalance: vi.fn().mockResolvedValue('0xde0b6b3a7640000'),
+      get: respondExcept('none'),
+    });
+
+    expect(accountInfo.unavailable).toEqual([]);
+    expect(describeAccountInfoGaps(accountInfo)).toBe('');
+  });
+
+  it('names every failed slice in read order when several endpoints fail', async () => {
+    const get = vi.fn(async (path: string) => {
+      if (path.includes('/bank/') || path.includes('/rewards')) {
+        throw new Error('down');
+      }
+      if (path.includes('/staking/v1beta1/delegations/')) {
+        return { data: { delegation_responses: [delegation] } };
+      }
+      return { data: { unbonding_responses: [unbonding] } };
+    });
+
+    const accountInfo = await fetchAccountInfo('lumera1account', { get });
+
+    expect(accountInfo.unavailable).toEqual(['balances', 'rewards']);
+    expect(accountInfo.delegations).toEqual([delegation]);
   });
 
   it('keeps the EVM staking slices when the EVM balance query fails', async () => {
@@ -186,6 +232,7 @@ describe('one failing endpoint', () => {
     expect(accountInfo.delegations).toEqual([delegation]);
     expect(accountInfo.rewards).toEqual([reward]);
     expect(accountInfo.unbonding).toEqual([unbonding]);
+    expect(accountInfo.unavailable).toEqual(['balances']);
   });
 });
 
@@ -256,6 +303,7 @@ describe('fetchEvmAccountInfo', () => {
       rewards: [reward],
       rewardTotal,
       unbonding: [unbonding],
+      unavailable: [],
     });
   });
 
@@ -283,5 +331,39 @@ describe('fetchEvmAccountInfo', () => {
       rewardTotal: [{ denom: 'ulume', amount: '124999.75' }],
       unbonding: [],
     })).toBe(124999.75);
+  });
+});
+
+describe('describeAccountInfoGaps', () => {
+  const accountInfo = {
+    balances: [],
+    delegations: [],
+    rewards: [],
+    unbonding: [],
+  };
+
+  it('says nothing when every figure loaded', () => {
+    expect(describeAccountInfoGaps({ ...accountInfo, unavailable: [] })).toBe('');
+  });
+
+  it('says nothing for an account that was never loaded', () => {
+    expect(describeAccountInfoGaps(null)).toBe('');
+    expect(describeAccountInfoGaps(accountInfo)).toBe('');
+  });
+
+  it('names the balance so a failed query cannot read as a zero balance', () => {
+    expect(describeAccountInfoGaps({ ...accountInfo, unavailable: ['balances'] })).toBe(
+      'Could not load your available balance. The amounts shown may be incomplete.',
+    );
+  });
+
+  it('lists several missing figures in one notice', () => {
+    expect(describeAccountInfoGaps({
+      ...accountInfo,
+      unavailable: ['balances', 'rewards', 'unbonding'],
+    })).toBe(
+      'Could not load your available balance, your rewards and your unstaking total.'
+      + ' The amounts shown may be incomplete.',
+    );
   });
 });

@@ -53,38 +53,59 @@ export interface BaseAccount {
   sequence: string;
 }
 
+/** The four independently-loaded slices of an account's on-chain figures. */
+export type AccountInfoSlice = 'balances' | 'delegations' | 'rewards' | 'unbonding';
+
 export interface AccountInfoData {
   balances: Coin[];
   delegations: DelegationResponse[];
   rewards: ValidatorRewards[];
   rewardTotal?: Coin[];
   unbonding: ValidatorUnbonding[];
+  /**
+   * Slices whose source failed, in read order. Empty when everything loaded.
+   * Callers need this to tell "we could not load your balance" apart from "your
+   * balance is zero" — the two are indistinguishable in the figures alone.
+   */
+  unavailable?: AccountInfoSlice[];
 }
 
 interface AccountInfoApiResponse<T> {
   data: T;
 }
 
-/**
- * Value of one settled account slice. A slice whose source failed falls back to
- * `fallback` and logs, so the slices that did load keep their real data instead
- * of the whole account reading as empty — a rewards 500 is commonplace on Cosmos
- * LCDs and used to blank balances, delegations and unbonding along with it.
- */
-const settledValue = <T>(result: PromiseSettledResult<T>, fallback: T): T => {
-  if (result.status === 'rejected') {
-    console.error('API Error:', result.reason);
-    return fallback;
-  }
-  return result.value;
-};
-
 const EMPTY_RESPONSE: AccountInfoApiResponse<unknown> = { data: {} };
 
-/** Response payload of one settled slice, or an empty payload if it failed. */
-const settledSliceData = <T extends object>(
-  result: PromiseSettledResult<AccountInfoApiResponse<unknown>>,
-): Partial<T> => (settledValue(result, EMPTY_RESPONSE).data ?? {}) as Partial<T>;
+/**
+ * Reads settled slices for one account query. A slice whose source failed falls
+ * back to its empty value, is logged, and is recorded in `unavailable`, so the
+ * slices that did load keep their real data while the caller can still tell the
+ * user which figures are missing — a rewards 500 is commonplace on Cosmos LCDs
+ * and used to blank balances, delegations and unbonding along with it.
+ */
+const createSliceReader = () => {
+  const unavailable: AccountInfoSlice[] = [];
+
+  const read = <T>(
+    slice: AccountInfoSlice,
+    result: PromiseSettledResult<T>,
+    fallback: T,
+  ): T => {
+    if (result.status === 'rejected') {
+      console.error('API Error:', result.reason);
+      unavailable.push(slice);
+      return fallback;
+    }
+    return result.value;
+  };
+
+  const data = <T extends object>(
+    slice: AccountInfoSlice,
+    result: PromiseSettledResult<AccountInfoApiResponse<unknown>>,
+  ): Partial<T> => (read(slice, result, EMPTY_RESPONSE).data ?? {}) as Partial<T>;
+
+  return { unavailable, read, data };
+};
 
 interface FetchEvmAccountInfoOptions {
   ethAddress: string;
@@ -109,10 +130,11 @@ export const fetchEvmAccountInfo = async ({
     get(`/cosmos/distribution/v1beta1/delegators/${bech32Address}/rewards`),
     get(`/cosmos/staking/v1beta1/delegators/${bech32Address}/unbonding_delegations`),
   ]);
-  const balance = settledValue<string | null>(balanceRes, null);
-  const delegationsData = settledSliceData<{ delegation_responses: DelegationResponse[] }>(delegationsRes);
-  const rewardsData = settledSliceData<{ rewards: ValidatorRewards[]; total: Coin[] }>(rewardsRes);
-  const unbondingData = settledSliceData<{ unbonding_responses: ValidatorUnbonding[] }>(unbondingRes);
+  const slices = createSliceReader();
+  const balance = slices.read<string | null>('balances', balanceRes, null);
+  const delegationsData = slices.data<{ delegation_responses: DelegationResponse[] }>('delegations', delegationsRes);
+  const rewardsData = slices.data<{ rewards: ValidatorRewards[]; total: Coin[] }>('rewards', rewardsRes);
+  const unbondingData = slices.data<{ unbonding_responses: ValidatorUnbonding[] }>('unbonding', unbondingRes);
 
   return {
     // No balance rather than a confident zero when the EVM node did not answer.
@@ -121,6 +143,7 @@ export const fetchEvmAccountInfo = async ({
     rewards: rewardsData.rewards || [],
     rewardTotal: rewardsData.total || [],
     unbonding: unbondingData.unbonding_responses || [],
+    unavailable: slices.unavailable,
   };
 };
 
@@ -138,10 +161,11 @@ export const fetchAccountInfo = async (
     get(`/cosmos/distribution/v1beta1/delegators/${address}/rewards`),
     get(`/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`),
   ]);
-  const balanceData = settledSliceData<{ balances: Coin[] }>(balanceRes);
-  const delegationsData = settledSliceData<{ delegation_responses: DelegationResponse[] }>(delegationsRes);
-  const rewardsData = settledSliceData<{ rewards: ValidatorRewards[]; total: Coin[] }>(rewardsRes);
-  const unbondingData = settledSliceData<{ unbonding_responses: ValidatorUnbonding[] }>(unbondingRes);
+  const slices = createSliceReader();
+  const balanceData = slices.data<{ balances: Coin[] }>('balances', balanceRes);
+  const delegationsData = slices.data<{ delegation_responses: DelegationResponse[] }>('delegations', delegationsRes);
+  const rewardsData = slices.data<{ rewards: ValidatorRewards[]; total: Coin[] }>('rewards', rewardsRes);
+  const unbondingData = slices.data<{ unbonding_responses: ValidatorUnbonding[] }>('unbonding', unbondingRes);
 
   return {
     balances: balanceData.balances || [],
@@ -149,6 +173,7 @@ export const fetchAccountInfo = async (
     rewards: rewardsData.rewards || [],
     rewardTotal: rewardsData.total || [],
     unbonding: unbondingData.unbonding_responses || [],
+    unavailable: slices.unavailable,
   };
 };
 
@@ -162,6 +187,30 @@ export const fetchBaseAccount = async (
 ): Promise<BaseAccount | null> => {
   const { data } = await get(`/cosmos/auth/v1beta1/accounts/${address}`);
   return (data as { account?: BaseAccount }).account ?? null;
+};
+
+const SLICE_LABELS: Record<AccountInfoSlice, string> = {
+  balances: 'your available balance',
+  delegations: 'your staking total',
+  rewards: 'your rewards',
+  unbonding: 'your unstaking total',
+};
+
+/**
+ * One short notice naming the figures that could not be loaded, so a failed
+ * balance query cannot read as a genuine zero. Empty string when nothing failed,
+ * which keeps the notice off the happy path.
+ */
+export const describeAccountInfoGaps = (accountInfo: AccountInfoData | null) => {
+  const unavailable = accountInfo?.unavailable ?? [];
+  if (!unavailable.length) {
+    return '';
+  }
+  const labels = unavailable.map((slice) => SLICE_LABELS[slice]);
+  const listed = labels.length > 1
+    ? `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`
+    : labels[0];
+  return `Could not load ${listed}. The amounts shown may be incomplete.`;
 };
 
 export const getTotalRewards = (accountInfo: AccountInfoData | null) => {
