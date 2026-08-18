@@ -10,7 +10,6 @@ import {
   BrainCircuit,
   Wallet,
   Blocks,
-  ArrowRight,
   ExternalLink,
 } from '@tamagui/lucide-icons';
 import Image from 'next/image';
@@ -22,7 +21,7 @@ import AppLink from '@/components/AppLink';
 import SearchDialog from '@/components/SearchDialog';
 import Tooltip from '@/components/Tooltip';
 import GetStarted from '@/components/GetStarted';
-import { CHAIN_NAME } from '@/contants/network';
+import { CHAIN_NAME, PORTAL_URL } from '@/contants/network';
 
 import { useSelector, useDispatch } from '@/redux/hooks';
 import { setActiveView, setCurrentPath, setViewTitle } from '@/redux/app.slice';
@@ -52,7 +51,7 @@ export const NAV_ITEMS: TNaxItems[] = [
   {
     id: "portal",
     label: "Portal",
-    url: `https://portal.${process.env.NEXT_PUBLIC_SDK_PRESET === 'testnet' ? 'testnet.' : ''}lumera.io/`,
+    url: PORTAL_URL,
     icon: <Image src={LumeraSymbol} width={20} alt="Portal" className="rounded-full" />,
     newPage: true,
     newIcon: <ExternalLink size={16} />,
@@ -87,7 +86,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (!referrer) {
       sessionStorage.setItem('acquisitionSource', searchParams.get('utm_source') || document.referrer || 'Direct');
     }
-  }, []);
+  }, [dispatch, searchParams]);
 
   useEffect(() => {
     if (pathname) {

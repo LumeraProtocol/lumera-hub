@@ -79,7 +79,17 @@ NEXT_PUBLIC_NETWORK_PROFILE=testnet
 
 Supported profiles are `devnet`, `testnet`, and `mainnet`. Their chain IDs and endpoints are defined together in `apps/web/src/contants/network.ts`. Individual `NEXT_PUBLIC_CHAIN_NAME`, `NEXT_PUBLIC_CHAIN_ID`, `NEXT_PUBLIC_RPC_ENDPOINT`, `NEXT_PUBLIC_REST_AI_URL`, `NEXT_PUBLIC_EVM_RPC_ENDPOINT`, `NEXT_PUBLIC_EVM_WS_ENDPOINT`, `NEXT_PUBLIC_EVM_CHAIN_ID`, and `NEXT_PUBLIC_SNAPI_URL` values can still override the selected profile.
 
-Profiles with both an EVM RPC endpoint and EVM chain ID use an injected EIP-1193 wallet for native LUME balances and transfers. Profiles without those values continue to use the legacy Cosmos/Interchain wallet flow.
+Wallet support is profile-dependent:
+
+- `mainnet` uses Interchain Kit with the injected Keplr wallet.
+- EVM-enabled `devnet` and `testnet` profiles support Keplr plus an injected
+  EIP-1193 MetaMask wallet for native LUME balances and transfers.
+- MetaMask does not provide a Cosmos signer. Cosmos staking and governance
+  actions therefore remain unavailable while MetaMask is active.
+
+WalletConnect, Leap, and Cosmostation are not configured. The scaffold document
+under `docs/` contains historical examples for those integrations and is not a
+current setup guide.
 
 ### Run Dev Servers with Watcher
 

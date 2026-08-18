@@ -332,6 +332,19 @@ describe('fetchEvmAccountInfo', () => {
       unbonding: [],
     })).toBe(124999.75);
   });
+
+  it('falls back to validator rewards when an aggregate is absent or empty', () => {
+    expect(getTotalRewards({
+      balances: [],
+      delegations: [],
+      rewards: [{
+        validator_address: 'lumeravaloper1validator',
+        reward: [{ denom: 'ulume', amount: '125000.5' }],
+      }],
+      rewardTotal: [],
+      unbonding: [],
+    })).toBe(125000.5);
+  });
 });
 
 describe('describeAccountInfoGaps', () => {

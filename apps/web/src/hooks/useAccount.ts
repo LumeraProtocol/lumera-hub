@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useChain } from '@interchain-kit/react';
 
-import { CHAIN_NAME } from '@/contants/network';
-import { resolveAccountRouteAddress } from '@/utils/account';
+import { CHAIN_NAME, IS_EVM_NETWORK } from '@/contants/network';
+import {
+  getConnectedAccountQueryAddress,
+  resolveAccountRouteAddress,
+} from '@/utils/account';
 import {
   fetchAccountInfo,
   fetchBaseAccount,
@@ -19,6 +22,9 @@ import {
 } from '@/utils/account-activity';
 import type { ITransaction } from '@/hooks/useTransaction';
 import type { IValidator } from '@/types/validator';
+import useWalletConnect from '@/hooks/useWalletConnect';
+import { useDispatch } from '@/redux/hooks';
+import { setModalOpen } from '@/redux/wallet.slice';
 
 const EMPTY_ACCOUNT_INFO: AccountInfoData = {
   balances: [],
@@ -37,8 +43,15 @@ const EMPTY_ACCOUNT_INFO: AccountInfoData = {
  */
 const useAccount = () => {
   const params = useParams();
-  const { openView, address } = useChain(CHAIN_NAME);
+  const dispatch = useDispatch();
+  const { openView: openCosmosView } = useChain(CHAIN_NAME);
+  const { address, bech32Address, isEvm } = useWalletConnect();
   const queryAddress = resolveAccountRouteAddress(params?.address);
+  const connectedQueryAddress = getConnectedAccountQueryAddress({
+    address,
+    bech32Address,
+    isEvm,
+  });
 
   const [isAccountLoading, setAccountLoading] = useState(false);
   const [account, setAccount] = useState<BaseAccount | null>(null);
@@ -59,6 +72,12 @@ const useAccount = () => {
 
   useEffect(() => {
     if (!queryAddress) {
+      setAccountLoading(false);
+      setAccountInfoLoading(false);
+      setValidatorsLoading(false);
+      setTransactionsLoading(false);
+      setRecentReceivedLoading(false);
+      setCascadeFilesLoading(false);
       setAccount(null);
       setAccountInfo(EMPTY_ACCOUNT_INFO);
       setValidators([]);
@@ -67,28 +86,31 @@ const useAccount = () => {
       setCascades([]);
       return;
     }
+    let cancelled = false;
 
     const loadAccount = async () => {
       setAccountLoading(true);
       try {
-        setAccount(await fetchBaseAccount(queryAddress));
+        const nextAccount = await fetchBaseAccount(queryAddress);
+        if (!cancelled) setAccount(nextAccount);
       } catch (e) {
         console.error('API Error:', e);
-        setAccount(null);
+        if (!cancelled) setAccount(null);
       } finally {
-        setAccountLoading(false);
+        if (!cancelled) setAccountLoading(false);
       }
     };
 
     const loadAccountInfo = async () => {
       setAccountInfoLoading(true);
       try {
-        setAccountInfo(await fetchAccountInfo(queryAddress));
+        const nextAccountInfo = await fetchAccountInfo(queryAddress);
+        if (!cancelled) setAccountInfo(nextAccountInfo);
       } catch (e) {
         console.error('API Error:', e);
-        setAccountInfo(EMPTY_ACCOUNT_INFO);
+        if (!cancelled) setAccountInfo(EMPTY_ACCOUNT_INFO);
       } finally {
-        setAccountInfoLoading(false);
+        if (!cancelled) setAccountInfoLoading(false);
       }
     };
 
@@ -102,18 +124,22 @@ const useAccount = () => {
       await fetchAccountActivity(queryAddress, {
         onSlice: {
           validators: (items) => {
+            if (cancelled) return;
             setValidators(items);
             setValidatorsLoading(false);
           },
           sentTransactions: (items) => {
+            if (cancelled) return;
             setTransactions(items);
             setTransactionsLoading(false);
           },
           receivedTransactions: (items) => {
+            if (cancelled) return;
             setRecentReceived(items);
             setRecentReceivedLoading(false);
           },
           cascadeHistory: (items) => {
+            if (cancelled) return;
             setCascades(items);
             setCascadeFilesLoading(false);
           },
@@ -124,13 +150,30 @@ const useAccount = () => {
     loadAccount();
     loadAccountInfo();
     loadActivity();
+    return () => {
+      cancelled = true;
+    };
   }, [queryAddress]);
 
   useEffect(() => {
-    fetchConnectedStaking(address || '')
-      .then(setConnectedStaking)
+    let cancelled = false;
+    fetchConnectedStaking(connectedQueryAddress)
+      .then((staking) => {
+        if (!cancelled) setConnectedStaking(staking);
+      })
       .catch((e) => console.error('API Error:', e));
-  }, [address]);
+    return () => {
+      cancelled = true;
+    };
+  }, [connectedQueryAddress]);
+
+  const openView = () => {
+    if (IS_EVM_NETWORK) {
+      dispatch(setModalOpen({ status: true }));
+      return;
+    }
+    openCosmosView();
+  };
 
   const handleDelegationsTabChange = (val: string) => {
     setDelegationsTab(val);

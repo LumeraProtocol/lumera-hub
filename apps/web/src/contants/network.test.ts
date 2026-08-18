@@ -13,6 +13,8 @@ const ENVIRONMENT_KEYS = [
   'NEXT_PUBLIC_EVM_PROFILE_NAME',
   'NEXT_PUBLIC_EVM_CHAIN_ID',
   'NEXT_PUBLIC_COSMOS_EIP712_ENABLED',
+  'NEXT_PUBLIC_SDK_PRESET',
+  'NEXT_PUBLIC_SNSCOPE_URL',
 ] as const;
 
 const originalEnvironment = Object.fromEntries(
@@ -38,6 +40,9 @@ describe('network profiles', () => {
     const network = await import('./network');
     expect(network.NETWORK_PROFILE).toBe('mainnet');
     expect(network.IS_EVM_NETWORK).toBe(false);
+    expect(network.SDK_PRESET).toBe('mainnet');
+    expect(network.SNSCOPE_URL).toBe('https://snscope.lumera.io/');
+    expect(network.PORTAL_URL).toBe('https://portal.lumera.io/');
   });
 
   it('selects the complete testnet EVM profile', async () => {
@@ -48,6 +53,29 @@ describe('network profiles', () => {
     expect(network.EVM_PROFILE_NAME).toBe('lumera-testnet-evm');
     expect(network.EVM_RPC_ENDPOINT).toBe('https://evm-testnet.lumeraprotocol.com');
     expect(network.IS_EVM_NETWORK).toBe(true);
+    expect(network.SDK_PRESET).toBe('testnet');
+    expect(network.SNSCOPE_URL).toBe('https://snscope.testnet.lumera.io/');
+    expect(network.PORTAL_URL).toBe('https://portal.testnet.lumera.io/');
+  });
+
+  it('keeps the devnet SDK and SNScope endpoints on the dev/test network', async () => {
+    process.env.NEXT_PUBLIC_NETWORK_PROFILE = 'devnet';
+    const network = await import('./network');
+
+    expect(network.SDK_PRESET).toBe('testnet');
+    expect(network.SNSCOPE_URL).toBe('https://p1p2p3p4.pastel.network/snscope/');
+    expect(network.PORTAL_URL).toBe('https://portal.testnet.lumera.io/');
+  });
+
+  it('allows explicit SDK and SNScope overrides for private deployments', async () => {
+    process.env.NEXT_PUBLIC_NETWORK_PROFILE = 'testnet';
+    process.env.NEXT_PUBLIC_SDK_PRESET = 'mainnet';
+    process.env.NEXT_PUBLIC_SNSCOPE_URL = 'https://snscope.example/';
+    const network = await import('./network');
+
+    expect(network.SDK_PRESET).toBe('mainnet');
+    expect(network.SNSCOPE_URL).toBe('https://snscope.example/');
+    expect(network.PORTAL_URL).toBe('https://portal.lumera.io/');
   });
 
   it('keeps Cosmos EIP-712 disabled unless explicitly enabled', async () => {

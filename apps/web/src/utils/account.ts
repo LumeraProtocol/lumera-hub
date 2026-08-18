@@ -9,6 +9,19 @@ export interface AccountAddressFormats {
   ethAddress: string;
 }
 
+interface ConnectedAccountQueryOptions {
+  address: string;
+  bech32Address: string;
+  isEvm: boolean;
+}
+
+/** Cosmos REST endpoints are always keyed by Bech32, even for MetaMask. */
+export const getConnectedAccountQueryAddress = ({
+  address,
+  bech32Address,
+  isEvm,
+}: ConnectedAccountQueryOptions) => isEvm ? bech32Address : address;
+
 export const parseAccountAddress = (input: string): AccountAddressFormats | null => {
   const lowered = input.trim().toLowerCase();
   if (!lowered) return null;

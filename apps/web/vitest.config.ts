@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      '@interchain-ui/react/styles': path.resolve(__dirname, 'src/test/empty-style.ts'),
     },
   },
   test: {

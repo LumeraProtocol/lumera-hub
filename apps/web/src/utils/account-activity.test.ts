@@ -234,6 +234,7 @@ describe('fetchConnectedStaking', () => {
       balances: vi.fn().mockResolvedValue([
         { denom: 'ulume', amount: '1500000' },
         { denom: 'ulume', amount: '500000' },
+        { denom: 'ibc/NOT_LUME', amount: '9000000' },
       ]),
     });
 

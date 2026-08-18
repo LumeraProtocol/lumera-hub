@@ -1,5 +1,13 @@
 # Lumera Hub — Monorepo Scaffold (Web‑first with Wallet; Mobile later)
 
+> **Historical document:** This is the original repository scaffold, not the
+> current setup guide. Its Cosmos Kit, Leap, Cosmostation, and wallet-adapter
+> installation examples are retained only as project history. The current web
+> app uses Interchain Kit with injected Keplr support and, on EVM-enabled
+> profiles, a custom injected EIP-1193 MetaMask integration. Do not install the
+> wallet packages shown below; use the root README and the checked-in
+> configuration as the source of truth.
+
 This guide creates a clean monorepo with Next.js 15 for web (with Cosmos‑Kit wallet on web now), Expo SDK 53 for mobile (added later), and a Tauri 2 desktop shell. It uses Turborepo + pnpm, Tamagui for a shared UI system, and a pragmatic desktop strategy (dev points at Next dev server, prod ships a static export subset).
 
 ---

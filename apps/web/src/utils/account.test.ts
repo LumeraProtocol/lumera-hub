@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { toBech32, fromHex } from '@cosmjs/encoding';
 
-import { parseAccountAddress, resolveAccountRouteAddress } from './account';
+import {
+  getConnectedAccountQueryAddress,
+  parseAccountAddress,
+  resolveAccountRouteAddress,
+} from './account';
 
 const HEX_20_BYTES = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0';
 const ACCOUNT_ADDRESS = toBech32('lumera', fromHex(HEX_20_BYTES));
@@ -62,5 +66,23 @@ describe('resolveAccountRouteAddress', () => {
     expect(resolveAccountRouteAddress(undefined)).toBe('');
     expect(resolveAccountRouteAddress([])).toBe('');
     expect(resolveAccountRouteAddress([`0x${HEX_20_BYTES}`, 'ignored'])).toBe(ACCOUNT_ADDRESS);
+  });
+});
+
+describe('getConnectedAccountQueryAddress', () => {
+  it('uses the derived Bech32 address for a MetaMask account', () => {
+    expect(getConnectedAccountQueryAddress({
+      address: `0x${HEX_20_BYTES}`,
+      bech32Address: ACCOUNT_ADDRESS,
+      isEvm: true,
+    })).toBe(ACCOUNT_ADDRESS);
+  });
+
+  it('keeps the native address for a Cosmos wallet', () => {
+    expect(getConnectedAccountQueryAddress({
+      address: ACCOUNT_ADDRESS,
+      bech32Address: ACCOUNT_ADDRESS,
+      isEvm: false,
+    })).toBe(ACCOUNT_ADDRESS);
   });
 });

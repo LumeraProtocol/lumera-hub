@@ -2,7 +2,7 @@ import numeral from 'numeral';
 
 import * as instance from '@/utils/api';
 import { RATE_VALUE } from '@/contants';
-import { SNSCOPE_URL } from '@/contants/network';
+import { DENOM, SNSCOPE_URL } from '@/contants/network';
 import { formatTokenDisplay } from '@/utils/format';
 import type { IActionDetail } from '@/types';
 import type { IValidator } from '@/types/validator';
@@ -49,7 +49,7 @@ export interface ConnectedStaking {
   validatorAddresses: string[];
   /** Staked amount per validator address, in micro-denom. */
   stakedBalances: Record<string, string>;
-  /** Total bank balance of the connected wallet: every coin amount summed, in display LUME. */
+  /** Native LUME bank balance of the connected wallet, in display LUME. */
   availableBalance: number;
 }
 
@@ -212,7 +212,10 @@ export const fetchConnectedStaking = async (
     loadSlice(() => api.delegations(connectedAddress), [] as DelegationResponse[]),
     loadSlice(async () => {
       const balances = await api.balances(connectedAddress);
-      const total = balances.reduce((sum, balance) => sum + Number(balance.amount), 0);
+      const total = balances.reduce(
+        (sum, balance) => balance.denom === DENOM ? sum + Number(balance.amount) : sum,
+        0,
+      );
       return Number(numeral(total / RATE_VALUE).format('0.[000000]'));
     }, 0),
   ]);

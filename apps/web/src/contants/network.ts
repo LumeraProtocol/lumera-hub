@@ -13,6 +13,8 @@ export const NETWORK_PROFILES = {
     evmWsEndpoint: null,
     evmChainId: 76857769,
     snapiUrl: 'http://localhost:3100',
+    sdkPreset: 'testnet',
+    snscopeUrl: 'https://p1p2p3p4.pastel.network/snscope/',
   },
   testnet: {
     displayName: 'Lumera Testnet',
@@ -26,6 +28,8 @@ export const NETWORK_PROFILES = {
     evmWsEndpoint: 'https://evm-ws-testnet.lumeraprotocol.com',
     evmChainId: 76857769,
     snapiUrl: 'http://localhost:3100',
+    sdkPreset: 'testnet',
+    snscopeUrl: 'https://snscope.testnet.lumera.io/',
   },
   mainnet: {
     displayName: 'Lumera Mainnet',
@@ -39,6 +43,8 @@ export const NETWORK_PROFILES = {
     evmWsEndpoint: null,
     evmChainId: null,
     snapiUrl: 'http://localhost:3100',
+    sdkPreset: 'mainnet',
+    snscopeUrl: 'https://snscope.lumera.io/',
   },
 } as const;
 
@@ -88,5 +94,8 @@ if (EVM_CHAIN_ID !== null && (!Number.isSafeInteger(EVM_CHAIN_ID) || EVM_CHAIN_I
 
 export const IS_EVM_NETWORK = EVM_RPC_ENDPOINT !== null && EVM_CHAIN_ID !== null;
 export const SNAPI_URL = process.env.NEXT_PUBLIC_SNAPI_URL || ACTIVE_NETWORK.snapiUrl;
-export const SDK_PRESET = process.env.NEXT_PUBLIC_SDK_PRESET || 'mainnet';
-export const SNSCOPE_URL = process.env.NEXT_PUBLIC_SNSCOPE_URL || 'https://snscope.testnet.lumera.io/';
+export const SDK_PRESET = process.env.NEXT_PUBLIC_SDK_PRESET || ACTIVE_NETWORK.sdkPreset;
+export const SNSCOPE_URL = process.env.NEXT_PUBLIC_SNSCOPE_URL || ACTIVE_NETWORK.snscopeUrl;
+export const PORTAL_URL = SDK_PRESET === 'testnet'
+  ? 'https://portal.testnet.lumera.io/'
+  : 'https://portal.lumera.io/';

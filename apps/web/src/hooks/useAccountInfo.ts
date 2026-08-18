@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
@@ -214,7 +214,7 @@ export const describeAccountInfoGaps = (accountInfo: AccountInfoData | null) => 
 };
 
 export const getTotalRewards = (accountInfo: AccountInfoData | null) => {
-  if (accountInfo?.rewardTotal) {
+  if (accountInfo?.rewardTotal?.length) {
     return accountInfo.rewardTotal.reduce((total, reward) => {
       if (reward.denom === DENOM) {
         return total + Number(reward.amount);
@@ -261,8 +261,11 @@ const useAccountInfo = () => {
   const [selectedModal, setSelectedModal] = useState('');
   const [transactionHash, setTransactionHash] = useState('');
   const [selectedClaim, setSelectedClaim] = useState<DelegationResponse | null>(null);
+  const fetchSequence = useRef(0);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    const requestId = fetchSequence.current + 1;
+    fetchSequence.current = requestId;
     setLoading(true);
     setError(null);
 
@@ -272,6 +275,7 @@ const useAccountInfo = () => {
           ethAddress: address,
           bech32Address,
         });
+        if (requestId !== fetchSequence.current) return;
         setAccountInfo(_accountInfo);
         setClaimInfo((current) => ({
           ...current,
@@ -281,12 +285,14 @@ const useAccountInfo = () => {
       }
 
       const _accountInfo = await fetchAccountInfo(address);
+      if (requestId !== fetchSequence.current) return;
       setAccountInfo(_accountInfo);
-      setClaimInfo({
-        ...claimInfo,
+      setClaimInfo((current) => ({
+        ...current,
         totalRewards: `${getTotalRewards(_accountInfo)}`,
-      })
+      }));
     } catch (e) {
+      if (requestId !== fetchSequence.current) return;
       console.error('API Error:', e);
       if (e instanceof Error) {
         setError(e);
@@ -294,24 +300,25 @@ const useAccountInfo = () => {
         setError(new Error('An unknown error occurred.'));
       }
     } finally {
-      setLoading(false);
+      if (requestId === fetchSequence.current) setLoading(false);
     }
-  };
+  }, [address, bech32Address, isEvm]);
 
   useEffect(() => {
     if (!address) {
+      fetchSequence.current += 1;
       setAccountInfo({ balances: [], delegations: [], rewards: [], unbonding: [], });
       setLoading(false);
       setError(null);
       return;
     } else {
-      setClaimInfo({
-        ...claimInfo,
+      setClaimInfo((current) => ({
+        ...current,
         senderAddress: address,
-      });
+      }));
     }
-    fetchData();
-  }, [address, bech32Address, isEvm]);
+    void fetchData();
+  }, [address, fetchData]);
 
   const handleClaimButtonClick = async () => {
     setErrorClaim(null);

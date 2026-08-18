@@ -65,35 +65,42 @@ function InterchainWalletModeSynchronizer() {
   return null;
 }
 
-function WalletRuntimeProviders({ children }: { children: React.ReactNode }) {
-  const walletName = useSelector((state) => state.wallet.walletName);
+const getConfiguredChainData = () => {
   const { chains, assetLists } = getChains();
+  const chain = chains.find(({ chainName }) => chainName === CHAIN_NAME);
+  const assets = assetLists.find(({ chainName }) => chainName === CHAIN_NAME);
+
+  // Every app surface calls interchain-kit hooks, including EVM-only screens.
+  // Rendering children before ChainProvider exists throws synchronously from
+  // useWalletManager, so resolve the static profile data during render instead
+  // of installing the provider one effect later.
+  if (!chain || !assets) {
+    throw new Error(
+      `Chain or assets not found for ${CHAIN_NAME}. Available chains: ${chains
+        .map((item) => item.chainName)
+        .join(', ')}`
+    );
+  }
+  // The handcrafted devnet entry is structurally compatible at runtime, but
+  // chain-registry's generated type requires metadata fields it does not use.
+  // Keep the cast at this single provider boundary.
+  return { chain, assets } as {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    chain: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    assets: any;
+  };
+};
+
+export function WalletRuntimeProviders({ children }: { children: React.ReactNode }) {
+  const walletName = useSelector((state) => state.wallet.walletName);
+  const chainData = getConfiguredChainData();
   const isBrowser = typeof window !== 'undefined';
-  // Resolve chain & assets only in the browser to avoid throwing during Next.js prerender/export
-  // Use loose typing to avoid importing chain-registry types; runtime values come from the registry data.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [chainData, setChainData] = React.useState<{ chain: any; assets: any } | null>(null);
   React.useEffect(() => {
     if (isBrowser && IS_EVM_NETWORK && walletName === METAMASK_WALLET_NAME) {
       suppressPersistedKeplrConnection(window.localStorage);
     }
   }, [isBrowser, walletName]);
-
-  React.useEffect(() => {
-    if (!isBrowser || chainData) return;
-    const foundChain = chains.find(({ chainName }) => chainName === CHAIN_NAME);
-    const foundAssets = assetLists.find(({ chainName }) => chainName === CHAIN_NAME);
-
-    if (!foundChain || !foundAssets) {
-      console.warn(
-        `Chain or assets not found for ${CHAIN_NAME}. Available chains: ${chains
-          .map((c) => c.chainName)
-          .join(', ')}`
-      );
-      return;
-    }
-    setChainData({ chain: foundChain, assets: foundAssets });
-  }, [isBrowser, chains, assetLists, chainData]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const walletAdapters: any = React.useMemo(() => [keplrWallet], []);
@@ -103,18 +110,11 @@ function WalletRuntimeProviders({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <RegistryProvider>
           <EvmWalletProvider>
-            {isBrowser && chainData ? (
-              <ChainProvider wallets={walletAdapters} chains={[chainData.chain]} assetLists={[chainData.assets]}>
-                <InterchainWalletModeSynchronizer />
-                {children}
-                <OverlaysManager />
-              </ChainProvider>
-            ) : (
-              // During SSR or while resolving on client, render app shell without ChainProvider to avoid build-time throws
-              <>
-                {children}
-              </>
-            )}
+            <ChainProvider wallets={walletAdapters} chains={[chainData.chain]} assetLists={[chainData.assets]}>
+              <InterchainWalletModeSynchronizer />
+              {children}
+              <OverlaysManager />
+            </ChainProvider>
           </EvmWalletProvider>
         </RegistryProvider>
       </ThemeProvider>
