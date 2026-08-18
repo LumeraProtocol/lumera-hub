@@ -31,3 +31,16 @@ export const parseAccountAddress = (input: string): AccountAddressFormats | null
     return null;
   }
 };
+
+/**
+ * Resolves the `[address]` route segment of `/account/…` to the Bech32 address
+ * the chain APIs are keyed by, so a `0x…` address typed straight into the
+ * address bar resolves the same account as its `lumera1…` form. Input that is
+ * neither format is passed through unchanged, so the page keeps rendering its
+ * usual empty-account state instead of silently querying something else.
+ */
+export const resolveAccountRouteAddress = (param?: string | string[]): string => {
+  const raw = (Array.isArray(param) ? param[0] : param) ?? '';
+  if (!raw) return '';
+  return parseAccountAddress(raw)?.bech32Address ?? raw;
+};

@@ -21,7 +21,7 @@ export interface DelegationResponse {
   balance: Coin
 }
 
-interface ValidatorRewards {
+export interface ValidatorRewards {
   validator_address: string;
   reward: Coin[];
 }
@@ -35,10 +35,22 @@ interface IEntries {
   unbonding_on_hold_ref_count: string;
 }
 
-interface ValidatorUnbonding {
+export interface ValidatorUnbonding {
   delegator_address: string;
   validator_address: string;
   entries: IEntries[];
+}
+
+/** The `cosmos.auth.v1beta1.BaseAccount` record shown at the top of the account page. */
+export interface BaseAccount {
+  '@type': string;
+  address: string;
+  pub_key: {
+    '@type': string;
+    key: string;
+  } | null;
+  account_number: string;
+  sequence: string;
 }
 
 export interface AccountInfoData {
@@ -115,6 +127,18 @@ export const fetchAccountInfo = async (
     rewardTotal: rewardsData.total || [],
     unbonding: unbondingData.unbonding_responses || [],
   };
+};
+
+/**
+ * Reads the on-chain account record. Returns `null` for an address that has
+ * never appeared on chain, which the account page renders as "no account".
+ */
+export const fetchBaseAccount = async (
+  address: string,
+  { get = instance.get }: FetchAccountInfoOptions = {},
+): Promise<BaseAccount | null> => {
+  const { data } = await get(`/cosmos/auth/v1beta1/accounts/${address}`);
+  return (data as { account?: BaseAccount }).account ?? null;
 };
 
 export const getTotalRewards = (accountInfo: AccountInfoData | null) => {

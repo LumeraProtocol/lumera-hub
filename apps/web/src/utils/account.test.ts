@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { toBech32, fromHex } from '@cosmjs/encoding';
 
-import { parseAccountAddress } from './account';
+import { parseAccountAddress, resolveAccountRouteAddress } from './account';
 
 const HEX_20_BYTES = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0';
 const ACCOUNT_ADDRESS = toBech32('lumera', fromHex(HEX_20_BYTES));
@@ -40,5 +40,27 @@ describe('parseAccountAddress', () => {
     expect(parseAccountAddress('lumera1notarealaddress')).toBeNull();
     expect(parseAccountAddress('')).toBeNull();
     expect(parseAccountAddress('0xabc')).toBeNull();
+  });
+});
+
+describe('resolveAccountRouteAddress', () => {
+  it('resolves a hex route param to the same account as its bech32 form', () => {
+    expect(resolveAccountRouteAddress(`0x${HEX_20_BYTES}`)).toBe(ACCOUNT_ADDRESS);
+    expect(resolveAccountRouteAddress(`0x${HEX_20_BYTES.toUpperCase()}`)).toBe(ACCOUNT_ADDRESS);
+  });
+
+  it('keeps a bech32 route param queryable', () => {
+    expect(resolveAccountRouteAddress(ACCOUNT_ADDRESS)).toBe(ACCOUNT_ADDRESS);
+    expect(resolveAccountRouteAddress(ACCOUNT_ADDRESS.toUpperCase())).toBe(ACCOUNT_ADDRESS);
+  });
+
+  it('passes unresolvable input through so the page still renders empty', () => {
+    expect(resolveAccountRouteAddress('lumera1notarealaddress')).toBe('lumera1notarealaddress');
+  });
+
+  it('reads the first segment of a missing or repeated route param', () => {
+    expect(resolveAccountRouteAddress(undefined)).toBe('');
+    expect(resolveAccountRouteAddress([])).toBe('');
+    expect(resolveAccountRouteAddress([`0x${HEX_20_BYTES}`, 'ignored'])).toBe(ACCOUNT_ADDRESS);
   });
 });

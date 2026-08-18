@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fetchAccountInfo, fetchEvmAccountInfo, getTotalRewards } from './useAccountInfo';
+import {
+  fetchAccountInfo,
+  fetchBaseAccount,
+  fetchEvmAccountInfo,
+  getTotalRewards,
+} from './useAccountInfo';
 
 describe('fetchAccountInfo', () => {
   it('queries balances and staking data for the given address', async () => {
@@ -52,6 +57,28 @@ describe('fetchAccountInfo', () => {
       rewardTotal: [],
       unbonding: [],
     });
+  });
+});
+
+describe('fetchBaseAccount', () => {
+  it('reads the on-chain account record for the given address', async () => {
+    const account = {
+      '@type': '/cosmos.auth.v1beta1.BaseAccount',
+      address: 'lumera1account',
+      pub_key: { '@type': '/cosmos.crypto.secp256k1.PubKey', key: 'Aabb' },
+      account_number: '12',
+      sequence: '3',
+    };
+    const get = vi.fn().mockResolvedValue({ data: { account } });
+
+    expect(await fetchBaseAccount('lumera1account', { get })).toEqual(account);
+    expect(get).toHaveBeenCalledWith('/cosmos/auth/v1beta1/accounts/lumera1account');
+  });
+
+  it('reports an account that has never appeared on chain as null', async () => {
+    const get = vi.fn().mockResolvedValue({ data: {} });
+
+    expect(await fetchBaseAccount('lumera1account', { get })).toBeNull();
   });
 });
 
