@@ -491,8 +491,7 @@
   animation: slideBackForth 1s infinite ease-in-out;
 }
 .get-started .keplr-wallet::after,
-.get-started .leap-wallet::after,
-.get-started .cosmostation-wallet::after {
+.get-started .metamask-wallet::after {
   content: '';
   position: absolute;
   top: 0;
@@ -505,11 +504,8 @@
 .get-started .keplr-wallet::after {
   background-image: url(../../public/img/keplr.jpg);
 }
-.get-started .leap-wallet::after {
-  background-image: url(../../public/img/leap.jpg);
-}
-.get-started .cosmostation-wallet::after {
-  background-image: url(../../public/img/cosmostation.jpg);
+.get-started .metamask-wallet::after {
+  background-image: url(../../public/metamask.png);
 }
 .datepicker-wrapper .react-datepicker {
   border: 1px solid transparent;
@@ -721,8 +717,7 @@
     row-gap: 8px;
   }
   .get-started .keplr-wallet::after,
-  .get-started .leap-wallet::after,
-  .get-started .cosmostation-wallet::after,
+  .get-started .metamask-wallet::after,
   .wallet-mark {
     opacity: 0.1;
   }

@@ -29,6 +29,7 @@ import useStaking from '@/hooks/useStaking';
 import { formatToken } from '@/utils/format';
 import { useDispatch } from '@/redux/hooks';
 import { setActiveView, setCurrentPath } from '@/redux/app.slice';
+import { IS_EVM_NETWORK } from '@/contants/network';
 
 interface IGetStartedContent {
   onClose: () => void;
@@ -121,36 +122,23 @@ const GetStartedContent = ({ onClose }: IGetStartedContent) => {
             </div>
           </Link>
         </Card>
-        <Card elevate size="$4" bordered className='overflow-hidden'>
-          <Link href={`https://www.leapwallet.io?referrer=${refer}`} target='_blank'>
-            <div className='flex gap-3 p-4 relative items-stretch leap-wallet'>
-              <div>
-                <h3 className='text-base'>Leap Wallet</h3>
-                <div className='text-lumera-label text-base'>Meet the wallet that understands you, & the Cosmos.</div>
-                <div className='flex gap-2 items-center mt-1'>
-                  <Image src='/leap.svg' width={18} height={18} alt='Keplr Wallet' className='rounded-xl' />
-                  <span className='text-lumera-label text-base'>https://www.leapwallet.io/</span>
+        {IS_EVM_NETWORK && (
+          <Card elevate size="$4" bordered className='overflow-hidden'>
+            <Link href={`https://metamask.io?referrer=${refer}`} target='_blank'>
+              <div className='flex gap-3 p-4 relative items-stretch metamask-wallet'>
+                <div className='relative z-30'>
+                  <h3 className='text-base'>MetaMask Wallet</h3>
+                  <div className='text-lumera-label text-base'>A crypto wallet & gateway to blockchain apps, trusted by millions worldwide.</div>
+                  <div className='flex gap-2 items-center mt-1'>
+                    <Image src='/metamask.png' width={18} height={18} alt='MetaMask Wallet' className='rounded-xl' />
+                    <span className='text-lumera-label text-base'>https://metamask.io/</span>
+                  </div>
                 </div>
+                <div className='min-w-[150px] relative flex-auto h-full wallet-mark'>&nbsp;</div>
               </div>
-              <div className='min-w-[150px] relative flex-auto h-full wallet-mark'>&nbsp;</div>
-            </div>
-          </Link>
-        </Card>
-        <Card elevate size="$4" bordered className='overflow-hidden'>
-          <Link href={`https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf?hl=en&referrer=${refer}`} target='_blank'>
-            <div className='flex gap-3 p-4 relative items-stretch cosmostation-wallet'>
-              <div className='min-w-0'>
-                <h3 className='text-base'>Cosmostation Wallet</h3>
-                <div className='text-lumera-label text-base'>Non-custodial multi-chain extension wallet powered by Cosmostation, the interchain validator.</div>
-                <div className='flex gap-2 items-center mt-1'>
-                  <Image src='/cosmostation.svg' width={18} height={18} alt='Keplr Wallet' className='rounded-xl' />
-                  <span className='text-lumera-label text-base truncate block min-w-0'>https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf?hl=en</span>
-                </div>
-              </div>
-              <div className='min-w-[150px] relative flex-auto h-full wallet-mark'>&nbsp;</div>
-            </div>
-          </Link>
-        </Card>
+            </Link>
+          </Card>
+        )}
       </div>
     </>,
     <>
