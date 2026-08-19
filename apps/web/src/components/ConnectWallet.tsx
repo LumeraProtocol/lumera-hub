@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
-import { Wallet, ChevronDown, Copy, LogOut, RefreshCw, TriangleAlert } from 'lucide-react';
+import { Wallet, ChevronDown, Copy, LogOut, RefreshCw } from 'lucide-react';
 import {
   InterchainWalletModal,
   useChain,
@@ -116,6 +116,8 @@ function WalletChoiceModal() {
       installed: isMetaMaskInstalled,
     },
   ];
+  const displayedWalletError = walletError
+    || (selectedWallet === METAMASK_WALLET_NAME ? evmWallet.error : '');
 
   return createPortal(
     <div
@@ -165,7 +167,9 @@ function WalletChoiceModal() {
             );
           })}
         </ul>
-        {walletError && <p className={styles.error} role="alert">{walletError}</p>}
+        {displayedWalletError && (
+          <p className={styles.error} role="alert">{displayedWalletError}</p>
+        )}
         <button
           type="button"
           className={styles.connectButton}
@@ -334,20 +338,8 @@ export function ConnectWallet() {
       { label: 'ETH hex address', value: ethAddress },
     ]
     : [{ label: 'Bech32 address', value: address }];
-  // Surface MetaMask sync/verification problems, which otherwise leave the
-  // header looking simply disconnected with no explanation.
-  const evmWalletError = IS_EVM_NETWORK && walletName !== KEPLR_WALLET_NAME
-    ? evmWallet.error
-    : '';
-
   return (
     <div className={styles.accountControls}>
-      {evmWalletError && (
-        <p className={styles.walletAlert} role="alert" title={evmWalletError}>
-          <TriangleAlert aria-hidden="true" size={15} />
-          <span className={styles.walletAlertText}>{evmWalletError}</span>
-        </p>
-      )}
       {!address ?
         <AppButton onClick={handleConnect}>
           <Wallet className='w-4 h-4' /> <div className="connect-wallet-label">Connect Wallet</div>
@@ -371,6 +363,9 @@ export function ConnectWallet() {
             {isMenuOpen && (
               <div className={styles.accountMenu} role="menu" aria-label={`${walletLabel} wallet menu`}>
                 <div className={styles.accountMenuHeading}>{walletLabel} wallet</div>
+                {walletName === METAMASK_WALLET_NAME && evmWallet.error && (
+                  <p className={styles.menuError} role="alert">{evmWallet.error}</p>
+                )}
                 <div className={styles.addressList}>
                   {addressItems.filter((item) => item.value).map((item) => (
                     <button

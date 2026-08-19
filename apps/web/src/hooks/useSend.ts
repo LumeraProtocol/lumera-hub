@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   MsgSend,
 } from 'cosmjs-types/cosmos/bank/v1beta1/tx';
@@ -11,6 +11,7 @@ import {
   evmBalanceToMicroLume,
   getEvmBalance,
   assertEvmAccountForChain,
+  isEvmTransactionHash,
   normalizeEvmRecipientAddress,
   parseEvmAmount,
 } from '@/utils/evm';
@@ -46,14 +47,46 @@ const useSend = (options: UseDepositOptions = {}) => {
     const [balances, setBalances] = useState<Coin[]>([]);
     const [selectedDenom, setSelectedDenom] = useState<string>('ulume');
     const [transactionHash, setTransactionHash] = useState('');
+    const balanceRequestSequence = useRef(0);
+
+    const queryBalances = useCallback(async (): Promise<void> => {
+      const requestId = balanceRequestSequence.current + 1;
+      balanceRequestSequence.current = requestId;
+      try {
+        if (isEvm) {
+          const balance = await getEvmBalance(address);
+          if (requestId !== balanceRequestSequence.current) return;
+          setBalances([{ denom: DENOM, amount: evmBalanceToMicroLume(balance) }]);
+          setSelectedDenom(DENOM);
+          return;
+        }
+
+        const client = await getClient();
+        if (!client) return;
+        const allBalances = await client.getAllBalances(address);
+        if (requestId !== balanceRequestSequence.current) return;
+        const positiveBalances = allBalances.filter((balance) => Number(balance.amount) > 0);
+        setBalances(positiveBalances);
+        if (positiveBalances.length > 0) {
+          setSelectedDenom(positiveBalances[0].denom);
+        }
+      } catch {
+        if (requestId === balanceRequestSequence.current) setBalances([]);
+      }
+    }, [address, getClient, isEvm]);
 
     useEffect(() => {
       if (!isConnected || !address) {
+        balanceRequestSequence.current += 1;
         setBalances([]);
         return;
       }
+      setBalances([]);
       void queryBalances();
-    }, [address, isConnected, isEvm]);
+      return () => {
+        balanceRequestSequence.current += 1;
+      };
+    }, [address, isConnected, queryBalances]);
 
     useEffect(() => {
       setOptionsAdvanced((current) => ({
@@ -63,11 +96,12 @@ const useSend = (options: UseDepositOptions = {}) => {
     }, [address]);
 
     useEffect(() => {
-      if (options?.customMemo) {
-        setOptionsAdvanced({
-          ...optionsAdvanced,
-          memo: options?.customMemo,
-        })
+      const customMemo = options?.customMemo;
+      if (customMemo) {
+        setOptionsAdvanced((current) => ({
+          ...current,
+          memo: customMemo,
+        }));
       }
     }, [options?.customMemo]);
 
@@ -135,7 +169,7 @@ const useSend = (options: UseDepositOptions = {}) => {
             address,
             EVM_CHAIN_ID
           );
-          const transactionHash = await evmProvider.request<string>({
+          const transactionHash = await evmProvider.request({
             method: 'eth_sendTransaction',
             params: [{
               from: activeAddress,
@@ -143,6 +177,9 @@ const useSend = (options: UseDepositOptions = {}) => {
               value: parseEvmAmount(optionsAdvanced.amount),
             }],
           });
+          if (!isEvmTransactionHash(transactionHash)) {
+            throw new Error('EVM wallet returned an invalid transaction hash.');
+          }
           setTransactionHash(transactionHash);
           resetData();
           options.callback?.(transactionHash);
@@ -193,30 +230,6 @@ const useSend = (options: UseDepositOptions = {}) => {
       }
       setLoading(false);
     }
-
-    const queryBalances = async (): Promise<void> => {
-      try {
-        if (isEvm) {
-          const balance = await getEvmBalance(address);
-          setBalances([{ denom: DENOM, amount: evmBalanceToMicroLume(balance) }]);
-          setSelectedDenom(DENOM);
-          return;
-        }
-
-        const client = await getClient();
-        if (!client) {
-          return
-        }
-        const allBalances = await client.getAllBalances(address);
-        setBalances(allBalances.filter(b => parseInt(b.amount) > 0));
-        if (allBalances.length > 0) {
-          setSelectedDenom(allBalances[0].denom);
-        }
-      } catch {
-        // console.error('Query balances error:', err);
-        // noop
-      }
-    };
 
     const handleCloseCongratulationsModal = () => {
         setTransactionHash('');

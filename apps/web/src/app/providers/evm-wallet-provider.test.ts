@@ -10,6 +10,7 @@ process.env.NEXT_PUBLIC_NETWORK_PROFILE = 'testnet';
 const mocks = vi.hoisted(() => ({
   getEvmAccountForChain: vi.fn(),
   assertEvmProviderMatchesRpc: vi.fn(),
+  ensureEvmWalletNetwork: vi.fn(),
 }));
 
 vi.mock('@/utils/evm', async (importOriginal) => {
@@ -18,6 +19,7 @@ vi.mock('@/utils/evm', async (importOriginal) => {
     ...actual,
     getEvmAccountForChain: mocks.getEvmAccountForChain,
     assertEvmProviderMatchesRpc: mocks.assertEvmProviderMatchesRpc,
+    ensureEvmWalletNetwork: mocks.ensureEvmWalletNetwork,
   };
 });
 
@@ -75,6 +77,8 @@ describe('EvmWalletProvider account sync', () => {
     mocks.getEvmAccountForChain.mockReset();
     mocks.assertEvmProviderMatchesRpc.mockReset();
     mocks.assertEvmProviderMatchesRpc.mockResolvedValue(undefined);
+    mocks.ensureEvmWalletNetwork.mockReset();
+    mocks.ensureEvmWalletNetwork.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -156,5 +160,84 @@ describe('EvmWalletProvider account sync', () => {
     expect(result.current.address).toBe('');
     expect(result.current.error).toBe('No EVM wallet account is connected.');
     expect(mocks.assertEvmProviderMatchesRpc).not.toHaveBeenCalled();
+  });
+
+  it('connects only after configuring and verifying the selected EVM profile', async () => {
+    mocks.getEvmAccountForChain.mockResolvedValue(ADDRESS_A);
+    const { result } = renderWallet();
+    await flush();
+
+    await act(async () => {
+      await result.current.connect();
+    });
+
+    expect(fakeProvider.request).toHaveBeenCalledWith({ method: 'eth_requestAccounts' });
+    expect(mocks.ensureEvmWalletNetwork).toHaveBeenCalledWith(
+      fakeProvider,
+      expect.objectContaining({
+        chainId: 76857769,
+        suggestProfileOnMismatch: true,
+      }),
+    );
+    expect(result.current.address).toBe(ADDRESS_A);
+    expect(result.current.isConnected).toBe(true);
+    expect(result.current.isConnecting).toBe(false);
+    expect(result.current.error).toBe('');
+  });
+
+  it('surfaces profile verification failures and leaves the wallet disconnected', async () => {
+    mocks.getEvmAccountForChain.mockRejectedValue(
+      new Error('No EVM wallet account is connected.'),
+    );
+    mocks.ensureEvmWalletNetwork.mockRejectedValue(new TypeError('Failed to fetch'));
+    const { result } = renderWallet();
+    await flush();
+
+    await act(async () => {
+      await expect(result.current.connect()).rejects.toThrow('temporarily unavailable');
+    });
+
+    expect(result.current.address).toBe('');
+    expect(result.current.isConnected).toBe(false);
+    expect(result.current.isConnecting).toBe(false);
+    expect(result.current.error).toContain('temporarily unavailable');
+  });
+
+  it('clears local state even when permission revocation is unsupported', async () => {
+    mocks.getEvmAccountForChain.mockResolvedValue(ADDRESS_A);
+    const { result } = renderWallet();
+    await flush();
+    expect(result.current.address).toBe(ADDRESS_A);
+    fakeProvider.request.mockRejectedValueOnce(new Error('unsupported method'));
+
+    await act(async () => {
+      await result.current.disconnect();
+    });
+
+    expect(fakeProvider.request).toHaveBeenCalledWith({
+      method: 'wallet_revokePermissions',
+      params: [{ eth_accounts: {} }],
+    });
+    expect(result.current.address).toBe('');
+    expect(result.current.error).toBe('');
+  });
+
+  it('discovers MetaMask through an EIP-6963 provider announcement', async () => {
+    delete (window as unknown as { ethereum?: unknown }).ethereum;
+    mocks.getEvmAccountForChain.mockResolvedValue(ADDRESS_B);
+    const announcedProvider = createFakeProvider();
+    const { result } = renderWallet();
+    await flush();
+    expect(result.current.provider).toBeNull();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('eip6963:announceProvider', {
+        detail: { provider: announcedProvider },
+      }));
+    });
+    await flush();
+
+    expect(result.current.provider).toBe(announcedProvider);
+    expect(result.current.address).toBe(ADDRESS_B);
   });
 });

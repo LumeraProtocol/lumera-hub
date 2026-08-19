@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 
 import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
@@ -59,8 +59,11 @@ const useTransaction = ({ address: addressOverride, direction }: UseTransactionO
     const [error, setError] = useState('');
     const [transactions, setTransactions] = useState<ITransaction[]>([]);
     const [totalTransactions, setTotalTransactions] = useState(0);
+    const requestSequence = useRef(0);
 
     const fetchTransactions = useCallback(async (offset = 0, showLoading = true) => {
+        const requestId = requestSequence.current + 1;
+        requestSequence.current = requestId;
         if (!transactionAddress) {
             setTransactions([]);
             setTotalTransactions(0);
@@ -80,14 +83,16 @@ const useTransaction = ({ address: addressOverride, direction }: UseTransactionO
                 limit: LIMIT,
                 offset,
             }));
+            if (requestId !== requestSequence.current) return [];
             setTotalTransactions(Math.ceil(Number(data.total) / LIMIT));
             setTransactions(data.tx_responses || []);
             return data.tx_responses || [];
         } catch (e) {
+            if (requestId !== requestSequence.current) return [];
             setError(e instanceof Error ? e.message : 'An unknown error occurred.');
             return [];
         } finally {
-            if (showLoading) {
+            if (requestId === requestSequence.current) {
                 setLoading(false);
             }
         }
@@ -95,13 +100,17 @@ const useTransaction = ({ address: addressOverride, direction }: UseTransactionO
 
     useEffect(() => {
         if (transactionAddress) {
-            fetchTransactions();
+            void fetchTransactions();
         } else {
+            requestSequence.current += 1;
             setTransactions([]);
             setTotalTransactions(0);
             setError('');
             setLoading(false);
         }
+        return () => {
+            requestSequence.current += 1;
+        };
     }, [fetchTransactions, transactionAddress]);
 
     const handlePageClick = ({ selected }: { selected: number }) => {

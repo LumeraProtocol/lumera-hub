@@ -264,7 +264,7 @@ const useSupernodeDetails = () => {
 
     setMetricsLoading(true);
     try {
-      const { data } = await instance.getExternal(`${SNSCOPE_URL}v1/supernodes/${account}/metrics`);
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/${account}/metrics`);
       setMetrics(data);
     } catch (error) {
       console.error(error);
@@ -311,7 +311,7 @@ const useSupernodeDetails = () => {
     setRecentActivitiesError('');
     setRecentActivityLoading(true);
     try {
-      const { data } = await instance.getExternal(`${SNSCOPE_URL}v1/actions?supernode=${account}&limit=50&include_transactions=true`);
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?supernode=${account}&limit=50&include_transactions=true`);
       setRecentActivities(data.items.filter((item: TAction) => item.finalize_tx_id));
     } catch (error) {
       console.error(error);
@@ -326,7 +326,7 @@ const useSupernodeDetails = () => {
     }
     setCascadeActionLoading(true);
     try {
-      const { data } = await instance.getExternal(`${SNSCOPE_URL}v1/supernodes/action-stats?address=${account}&type=ACTION_TYPE_CASCADE`);
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/action-stats?address=${account}&type=ACTION_TYPE_CASCADE`);
       setCascadeAction(data);
     } catch (error) {
       console.error(error);
@@ -340,7 +340,7 @@ const useSupernodeDetails = () => {
     }
     setSenseActionLoading(true);
     try {
-      const { data } = await instance.getExternal(`${SNSCOPE_URL}v1/supernodes/action-stats?address=${account}&type=ACTION_TYPE_SENSE`);
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/action-stats?address=${account}&type=ACTION_TYPE_SENSE`);
       setSenseAction(data);
     } catch (error) {
       console.error(error);

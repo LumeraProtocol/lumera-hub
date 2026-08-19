@@ -14,7 +14,7 @@ export const NETWORK_PROFILES = {
     evmChainId: 76857769,
     snapiUrl: 'http://localhost:3100',
     sdkPreset: 'testnet',
-    snscopeUrl: 'https://p1p2p3p4.pastel.network/snscope/',
+    snscopeUrl: 'https://p1p2p3p4.pastel.network/snscope',
   },
   testnet: {
     displayName: 'Lumera Testnet',
@@ -29,7 +29,7 @@ export const NETWORK_PROFILES = {
     evmChainId: 76857769,
     snapiUrl: 'http://localhost:3100',
     sdkPreset: 'testnet',
-    snscopeUrl: 'https://snscope.testnet.lumera.io/',
+    snscopeUrl: 'https://snscope.testnet.lumera.io',
   },
   mainnet: {
     displayName: 'Lumera Mainnet',
@@ -44,7 +44,7 @@ export const NETWORK_PROFILES = {
     evmChainId: null,
     snapiUrl: 'http://localhost:3100',
     sdkPreset: 'mainnet',
-    snscopeUrl: 'https://snscope.lumera.io/',
+    snscopeUrl: 'https://snscope.lumera.io',
   },
 } as const;
 
@@ -92,10 +92,15 @@ if (EVM_CHAIN_ID !== null && (!Number.isSafeInteger(EVM_CHAIN_ID) || EVM_CHAIN_I
   throw new Error('NEXT_PUBLIC_EVM_CHAIN_ID must be a positive integer.');
 }
 
-export const IS_EVM_NETWORK = EVM_RPC_ENDPOINT !== null && EVM_CHAIN_ID !== null;
+export const IS_EVM_NETWORK = EVM_RPC_ENDPOINT !== null
+  && EVM_CHAIN_ID !== null
+  && EVM_PROFILE_NAME !== null;
 export const SNAPI_URL = process.env.NEXT_PUBLIC_SNAPI_URL || ACTIVE_NETWORK.snapiUrl;
 export const SDK_PRESET = process.env.NEXT_PUBLIC_SDK_PRESET || ACTIVE_NETWORK.sdkPreset;
-export const SNSCOPE_URL = process.env.NEXT_PUBLIC_SNSCOPE_URL || ACTIVE_NETWORK.snscopeUrl;
+// Call sites append paths as `${SNSCOPE_URL}/v1/...`; a trailing slash in an
+// override would send `//v1/...`, which path-prefix proxies reject.
+export const SNSCOPE_URL = (process.env.NEXT_PUBLIC_SNSCOPE_URL || ACTIVE_NETWORK.snscopeUrl)
+  .replace(/\/+$/, '');
 export const PORTAL_URL = SDK_PRESET === 'testnet'
   ? 'https://portal.testnet.lumera.io/'
   : 'https://portal.lumera.io/';

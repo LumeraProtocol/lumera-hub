@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useChain } from '@interchain-kit/react';
 import { SigningStargateClient } from '@cosmjs/stargate';
 
@@ -36,7 +37,7 @@ const useWalletConnect = () => {
     hasEvmCosmosSigner,
   });
 
-  const getClient = async () => {
+  const getClient = useCallback(async () => {
     if (walletMode === 'none') {
       throw new Error('Please connect wallet before using');
     }
@@ -58,9 +59,9 @@ const useWalletConnect = () => {
       RPC_ENDPOINT,
       offlineSigner
     );
-  }
+  }, [canSignCosmosTransactions, chain, wallet, walletMode]);
 
-  const getOfflineSigner = async () => {
+  const getOfflineSigner = useCallback(async () => {
     if (walletMode === 'none') {
       throw new Error('Please connect wallet before using');
     }
@@ -77,7 +78,7 @@ const useWalletConnect = () => {
     }
 
     return offlineSigner;
-  }
+  }, [chain, wallet, walletMode]);
 
   return {
     isModalOpen,

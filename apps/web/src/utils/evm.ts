@@ -64,6 +64,10 @@ export const getMetaMaskProvider = (provider?: Eip1193Provider | null) => {
 
 export const isEvmAddress = (value: string) => /^0x[0-9a-fA-F]{40}$/.test(value);
 
+export const isEvmTransactionHash = (value: unknown): value is string => (
+  typeof value === 'string' && /^0x[0-9a-fA-F]{64}$/.test(value)
+);
+
 export const evmAddressToCosmosAddress = (address: string, prefix = 'lumera') => {
   if (!isEvmAddress(address)) {
     throw new Error('Cannot convert an invalid EVM address.');

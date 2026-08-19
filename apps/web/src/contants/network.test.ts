@@ -41,7 +41,7 @@ describe('network profiles', () => {
     expect(network.NETWORK_PROFILE).toBe('mainnet');
     expect(network.IS_EVM_NETWORK).toBe(false);
     expect(network.SDK_PRESET).toBe('mainnet');
-    expect(network.SNSCOPE_URL).toBe('https://snscope.lumera.io/');
+    expect(network.SNSCOPE_URL).toBe('https://snscope.lumera.io');
     expect(network.PORTAL_URL).toBe('https://portal.lumera.io/');
   });
 
@@ -54,7 +54,7 @@ describe('network profiles', () => {
     expect(network.EVM_RPC_ENDPOINT).toBe('https://evm-testnet.lumeraprotocol.com');
     expect(network.IS_EVM_NETWORK).toBe(true);
     expect(network.SDK_PRESET).toBe('testnet');
-    expect(network.SNSCOPE_URL).toBe('https://snscope.testnet.lumera.io/');
+    expect(network.SNSCOPE_URL).toBe('https://snscope.testnet.lumera.io');
     expect(network.PORTAL_URL).toBe('https://portal.testnet.lumera.io/');
   });
 
@@ -63,7 +63,7 @@ describe('network profiles', () => {
     const network = await import('./network');
 
     expect(network.SDK_PRESET).toBe('testnet');
-    expect(network.SNSCOPE_URL).toBe('https://p1p2p3p4.pastel.network/snscope/');
+    expect(network.SNSCOPE_URL).toBe('https://p1p2p3p4.pastel.network/snscope');
     expect(network.PORTAL_URL).toBe('https://portal.testnet.lumera.io/');
   });
 
@@ -74,7 +74,8 @@ describe('network profiles', () => {
     const network = await import('./network');
 
     expect(network.SDK_PRESET).toBe('mainnet');
-    expect(network.SNSCOPE_URL).toBe('https://snscope.example/');
+    // Trailing slashes are stripped so call sites can join `${SNSCOPE_URL}/v1/...`.
+    expect(network.SNSCOPE_URL).toBe('https://snscope.example');
     expect(network.PORTAL_URL).toBe('https://portal.lumera.io/');
   });
 
@@ -96,5 +97,17 @@ describe('network profiles', () => {
     process.env.NEXT_PUBLIC_NETWORK_PROFILE = 'testnet';
     process.env.NEXT_PUBLIC_EVM_CHAIN_ID = '1.5';
     await expect(import('./network')).rejects.toThrow('positive integer');
+  });
+
+  it('does not advertise EVM support for an incomplete private profile', async () => {
+    process.env.NEXT_PUBLIC_EVM_RPC_ENDPOINT = 'https://evm.private.example';
+    process.env.NEXT_PUBLIC_EVM_CHAIN_ID = '76857769';
+
+    const network = await import('./network');
+
+    expect(network.EVM_RPC_ENDPOINT).toBe('https://evm.private.example');
+    expect(network.EVM_CHAIN_ID).toBe(76857769);
+    expect(network.EVM_PROFILE_NAME).toBeNull();
+    expect(network.IS_EVM_NETWORK).toBe(false);
   });
 });

@@ -13,15 +13,15 @@ import {
   ExternalLink,
 } from '@tamagui/lucide-icons';
 import Image from 'next/image';
-import { Layers, TriangleAlert } from 'lucide-react';
-import { useChain } from '@interchain-kit/react';
+import { Layers } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 import { ConnectWallet, WalletModalComponent } from '@/components/ConnectWallet'
 import AppLink from '@/components/AppLink';
 import SearchDialog from '@/components/SearchDialog';
-import Tooltip from '@/components/Tooltip';
 import GetStarted from '@/components/GetStarted';
-import { CHAIN_NAME, PORTAL_URL } from '@/contants/network';
+import { PORTAL_URL } from '@/contants/network';
+import useWalletConnect from '@/hooks/useWalletConnect';
 
 import { useSelector, useDispatch } from '@/redux/hooks';
 import { setActiveView, setCurrentPath, setViewTitle } from '@/redux/app.slice';
@@ -72,7 +72,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
-  const { address } = useChain(CHAIN_NAME);
+  const { address } = useWalletConnect();
   const { activeView, currentPath, viewTitle } = useSelector((state) => state.app);
   const { message } = useSelector((state) => state.error);
   const [isSidebarOpen, setSidebarOpen] = useState(false)
@@ -87,6 +87,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       sessionStorage.setItem('acquisitionSource', searchParams.get('utm_source') || document.referrer || 'Direct');
     }
   }, [dispatch, searchParams]);
+
+  useEffect(() => {
+    if (!message) return;
+    const errorMessage = typeof message === 'string' && message !== 'unknown error'
+      ? message
+      : 'Failed to fetch';
+    toast.error(errorMessage, {
+      toastId: 'global-api-error',
+    });
+  }, [message]);
 
   useEffect(() => {
     if (pathname) {
@@ -316,9 +326,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <h1 className="text-base sm:text-2xl font-bold">{viewTitle === '&nbsp;' ? '' : viewTitle || VIEW_TITLES[activeView]}</h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6 gap-2">
-              {message ?
-                <Tooltip icon={<TriangleAlert className="text-yellow-400" />} content={<div className="text-white">Failed to fetch</div>} /> : null
-              }
               {!address ?
                 <div className="hidden sm:block">
                   <GetStarted />

@@ -21,6 +21,7 @@ import {
   getEvmAddressFormats,
   getMetaMaskProvider,
   isEvmAddress,
+  isEvmTransactionHash,
   normalizeEvmRecipientAddress,
   parseEvmAmount,
   requestEvmRpc,
@@ -150,6 +151,13 @@ describe('EVM value helpers', () => {
     expect(isEvmAddress(ADDRESS)).toBe(true);
     expect(isEvmAddress(`${ADDRESS}00`)).toBe(false);
     expect(isEvmAddress('lumera1abc')).toBe(false);
+  });
+
+  it('accepts only full EVM transaction hashes', () => {
+    expect(isEvmTransactionHash(`0x${'a1'.repeat(32)}`)).toBe(true);
+    expect(isEvmTransactionHash(`0x${'a1'.repeat(31)}`)).toBe(false);
+    expect(isEvmTransactionHash('not-a-hash')).toBe(false);
+    expect(isEvmTransactionHash(null)).toBe(false);
   });
 
   it('converts an EVM account to its Lumera Bech32 representation', () => {

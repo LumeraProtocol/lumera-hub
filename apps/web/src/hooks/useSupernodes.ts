@@ -307,7 +307,7 @@ const useSupernodes = () => {
     setParticipationPercentLoading(true);
     for (const supernode of items) {
       try {
-        const { data } = await instance.getExternal(`${SNSCOPE_URL}v1/supernodes/action-stats?address=${supernode.supernode_account}`);
+        const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/action-stats?address=${supernode.supernode_account}`);
         if (data?.states) {
           setParticipationPercent((prev) => ({
             ...prev,
@@ -452,7 +452,7 @@ const useSupernodes = () => {
   const getActionsStats = async () => {
     setActionsStatsLoading(true);
     try {
-      const { data } = await instance.getExternal(`${SNSCOPE_URL}v1/actions/stats`);
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions/stats`);
       setActionsStats(data);
     } catch (error) {
       console.error(error);
