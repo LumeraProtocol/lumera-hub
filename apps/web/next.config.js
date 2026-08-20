@@ -27,6 +27,15 @@ module.exports = withTamagui({
   env: {
     NEXT_PUBLIC_HUB_VERSION: getHubVersion(),
   },
+  async redirects() {
+    return [
+      {
+        source: '/block/:height',
+        destination: '/blocks/:height',
+        permanent: false,
+      },
+    ]
+  },
   transpilePackages: [
     'tamagui',
     '@tamagui/core',

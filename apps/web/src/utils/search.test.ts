@@ -9,12 +9,12 @@ const TX_HASH = 'ab'.repeat(32);
 
 describe('parseSearchQuery', () => {
   it('routes a block height to the block inspector', () => {
-    expect(parseSearchQuery('123456')).toBe('/block/123456');
+    expect(parseSearchQuery('123456')).toBe('/blocks/123456');
   });
 
   it('normalizes leading zeros in a block height', () => {
-    expect(parseSearchQuery('007')).toBe('/block/7');
-    expect(parseSearchQuery('0123456')).toBe('/block/123456');
+    expect(parseSearchQuery('007')).toBe('/blocks/7');
+    expect(parseSearchQuery('0123456')).toBe('/blocks/123456');
   });
 
   it('rejects an all-zero block height', () => {
@@ -59,7 +59,7 @@ describe('parseSearchQuery', () => {
   });
 
   it('trims surrounding whitespace before classifying', () => {
-    expect(parseSearchQuery('  123456  ')).toBe('/block/123456');
+    expect(parseSearchQuery('  123456  ')).toBe('/blocks/123456');
   });
 
   it('returns null for an empty query', () => {
