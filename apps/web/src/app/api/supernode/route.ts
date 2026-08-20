@@ -1,98 +1,84 @@
 // api/supernode/route.ts
-import { NextResponse, NextRequest } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-import dns from 'dns';
-import util from 'util';
-import { z } from 'zod';
+import { NextResponse, NextRequest } from 'next/server'
+import fs from 'fs/promises'
+import path from 'path'
+import { z } from 'zod'
 
-import * as instance from '@/utils/api-server';
-import { isValidIPv4 } from '@/utils/helpers';
-import { IMarker } from '@/hooks/useCascade';
-import { supernodeListSchema, SupernodeItem } from '@/app/api/supernode/validators';
-import { checkRateLimit, getClientIP, RATE_LIMIT_WINDOW_MS } from '@/lib/rate-limit';
-
-const resolveDns = util.promisify(dns.resolve4);
+import { IMarker } from '@/hooks/useCascade'
+import {
+  supernodeListSchema,
+  SupernodeItem,
+} from '@/app/api/supernode/validators'
+import {
+  fetchLocationFromIpWho,
+  resolveSupernodeIPv4,
+} from '@/app/api/supernode/location'
+import {
+  checkRateLimit,
+  getClientIP,
+  RATE_LIMIT_WINDOW_MS,
+} from '@/lib/rate-limit'
 
 const bodySchema = z.object({
   supernodes: supernodeListSchema,
-});
+})
 
-const MAX_REQUESTS = Number(process.env.NEXT_PUBLIC_MAX_REQUESTS || 10); // ~ 10/minute
+const MAX_REQUESTS = Number(process.env.NEXT_PUBLIC_MAX_REQUESTS || 10) // ~ 10/minute
 
-const filePath = path.join(process.cwd(), 'data', 'supernodes.json');
+const filePath = path.join(process.cwd(), 'data', 'supernodes.json')
 
 async function readFile() {
   try {
-    const data = await fs.readFile(filePath, 'utf8');
+    const data = await fs.readFile(filePath, 'utf8')
     return {
       status: true,
       supernodes: JSON.parse(data),
       message: null,
-    };
+    }
   } catch (error) {
     return {
       status: false,
       supernodes: [],
-      message: (error as Error)?.message ||  'An unknown error occurred.'
-    };
+      message: (error as Error)?.message || 'An unknown error occurred.',
+    }
   }
 }
 
 async function writeFile(content: IMarker[]) {
   try {
-    await fs.writeFile(filePath, JSON.stringify(content, null, 2), 'utf8');
-    return { success: true, data: content };
+    await fs.writeFile(filePath, JSON.stringify(content, null, 2), 'utf8')
+    return { success: true, data: content }
   } catch {
-    return { success: false, error: 'Cannot write file' };
-  }
-}
-
-async function fetchLocationFromIpWho(ip: string) {
-  try {
-    const { data } = await instance.getExternal(`https://ipwho.is/${ip}`);
-    return {
-      latitude: data?.latitude || null,
-      longitude: data?.longitude || null,
-      subdivision: data?.capital || null,
-      city: data?.city || null,
-      country: data?.country || null,
-      continent: data?.continent || null,
-      country_code: data?.country_code || null,
-    };
-  } catch (error) {
-    console.error('Fetch location from IpWho Error:', error);
-    return null;
+    return { success: false, error: 'Cannot write file' }
   }
 }
 
 async function readAndUpdateSupernode(supernodes: SupernodeItem[]) {
   if (!supernodes?.length) {
-    throw new Error("Supernodes list cannot be empty.");
+    throw new Error('Supernodes list cannot be empty.')
   }
   try {
-    const data = await readFile();
-    const currentSupernodes: IMarker[] = data.supernodes;
-    const results: IMarker[] = [];
-    let isUpdate = false;
+    const data = await readFile()
+    const currentSupernodes: IMarker[] = data.supernodes
+    const results: IMarker[] = []
+    let isUpdate = false
     for (const item of supernodes) {
       try {
-        const supernode = currentSupernodes.find((s) => s.address === item.ip_address);
+        const supernode = currentSupernodes.find(
+          (s) => s.address === item.ip_address,
+        )
         if (!supernode) {
-          const address = item.ip_address;
-          const ip = address.split(':')[0];
-          let data = null;
-          if (isValidIPv4(ip)) {
-            data = await fetchLocationFromIpWho(ip);
-          } else {
-            try {
-              const ips = await resolveDns(address);
-              data = await fetchLocationFromIpWho(ips[0]);
-            } catch (error) {
-              console.error(error)
+          const address = item.ip_address
+          let data = null
+          try {
+            const ip = await resolveSupernodeIPv4(address)
+            if (ip) {
+              data = await fetchLocationFromIpWho(ip)
             }
+          } catch (error) {
+            console.error(error)
           }
-          if (data?.latitude && data?.longitude) {
+          if (data?.latitude != null && data.longitude != null) {
             results.push({
               latLng: [data.latitude, data.longitude],
               name: data?.city || '',
@@ -106,11 +92,11 @@ async function readAndUpdateSupernode(supernodes: SupernodeItem[]) {
               validatorMoniker: item.validator_moniker,
               address,
               p2pPort: item.p2p_port.toString(),
-            });
+            })
           }
-          isUpdate = true;
+          isUpdate = true
         } else {
-          results.push(supernode);
+          results.push(supernode)
         }
       } catch (error) {
         console.error(error)
@@ -118,55 +104,57 @@ async function readAndUpdateSupernode(supernodes: SupernodeItem[]) {
       }
     }
     if (isUpdate) {
-      await writeFile(results);
+      await writeFile(results)
     }
-    return results;
+    return results
   } catch (error) {
     throw new Error((error as Error).message)
   }
 }
 
 export async function POST(request: NextRequest) {
-  const ip = getClientIP(request);
+  const ip = getClientIP(request)
 
   if (!checkRateLimit(ip, MAX_REQUESTS, RATE_LIMIT_WINDOW_MS)) {
     return NextResponse.json(
-      { error: `Rate limit exceeded. Try again in ${Math.ceil(RATE_LIMIT_WINDOW_MS / 1000 / 60)} minutes.` },
+      {
+        error: `Rate limit exceeded. Try again in ${Math.ceil(RATE_LIMIT_WINDOW_MS / 1000 / 60)} minutes.`,
+      },
       {
         status: 429,
-      }
-    );
+      },
+    )
   }
 
   try {
-    const body = await request.json();
-    const validatedBody = bodySchema.parse(body);
-    const { supernodes } = validatedBody;
+    const body = await request.json()
+    const validatedBody = bodySchema.parse(body)
+    const { supernodes } = validatedBody
 
-    const data = await readAndUpdateSupernode(supernodes);
+    const data = await readAndUpdateSupernode(supernodes)
     return NextResponse.json({
       status: true,
       supernodes: data,
-    });
+    })
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('API Error:', error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
           error: 'Invalid data',
-          details: error.issues.map(e => ({
+          details: error.issues.map((e) => ({
             field: e.path.join('.'),
             message: e.message,
           })),
         },
-        { status: 400 }
-      );
+        { status: 400 },
+      )
     }
 
     return NextResponse.json(
       { error: (error as Error).message || 'An unknown error occurred.' },
-      { status: 500 }
-    );
+      { status: 500 },
+    )
   }
 }

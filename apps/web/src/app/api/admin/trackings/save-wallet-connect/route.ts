@@ -9,6 +9,7 @@ import { SnagRefer } from '@/entities/SnagRefer';
 import { SnagUser } from '@/entities/SnagUser';
 import { SnagLoyalty } from '@/entities/SnagLoyalty';
 import client from '@/lib/snag';
+import { persistWalletConnection } from '@/lib/wallet-connection-tracking';
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,68 +30,6 @@ export async function POST(req: NextRequest) {
     const nowIso = now.toISOString();
     const acquisitionSource = data.acquisitionSource || 'Direct';
 
-    const [existingHub] = await dataSource.query(
-      `
-      SELECT address, total_connected, acquisition_source
-      FROM hub_address
-      WHERE address = ?
-      LIMIT 1
-      `,
-      [data.address]
-    );
-
-    if (existingHub) {
-      await dataSource.query(
-        `
-        UPDATE hub_address
-        SET
-          last_connected = ?,
-          total_connected = ?,
-          acquisition_source = COALESCE(?, acquisition_source)
-        WHERE address = ?
-        `,
-        [
-          nowIso,
-          Number(existingHub.total_connected) + 1,
-          existingHub.acquisition_source || acquisitionSource,
-          data.address,
-        ]
-      );
-    } else {
-      await dataSource.query(
-        `
-        INSERT INTO hub_address (
-          address,
-          first_connected,
-          last_connected,
-          total_connected,
-          acquisition_source
-        ) VALUES (?, ?, ?, ?, ?)
-        `,
-        [data.address, nowIso, nowIso, 1, acquisitionSource]
-      );
-    }
-
-    const [existingAddr] = await dataSource.query(
-      `
-      SELECT address
-      FROM address
-      WHERE address = ?
-      LIMIT 1
-      `,
-      [data.address]
-    );
-
-    if (!existingAddr) {
-      await dataSource.query(
-        `
-        INSERT INTO address (address, timestamp, type, created_at, updated_at)
-        VALUES (?, ?, 'hub', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        `,
-        [data.address, nowIso]
-      );
-    }
-
     const ip =
       req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
       req.headers.get('cf-connecting-ip') ||
@@ -110,42 +49,30 @@ export async function POST(req: NextRequest) {
       secChUaPlatformVersion: req.headers.get('sec-ch-ua-platform-version'),
     });
 
-    await dataSource.query(
-      `
-      INSERT INTO hub_address_connected_log (
-        address,
-        ip,
-        browser,
-        other_info,
-        created_at,
-        acquisition_source
-      ) VALUES (?, ?, ?, ?, ?, ?)
-      `,
-      [
-        data.address,
-        ip,
-        ua?.browser?.name || null,
-        otherInfo,
-        nowIso,
-        data.acquisitionSource || null,
-      ]
-    );
+    const { isNewHub } = await persistWalletConnection(dataSource, {
+      address: data.address,
+      acquisitionSource,
+      browser: ua?.browser?.name || null,
+      ip,
+      otherInfo,
+      timestamp: nowIso,
+    });
 
-    if (!existingHub) {
+    if (isNewHub && data.referralCode) {
       // save SnagRefer
-      const snagReferRepo = dataSource.getRepository(SnagRefer);
-      const snagUserRepo = dataSource.getRepository(SnagUser);
-      const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
+      try {
+        const snagReferRepo = dataSource.getRepository(SnagRefer);
+        const snagUserRepo = dataSource.getRepository(SnagUser);
+        const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
 
-      const refer = await snagReferRepo
-        .createQueryBuilder()
-        .select('lumeraAddress')
-        .addSelect('claim')
-        .where('lumeraAddress = :lumeraAddress', { lumeraAddress: data.address })
-        .getRawOne();
+        const refer = await snagReferRepo
+          .createQueryBuilder()
+          .select('lumeraAddress')
+          .addSelect('claim')
+          .where('lumeraAddress = :lumeraAddress', { lumeraAddress: data.address })
+          .getRawOne();
 
-      if (body.referralCode) {
-        const referAddress = body.referralCode;
+        const referAddress = data.referralCode;
         if (referAddress !== data.address) {
           if (!refer) {
             await snagReferRepo.save({
@@ -196,6 +123,11 @@ export async function POST(req: NextRequest) {
             }
           }
         }
+      } catch (error) {
+        // The core wallet connection record is already committed. Referral
+        // enrichment is best-effort and must not turn successful tracking into
+        // a retrying 500 response.
+        console.error('Wallet referral tracking error:', error);
       }
     }
 

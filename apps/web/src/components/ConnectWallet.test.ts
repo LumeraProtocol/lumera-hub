@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { createElement, type ReactNode } from 'react';
+import { createElement, StrictMode, type ReactNode } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -155,6 +155,20 @@ describe('EVM wallet error placement', () => {
     render(createElement(WalletModalComponent));
 
     await waitFor(() => expect(mocks.trackingUser).toHaveBeenCalledWith({ address: ETH_ADDRESS }));
+    await waitFor(() => expect(sessionStorage.getItem('new_connect')).toBe(ETH_ADDRESS));
+  });
+
+  it('deduplicates an in-flight tracking request during Strict Mode effect replay', async () => {
+    let finishTracking: (didTrack: boolean) => void = () => undefined;
+    mocks.trackingUser.mockReturnValue(new Promise<boolean>((resolve) => {
+      finishTracking = resolve;
+    }));
+    mocks.evmWallet.address = ETH_ADDRESS;
+
+    render(createElement(StrictMode, null, createElement(WalletModalComponent)));
+
+    await waitFor(() => expect(mocks.trackingUser).toHaveBeenCalledOnce());
+    finishTracking(true);
     await waitFor(() => expect(sessionStorage.getItem('new_connect')).toBe(ETH_ADDRESS));
   });
 

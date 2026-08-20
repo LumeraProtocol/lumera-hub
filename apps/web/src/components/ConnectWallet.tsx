@@ -195,6 +195,9 @@ export function WalletModalComponent() {
   const walletMode = getActiveWalletMode({ selectedWallet: walletName, isEvmNetwork: IS_EVM_NETWORK });
   const address = getActiveWalletAddress({ mode: walletMode, evmAddress, cosmosAddress });
   const { trackingUser } = useTrackingUser();
+  const activeAddressRef = useRef(address);
+  const trackingAddressesRef = useRef(new Set<string>());
+  activeAddressRef.current = address;
   // Cosmos (interchain-kit) can retain a persisted/cached account address while
   // the live session is 'Connecting' or 'Disconnected' (see
   // utils/wallet-selection.ts's disconnectPersistedInterchainWallet), so only
@@ -212,12 +215,24 @@ export function WalletModalComponent() {
       // setModalOpen, so this is a no-op on EVM profiles.
       close();
       const trackedAddress = sessionStorage.getItem('new_connect');
-      if (trackedAddress !== address) {
-        void trackingUser({ address }).then((didTrack) => {
-          if (didTrack) {
-            sessionStorage.setItem('new_connect', address);
-          }
-        });
+      if (
+        trackedAddress !== address
+        && !trackingAddressesRef.current.has(address)
+      ) {
+        // Strict Mode replays mount effects in development. Mark the request as
+        // in flight synchronously so the replay cannot race the same SQLite
+        // first-connect insert, but clear it after failure so reconnecting can
+        // retry normally.
+        trackingAddressesRef.current.add(address);
+        void trackingUser({ address })
+          .then((didTrack) => {
+            if (didTrack && activeAddressRef.current === address) {
+              sessionStorage.setItem('new_connect', address);
+            }
+          })
+          .finally(() => {
+            trackingAddressesRef.current.delete(address);
+          });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

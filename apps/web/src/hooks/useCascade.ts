@@ -7,10 +7,15 @@ import { useChain } from '@interchain-kit/react';
 import dayjs from 'dayjs';
 import IPLocate from 'node-iplocate';
 
-import { useSelector } from '@/redux/hooks';
 import useTrackingCascadeDownload from '@/hooks/useTrackingCascadeDownload';
+import useWalletConnect from '@/hooks/useWalletConnect';
 import * as instance from '@/utils/api';
-import { delay } from '@/utils/helpers';
+import { getCascadeBalanceMicroLume } from '@/utils/cascade-balance';
+import { delay, isValidIPv4 } from '@/utils/helpers';
+import {
+  getAbstractIpLocationUrl,
+  getSupernodeHost,
+} from '@/utils/supernode-address';
 import {
   formatBytes,
   formatTokenDisplay,
@@ -273,7 +278,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const { trackingCascadeDownload } = useTrackingCascadeDownload();
   const { openView } = useChain(CHAIN_NAME);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { address } = useSelector((state) => state.wallet);
+  const summaryStartedRef = useRef(false);
+  const getSummaryRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const { address, isEvm } = useWalletConnect();
   const [isUploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [isFetchSummaryLoading, setFetchSummaryLoading] = useState(false);
@@ -424,7 +431,14 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
 
   const fetchLocationFromAbstractApi = async (ip: string) => {
     try {
-      const { data } = await instance.getExternal(`https://ip-intelligence.abstractapi.com/v1/?api_key=${process.env.NEXT_PUBLIC_ABSTRACTAPI_KEY || ''}&ip_address=${ip}`);
+      const url = getAbstractIpLocationUrl(
+        ip,
+        process.env.NEXT_PUBLIC_ABSTRACTAPI_KEY,
+      );
+      if (!url) {
+        return null;
+      }
+      const { data } = await instance.getExternal(url);
       return {
         latitude: data?.location?.latitude || null,
         longitude: data?.location?.longitude || null,
@@ -440,6 +454,11 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   }
 
   const fetchLocationForIP = async (ip: string) => {
+    // Browser geolocation providers accept IP literals, not DNS names. Hostname
+    // resolution belongs to the server route, where DNS is available.
+    if (!isValidIPv4(ip)) {
+      return null;
+    }
     let data = null;
     try {
       const result = await fetchLocationFromIpWho(ip);
@@ -497,7 +516,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       const supernodeData: IMarker[] = await readSupernodeFile(items);
       for (const item of items) {
         const address = item.ip_address;
-        const ip = address.split(':')[0];
+        const ip = getSupernodeHost(address);
         const supernode = supernodeData?.find((s) => s.address.trim() === address.trim());
         if (!supernode) {
           const data = await fetchLocationForIP(ip);
@@ -581,6 +600,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     setFetchSummaryLoading(false);
     setMarkerLoading(false);
   }, [address, getChartMarker]);
+  getSummaryRef.current = getSummary;
 
   const fetchMyFiles = async (nextKey = '') => {
     if (!address) {
@@ -841,20 +861,12 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
 
     try {
-      const { data } = await instance.get(`/cosmos/bank/v1beta1/balances/${address}`);
-      if (data?.balances?.length) {
-        let total = 0;
-        for (const item of data.balances) {
-          if (item.denom === DENOM) {
-            total += Number(item.amount);
-          }
-        }
-        setTotalBalance(total);
-      }
+      const total = await getCascadeBalanceMicroLume({ address, isEvm });
+      setTotalBalance(total);
     } catch {
       // noop
     }
-  }, [address]);
+  }, [address, isEvm]);
 
   useEffect(() => {
     if (address) {
@@ -875,7 +887,10 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   }, [address, getMyFiles]);
 
   useEffect(() => {
-    getSummary();
+    if (!summaryStartedRef.current) {
+      summaryStartedRef.current = true;
+      void getSummaryRef.current();
+    }
 
     return () => {
       if (timeoutRef.current) {

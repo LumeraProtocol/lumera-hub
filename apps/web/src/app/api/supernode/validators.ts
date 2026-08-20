@@ -21,8 +21,7 @@ const supernodeItemSchema = z.object({
     .number()
     .int('P2P port must be an integer')
     .min(1, 'P2P port must be greater than 0')
-    .max(65535, 'P2P port must be less than 65535')
-    .refine((val) => val === 4445, 'P2P port must be 4445'),
+    .max(65535, 'P2P port must be less than 65536'),
 
   ip_address: z
     .string()
