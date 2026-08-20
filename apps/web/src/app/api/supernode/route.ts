@@ -46,6 +46,7 @@ async function readFile() {
 
 async function writeFile(content: IMarker[]) {
   try {
+    await fs.mkdir(path.dirname(filePath), { recursive: true })
     await fs.writeFile(filePath, JSON.stringify(content, null, 2), 'utf8')
     return { success: true, data: content }
   } catch {
