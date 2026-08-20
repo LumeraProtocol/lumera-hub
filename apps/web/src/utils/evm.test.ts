@@ -12,6 +12,7 @@ import {
   assertEvmAccountForChain,
   assertEvmProviderMatchesRpc,
   cosmosAddressToEvmAddress,
+  EvmAccountNotConnectedError,
   evmAddressToCosmosAddress,
   evmBalanceToMicroLume,
   ensureEvmWalletNetwork,
@@ -202,9 +203,13 @@ describe('EVM account validation', () => {
     await expect(getEvmAccountForChain(createProvider([ADDRESS], '0x1'), CHAIN_ID)).rejects.toThrow(
       'different network'
     );
-    await expect(getEvmAccountForChain(createProvider([]), CHAIN_ID)).rejects.toThrow(
-      'No EVM wallet account'
-    );
+    await expect(getEvmAccountForChain(createProvider([]), CHAIN_ID))
+      .rejects.toBeInstanceOf(EvmAccountNotConnectedError);
+  });
+
+  it('reports a missing account before considering an unauthorized wallet network', async () => {
+    await expect(getEvmAccountForChain(createProvider([], '0x1'), CHAIN_ID))
+      .rejects.toBeInstanceOf(EvmAccountNotConnectedError);
   });
 
   it('detects an account change before sending', async () => {

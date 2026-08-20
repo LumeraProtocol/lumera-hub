@@ -1,12 +1,25 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+import createWebStorage from 'redux-persist/lib/storage/createWebStorage';
 import { combineReducers } from 'redux';
 
 import walletSlice from '@/redux/wallet.slice';
 import appSlice from '@/redux/app.slice';
 import errorSlice from '@/redux/error.slice';
 import adminSlice from '@/redux/admin.slice';
+
+const createNoopStorage = () => ({
+  getItem: () => Promise.resolve(null),
+  setItem: () => Promise.resolve(),
+  removeItem: () => Promise.resolve(),
+});
+
+// Client components are still evaluated while Next renders on the server.
+// Avoid asking redux-persist to probe localStorage there: its fallback works,
+// but logs a misleading warning on every server/test startup.
+const storage = typeof window === 'undefined'
+  ? createNoopStorage()
+  : createWebStorage('local');
 
 const rootReducer = combineReducers({
   wallet: walletSlice,

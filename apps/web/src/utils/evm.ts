@@ -39,6 +39,13 @@ export class EvmNetworkMismatchError extends Error {
   }
 }
 
+export class EvmAccountNotConnectedError extends Error {
+  constructor() {
+    super('No EVM wallet account is connected.');
+    this.name = 'EvmAccountNotConnectedError';
+  }
+}
+
 export const getEvmConnectionErrorMessage = (
   error: unknown,
   networkName: string,
@@ -135,13 +142,13 @@ export const getEvmAccountForChain = async (
     provider.request<string>({ method: 'eth_chainId' }),
   ]);
 
-  if (chainId.toLowerCase() !== toHexChainId(expectedChainId).toLowerCase()) {
-    throw new Error('The wallet is connected to a different network.');
-  }
-
   const account = accounts[0] || '';
   if (!isEvmAddress(account)) {
-    throw new Error('No EVM wallet account is connected.');
+    throw new EvmAccountNotConnectedError();
+  }
+
+  if (chainId.toLowerCase() !== toHexChainId(expectedChainId).toLowerCase()) {
+    throw new Error('The wallet is connected to a different network.');
   }
 
   return account;

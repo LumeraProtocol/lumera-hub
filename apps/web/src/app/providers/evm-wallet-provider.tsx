@@ -12,6 +12,7 @@ import {
 import {
   assertEvmProviderMatchesRpc,
   ensureEvmWalletNetwork,
+  EvmAccountNotConnectedError,
   EvmNetworkMismatchError,
   getEvmAccountForChain,
   getEvmConnectionErrorMessage,
@@ -144,10 +145,14 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
       try {
         activeAddress = await getEvmAccountForChain(provider, expectedChainId);
       } catch (accountError) {
-        // The wallet reports no usable account for this chain, so there is
-        // genuinely nothing connected.
         if (isStale()) return;
         setAddress('');
+        // An empty eth_accounts response is the normal passive-discovery state
+        // before the user authorizes this site. It is not a connection error.
+        if (accountError instanceof EvmAccountNotConnectedError) {
+          setError('');
+          return;
+        }
         setError(accountError instanceof Error
           ? accountError.message
           : 'Unable to read the MetaMask account.');

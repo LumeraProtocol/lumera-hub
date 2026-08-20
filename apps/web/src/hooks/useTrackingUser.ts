@@ -15,10 +15,15 @@ const useTrackingUser = () => {
         acquisitionSource: referralCode ? 'referralCode' : referrer || 'Direct',
         referralCode,
       });
+      return true;
     } catch (error) {
-      console.error(error);
+      // Tracking is best-effort. Next intercepts console.error in development,
+      // so warn with the original details without opening its error overlay.
+      console.warn('Wallet connection tracking failed:', error);
+      return false;
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return {

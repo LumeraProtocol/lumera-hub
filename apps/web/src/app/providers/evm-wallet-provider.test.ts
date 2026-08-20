@@ -23,7 +23,7 @@ vi.mock('@/utils/evm', async (importOriginal) => {
   };
 });
 
-const { EvmNetworkMismatchError } = await import('@/utils/evm');
+const { EvmAccountNotConnectedError, EvmNetworkMismatchError } = await import('@/utils/evm');
 const { EvmWalletProvider, useEvmWallet } = await import('./evm-wallet-provider');
 
 const ADDRESS_A = '0x1111111111111111111111111111111111111111';
@@ -149,16 +149,16 @@ describe('EvmWalletProvider account sync', () => {
     expect(result.current.error).toBe('MetaMask is connected to a different Lumera network.');
   });
 
-  it('clears the address when the wallet reports no usable account', async () => {
+  it('treats a passively discovered wallet with no authorized account as disconnected', async () => {
     mocks.getEvmAccountForChain.mockRejectedValue(
-      new Error('No EVM wallet account is connected.'),
+      new EvmAccountNotConnectedError(),
     );
 
     const { result } = renderWallet();
     await flush();
 
     expect(result.current.address).toBe('');
-    expect(result.current.error).toBe('No EVM wallet account is connected.');
+    expect(result.current.error).toBe('');
     expect(mocks.assertEvmProviderMatchesRpc).not.toHaveBeenCalled();
   });
 
@@ -187,7 +187,7 @@ describe('EvmWalletProvider account sync', () => {
 
   it('surfaces profile verification failures and leaves the wallet disconnected', async () => {
     mocks.getEvmAccountForChain.mockRejectedValue(
-      new Error('No EVM wallet account is connected.'),
+      new EvmAccountNotConnectedError(),
     );
     mocks.ensureEvmWalletNetwork.mockRejectedValue(new TypeError('Failed to fetch'));
     const { result } = renderWallet();

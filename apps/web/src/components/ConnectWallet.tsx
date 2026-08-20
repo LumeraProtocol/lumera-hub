@@ -116,8 +116,10 @@ function WalletChoiceModal() {
       installed: isMetaMaskInstalled,
     },
   ];
-  const displayedWalletError = walletError
-    || (selectedWallet === METAMASK_WALLET_NAME ? evmWallet.error : '');
+  // The chooser only reports failures caused by this dialog's explicit
+  // Connect action. Passive provider discovery is allowed to be disconnected
+  // without presenting an error before the user has attempted anything.
+  const displayedWalletError = walletError;
 
   return createPortal(
     <div
@@ -209,10 +211,13 @@ export function WalletModalComponent() {
       // succeeds. The EVM picker (WalletChoiceModal) closes itself via
       // setModalOpen, so this is a no-op on EVM profiles.
       close();
-      const isNewConnect = sessionStorage.getItem('new_connect');
-      if (!isNewConnect) {
-        trackingUser({ address });
-        sessionStorage.setItem('new_connect', 'true');
+      const trackedAddress = sessionStorage.getItem('new_connect');
+      if (trackedAddress !== address) {
+        void trackingUser({ address }).then((didTrack) => {
+          if (didTrack) {
+            sessionStorage.setItem('new_connect', address);
+          }
+        });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

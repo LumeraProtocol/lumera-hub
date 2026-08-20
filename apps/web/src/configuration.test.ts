@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { createRequire } from 'node:module'
+import { describe, expect, it, vi } from 'vitest'
 
 const turbo = JSON.parse(
   readFileSync(new URL('../../../turbo.json', import.meta.url), 'utf8'),
@@ -24,5 +25,22 @@ describe('build environment forwarding', () => {
     expect(
       turbo.tasks.build.env.filter((key) => key.includes('WALLET_CONNECT')),
     ).toEqual([])
+  })
+})
+
+describe('CSS processing', () => {
+  it('removes stale external source-map references from dependency CSS', () => {
+    const require = createRequire(import.meta.url)
+    const plugin = require('../postcss-discard-external-source-maps.cjs') as {
+      Comment: (comment: { text: string; remove: () => void }) => void
+    }
+    const remove = vi.fn()
+
+    plugin.Comment({
+      text: '# sourceMappingURL=interchain-ui-kit-react.cjs.css.map ',
+      remove,
+    })
+
+    expect(remove).toHaveBeenCalledOnce()
   })
 })
