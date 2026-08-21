@@ -15,6 +15,7 @@ export const NETWORK_PROFILES = {
     snapiUrl: 'http://localhost:3100',
     sdkPreset: 'testnet',
     snscopeUrl: 'https://p1p2p3p4.pastel.network/snscope',
+    portalUrl: 'https://portal.testnet.lumera.io/',
   },
   testnet: {
     displayName: 'Lumera Testnet',
@@ -30,6 +31,7 @@ export const NETWORK_PROFILES = {
     snapiUrl: 'http://localhost:3100',
     sdkPreset: 'testnet',
     snscopeUrl: 'https://snscope.testnet.lumera.io',
+    portalUrl: 'https://portal.testnet.lumera.io/',
   },
   mainnet: {
     displayName: 'Lumera Mainnet',
@@ -45,6 +47,7 @@ export const NETWORK_PROFILES = {
     snapiUrl: 'http://localhost:3100',
     sdkPreset: 'mainnet',
     snscopeUrl: 'https://snscope.lumera.io',
+    portalUrl: 'https://portal.lumera.io/',
   },
 } as const;
 
@@ -101,6 +104,7 @@ export const SDK_PRESET = process.env.NEXT_PUBLIC_SDK_PRESET || ACTIVE_NETWORK.s
 // override would send `//v1/...`, which path-prefix proxies reject.
 export const SNSCOPE_URL = (process.env.NEXT_PUBLIC_SNSCOPE_URL || ACTIVE_NETWORK.snscopeUrl)
   .replace(/\/+$/, '');
-export const PORTAL_URL = SDK_PRESET === 'testnet'
-  ? 'https://portal.testnet.lumera.io/'
-  : 'https://portal.lumera.io/';
+// Keyed by network profile (with an env override), not by SDK_PRESET: a
+// private deployment overriding the SDK preset must not have its header
+// Portal link silently repointed.
+export const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || ACTIVE_NETWORK.portalUrl;

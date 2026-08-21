@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { useChain } from '@interchain-kit/react';
 
-import { CHAIN_NAME, IS_EVM_NETWORK } from '@/contants/network';
 import {
   getConnectedAccountQueryAddress,
   resolveAccountRouteAddress,
@@ -22,9 +20,8 @@ import {
 } from '@/utils/account-activity';
 import type { ITransaction } from '@/hooks/useTransaction';
 import type { IValidator } from '@/types/validator';
+import useLatestRequest from '@/hooks/useLatestRequest';
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { useDispatch } from '@/redux/hooks';
-import { setModalOpen } from '@/redux/wallet.slice';
 
 const EMPTY_ACCOUNT_INFO: AccountInfoData = {
   balances: [],
@@ -43,9 +40,7 @@ const EMPTY_ACCOUNT_INFO: AccountInfoData = {
  */
 const useAccount = () => {
   const params = useParams();
-  const dispatch = useDispatch();
-  const { openView: openCosmosView } = useChain(CHAIN_NAME);
-  const { address, bech32Address, isEvm } = useWalletConnect();
+  const { address, bech32Address, isEvm, openConnectView } = useWalletConnect();
   const queryAddress = resolveAccountRouteAddress(params?.address);
   const connectedQueryAddress = getConnectedAccountQueryAddress({
     address,
@@ -69,6 +64,8 @@ const useAccount = () => {
     EMPTY_CONNECTED_STAKING,
   );
   const [delegationsTab, setDelegationsTab] = useState('delegations');
+  const accountRequest = useLatestRequest();
+  const stakingRequest = useLatestRequest();
 
   useEffect(() => {
     if (!queryAddress) {
@@ -86,18 +83,19 @@ const useAccount = () => {
       setCascades([]);
       return;
     }
-    let cancelled = false;
+    const requestId = accountRequest.begin();
+    const isCurrent = () => accountRequest.isCurrent(requestId);
 
     const loadAccount = async () => {
       setAccountLoading(true);
       try {
         const nextAccount = await fetchBaseAccount(queryAddress);
-        if (!cancelled) setAccount(nextAccount);
+        if (isCurrent()) setAccount(nextAccount);
       } catch (e) {
         console.error('API Error:', e);
-        if (!cancelled) setAccount(null);
+        if (isCurrent()) setAccount(null);
       } finally {
-        if (!cancelled) setAccountLoading(false);
+        if (isCurrent()) setAccountLoading(false);
       }
     };
 
@@ -105,12 +103,12 @@ const useAccount = () => {
       setAccountInfoLoading(true);
       try {
         const nextAccountInfo = await fetchAccountInfo(queryAddress);
-        if (!cancelled) setAccountInfo(nextAccountInfo);
+        if (isCurrent()) setAccountInfo(nextAccountInfo);
       } catch (e) {
         console.error('API Error:', e);
-        if (!cancelled) setAccountInfo(EMPTY_ACCOUNT_INFO);
+        if (isCurrent()) setAccountInfo(EMPTY_ACCOUNT_INFO);
       } finally {
-        if (!cancelled) setAccountInfoLoading(false);
+        if (isCurrent()) setAccountInfoLoading(false);
       }
     };
 
@@ -124,22 +122,22 @@ const useAccount = () => {
       await fetchAccountActivity(queryAddress, {
         onSlice: {
           validators: (items) => {
-            if (cancelled) return;
+            if (!isCurrent()) return;
             setValidators(items);
             setValidatorsLoading(false);
           },
           sentTransactions: (items) => {
-            if (cancelled) return;
+            if (!isCurrent()) return;
             setTransactions(items);
             setTransactionsLoading(false);
           },
           receivedTransactions: (items) => {
-            if (cancelled) return;
+            if (!isCurrent()) return;
             setRecentReceived(items);
             setRecentReceivedLoading(false);
           },
           cascadeHistory: (items) => {
-            if (cancelled) return;
+            if (!isCurrent()) return;
             setCascades(items);
             setCascadeFilesLoading(false);
           },
@@ -151,29 +149,23 @@ const useAccount = () => {
     loadAccountInfo();
     loadActivity();
     return () => {
-      cancelled = true;
+      accountRequest.invalidate();
     };
-  }, [queryAddress]);
+  }, [accountRequest, queryAddress]);
 
   useEffect(() => {
-    let cancelled = false;
+    const requestId = stakingRequest.begin();
     fetchConnectedStaking(connectedQueryAddress)
       .then((staking) => {
-        if (!cancelled) setConnectedStaking(staking);
+        if (stakingRequest.isCurrent(requestId)) setConnectedStaking(staking);
       })
       .catch((e) => console.error('API Error:', e));
     return () => {
-      cancelled = true;
+      stakingRequest.invalidate();
     };
-  }, [connectedQueryAddress]);
+  }, [connectedQueryAddress, stakingRequest]);
 
-  const openView = () => {
-    if (IS_EVM_NETWORK) {
-      dispatch(setModalOpen({ status: true }));
-      return;
-    }
-    openCosmosView();
-  };
+  const openView = openConnectView;
 
   const handleDelegationsTabChange = (val: string) => {
     setDelegationsTab(val);

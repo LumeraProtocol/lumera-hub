@@ -8,6 +8,8 @@ const BECH32_ADDRESS = 'lumera1qy352euf40x77qfrg4ncn27dauqjx3t83egcev';
 const mocks = vi.hoisted(() => ({
   connectWithSigner: vi.fn(),
   getOfflineSigner: vi.fn(),
+  dispatch: vi.fn(),
+  openCosmosView: vi.fn(),
   reduxWallet: {
     isModalOpen: false,
     walletName: '',
@@ -25,7 +27,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@interchain-kit/react', () => ({
-  useChain: () => mocks.chainState,
+  useChain: () => ({ ...mocks.chainState, openView: mocks.openCosmosView }),
 }));
 vi.mock('@cosmjs/stargate', () => ({
   SigningStargateClient: {
@@ -36,6 +38,7 @@ vi.mock('@/app/providers/evm-wallet-provider', () => ({
   useEvmWallet: () => mocks.evmWallet,
 }));
 vi.mock('@/redux/hooks', () => ({
+  useDispatch: () => mocks.dispatch,
   useSelector: (selector: (state: unknown) => unknown) => selector({
     wallet: mocks.reduxWallet,
   }),
@@ -112,6 +115,20 @@ describe('useWalletConnect EVM profile selection', () => {
       'https://cosmos.example.test',
       signer,
     );
+  });
+
+  it('opens the EVM wallet picker from the shared connect entry point', () => {
+    const { result } = renderHook(() => useWalletConnect());
+
+    act(() => result.current.openConnectView());
+
+    // IS_EVM_NETWORK is mocked true for this file, so the shared entry point
+    // must open the redux-driven wallet chooser, never the interchain-kit
+    // modal (which is not mounted on EVM profiles).
+    expect(mocks.dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ payload: { status: true } }),
+    );
+    expect(mocks.openCosmosView).not.toHaveBeenCalled();
   });
 
   it('ignores cached provider addresses until a wallet is explicitly selected', async () => {

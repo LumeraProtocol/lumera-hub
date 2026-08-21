@@ -1,6 +1,6 @@
-import { DENOM } from '@/contants/network'
 import * as instance from '@/utils/api'
 import { evmBalanceToMicroLume, getEvmBalance } from '@/utils/evm'
+import { sumMicroLumeAmounts } from '@/utils/helpers'
 
 interface BalanceResponse {
   data?: {
@@ -32,9 +32,5 @@ export const getCascadeBalanceMicroLume = async ({
   const { data } = await getCosmosBalances(
     `/cosmos/bank/v1beta1/balances/${address}`,
   )
-  return (data?.balances ?? []).reduce(
-    (total, balance) =>
-      balance.denom === DENOM ? total + Number(balance.amount) : total,
-    0,
-  )
+  return sumMicroLumeAmounts(data?.balances)
 }

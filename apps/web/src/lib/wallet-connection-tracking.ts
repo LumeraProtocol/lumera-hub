@@ -41,16 +41,11 @@ export const persistWalletConnection = async (
 ): Promise<WalletConnectionResult> =>
   serializeWalletTrackingWrite(() =>
     dataSource.transaction(async (manager) => {
-      const [existingHub] = await manager.query(
-        `
-      SELECT address
-      FROM hub_address
-      WHERE address = ?
-      LIMIT 1
-      `,
-        [record.address],
-      )
-
+      // The first-connect decision must come from the insert itself. A
+      // pre-check SELECT races a second process between check and write, and
+      // both processes would then report isNewHub and double-award
+      // first-connect side effects (referral bonuses). SQLite's changes()
+      // reports, per connection, whether OR-IGNORE actually inserted.
       await manager.query(
         `
       INSERT INTO hub_address (
@@ -60,10 +55,7 @@ export const persistWalletConnection = async (
         total_connected,
         acquisition_source
       ) VALUES (?, ?, ?, 1, ?)
-      ON CONFLICT(address) DO UPDATE SET
-        last_connected = excluded.last_connected,
-        total_connected = COALESCE(hub_address.total_connected, 0) + 1,
-        acquisition_source = COALESCE(hub_address.acquisition_source, excluded.acquisition_source)
+      ON CONFLICT(address) DO NOTHING
       `,
         [
           record.address,
@@ -72,6 +64,21 @@ export const persistWalletConnection = async (
           record.acquisitionSource,
         ],
       )
+      const [{ inserted }] = await manager.query('SELECT changes() AS inserted')
+      const isNewHub = Number(inserted) === 1
+
+      if (!isNewHub) {
+        await manager.query(
+          `
+      UPDATE hub_address SET
+        last_connected = ?,
+        total_connected = COALESCE(total_connected, 0) + 1,
+        acquisition_source = COALESCE(acquisition_source, ?)
+      WHERE address = ?
+      `,
+          [record.timestamp, record.acquisitionSource, record.address],
+        )
+      }
 
       await manager.query(
         `
@@ -103,6 +110,6 @@ export const persistWalletConnection = async (
         ],
       )
 
-      return { isNewHub: !existingHub }
+      return { isNewHub }
     }),
   )

@@ -3,7 +3,10 @@ import { createElement, StrictMode, type ReactNode } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { isConnectTracked } from '@/utils/wallet-connect-marker';
+
 const ETH_ADDRESS = '0x1111111111111111111111111111111111111111';
+const OTHER_ETH_ADDRESS = '0x2222222222222222222222222222222222222222';
 const WALLET_ERROR = 'MetaMask is connected to a different Lumera network.';
 
 const mocks = vi.hoisted(() => ({
@@ -17,6 +20,7 @@ const mocks = vi.hoisted(() => ({
     address: '',
     bech32Address: '',
     ethAddress: '',
+    openConnectView: vi.fn(),
     walletName: 'metamask',
   },
   evmWallet: {
@@ -107,7 +111,7 @@ describe('EVM wallet error placement', () => {
     mocks.evmWallet.connect.mockResolvedValue(undefined);
     mocks.dispatch.mockClear();
     mocks.trackingUser.mockReset();
-    mocks.trackingUser.mockResolvedValue(true);
+    mocks.trackingUser.mockResolvedValue('tracked');
   });
 
   afterEach(() => {
@@ -115,14 +119,27 @@ describe('EVM wallet error placement', () => {
     document.body.style.overflow = '';
   });
 
-  it('does not show a passive provider error before a connection attempt', async () => {
+  it('keeps a provider error visible in the header when the wallet lost its address', async () => {
+    // A network switch in MetaMask clears the address and records an error.
+    // The header must explain the disconnect instead of showing only a plain
+    // Connect button — the account-menu error is unreachable with no address.
     const { unmount } = render(createElement(ConnectWallet));
     expect(screen.getByRole('button', { name: /connect wallet/i })).toBeDefined();
-    expect(screen.queryByRole('alert')).toBeNull();
+    const headerAlert = screen.getByRole('alert');
+    expect(headerAlert.textContent).toContain(WALLET_ERROR);
     unmount();
 
+    // The chooser dialog still only reports failures caused by its own
+    // explicit Connect action.
     mocks.reduxWallet.isModalOpen = true;
     render(createElement(WalletModalComponent));
+
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('shows no header alert while the provider is quietly disconnected', () => {
+    mocks.evmWallet.error = '';
+    render(createElement(ConnectWallet));
 
     expect(screen.queryByRole('alert')).toBeNull();
   });
@@ -155,12 +172,12 @@ describe('EVM wallet error placement', () => {
     render(createElement(WalletModalComponent));
 
     await waitFor(() => expect(mocks.trackingUser).toHaveBeenCalledWith({ address: ETH_ADDRESS }));
-    await waitFor(() => expect(sessionStorage.getItem('new_connect')).toBe(ETH_ADDRESS));
+    await waitFor(() => expect(isConnectTracked(sessionStorage, ETH_ADDRESS)).toBe(true));
   });
 
   it('deduplicates an in-flight tracking request during Strict Mode effect replay', async () => {
-    let finishTracking: (didTrack: boolean) => void = () => undefined;
-    mocks.trackingUser.mockReturnValue(new Promise<boolean>((resolve) => {
+    let finishTracking: (outcome: string) => void = () => undefined;
+    mocks.trackingUser.mockReturnValue(new Promise<string>((resolve) => {
       finishTracking = resolve;
     }));
     mocks.evmWallet.address = ETH_ADDRESS;
@@ -168,17 +185,53 @@ describe('EVM wallet error placement', () => {
     render(createElement(StrictMode, null, createElement(WalletModalComponent)));
 
     await waitFor(() => expect(mocks.trackingUser).toHaveBeenCalledOnce());
-    finishTracking(true);
-    await waitFor(() => expect(sessionStorage.getItem('new_connect')).toBe(ETH_ADDRESS));
+    finishTracking('tracked');
+    await waitFor(() => expect(isConnectTracked(sessionStorage, ETH_ADDRESS)).toBe(true));
   });
 
-  it('retries a legacy tracking marker without replacing it after a failed request', async () => {
+  it('retries a legacy tracking marker after a transient failure', async () => {
     sessionStorage.setItem('new_connect', 'true');
     mocks.evmWallet.address = ETH_ADDRESS;
-    mocks.trackingUser.mockResolvedValue(false);
+    mocks.trackingUser.mockResolvedValue('transient-failure');
     render(createElement(WalletModalComponent));
 
     await waitFor(() => expect(mocks.trackingUser).toHaveBeenCalledWith({ address: ETH_ADDRESS }));
-    expect(sessionStorage.getItem('new_connect')).toBe('true');
+    expect(isConnectTracked(sessionStorage, ETH_ADDRESS)).toBe(false);
+  });
+
+  it('stops re-sending a payload the server deterministically rejected', async () => {
+    mocks.evmWallet.address = ETH_ADDRESS;
+    mocks.trackingUser.mockResolvedValue('permanent-failure');
+    const { unmount } = render(createElement(WalletModalComponent));
+
+    await waitFor(() => expect(mocks.trackingUser).toHaveBeenCalledOnce());
+    await waitFor(() => expect(isConnectTracked(sessionStorage, ETH_ADDRESS)).toBe(true));
+    unmount();
+
+    // A remount (route change, reconnect) must not fire the same failing
+    // request again for the whole session.
+    render(createElement(WalletModalComponent));
+    await Promise.resolve();
+    expect(mocks.trackingUser).toHaveBeenCalledOnce();
+  });
+
+  it('records a commit for the requested address even if the active address changed mid-request', async () => {
+    let finishTracking: (outcome: string) => void = () => undefined;
+    mocks.trackingUser.mockReturnValue(new Promise<string>((resolve) => {
+      finishTracking = resolve;
+    }));
+    mocks.evmWallet.address = ETH_ADDRESS;
+    const { rerender } = render(createElement(WalletModalComponent));
+    await waitFor(() => expect(mocks.trackingUser).toHaveBeenCalledWith({ address: ETH_ADDRESS }));
+
+    // The user switches to another account while the request is in flight.
+    mocks.evmWallet.address = OTHER_ETH_ADDRESS;
+    mocks.trackingUser.mockResolvedValue('tracked');
+    rerender(createElement(WalletModalComponent));
+
+    // The server committed the connect for the first address; switching back
+    // to it must not double-count the connect.
+    finishTracking('tracked');
+    await waitFor(() => expect(isConnectTracked(sessionStorage, ETH_ADDRESS)).toBe(true));
   });
 });

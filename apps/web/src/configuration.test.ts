@@ -14,6 +14,7 @@ describe('build environment forwarding', () => {
         'NEXT_PUBLIC_GOOGLE_RECAPTCHA_CLIENT_SITE_KEY',
         'NEXT_PUBLIC_GOOGLE_TAG_MANAGER_KEY',
         'NEXT_PUBLIC_MAX_REQUESTS',
+        'NEXT_PUBLIC_PORTAL_URL',
         'NEXT_PUBLIC_SDK_PRESET',
         'NEXT_PUBLIC_SNSCOPE_URL',
         'NEXT_PUBLIC_UPLOAD_MAX_FILES',

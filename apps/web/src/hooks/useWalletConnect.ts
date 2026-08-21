@@ -2,7 +2,8 @@ import { useCallback } from 'react';
 import { useChain } from '@interchain-kit/react';
 import { SigningStargateClient } from '@cosmjs/stargate';
 
-import { useSelector } from '@/redux/hooks';
+import { useDispatch, useSelector } from '@/redux/hooks';
+import { setModalOpen } from '@/redux/wallet.slice';
 import {
   RPC_ENDPOINT,
   CHAIN_NAME,
@@ -15,7 +16,8 @@ import { getActiveWalletAddress, getActiveWalletMode } from '@/utils/wallet-sele
 import { getEvmAddressFormats } from '@/utils/evm';
 
 const useWalletConnect = () => {
-  const { chain, wallet, address: cosmosAddress } = useChain(CHAIN_NAME);
+  const dispatch = useDispatch();
+  const { chain, wallet, address: cosmosAddress, openView: openCosmosView } = useChain(CHAIN_NAME);
   const evmWallet = useEvmWallet();
   const { walletName, isModalOpen } = useSelector((state) => state.wallet);
   const walletMode = getActiveWalletMode({
@@ -36,6 +38,17 @@ const useWalletConnect = () => {
     chainEip712Enabled: COSMOS_EIP712_ENABLED,
     hasEvmCosmosSigner,
   });
+
+  // The single connect entry point. On EVM profiles the interchain-kit modal
+  // is not mounted (WalletModalComponent renders WalletChoiceModal instead),
+  // so interchain-kit's openView() would toggle a store nothing listens to.
+  const openConnectView = useCallback(() => {
+    if (IS_EVM_NETWORK) {
+      dispatch(setModalOpen({ status: true }));
+      return;
+    }
+    openCosmosView();
+  }, [dispatch, openCosmosView]);
 
   const getClient = useCallback(async () => {
     if (walletMode === 'none') {
@@ -94,6 +107,7 @@ const useWalletConnect = () => {
     ensureEvmNetwork: evmWallet.ensureNetwork,
     getClient,
     getOfflineSigner,
+    openConnectView,
   }
 }
 

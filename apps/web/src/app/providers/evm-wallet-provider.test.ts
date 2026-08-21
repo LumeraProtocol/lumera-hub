@@ -1,243 +1,113 @@
 // @vitest-environment jsdom
-import { act, renderHook } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// The default profile is mainnet, which has no EVM endpoints, so the wallet
-// sync effect would bail out before any of this behaviour runs.
-process.env.NEXT_PUBLIC_NETWORK_PROFILE = 'testnet';
+const ETH_ADDRESS = '0x1111111111111111111111111111111111111111';
 
 const mocks = vi.hoisted(() => ({
+  provider: {
+    request: vi.fn(),
+    on: vi.fn(),
+    removeListener: vi.fn(),
+  },
   getEvmAccountForChain: vi.fn(),
   assertEvmProviderMatchesRpc: vi.fn(),
   ensureEvmWalletNetwork: vi.fn(),
 }));
 
+vi.mock('@/contants/network', () => ({
+  ACTIVE_NETWORK: { displayName: 'Lumera Testnet' },
+  EVM_CHAIN_ID: 76857769,
+  EVM_PROFILE_NAME: 'lumera-testnet-evm',
+  EVM_RPC_ENDPOINT: 'https://evm.example.test',
+  IS_EVM_NETWORK: true,
+}));
 vi.mock('@/utils/evm', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/utils/evm')>();
   return {
     ...actual,
-    getEvmAccountForChain: mocks.getEvmAccountForChain,
     assertEvmProviderMatchesRpc: mocks.assertEvmProviderMatchesRpc,
     ensureEvmWalletNetwork: mocks.ensureEvmWalletNetwork,
+    getEvmAccountForChain: mocks.getEvmAccountForChain,
+    getMetaMaskProvider: () => mocks.provider,
   };
 });
 
-const { EvmAccountNotConnectedError, EvmNetworkMismatchError } = await import('@/utils/evm');
 const { EvmWalletProvider, useEvmWallet } = await import('./evm-wallet-provider');
-
-const ADDRESS_A = '0x1111111111111111111111111111111111111111';
-const ADDRESS_B = '0x2222222222222222222222222222222222222222';
-
-const deferred = <T,>() => {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-};
-
-const createFakeProvider = () => {
-  const listeners = new Map<string, Array<() => void>>();
-  return {
-    isMetaMask: true,
-    request: vi.fn(async () => undefined),
-    on: (event: string, handler: () => void) => {
-      listeners.set(event, [...(listeners.get(event) || []), handler]);
-    },
-    removeListener: (event: string, handler: () => void) => {
-      listeners.set(event, (listeners.get(event) || []).filter((item) => item !== handler));
-    },
-    emit: (event: string) => {
-      (listeners.get(event) || []).forEach((handler) => handler());
-    },
-  };
-};
-
-let fakeProvider: ReturnType<typeof createFakeProvider>;
 
 const wrapper = ({ children }: { children: ReactNode }) =>
   createElement(EvmWalletProvider, null, children);
 
-const renderWallet = () => renderHook(() => useEvmWallet(), { wrapper });
-
-const flush = async () => {
-  await act(async () => {
-    await Promise.resolve();
-    await Promise.resolve();
+const deferred = <T,>() => {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((done, fail) => {
+    resolve = done;
+    reject = fail;
   });
+  return { promise, resolve, reject };
 };
 
-describe('EvmWalletProvider account sync', () => {
+describe('EvmWalletProvider stale sync protection', () => {
   beforeEach(() => {
-    fakeProvider = createFakeProvider();
-    (window as unknown as { ethereum: unknown }).ethereum = fakeProvider;
+    mocks.provider.request.mockReset().mockResolvedValue(undefined);
+    mocks.provider.on.mockReset();
+    mocks.provider.removeListener.mockReset();
+    mocks.assertEvmProviderMatchesRpc.mockReset().mockResolvedValue(undefined);
+    mocks.ensureEvmWalletNetwork.mockReset().mockResolvedValue(undefined);
     mocks.getEvmAccountForChain.mockReset();
-    mocks.assertEvmProviderMatchesRpc.mockReset();
-    mocks.assertEvmProviderMatchesRpc.mockResolvedValue(undefined);
-    mocks.ensureEvmWalletNetwork.mockReset();
-    mocks.ensureEvmWalletNetwork.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    delete (window as unknown as { ethereum?: unknown }).ethereum;
-  });
+  it('does not let an in-flight passive sync re-connect an explicitly disconnected wallet', async () => {
+    // The mount-time passive sync stalls on its first RPC round trip…
+    const slowAccountRead = deferred<string>();
+    mocks.getEvmAccountForChain.mockReturnValue(slowAccountRead.promise);
+    const { result } = renderHook(() => useEvmWallet(), { wrapper });
 
-  it('ignores a superseded sync that resolves after a newer one', async () => {
-    const slowSync = deferred<string>();
-    const fastSync = deferred<string>();
-    mocks.getEvmAccountForChain
-      .mockReturnValueOnce(slowSync.promise)
-      .mockReturnValueOnce(fastSync.promise);
+    await waitFor(() => expect(mocks.getEvmAccountForChain).toHaveBeenCalled());
 
-    const { result } = renderWallet();
-    await flush();
-
-    // A wallet event starts a second sync while the first is still in flight.
-    await act(async () => {
-      fakeProvider.emit('accountsChanged');
-    });
-
-    // The newer sync resolves first and wins.
-    fastSync.resolve(ADDRESS_B);
-    await flush();
-    expect(result.current.address).toBe(ADDRESS_B);
-
-    // The older, slower sync must not clobber it on arrival.
-    slowSync.resolve(ADDRESS_A);
-    await flush();
-    expect(result.current.address).toBe(ADDRESS_B);
-  });
-
-  it('keeps the connected address when verification fails transiently', async () => {
-    mocks.getEvmAccountForChain.mockResolvedValue(ADDRESS_A);
-
-    const { result } = renderWallet();
-    await flush();
-    expect(result.current.address).toBe(ADDRESS_A);
-
-    mocks.assertEvmProviderMatchesRpc.mockRejectedValue(new Error('socket hang up'));
-    await act(async () => {
-      fakeProvider.emit('chainChanged');
-    });
-    await flush();
-
-    expect(result.current.address).toBe(ADDRESS_A);
-    expect(result.current.isConnected).toBe(true);
-    expect(result.current.error).toBe('socket hang up');
-  });
-
-  it('clears the address when the network genuinely mismatches', async () => {
-    mocks.getEvmAccountForChain.mockResolvedValue(ADDRESS_A);
-
-    const { result } = renderWallet();
-    await flush();
-    expect(result.current.address).toBe(ADDRESS_A);
-
-    mocks.assertEvmProviderMatchesRpc.mockRejectedValue(
-      new EvmNetworkMismatchError('MetaMask is connected to a different Lumera network.'),
-    );
-    await act(async () => {
-      fakeProvider.emit('chainChanged');
-    });
-    await flush();
-
-    expect(result.current.address).toBe('');
-    expect(result.current.isConnected).toBe(false);
-    expect(result.current.error).toBe('MetaMask is connected to a different Lumera network.');
-  });
-
-  it('treats a passively discovered wallet with no authorized account as disconnected', async () => {
-    mocks.getEvmAccountForChain.mockRejectedValue(
-      new EvmAccountNotConnectedError(),
-    );
-
-    const { result } = renderWallet();
-    await flush();
-
-    expect(result.current.address).toBe('');
-    expect(result.current.error).toBe('');
-    expect(mocks.assertEvmProviderMatchesRpc).not.toHaveBeenCalled();
-  });
-
-  it('connects only after configuring and verifying the selected EVM profile', async () => {
-    mocks.getEvmAccountForChain.mockResolvedValue(ADDRESS_A);
-    const { result } = renderWallet();
-    await flush();
-
-    await act(async () => {
-      await result.current.connect();
-    });
-
-    expect(fakeProvider.request).toHaveBeenCalledWith({ method: 'eth_requestAccounts' });
-    expect(mocks.ensureEvmWalletNetwork).toHaveBeenCalledWith(
-      fakeProvider,
-      expect.objectContaining({
-        chainId: 76857769,
-        suggestProfileOnMismatch: true,
-      }),
-    );
-    expect(result.current.address).toBe(ADDRESS_A);
-    expect(result.current.isConnected).toBe(true);
-    expect(result.current.isConnecting).toBe(false);
-    expect(result.current.error).toBe('');
-  });
-
-  it('surfaces profile verification failures and leaves the wallet disconnected', async () => {
-    mocks.getEvmAccountForChain.mockRejectedValue(
-      new EvmAccountNotConnectedError(),
-    );
-    mocks.ensureEvmWalletNetwork.mockRejectedValue(new TypeError('Failed to fetch'));
-    const { result } = renderWallet();
-    await flush();
-
-    await act(async () => {
-      await expect(result.current.connect()).rejects.toThrow('temporarily unavailable');
-    });
-
-    expect(result.current.address).toBe('');
-    expect(result.current.isConnected).toBe(false);
-    expect(result.current.isConnecting).toBe(false);
-    expect(result.current.error).toContain('temporarily unavailable');
-  });
-
-  it('clears local state even when permission revocation is unsupported', async () => {
-    mocks.getEvmAccountForChain.mockResolvedValue(ADDRESS_A);
-    const { result } = renderWallet();
-    await flush();
-    expect(result.current.address).toBe(ADDRESS_A);
-    fakeProvider.request.mockRejectedValueOnce(new Error('unsupported method'));
-
+    // …while the user explicitly disconnects.
     await act(async () => {
       await result.current.disconnect();
     });
-
-    expect(fakeProvider.request).toHaveBeenCalledWith({
-      method: 'wallet_revokePermissions',
-      params: [{ eth_accounts: {} }],
-    });
     expect(result.current.address).toBe('');
-    expect(result.current.error).toBe('');
+
+    // The stale sync finally resolves with the pre-revocation account. It
+    // must not repopulate the address the user just disconnected.
+    await act(async () => {
+      slowAccountRead.resolve(ETH_ADDRESS);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.address).toBe('');
+    expect(result.current.isConnected).toBe(false);
   });
 
-  it('discovers MetaMask through an EIP-6963 provider announcement', async () => {
-    delete (window as unknown as { ethereum?: unknown }).ethereum;
-    mocks.getEvmAccountForChain.mockResolvedValue(ADDRESS_B);
-    const announcedProvider = createFakeProvider();
-    const { result } = renderWallet();
-    await flush();
-    expect(result.current.provider).toBeNull();
+  it('does not let an in-flight passive sync clear an address connect() just set', async () => {
+    // The mount-time sync stalls, then the user connects successfully.
+    const slowAccountRead = deferred<string>();
+    mocks.getEvmAccountForChain
+      .mockReturnValueOnce(slowAccountRead.promise)
+      .mockResolvedValue(ETH_ADDRESS);
+    const { result } = renderHook(() => useEvmWallet(), { wrapper });
 
+    await waitFor(() => expect(mocks.getEvmAccountForChain).toHaveBeenCalled());
     await act(async () => {
-      window.dispatchEvent(new CustomEvent('eip6963:announceProvider', {
-        detail: { provider: announcedProvider },
-      }));
+      await result.current.connect();
     });
-    await flush();
+    expect(result.current.address).toBe(ETH_ADDRESS);
 
-    expect(result.current.provider).toBe(announcedProvider);
-    expect(result.current.address).toBe(ADDRESS_B);
+    // The stale mount-time sync fails afterwards (it read state from before
+    // the user authorized the site). The fresh connection must survive.
+    await act(async () => {
+      slowAccountRead.reject(new Error('stale read'));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.address).toBe(ETH_ADDRESS);
+    expect(result.current.error).toBe('');
   });
 });

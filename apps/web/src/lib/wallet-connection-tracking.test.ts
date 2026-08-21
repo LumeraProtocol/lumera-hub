@@ -85,6 +85,69 @@ describe('wallet connection persistence', () => {
     ).toEqual([{ count: 2 }])
   })
 
+  it('never reports isNewHub for a hub another process registered first', async () => {
+    // Simulates a second server process committing the same address's first
+    // connect in the window between anything this call reads from hub_address
+    // and its own write: reads see an empty table, but by the time this call
+    // writes, the row exists. The first-connect decision must come from the
+    // write itself, not from a prior read.
+    const injectCompetingFirstConnect = (manager: {
+      query: (sql: string, params?: unknown[]) => Promise<unknown>
+    }) =>
+      manager.query(
+        `
+        INSERT INTO hub_address (
+          address, first_connected, last_connected, total_connected, acquisition_source
+        ) VALUES (?, ?, ?, 1, ?)
+        ON CONFLICT(address) DO NOTHING
+        `,
+        [ADDRESS, '2026-08-20T20:30:50.000Z', '2026-08-20T20:30:50.000Z', 'Direct'],
+      )
+
+    const racingDataSource = {
+      transaction: (run: (manager: unknown) => Promise<unknown>) =>
+        dataSource.transaction((manager) => {
+          let injected = false
+          const racingManager = {
+            query: async (sql: string, params?: unknown[]) => {
+              const touchesHubAddress = /\bhub_address\b/i.test(sql)
+              const isWrite = /^\s*(INSERT|UPDATE|DELETE)/i.test(sql)
+              if (touchesHubAddress && isWrite && !injected) {
+                injected = true
+                await injectCompetingFirstConnect(manager)
+              }
+              const result = await manager.query(sql, params)
+              if (touchesHubAddress && !isWrite && !injected) {
+                injected = true
+                await injectCompetingFirstConnect(manager)
+              }
+              return result
+            },
+          }
+          return run(racingManager)
+        }),
+    }
+
+    const result = await persistWalletConnection(
+      racingDataSource as unknown as DataSource,
+      {
+        address: ADDRESS,
+        acquisitionSource: 'Direct',
+        browser: 'Chrome',
+        ip: '127.0.0.1',
+        otherInfo: '{}',
+        timestamp: '2026-08-20T20:30:50.489Z',
+      },
+    )
+
+    expect(result).toEqual({ isNewHub: false })
+    expect(
+      await dataSource.query(
+        'SELECT address, total_connected FROM hub_address',
+      ),
+    ).toEqual([{ address: ADDRESS, total_connected: 2 }])
+  })
+
   it('rolls back the whole connection record when a required write fails', async () => {
     await dataSource.query('DROP TABLE hub_address_connected_log')
 

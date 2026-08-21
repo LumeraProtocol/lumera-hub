@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   buildTxHistoryPath,
   getPrimaryTransactionType,
-  getTransactionHistoryAddress,
   getTransactionDisplayType,
   hasEthereumTransactionHash,
   isTransactionSuccessful,
@@ -29,20 +28,6 @@ describe('buildTxHistoryPath', () => {
 });
 
 describe('transaction history', () => {
-  it('queries the equivalent Bech32 account in MetaMask mode', () => {
-    expect(getTransactionHistoryAddress({
-      address: '0x0123456789012345678901234567890123456789',
-      bech32Address: 'lumera1account',
-      isEvm: true,
-    })).toBe('lumera1account');
-
-    expect(getTransactionHistoryAddress({
-      address: 'lumera1account',
-      bech32Address: 'lumera1account',
-      isEvm: false,
-    })).toBe('lumera1account');
-  });
-
   it('uses the indexed Cosmos result as the Wallet transaction status', () => {
     expect(isTransactionSuccessful({
       code: 0,

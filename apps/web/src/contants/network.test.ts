@@ -15,6 +15,7 @@ const ENVIRONMENT_KEYS = [
   'NEXT_PUBLIC_COSMOS_EIP712_ENABLED',
   'NEXT_PUBLIC_SDK_PRESET',
   'NEXT_PUBLIC_SNSCOPE_URL',
+  'NEXT_PUBLIC_PORTAL_URL',
 ] as const;
 
 const originalEnvironment = Object.fromEntries(
@@ -76,7 +77,18 @@ describe('network profiles', () => {
     expect(network.SDK_PRESET).toBe('mainnet');
     // Trailing slashes are stripped so call sites can join `${SNSCOPE_URL}/v1/...`.
     expect(network.SNSCOPE_URL).toBe('https://snscope.example');
-    expect(network.PORTAL_URL).toBe('https://portal.lumera.io/');
+    // The portal link follows the network profile, not the SDK preset: a
+    // private testnet deployment pointing the SDK at mainnet must not send
+    // its header Portal link to the production portal.
+    expect(network.PORTAL_URL).toBe('https://portal.testnet.lumera.io/');
+  });
+
+  it('allows an explicit portal override for private deployments', async () => {
+    process.env.NEXT_PUBLIC_NETWORK_PROFILE = 'testnet';
+    process.env.NEXT_PUBLIC_PORTAL_URL = 'https://portal.staging.example/';
+    const network = await import('./network');
+
+    expect(network.PORTAL_URL).toBe('https://portal.staging.example/');
   });
 
   it('keeps Cosmos EIP-712 disabled unless explicitly enabled', async () => {

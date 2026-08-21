@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   MsgSend,
 } from 'cosmjs-types/cosmos/bank/v1beta1/tx';
+import useLatestRequest from '@/hooks/useLatestRequest';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM, EVM_CHAIN_ID } from '@/contants/network';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contants';
@@ -47,15 +48,14 @@ const useSend = (options: UseDepositOptions = {}) => {
     const [balances, setBalances] = useState<Coin[]>([]);
     const [selectedDenom, setSelectedDenom] = useState<string>('ulume');
     const [transactionHash, setTransactionHash] = useState('');
-    const balanceRequestSequence = useRef(0);
+    const balanceRequest = useLatestRequest();
 
     const queryBalances = useCallback(async (): Promise<void> => {
-      const requestId = balanceRequestSequence.current + 1;
-      balanceRequestSequence.current = requestId;
+      const requestId = balanceRequest.begin();
       try {
         if (isEvm) {
           const balance = await getEvmBalance(address);
-          if (requestId !== balanceRequestSequence.current) return;
+          if (!balanceRequest.isCurrent(requestId)) return;
           setBalances([{ denom: DENOM, amount: evmBalanceToMicroLume(balance) }]);
           setSelectedDenom(DENOM);
           return;
@@ -64,29 +64,31 @@ const useSend = (options: UseDepositOptions = {}) => {
         const client = await getClient();
         if (!client) return;
         const allBalances = await client.getAllBalances(address);
-        if (requestId !== balanceRequestSequence.current) return;
+        if (!balanceRequest.isCurrent(requestId)) return;
         const positiveBalances = allBalances.filter((balance) => Number(balance.amount) > 0);
         setBalances(positiveBalances);
         if (positiveBalances.length > 0) {
           setSelectedDenom(positiveBalances[0].denom);
         }
       } catch {
-        if (requestId === balanceRequestSequence.current) setBalances([]);
+        if (balanceRequest.isCurrent(requestId)) setBalances([]);
       }
-    }, [address, getClient, isEvm]);
+    }, [address, balanceRequest, getClient, isEvm]);
 
     useEffect(() => {
       if (!isConnected || !address) {
-        balanceRequestSequence.current += 1;
         setBalances([]);
         return;
       }
       setBalances([]);
       void queryBalances();
+      // The cleanup invalidation alone covers disconnects too: when the
+      // address empties, the previous run's cleanup has already superseded
+      // any in-flight balance query.
       return () => {
-        balanceRequestSequence.current += 1;
+        balanceRequest.invalidate();
       };
-    }, [address, isConnected, queryBalances]);
+    }, [address, balanceRequest, isConnected, queryBalances]);
 
     useEffect(() => {
       setOptionsAdvanced((current) => ({

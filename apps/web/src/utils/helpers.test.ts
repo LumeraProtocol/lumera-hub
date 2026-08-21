@@ -52,3 +52,22 @@ describe('getChains', () => {
     expect(assetLists[0].chainName).toBe('lumera');
   });
 });
+
+describe('sumMicroLumeAmounts', () => {
+  it('sums only micro-LUME denominated coins', async () => {
+    const { sumMicroLumeAmounts } = await import('./helpers');
+
+    expect(sumMicroLumeAmounts([
+      { denom: 'ulume', amount: '100' },
+      { denom: 'uatom', amount: '5' },
+      { denom: 'ulume', amount: '23' },
+    ])).toBe(123);
+  });
+
+  it('returns zero when there are no balances', async () => {
+    const { sumMicroLumeAmounts } = await import('./helpers');
+
+    expect(sumMicroLumeAmounts([])).toBe(0);
+    expect(sumMicroLumeAmounts(undefined)).toBe(0);
+  });
+});

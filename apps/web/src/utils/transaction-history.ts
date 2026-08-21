@@ -1,9 +1,3 @@
-interface TransactionHistoryAddressOptions {
-  address: string;
-  bech32Address: string;
-  isEvm: boolean;
-}
-
 interface IndexedTransactionStatus {
   code: number;
   events?: unknown;
@@ -60,12 +54,6 @@ export const buildTxHistoryPath = ({
   const event = direction === 'received' ? 'transfer.recipient' : 'message.sender';
   return `/cosmos/tx/v1beta1/txs?query=${event}=%27${address}%27&pagination.limit=${limit}&pagination.offset=${offset}&order_by=ORDER_BY_DESC`;
 };
-
-export const getTransactionHistoryAddress = ({
-  address,
-  bech32Address,
-  isEvm,
-}: TransactionHistoryAddressOptions) => isEvm ? bech32Address : address;
 
 export const isTransactionSuccessful = (transaction: IndexedTransactionStatus) => (
   transaction.code === 0

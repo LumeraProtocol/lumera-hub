@@ -113,6 +113,15 @@ export const mapAmount = (events:{type: string, attributes: {key: string, value:
     .map(x => x.key==='amount'? x.value : String.fromCharCode(...fromBase64(x.value)))
 }
 
+/** Sums the micro-LUME (`DENOM`) coins of a balance/reward list, ignoring
+ * every other denomination. */
+export const sumMicroLumeAmounts = (
+  coins: Array<{ denom: string; amount: string }> | null | undefined,
+) => (coins ?? []).reduce(
+  (total, coin) => coin.denom === DENOM ? total + Number(coin.amount) : total,
+  0,
+);
+
 export const getChains = () => {
   if (NETWORK_PROFILE === 'devnet') {
     const lumeraChain = {

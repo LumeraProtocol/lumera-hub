@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
-import { Wallet, ChevronDown, Copy, LogOut, RefreshCw } from 'lucide-react';
+import { Wallet, ChevronDown, Copy, LogOut, RefreshCw, TriangleAlert } from 'lucide-react';
 import {
   InterchainWalletModal,
   useChain,
@@ -24,6 +24,11 @@ import {
 import { useEvmWallet } from '@/app/providers/evm-wallet-provider';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import useTrackingUser from '@/hooks/useTrackingUser';
+import {
+  clearTrackedConnects,
+  isConnectTracked,
+  markConnectTracked,
+} from '@/utils/wallet-connect-marker';
 import {
   getActiveWalletAddress,
   getActiveWalletMode,
@@ -116,11 +121,6 @@ function WalletChoiceModal() {
       installed: isMetaMaskInstalled,
     },
   ];
-  // The chooser only reports failures caused by this dialog's explicit
-  // Connect action. Passive provider discovery is allowed to be disconnected
-  // without presenting an error before the user has attempted anything.
-  const displayedWalletError = walletError;
-
   return createPortal(
     <div
       role="presentation"
@@ -169,8 +169,10 @@ function WalletChoiceModal() {
             );
           })}
         </ul>
-        {displayedWalletError && (
-          <p className={styles.error} role="alert">{displayedWalletError}</p>
+        {/* Only failures caused by this dialog's explicit Connect action are
+            reported here; passive provider discovery never sets walletError. */}
+        {walletError && (
+          <p className={styles.error} role="alert">{walletError}</p>
         )}
         <button
           type="button"
@@ -195,9 +197,7 @@ export function WalletModalComponent() {
   const walletMode = getActiveWalletMode({ selectedWallet: walletName, isEvmNetwork: IS_EVM_NETWORK });
   const address = getActiveWalletAddress({ mode: walletMode, evmAddress, cosmosAddress });
   const { trackingUser } = useTrackingUser();
-  const activeAddressRef = useRef(address);
   const trackingAddressesRef = useRef(new Set<string>());
-  activeAddressRef.current = address;
   // Cosmos (interchain-kit) can retain a persisted/cached account address while
   // the live session is 'Connecting' or 'Disconnected' (see
   // utils/wallet-selection.ts's disconnectPersistedInterchainWallet), so only
@@ -214,20 +214,25 @@ export function WalletModalComponent() {
       // succeeds. The EVM picker (WalletChoiceModal) closes itself via
       // setModalOpen, so this is a no-op on EVM profiles.
       close();
-      const trackedAddress = sessionStorage.getItem('new_connect');
       if (
-        trackedAddress !== address
+        !isConnectTracked(sessionStorage, address)
         && !trackingAddressesRef.current.has(address)
       ) {
         // Strict Mode replays mount effects in development. Mark the request as
         // in flight synchronously so the replay cannot race the same SQLite
-        // first-connect insert, but clear it after failure so reconnecting can
-        // retry normally.
+        // first-connect insert, but clear it afterwards so a transient failure
+        // can retry normally.
         trackingAddressesRef.current.add(address);
         void trackingUser({ address })
-          .then((didTrack) => {
-            if (didTrack && activeAddressRef.current === address) {
-              sessionStorage.setItem('new_connect', address);
+          .then((outcome) => {
+            // 'tracked': the server committed this address's connect — record
+            // it even if the user already switched accounts, or switching back
+            // re-sends the request and double-counts the connect.
+            // 'permanent-failure': the server deterministically rejected the
+            // payload; re-sending the identical payload can only fail the same
+            // way, so stop for this session rather than loop.
+            if (outcome !== 'transient-failure') {
+              markConnectTracked(sessionStorage, address);
             }
           })
           .finally(() => {
@@ -259,10 +264,16 @@ export function WalletModalComponent() {
 
 export function ConnectWallet() {
   const dispatch = useDispatch();
-  const { disconnect: disconnectCosmos, openView } = useChain(CHAIN_NAME);
+  const { disconnect: disconnectCosmos } = useChain(CHAIN_NAME);
   const keplrWallet = useChainWallet(CHAIN_NAME, KEPLR_WALLET_NAME);
   const evmWallet = useEvmWallet();
-  const { address, bech32Address, ethAddress, walletName } = useWalletConnect();
+  const {
+    address,
+    bech32Address,
+    ethAddress,
+    openConnectView,
+    walletName,
+  } = useWalletConnect();
   const menuRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [isKeplrInstalled, setKeplrInstalled] = useState(false);
@@ -320,15 +331,11 @@ export function ConnectWallet() {
     dispatch(setWalletName({ walletName: '' }));
     dispatch(setAddress({ address: '' }));
     dispatch(setConnected({ status: false }));
-    sessionStorage.removeItem('new_connect');
+    clearTrackedConnects(sessionStorage);
   };
 
   const handleConnect = () => {
-    if (IS_EVM_NETWORK) {
-      dispatch(setModalOpen({ status: true }));
-    } else {
-      openView();
-    }
+    openConnectView();
   };
 
   const handleCopyAddress = async (value: string, label: string) => {
@@ -358,8 +365,19 @@ export function ConnectWallet() {
       { label: 'ETH hex address', value: ethAddress },
     ]
     : [{ label: 'Bech32 address', value: address }];
+  // With no address the account menu (and its error slot) is unreachable, so a
+  // wallet problem that cleared the address — e.g. MetaMask switched to a
+  // different network — would otherwise read as a silent logout.
+  const headerWalletError = !address && IS_EVM_NETWORK ? evmWallet.error : '';
+
   return (
     <div className={styles.accountControls}>
+      {headerWalletError && (
+        <p className={styles.walletAlert} role="alert" title={headerWalletError}>
+          <TriangleAlert aria-hidden="true" size={15} />
+          <span className={styles.walletAlertText}>{headerWalletError}</span>
+        </p>
+      )}
       {!address ?
         <AppButton onClick={handleConnect}>
           <Wallet className='w-4 h-4' /> <div className="connect-wallet-label">Connect Wallet</div>
@@ -448,16 +466,10 @@ export function ConnectWalletButton({
   className = '',
   onClick,
 }: IConnectWalletButton = {}) {
-  const dispatch = useDispatch();
-  const { openView } = useChain(CHAIN_NAME);
-  const { address } = useWalletConnect();
+  const { address, openConnectView } = useWalletConnect();
 
   const handleConnect = () => {
-    if (IS_EVM_NETWORK) {
-      dispatch(setModalOpen({ status: true }));
-    } else {
-      openView();
-    }
+    openConnectView();
     if (onClick) {
       onClick();
     }
@@ -480,15 +492,10 @@ export function ConnectWalletButton({
 export function ConnectButton({
   className = ''
 }: IConnectWalletButton) {
-  const dispatch = useDispatch();
-  const { openView } = useChain(CHAIN_NAME);
+  const { openConnectView } = useWalletConnect();
 
   const handleConnect = () => {
-    if (IS_EVM_NETWORK) {
-      dispatch(setModalOpen({ status: true }));
-    } else {
-      openView();
-    }
+    openConnectView();
   };
 
   return (

@@ -22,6 +22,7 @@ import SearchDialog from '@/components/SearchDialog';
 import GetStarted from '@/components/GetStarted';
 import { PORTAL_URL } from '@/contants/network';
 import useWalletConnect from '@/hooks/useWalletConnect';
+import { showGlobalApiErrorToast } from '@/utils/global-api-error';
 
 import { useSelector, useDispatch } from '@/redux/hooks';
 import { setActiveView, setCurrentPath, setViewTitle } from '@/redux/app.slice';
@@ -89,13 +90,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [dispatch, searchParams]);
 
   useEffect(() => {
-    if (!message) return;
-    const errorMessage = typeof message === 'string' && message !== 'unknown error'
-      ? message
-      : 'Failed to fetch';
-    toast.error(errorMessage, {
-      toastId: 'global-api-error',
-    });
+    showGlobalApiErrorToast(message, toast);
   }, [message]);
 
   useEffect(() => {

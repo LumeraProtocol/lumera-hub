@@ -1,12 +1,13 @@
-import { useCallback, useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 
 import * as instance from '@/utils/api';
+import useLatestRequest from '@/hooks/useLatestRequest';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { TLog, TLogEvent, TMessage, TOption, TSignerInfos, TFee } from '@/hooks/useRecentActivity';
 import { Coin } from '@/hooks/useAccountInfo';
+import { getConnectedAccountQueryAddress } from '@/utils/account';
 import {
   buildTxHistoryPath,
-  getTransactionHistoryAddress,
   TxHistoryDirection,
 } from '@/utils/transaction-history';
 
@@ -54,16 +55,15 @@ interface UseTransactionOptions {
 const useTransaction = ({ address: addressOverride, direction }: UseTransactionOptions = {}) => {
     const { address, bech32Address, isEvm } = useWalletConnect();
     const transactionAddress = addressOverride
-        ?? getTransactionHistoryAddress({ address, bech32Address, isEvm });
+        ?? getConnectedAccountQueryAddress({ address, bech32Address, isEvm });
     const [isLoading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [transactions, setTransactions] = useState<ITransaction[]>([]);
     const [totalTransactions, setTotalTransactions] = useState(0);
-    const requestSequence = useRef(0);
+    const request = useLatestRequest();
 
     const fetchTransactions = useCallback(async (offset = 0, showLoading = true) => {
-        const requestId = requestSequence.current + 1;
-        requestSequence.current = requestId;
+        const requestId = request.begin();
         if (!transactionAddress) {
             setTransactions([]);
             setTotalTransactions(0);
@@ -75,7 +75,7 @@ const useTransaction = ({ address: addressOverride, direction }: UseTransactionO
             setLoading(true);
         }
         setError('');
-    
+
         try {
             const { data } = await instance.get(buildTxHistoryPath({
                 address: transactionAddress,
@@ -83,35 +83,36 @@ const useTransaction = ({ address: addressOverride, direction }: UseTransactionO
                 limit: LIMIT,
                 offset,
             }));
-            if (requestId !== requestSequence.current) return [];
+            if (!request.isCurrent(requestId)) return [];
             setTotalTransactions(Math.ceil(Number(data.total) / LIMIT));
             setTransactions(data.tx_responses || []);
             return data.tx_responses || [];
         } catch (e) {
-            if (requestId !== requestSequence.current) return [];
+            if (!request.isCurrent(requestId)) return [];
             setError(e instanceof Error ? e.message : 'An unknown error occurred.');
             return [];
         } finally {
-            if (requestId === requestSequence.current) {
+            if (request.isCurrent(requestId)) {
                 setLoading(false);
             }
         }
-    }, [transactionAddress, direction]);
+    }, [direction, request, transactionAddress]);
 
     useEffect(() => {
         if (transactionAddress) {
             void fetchTransactions();
         } else {
-            requestSequence.current += 1;
             setTransactions([]);
             setTotalTransactions(0);
             setError('');
             setLoading(false);
         }
+        // Dropping the address is covered too: the previous run's cleanup has
+        // already superseded any in-flight fetch.
         return () => {
-            requestSequence.current += 1;
+            request.invalidate();
         };
-    }, [fetchTransactions, transactionAddress]);
+    }, [fetchTransactions, request, transactionAddress]);
 
     const handlePageClick = ({ selected }: { selected: number }) => {
         const offset = selected * LIMIT;

@@ -2,33 +2,12 @@ import dns from 'node:dns'
 import util from 'node:util'
 
 import { isValidIPv4 } from '@/utils/helpers'
+import { mapIpWhoLocation, type IpLocation, type IpWhoResponse } from '@/utils/ipwho'
 import { getSupernodeHost } from '@/utils/supernode-address'
 
 type ResolveIPv4 = (hostname: string) => Promise<string[]>
 
 type Fetch = typeof fetch
-
-interface IpWhoResponse {
-  success?: boolean
-  message?: string
-  latitude?: number | null
-  longitude?: number | null
-  capital?: string | null
-  city?: string | null
-  country?: string | null
-  continent?: string | null
-  country_code?: string | null
-}
-
-export interface IpLocation {
-  latitude: number | null
-  longitude: number | null
-  subdivision: string | null
-  city: string | null
-  country: string | null
-  continent: string | null
-  country_code: string | null
-}
 
 const resolveDns = util.promisify(dns.resolve4)
 
@@ -65,13 +44,5 @@ export const fetchLocationFromIpWho = async (
     throw new Error(data.message || 'IpWho request failed')
   }
 
-  return {
-    latitude: data.latitude ?? null,
-    longitude: data.longitude ?? null,
-    subdivision: data.capital ?? null,
-    city: data.city ?? null,
-    country: data.country ?? null,
-    continent: data.continent ?? null,
-    country_code: data.country_code ?? null,
-  }
+  return mapIpWhoLocation(data)
 }

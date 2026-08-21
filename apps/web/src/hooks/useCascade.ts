@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from 'react-toastify';
 import JSZip from 'jszip';
-import { useChain } from '@interchain-kit/react';
 import dayjs from 'dayjs';
 import IPLocate from 'node-iplocate';
 
@@ -12,6 +11,7 @@ import useWalletConnect from '@/hooks/useWalletConnect';
 import * as instance from '@/utils/api';
 import { getCascadeBalanceMicroLume } from '@/utils/cascade-balance';
 import { delay, isValidIPv4 } from '@/utils/helpers';
+import { mapIpWhoLocation } from '@/utils/ipwho';
 import {
   getAbstractIpLocationUrl,
   getSupernodeHost,
@@ -25,7 +25,6 @@ import {
   SDK_PRESET,
   SNSCOPE_URL,
   SNAPI_URL,
-  CHAIN_NAME,
   DENOM,
 } from '@/contants/network';
 import {
@@ -276,11 +275,10 @@ export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   const { trackingCascadeDownload } = useTrackingCascadeDownload();
-  const { openView } = useChain(CHAIN_NAME);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const summaryStartedRef = useRef(false);
   const getSummaryRef = useRef<() => Promise<void>>(() => Promise.resolve());
-  const { address, isEvm } = useWalletConnect();
+  const { address, isEvm, openConnectView } = useWalletConnect();
   const [isUploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [isFetchSummaryLoading, setFetchSummaryLoading] = useState(false);
@@ -390,18 +388,13 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
   };
 
-  const fetchLocationFromIpWho = async (ip: string) => {
+  const fetchLocationFromIpWho = async (host: string) => {
     try {
-      const { data } = await instance.getExternal(`https://ipwho.is/${ip}`);
-      return {
-        latitude: data?.latitude || null,
-        longitude: data?.longitude || null,
-        subdivision: data?.capital || null,
-        city: data?.city || null,
-        country: data?.country || null,
-        continent: data?.continent || null,
-        country_code: data?.country_code || null,
-      };
+      const { data } = await instance.getExternal(`https://ipwho.is/${encodeURIComponent(host)}`);
+      if (data?.success === false) {
+        return null;
+      }
+      return mapIpWhoLocation(data || {});
     } catch (error) {
       throw new Error((error as Error)?.message ||  'An unknown error occurred.')
     }
@@ -454,13 +447,11 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   }
 
   const fetchLocationForIP = async (ip: string) => {
-    // Browser geolocation providers accept IP literals, not DNS names. Hostname
-    // resolution belongs to the server route, where DNS is available.
-    if (!isValidIPv4(ip)) {
-      return null;
-    }
     let data = null;
     try {
+      // ipwho.is accepts DNS hostnames as well as IP literals, so
+      // hostname-addressed supernodes keep a browser-side fallback when the
+      // server route cannot resolve them (rate limit, DNS egress blocked).
       const result = await fetchLocationFromIpWho(ip);
       if (result) {
         data = result;
@@ -468,7 +459,8 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     } catch {
       // noop
     }
-    if (!data) {
+    // The remaining providers accept IP literals only.
+    if (!data && isValidIPv4(ip)) {
       try {
         const result = await fetchLocationFromIpLocate(ip);
         if (result) {
@@ -478,7 +470,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         // noop
       }
     }
-    if (!data) {
+    if (!data && isValidIPv4(ip)) {
       try {
         const result = await fetchLocationFromAbstractApi(ip);
         if (result) {
@@ -1079,7 +1071,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     } else {
       setStep('login');
       setSelectedModal('');
-      openView();
+      // The shared connect entry point: on EVM profiles the interchain-kit
+      // modal is not mounted, so interchain-kit's own openView() shows nothing.
+      openConnectView();
     }
   }
 

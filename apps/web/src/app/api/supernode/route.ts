@@ -13,6 +13,7 @@ import {
   fetchLocationFromIpWho,
   resolveSupernodeIPv4,
 } from '@/app/api/supernode/location'
+import { mergeSupernodeLocations } from '@/app/api/supernode/supernode-cache'
 import {
   checkRateLimit,
   getClientIP,
@@ -26,13 +27,30 @@ const bodySchema = z.object({
 const MAX_REQUESTS = Number(process.env.NEXT_PUBLIC_MAX_REQUESTS || 10) // ~ 10/minute
 
 const filePath = path.join(process.cwd(), 'data', 'supernodes.json')
+// The runtime cache above is gitignored, so a fresh deploy starts empty. The
+// checked-in seed keeps the Cascade map populated on cold start instead of
+// depending on ipwho.is being reachable (and unthrottled) at request time.
+const seedFilePath = path.join(process.cwd(), 'data', 'supernodes.seed.json')
+
+async function readCacheFile(pathToRead: string) {
+  const data = await fs.readFile(pathToRead, 'utf8')
+  return JSON.parse(data)
+}
 
 async function readFile() {
   try {
-    const data = await fs.readFile(filePath, 'utf8')
     return {
       status: true,
-      supernodes: JSON.parse(data),
+      supernodes: await readCacheFile(filePath),
+      message: null,
+    }
+  } catch {
+    // Fall through to the seed below.
+  }
+  try {
+    return {
+      status: true,
+      supernodes: await readCacheFile(seedFilePath),
       message: null,
     }
   } catch (error) {
@@ -54,6 +72,11 @@ async function writeFile(content: IMarker[]) {
   }
 }
 
+const locateSupernode = async (endpoint: string) => {
+  const ip = await resolveSupernodeIPv4(endpoint)
+  return ip ? fetchLocationFromIpWho(ip) : null
+}
+
 async function readAndUpdateSupernode(supernodes: SupernodeItem[]) {
   if (!supernodes?.length) {
     throw new Error('Supernodes list cannot be empty.')
@@ -61,49 +84,11 @@ async function readAndUpdateSupernode(supernodes: SupernodeItem[]) {
   try {
     const data = await readFile()
     const currentSupernodes: IMarker[] = data.supernodes
-    const results: IMarker[] = []
-    let isUpdate = false
-    for (const item of supernodes) {
-      try {
-        const supernode = currentSupernodes.find(
-          (s) => s.address === item.ip_address,
-        )
-        if (!supernode) {
-          const address = item.ip_address
-          let data = null
-          try {
-            const ip = await resolveSupernodeIPv4(address)
-            if (ip) {
-              data = await fetchLocationFromIpWho(ip)
-            }
-          } catch (error) {
-            console.error(error)
-          }
-          if (data?.latitude != null && data.longitude != null) {
-            results.push({
-              latLng: [data.latitude, data.longitude],
-              name: data?.city || '',
-              continent: data?.continent || '',
-              country: data?.country || '',
-              country_code: data?.country_code || '',
-              subdivision: data?.subdivision || '',
-              city: data?.city || '',
-              supernodeAccount: item.supernode_account,
-              validatorAddress: item.validator_address,
-              validatorMoniker: item.validator_moniker,
-              address,
-              p2pPort: item.p2p_port.toString(),
-            })
-          }
-          isUpdate = true
-        } else {
-          results.push(supernode)
-        }
-      } catch (error) {
-        console.error(error)
-        // noop
-      }
-    }
+    const { results, isUpdate } = await mergeSupernodeLocations(
+      supernodes,
+      currentSupernodes,
+      locateSupernode,
+    )
     if (isUpdate) {
       await writeFile(results)
     }

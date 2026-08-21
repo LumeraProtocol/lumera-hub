@@ -94,7 +94,10 @@ const getConfiguredChainData = () => {
 
 export function WalletRuntimeProviders({ children }: { children: React.ReactNode }) {
   const walletName = useSelector((state) => state.wallet.walletName);
-  const chainData = getConfiguredChainData();
+  // Build-time constants in, so resolve once: this provider re-renders on
+  // every walletName change and ChainProvider ignores new chain objects
+  // anyway (it keeps its WalletManager in a ref).
+  const chainData = React.useMemo(getConfiguredChainData, []);
   const isBrowser = typeof window !== 'undefined';
   React.useEffect(() => {
     if (isBrowser && IS_EVM_NETWORK && walletName === METAMASK_WALLET_NAME) {

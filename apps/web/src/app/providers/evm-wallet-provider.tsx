@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   ACTIVE_NETWORK,
@@ -44,6 +44,11 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
   const [provider, setProvider] = useState<Eip1193Provider | null>(
     typeof window === 'undefined' ? null : getMetaMaskProvider(window.ethereum)
   );
+  // Generation counter shared by the passive account sync AND the explicit
+  // connect/disconnect actions. Each of them supersedes everything that came
+  // before, so a slow passive sync that started earlier can never overwrite
+  // the result of a user action (or of a newer sync).
+  const walletStateSequenceRef = useRef(0);
 
   useEffect(() => {
     const detectProvider = () => {
@@ -109,6 +114,9 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
       setError(message);
       throw new Error(message);
     } finally {
+      // Whatever the outcome, this action's state writes supersede every sync
+      // that was in flight when it ran.
+      walletStateSequenceRef.current += 1;
       setConnecting(false);
     }
   }, [ensureConfiguredNetwork, provider]);
@@ -124,6 +132,7 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
     }
     setAddress('');
     setError('');
+    walletStateSequenceRef.current += 1;
   }, [provider]);
 
   useEffect(() => {
@@ -132,14 +141,15 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
 
     // `accountsChanged` and `chainChanged` can overlap, and each sync awaits
     // several RPC round trips. Without a sequence guard the slowest response
-    // wins and can restore state the newer event already superseded.
+    // wins and can restore state the newer event already superseded. The
+    // shared component-level counter also makes connect()/disconnect()
+    // supersede in-flight syncs.
     let cancelled = false;
-    let latestSyncId = 0;
 
     const syncAccounts = async () => {
-      const syncId = latestSyncId + 1;
-      latestSyncId = syncId;
-      const isStale = () => cancelled || syncId !== latestSyncId;
+      walletStateSequenceRef.current += 1;
+      const syncId = walletStateSequenceRef.current;
+      const isStale = () => cancelled || syncId !== walletStateSequenceRef.current;
 
       let activeAddress: string;
       try {

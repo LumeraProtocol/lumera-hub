@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import * as instance from '@/utils/api';
+import useLatestRequest from '@/hooks/useLatestRequest';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 import { DENOM } from '@/contants/network';
+import { sumMicroLumeAmounts } from '@/utils/helpers';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
 import { evmBalanceToMicroLume, getEvmBalance } from '@/utils/evm';
 
@@ -215,25 +217,13 @@ export const describeAccountInfoGaps = (accountInfo: AccountInfoData | null) => 
 
 export const getTotalRewards = (accountInfo: AccountInfoData | null) => {
   if (accountInfo?.rewardTotal?.length) {
-    return accountInfo.rewardTotal.reduce((total, reward) => {
-      if (reward.denom === DENOM) {
-        return total + Number(reward.amount);
-      }
-      return total;
-    }, 0);
+    return sumMicroLumeAmounts(accountInfo.rewardTotal);
   }
 
-  let total = 0;
-  if (accountInfo?.rewards?.length) {
-    for (const item of accountInfo?.rewards) {
-      for (const reward of item.reward) {
-        if (reward.denom === DENOM) {
-          total += Number(reward.amount);
-        }
-      }
-    }
-  }
-  return total;
+  return (accountInfo?.rewards ?? []).reduce(
+    (total, item) => total + sumMicroLumeAmounts(item.reward),
+    0,
+  );
 }
 
 const useAccountInfo = () => {
@@ -261,11 +251,10 @@ const useAccountInfo = () => {
   const [selectedModal, setSelectedModal] = useState('');
   const [transactionHash, setTransactionHash] = useState('');
   const [selectedClaim, setSelectedClaim] = useState<DelegationResponse | null>(null);
-  const fetchSequence = useRef(0);
+  const fetchRequest = useLatestRequest();
 
   const fetchData = useCallback(async () => {
-    const requestId = fetchSequence.current + 1;
-    fetchSequence.current = requestId;
+    const requestId = fetchRequest.begin();
     setLoading(true);
     setError(null);
 
@@ -275,7 +264,7 @@ const useAccountInfo = () => {
           ethAddress: address,
           bech32Address,
         });
-        if (requestId !== fetchSequence.current) return;
+        if (!fetchRequest.isCurrent(requestId)) return;
         setAccountInfo(_accountInfo);
         setClaimInfo((current) => ({
           ...current,
@@ -285,14 +274,14 @@ const useAccountInfo = () => {
       }
 
       const _accountInfo = await fetchAccountInfo(address);
-      if (requestId !== fetchSequence.current) return;
+      if (!fetchRequest.isCurrent(requestId)) return;
       setAccountInfo(_accountInfo);
       setClaimInfo((current) => ({
         ...current,
         totalRewards: `${getTotalRewards(_accountInfo)}`,
       }));
     } catch (e) {
-      if (requestId !== fetchSequence.current) return;
+      if (!fetchRequest.isCurrent(requestId)) return;
       console.error('API Error:', e);
       if (e instanceof Error) {
         setError(e);
@@ -300,13 +289,13 @@ const useAccountInfo = () => {
         setError(new Error('An unknown error occurred.'));
       }
     } finally {
-      if (requestId === fetchSequence.current) setLoading(false);
+      if (fetchRequest.isCurrent(requestId)) setLoading(false);
     }
-  }, [address, bech32Address, isEvm]);
+  }, [address, bech32Address, fetchRequest, isEvm]);
 
   useEffect(() => {
     if (!address) {
-      fetchSequence.current += 1;
+      fetchRequest.invalidate();
       setAccountInfo({ balances: [], delegations: [], rewards: [], unbonding: [], });
       setLoading(false);
       setError(null);
@@ -318,7 +307,7 @@ const useAccountInfo = () => {
       }));
     }
     void fetchData();
-  }, [address, fetchData]);
+  }, [address, fetchData, fetchRequest]);
 
   const handleClaimButtonClick = async () => {
     setErrorClaim(null);

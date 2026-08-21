@@ -2,7 +2,8 @@ import numeral from 'numeral';
 
 import * as instance from '@/utils/api';
 import { RATE_VALUE } from '@/contants';
-import { DENOM, SNSCOPE_URL } from '@/contants/network';
+import { SNSCOPE_URL } from '@/contants/network';
+import { sumMicroLumeAmounts } from '@/utils/helpers';
 import { formatTokenDisplay } from '@/utils/format';
 import type { IActionDetail } from '@/types';
 import type { IValidator } from '@/types/validator';
@@ -212,10 +213,7 @@ export const fetchConnectedStaking = async (
     loadSlice(() => api.delegations(connectedAddress), [] as DelegationResponse[]),
     loadSlice(async () => {
       const balances = await api.balances(connectedAddress);
-      const total = balances.reduce(
-        (sum, balance) => balance.denom === DENOM ? sum + Number(balance.amount) : sum,
-        0,
-      );
+      const total = sumMicroLumeAmounts(balances);
       return Number(numeral(total / RATE_VALUE).format('0.[000000]'));
     }, 0),
   ]);
