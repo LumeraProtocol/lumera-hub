@@ -20,7 +20,7 @@
     "@tamagui/lucide-icons": "^1.132.20",
     "dayjs": "^1.11.18",
     "earth-map-3d-react": "^0.0.6",
-    "echarts": "^6.0.0",
+    "echarts": "^6.1.0",
     "echarts-for-react": "^3.0.2",
     "lucide-react": "^0.545.0",
     "react": "^19.1.0",
