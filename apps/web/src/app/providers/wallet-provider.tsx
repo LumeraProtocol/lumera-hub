@@ -26,7 +26,11 @@ import { EvmWalletProvider } from './evm-wallet-provider';
 import store, { persistor } from '@/store';
 
 function InterchainWalletModeSynchronizer() {
-  const walletName = useSelector((state) => state.wallet.walletName);
+  const {
+    isModalOpen,
+    preferredWalletName,
+    walletName,
+  } = useSelector((state) => state.wallet);
   const {
     currentWalletName,
     getChainWalletState,
@@ -35,9 +39,15 @@ function InterchainWalletModeSynchronizer() {
     updateChainWalletState,
   } = useWalletManager();
   const keplrState = getChainWalletState(KEPLR_WALLET_NAME, CHAIN_NAME);
+  const isSwitchingToKeplr = isModalOpen
+    && preferredWalletName === KEPLR_WALLET_NAME;
 
   React.useLayoutEffect(() => {
-    if (!IS_EVM_NETWORK || walletName !== METAMASK_WALLET_NAME) return;
+    if (
+      !IS_EVM_NETWORK
+      || walletName !== METAMASK_WALLET_NAME
+      || isSwitchingToKeplr
+    ) return;
 
     if (
       keplrState
@@ -55,6 +65,7 @@ function InterchainWalletModeSynchronizer() {
     }
   }, [
     currentWalletName,
+    isSwitchingToKeplr,
     keplrState,
     setCurrentChainName,
     setCurrentWalletName,

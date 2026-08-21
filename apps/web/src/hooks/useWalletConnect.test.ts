@@ -131,6 +131,21 @@ describe('useWalletConnect EVM profile selection', () => {
     expect(mocks.openCosmosView).not.toHaveBeenCalled();
   });
 
+  it('passes the requested switch target to the EVM wallet picker', () => {
+    const { result } = renderHook(() => useWalletConnect());
+
+    act(() => result.current.openConnectView(KEPLR_WALLET_NAME));
+
+    expect(mocks.dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: {
+          status: true,
+          preferredWalletName: KEPLR_WALLET_NAME,
+        },
+      }),
+    );
+  });
+
   it('ignores cached provider addresses until a wallet is explicitly selected', async () => {
     mocks.chainState.address = BECH32_ADDRESS;
     mocks.evmWallet.address = ETH_ADDRESS;

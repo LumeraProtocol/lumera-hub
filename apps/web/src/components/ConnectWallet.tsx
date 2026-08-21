@@ -8,8 +8,10 @@ import {
   InterchainWalletModal,
   useChain,
   useChainWallet,
+  useWalletManager,
   useWalletModal,
 } from '@interchain-kit/react';
+import { WalletState } from '@interchain-kit/core';
 import { toast } from 'react-toastify';
 
 import AppButton from '@/components/AppButton';
@@ -44,6 +46,7 @@ function WalletChoiceModal() {
   const { isModalOpen, preferredWalletName, walletName } = useSelector((state) => state.wallet);
   const evmWallet = useEvmWallet();
   const keplrWallet = useChainWallet(CHAIN_NAME, KEPLR_WALLET_NAME);
+  const { getChainWalletState } = useWalletManager();
   const [isKeplrInstalled, setKeplrInstalled] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState('');
   const [connectingWallet, setConnectingWallet] = useState('');
@@ -97,6 +100,22 @@ function WalletChoiceModal() {
       } else {
         if (!isKeplrInstalled) throw new Error('Keplr was not detected.');
         await keplrWallet.connect();
+        // interchain-kit catches extension rejection/account-read failures and
+        // resolves connect() after writing Disconnected/Rejected state. Verify
+        // the manager state explicitly before selecting Keplr in our store.
+        const connectedState = getChainWalletState(
+          KEPLR_WALLET_NAME,
+          CHAIN_NAME,
+        );
+        if (
+          connectedState?.walletState !== WalletState.Connected
+          || !connectedState.account?.address
+        ) {
+          throw new Error(
+            connectedState?.errorMessage
+            || 'Keplr did not return a connected account.',
+          );
+        }
       }
       dispatch(setWalletName({ walletName: selectedWallet }));
       close();
@@ -157,6 +176,14 @@ function WalletChoiceModal() {
                   disabled={!option.installed || Boolean(connectingWallet)}
                   onClick={() => {
                     setSelectedWallet(option.walletName);
+                    // Tell the runtime synchronizer which connection is about
+                    // to start. Without this, MetaMask remains the selected
+                    // wallet until Keplr connect() resolves, and the
+                    // synchronizer tears down the newly-approved Keplr state.
+                    dispatch(setModalOpen({
+                      status: true,
+                      preferredWalletName: option.walletName,
+                    }));
                     setWalletError('');
                   }}
                 >
@@ -334,8 +361,8 @@ export function ConnectWallet() {
     clearTrackedConnects(sessionStorage);
   };
 
-  const handleConnect = () => {
-    openConnectView();
+  const handleConnect = (preferredWalletName?: string) => {
+    openConnectView(preferredWalletName);
   };
 
   const handleCopyAddress = async (value: string, label: string) => {
@@ -379,7 +406,7 @@ export function ConnectWallet() {
         </p>
       )}
       {!address ?
-        <AppButton onClick={handleConnect}>
+        <AppButton onClick={() => handleConnect()}>
           <Wallet className='w-4 h-4' /> <div className="connect-wallet-label">Connect Wallet</div>
         </AppButton> : (
           <div className={styles.accountMenuRoot} ref={menuRef}>
@@ -431,7 +458,7 @@ export function ConnectWallet() {
                       className={styles.menuAction}
                       onClick={() => {
                         setMenuOpen(false);
-                        handleConnect();
+                        handleConnect(alternativeWallet);
                       }}
                     >
                       <RefreshCw aria-hidden="true" size={18} />

@@ -37,6 +37,15 @@ const mocks = vi.hoisted(() => ({
     disconnect: vi.fn(),
     openView: vi.fn(),
     status: 'Disconnected',
+    walletState: {
+      walletState: 'Connected',
+      account: { address: 'lumera1connectedaccount' },
+      errorMessage: '',
+    } as {
+      walletState: string;
+      account: { address: string } | null;
+      errorMessage: string;
+    },
   },
   trackingUser: vi.fn(),
 }));
@@ -52,6 +61,9 @@ vi.mock('@interchain-kit/react', () => ({
   useChainWallet: () => ({
     connect: mocks.cosmos.connect,
     disconnect: mocks.cosmos.disconnect,
+  }),
+  useWalletManager: () => ({
+    getChainWalletState: () => mocks.cosmos.walletState,
   }),
   useWalletModal: () => ({ close: mocks.cosmos.close }),
 }));
@@ -112,6 +124,13 @@ describe('EVM wallet error placement', () => {
     mocks.dispatch.mockClear();
     mocks.trackingUser.mockReset();
     mocks.trackingUser.mockResolvedValue('tracked');
+    mocks.cosmos.connect.mockReset();
+    mocks.cosmos.connect.mockResolvedValue(undefined);
+    mocks.cosmos.walletState = {
+      walletState: 'Connected',
+      account: { address: 'lumera1connectedaccount' },
+      errorMessage: '',
+    };
   });
 
   afterEach(() => {
@@ -165,6 +184,66 @@ describe('EVM wallet error placement', () => {
     const alert = screen.getByRole('alert');
     expect(alert.textContent).toContain(WALLET_ERROR);
     expect(alert.closest('[role="menu"]')).not.toBeNull();
+  });
+
+  it('opens Switch wallet with Keplr as the explicit target', () => {
+    mocks.walletConnect.address = ETH_ADDRESS;
+    mocks.walletConnect.ethAddress = ETH_ADDRESS;
+    mocks.walletConnect.openConnectView.mockReset();
+    render(createElement(ConnectWallet));
+
+    fireEvent.click(screen.getByRole('button', { name: /metamask/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /switch wallet/i }));
+
+    expect(mocks.walletConnect.openConnectView).toHaveBeenCalledWith(
+      'keplr-extension',
+    );
+  });
+
+  it('publishes a manually selected Keplr target before connecting', async () => {
+    mocks.reduxWallet.isModalOpen = true;
+    render(createElement(WalletModalComponent));
+
+    fireEvent.click(await screen.findByRole('button', { name: /keplr/i }));
+    expect(mocks.dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: {
+          status: true,
+          preferredWalletName: 'keplr-extension',
+        },
+      }),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^connect$/i }));
+    await waitFor(() => expect(mocks.cosmos.connect).toHaveBeenCalledOnce());
+    await waitFor(() => expect(mocks.dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: { walletName: 'keplr-extension' },
+      }),
+    ));
+  });
+
+  it('does not select Keplr when interchain-kit resolves without an account', async () => {
+    mocks.reduxWallet.isModalOpen = true;
+    mocks.cosmos.walletState = {
+      walletState: 'Disconnected',
+      account: null,
+      errorMessage: 'Keplr account access was rejected.',
+    };
+    render(createElement(WalletModalComponent));
+
+    fireEvent.click(await screen.findByRole('button', { name: /keplr/i }));
+    mocks.dispatch.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: /^connect$/i }));
+
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      'Keplr account access was rejected.',
+    );
+    expect(mocks.dispatch).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: { walletName: 'keplr-extension' },
+      }),
+    );
   });
 
   it('records the tracked address only after wallet tracking succeeds', async () => {

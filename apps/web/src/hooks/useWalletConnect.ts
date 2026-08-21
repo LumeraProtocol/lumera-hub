@@ -42,9 +42,9 @@ const useWalletConnect = () => {
   // The single connect entry point. On EVM profiles the interchain-kit modal
   // is not mounted (WalletModalComponent renders WalletChoiceModal instead),
   // so interchain-kit's openView() would toggle a store nothing listens to.
-  const openConnectView = useCallback(() => {
+  const openConnectView = useCallback((preferredWalletName?: string) => {
     if (IS_EVM_NETWORK) {
-      dispatch(setModalOpen({ status: true }));
+      dispatch(setModalOpen({ status: true, preferredWalletName }));
       return;
     }
     openCosmosView();
