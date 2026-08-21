@@ -4,6 +4,7 @@ import createWebStorage from 'redux-persist/lib/storage/createWebStorage';
 import { combineReducers } from 'redux';
 
 import walletSlice from '@/redux/wallet.slice';
+import walletFlowSlice from '@/redux/wallet-flow.slice';
 import appSlice from '@/redux/app.slice';
 import errorSlice from '@/redux/error.slice';
 import adminSlice from '@/redux/admin.slice';
@@ -23,6 +24,10 @@ const storage = typeof window === 'undefined'
 
 const rootReducer = combineReducers({
   wallet: walletSlice,
+  // Deliberately NOT whitelisted below: walletFlow marks in-flight connect
+  // attempts, and rehydrating an "in flight" flag after a reload would let it
+  // suppress the Keplr/MetaMask mode synchronizer forever.
+  walletFlow: walletFlowSlice,
   app: appSlice,
   error: errorSlice,
   admin: adminSlice,

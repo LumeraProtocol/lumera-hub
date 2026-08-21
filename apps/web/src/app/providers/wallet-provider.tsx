@@ -26,11 +26,18 @@ import { EvmWalletProvider } from './evm-wallet-provider';
 import store, { persistor } from '@/store';
 
 function InterchainWalletModeSynchronizer() {
-  const {
-    isModalOpen,
-    preferredWalletName,
-    walletName,
-  } = useSelector((state) => state.wallet);
+  // Narrow, primitive selectors: this component mounts above the whole app
+  // and must not re-render on unrelated wallet-slice writes (address,
+  // connection flags, modal toggles).
+  const walletName = useSelector((state) => state.wallet.walletName);
+  // A Keplr connect attempt that is in flight right now must not be torn
+  // down mid-approval. The flag lives in the non-persisted walletFlow slice
+  // and is scoped to the attempt (set/cleared by the wallet chooser's connect
+  // handler), so neither a reload nor an abandoned picker can latch the
+  // suspension: persisted modal state alone never suspends the synchronizer.
+  const isSwitchingToKeplr = useSelector(
+    (state) => state.walletFlow.connectingWalletName === KEPLR_WALLET_NAME,
+  );
   const {
     currentWalletName,
     getChainWalletState,
@@ -39,8 +46,6 @@ function InterchainWalletModeSynchronizer() {
     updateChainWalletState,
   } = useWalletManager();
   const keplrState = getChainWalletState(KEPLR_WALLET_NAME, CHAIN_NAME);
-  const isSwitchingToKeplr = isModalOpen
-    && preferredWalletName === KEPLR_WALLET_NAME;
 
   React.useLayoutEffect(() => {
     if (
@@ -105,16 +110,28 @@ const getConfiguredChainData = () => {
 
 export function WalletRuntimeProviders({ children }: { children: React.ReactNode }) {
   const walletName = useSelector((state) => state.wallet.walletName);
+  const isSwitchingToKeplr = useSelector(
+    (state) => state.walletFlow.connectingWalletName === KEPLR_WALLET_NAME,
+  );
   // Build-time constants in, so resolve once: this provider re-renders on
   // every walletName change and ChainProvider ignores new chain objects
   // anyway (it keeps its WalletManager in a ref).
   const chainData = React.useMemo(getConfiguredChainData, []);
   const isBrowser = typeof window !== 'undefined';
   React.useEffect(() => {
-    if (isBrowser && IS_EVM_NETWORK && walletName === METAMASK_WALLET_NAME) {
+    // The persisted-storage scrub pauses together with the in-memory
+    // synchronizer above: a remount during a MetaMask→Keplr approval (Strict
+    // Mode, PersistGate boundary) must not erase the freshly persisted Keplr
+    // session from 'interchain-kit-store'.
+    if (
+      isBrowser
+      && IS_EVM_NETWORK
+      && walletName === METAMASK_WALLET_NAME
+      && !isSwitchingToKeplr
+    ) {
       suppressPersistedKeplrConnection(window.localStorage);
     }
-  }, [isBrowser, walletName]);
+  }, [isBrowser, isSwitchingToKeplr, walletName]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const walletAdapters: any = React.useMemo(() => [keplrWallet], []);

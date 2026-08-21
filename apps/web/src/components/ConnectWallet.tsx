@@ -23,6 +23,7 @@ import {
   setModalOpen,
   setWalletName,
 } from '@/redux/wallet.slice';
+import { setWalletConnecting } from '@/redux/wallet-flow.slice';
 import { useEvmWallet } from '@/app/providers/evm-wallet-provider';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import useTrackingUser from '@/hooks/useTrackingUser';
@@ -35,6 +36,7 @@ import {
   getActiveWalletAddress,
   getActiveWalletMode,
   getAlternativeWalletName,
+  getKeplrConnectionIssue,
   getPreferredWalletSelection,
   KEPLR_WALLET_NAME,
   METAMASK_WALLET_NAME,
@@ -46,7 +48,7 @@ function WalletChoiceModal() {
   const { isModalOpen, preferredWalletName, walletName } = useSelector((state) => state.wallet);
   const evmWallet = useEvmWallet();
   const keplrWallet = useChainWallet(CHAIN_NAME, KEPLR_WALLET_NAME);
-  const { getChainWalletState } = useWalletManager();
+  const { getAccount, getChainWalletState } = useWalletManager();
   const [isKeplrInstalled, setKeplrInstalled] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState('');
   const [connectingWallet, setConnectingWallet] = useState('');
@@ -92,6 +94,11 @@ function WalletChoiceModal() {
     if (!selectedWallet) return;
 
     setConnectingWallet(selectedWallet);
+    // Marks the attempt in flight for the runtime synchronizer, which must
+    // not tear down a Keplr session the user is in the middle of approving.
+    // Scoped to this attempt regardless of how the wallet was selected
+    // (clicked or auto-preselected), and never persisted.
+    dispatch(setWalletConnecting({ walletName: selectedWallet }));
     setWalletError('');
     try {
       if (selectedWallet === METAMASK_WALLET_NAME) {
@@ -101,20 +108,26 @@ function WalletChoiceModal() {
         if (!isKeplrInstalled) throw new Error('Keplr was not detected.');
         await keplrWallet.connect();
         // interchain-kit catches extension rejection/account-read failures and
-        // resolves connect() after writing Disconnected/Rejected state. Verify
-        // the manager state explicitly before selecting Keplr in our store.
-        const connectedState = getChainWalletState(
-          KEPLR_WALLET_NAME,
-          CHAIN_NAME,
+        // resolves connect() after writing Disconnected/Rejected state — and
+        // its store can still hold a rehydrated account from a previous
+        // session. Judge the stored state, then require a FRESH account read
+        // from the extension before selecting Keplr.
+        const issue = getKeplrConnectionIssue(
+          getChainWalletState(KEPLR_WALLET_NAME, CHAIN_NAME),
         );
-        if (
-          connectedState?.walletState !== WalletState.Connected
-          || !connectedState.account?.address
-        ) {
-          throw new Error(
-            connectedState?.errorMessage
-            || 'Keplr did not return a connected account.',
-          );
+        const account = issue
+          ? null
+          : await getAccount(KEPLR_WALLET_NAME, CHAIN_NAME);
+        if (issue || !account?.address) {
+          // Roll back the half-connected session so a retry starts clean
+          // instead of reusing a Connected ghost.
+          try {
+            await keplrWallet.disconnect();
+          } catch {
+            // Best effort; the synchronizer reconciles any residue once the
+            // in-flight flag clears below.
+          }
+          throw new Error(issue || 'Keplr did not return a connected account.');
         }
       }
       dispatch(setWalletName({ walletName: selectedWallet }));
@@ -123,6 +136,11 @@ function WalletChoiceModal() {
       setWalletError(error instanceof Error ? error.message : 'Unable to connect wallet.');
     } finally {
       setConnectingWallet('');
+      // Released only after the selection dispatches above, so there is no
+      // render where the guard is down while the old wallet is still
+      // selected. On failure this re-enables the synchronizer, which then
+      // cleans up whatever interchain-kit left behind.
+      dispatch(setWalletConnecting({ walletName: '' }));
     }
   };
 
@@ -176,14 +194,6 @@ function WalletChoiceModal() {
                   disabled={!option.installed || Boolean(connectingWallet)}
                   onClick={() => {
                     setSelectedWallet(option.walletName);
-                    // Tell the runtime synchronizer which connection is about
-                    // to start. Without this, MetaMask remains the selected
-                    // wallet until Keplr connect() resolves, and the
-                    // synchronizer tears down the newly-approved Keplr state.
-                    dispatch(setModalOpen({
-                      status: true,
-                      preferredWalletName: option.walletName,
-                    }));
                     setWalletError('');
                   }}
                 >
@@ -231,7 +241,9 @@ export function WalletModalComponent() {
   // `status === 'Connected'` is a trustworthy signal there. EVM has no such
   // persisted-but-not-live state: evm-wallet-provider's own `isConnected` is
   // literally `Boolean(address)`, so that is the correct check for MetaMask.
-  const isConnected = walletMode === 'evm' ? Boolean(address) : cosmosStatus === 'Connected';
+  const isConnected = walletMode === 'evm'
+    ? Boolean(address)
+    : cosmosStatus === WalletState.Connected;
 
   useEffect(() => {
     dispatch(setAddress({ address }));
@@ -303,7 +315,12 @@ export function ConnectWallet() {
   } = useWalletConnect();
   const menuRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setMenuOpen] = useState(false);
-  const [isKeplrInstalled, setKeplrInstalled] = useState(false);
+  // Initialized from the live extension probe so the Switch-wallet item is
+  // present on the menu's very first paint, not only after the open effect
+  // re-runs the probe.
+  const [isKeplrInstalled, setKeplrInstalled] = useState(
+    () => typeof window !== 'undefined' && Boolean(window.keplr),
+  );
   const isMetaMaskInstalled = Boolean(evmWallet.provider);
 
   useEffect(() => {
@@ -361,10 +378,6 @@ export function ConnectWallet() {
     clearTrackedConnects(sessionStorage);
   };
 
-  const handleConnect = (preferredWalletName?: string) => {
-    openConnectView(preferredWalletName);
-  };
-
   const handleCopyAddress = async (value: string, label: string) => {
     try {
       await navigator.clipboard.writeText(value);
@@ -406,7 +419,7 @@ export function ConnectWallet() {
         </p>
       )}
       {!address ?
-        <AppButton onClick={() => handleConnect()}>
+        <AppButton onClick={() => openConnectView()}>
           <Wallet className='w-4 h-4' /> <div className="connect-wallet-label">Connect Wallet</div>
         </AppButton> : (
           <div className={styles.accountMenuRoot} ref={menuRef}>
@@ -458,7 +471,7 @@ export function ConnectWallet() {
                       className={styles.menuAction}
                       onClick={() => {
                         setMenuOpen(false);
-                        handleConnect(alternativeWallet);
+                        openConnectView(alternativeWallet);
                       }}
                     >
                       <RefreshCw aria-hidden="true" size={18} />
@@ -521,14 +534,10 @@ export function ConnectButton({
 }: IConnectWalletButton) {
   const { openConnectView } = useWalletConnect();
 
-  const handleConnect = () => {
-    openConnectView();
-  };
-
   return (
     <div style={{ display: 'flex', gap: 8 }}>
       <button
-        onClick={handleConnect}
+        onClick={() => openConnectView()}
         className={`bg-lumera-teal hover:bg-lumera-green text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors flex items-center cursor-pointer ${className}`}
         id="connectWallet"
       >

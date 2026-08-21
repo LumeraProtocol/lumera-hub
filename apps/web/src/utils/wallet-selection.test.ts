@@ -4,6 +4,7 @@ import {
   getActiveWalletAddress,
   getActiveWalletMode,
   getAlternativeWalletName,
+  getKeplrConnectionIssue,
   getPreferredWalletSelection,
   disconnectPersistedInterchainWallet,
   KEPLR_WALLET_NAME,
@@ -177,5 +178,46 @@ describe('persisted Cosmos wallet isolation', () => {
     });
     expect(disconnectPersistedInterchainWallet(disconnected, KEPLR_WALLET_NAME))
       .toBe(disconnected);
+  });
+});
+
+describe('getKeplrConnectionIssue', () => {
+  it('accepts a live connection', () => {
+    expect(getKeplrConnectionIssue({
+      walletState: 'Connected',
+      account: { address: 'lumera1account' },
+      errorMessage: '',
+    })).toBeNull();
+  });
+
+  it('maps the startup race to a recoverable message instead of the raw library error', () => {
+    // interchain-kit probes for the extension once at init; if Keplr injects
+    // later the stored state stays NotExist with errorMessage 'Client not
+    // exist', which is meaningless to a user.
+    expect(getKeplrConnectionIssue({
+      walletState: 'NotExist',
+      account: null,
+      errorMessage: 'Client not exist',
+    })).toMatch(/reload/i);
+  });
+
+  it('passes a rejection message through', () => {
+    expect(getKeplrConnectionIssue({
+      walletState: 'Rejected',
+      account: null,
+      errorMessage: 'Request rejected',
+    })).toBe('Request rejected');
+  });
+
+  it('reports a connection without an account', () => {
+    expect(getKeplrConnectionIssue({
+      walletState: 'Connected',
+      account: null,
+      errorMessage: '',
+    })).toMatch(/account/i);
+  });
+
+  it('reports missing state', () => {
+    expect(getKeplrConnectionIssue(undefined)).toMatch(/keplr/i);
   });
 });

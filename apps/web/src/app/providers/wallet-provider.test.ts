@@ -17,6 +17,9 @@ const mocks = vi.hoisted(() => ({
     preferredWalletName: '',
     walletName: '',
   },
+  walletFlow: {
+    connectingWalletName: '',
+  },
 }))
 
 vi.mock('@interchain-kit/react', async () => {
@@ -88,6 +91,7 @@ vi.mock('@/app/providers/evm-wallet-provider', async () => {
 vi.mock('@/redux/hooks', () => ({
   useSelector: (selector: (state: unknown) => unknown) => selector({
     wallet: mocks.reduxWallet,
+    walletFlow: mocks.walletFlow,
   }),
 }))
 vi.mock('@/store', () => ({ default: {}, persistor: {} }))
@@ -108,6 +112,7 @@ vi.mock('@/utils/wallet-selection', () => ({
 }))
 
 const { useWalletManager } = await import('@interchain-kit/react')
+const { suppressPersistedKeplrConnection } = await import('@/utils/wallet-selection')
 const { WalletRuntimeProviders } = await import('./wallet-provider')
 
 const ChainConsumer = () => {
@@ -115,17 +120,26 @@ const ChainConsumer = () => {
   return createElement('span', null, 'provider ready')
 }
 
+const setLiveKeplrManagerState = () => {
+  mocks.manager.currentWalletName = 'keplr-extension'
+  mocks.manager.getChainWalletState.mockReturnValue({
+    walletState: 'Connected',
+    account: { address: 'lumera1account' },
+  })
+}
+
 describe('WalletRuntimeProviders', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     mocks.chainProviderProps.length = 0
     mocks.manager.currentWalletName = ''
-    mocks.manager.getChainWalletState.mockReset().mockReturnValue(undefined)
-    mocks.manager.setCurrentChainName.mockReset()
-    mocks.manager.setCurrentWalletName.mockReset()
-    mocks.manager.updateChainWalletState.mockReset()
-    mocks.reduxWallet.isModalOpen = false
-    mocks.reduxWallet.preferredWalletName = ''
-    mocks.reduxWallet.walletName = ''
+    mocks.manager.getChainWalletState.mockReturnValue(undefined)
+    Object.assign(mocks.reduxWallet, {
+      isModalOpen: false,
+      preferredWalletName: '',
+      walletName: '',
+    })
+    mocks.walletFlow.connectingWalletName = ''
   })
 
   it('wraps the first child render in ChainProvider', () => {
@@ -142,15 +156,10 @@ describe('WalletRuntimeProviders', () => {
     ])
   })
 
-  it('does not tear down Keplr while a MetaMask to Keplr switch is pending', () => {
+  it('does not tear down Keplr while a Keplr connect attempt is in flight', () => {
     mocks.reduxWallet.walletName = 'metamask'
-    mocks.reduxWallet.isModalOpen = true
-    mocks.reduxWallet.preferredWalletName = 'keplr-extension'
-    mocks.manager.currentWalletName = 'keplr-extension'
-    mocks.manager.getChainWalletState.mockReturnValue({
-      walletState: 'Connected',
-      account: { address: 'lumera1account' },
-    })
+    mocks.walletFlow.connectingWalletName = 'keplr-extension'
+    setLiveKeplrManagerState()
 
     render(
       createElement(WalletRuntimeProviders, null, createElement(ChainConsumer)),
@@ -158,15 +167,15 @@ describe('WalletRuntimeProviders', () => {
 
     expect(mocks.manager.updateChainWalletState).not.toHaveBeenCalled()
     expect(mocks.manager.setCurrentWalletName).not.toHaveBeenCalled()
+    // The persisted-storage scrub is one half of the same teardown and must
+    // pause with it, or a Strict Mode remount mid-approval erases the freshly
+    // persisted Keplr session.
+    expect(suppressPersistedKeplrConnection).not.toHaveBeenCalled()
   })
 
   it('still suppresses stale Keplr state while MetaMask remains selected', () => {
     mocks.reduxWallet.walletName = 'metamask'
-    mocks.manager.currentWalletName = 'keplr-extension'
-    mocks.manager.getChainWalletState.mockReturnValue({
-      walletState: 'Connected',
-      account: { address: 'lumera1account' },
-    })
+    setLiveKeplrManagerState()
 
     render(
       createElement(WalletRuntimeProviders, null, createElement(ChainConsumer)),
@@ -181,5 +190,27 @@ describe('WalletRuntimeProviders', () => {
       }),
     )
     expect(mocks.manager.setCurrentWalletName).toHaveBeenCalledWith('')
+    expect(suppressPersistedKeplrConnection).toHaveBeenCalled()
+  })
+
+  it('tears down stale Keplr state rehydrated with a persisted open modal', () => {
+    // isModalOpen and preferredWalletName live in the persisted wallet slice,
+    // so a reload mid-switch rehydrates them. With no connect attempt actually
+    // in flight, that persisted UI state must not suspend the synchronizer —
+    // otherwise a reload latches the suspension for the whole session.
+    mocks.reduxWallet.walletName = 'metamask'
+    mocks.reduxWallet.isModalOpen = true
+    mocks.reduxWallet.preferredWalletName = 'keplr-extension'
+    setLiveKeplrManagerState()
+
+    render(
+      createElement(WalletRuntimeProviders, null, createElement(ChainConsumer)),
+    )
+
+    expect(mocks.manager.updateChainWalletState).toHaveBeenCalledWith(
+      'keplr-extension',
+      'lumera-testnet',
+      expect.objectContaining({ walletState: 'Disconnected' }),
+    )
   })
 })

@@ -165,7 +165,12 @@ const useAccount = () => {
     };
   }, [connectedQueryAddress, stakingRequest]);
 
-  const openView = openConnectView;
+  // Zero-arg on purpose: openConnectView takes an optional wallet name, so
+  // re-exporting it directly would let `onClick={openView}` pass a React
+  // event into redux as the preferred wallet with no type error.
+  const openView = () => {
+    openConnectView();
+  };
 
   const handleDelegationsTabChange = (val: string) => {
     setDelegationsTab(val);

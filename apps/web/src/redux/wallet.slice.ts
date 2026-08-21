@@ -49,7 +49,12 @@ export const walletSlice = createSlice({
     },
     setModalOpen: (state, { payload }: PayloadAction<TModalOpenAction>) => {
       state.isModalOpen = payload.status;
-      state.preferredWalletName = payload.status ? payload.preferredWalletName || '' : '';
+      // Opening without an explicit target keeps whatever target is already
+      // stored, so a programmatic re-open cannot clear a switch the user has
+      // in progress. Closing always clears it.
+      state.preferredWalletName = payload.status
+        ? payload.preferredWalletName ?? state.preferredWalletName
+        : '';
     },
   },
 });

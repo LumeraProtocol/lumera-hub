@@ -4,6 +4,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { isConnectTracked } from '@/utils/wallet-connect-marker';
+import { setWalletConnecting } from '@/redux/wallet-flow.slice';
+import { setWalletName } from '@/redux/wallet.slice';
 
 const ETH_ADDRESS = '0x1111111111111111111111111111111111111111';
 const OTHER_ETH_ADDRESS = '0x2222222222222222222222222222222222222222';
@@ -35,6 +37,7 @@ const mocks = vi.hoisted(() => ({
     close: vi.fn(),
     connect: vi.fn(),
     disconnect: vi.fn(),
+    getAccount: vi.fn(),
     openView: vi.fn(),
     status: 'Disconnected',
     walletState: {
@@ -63,6 +66,7 @@ vi.mock('@interchain-kit/react', () => ({
     disconnect: mocks.cosmos.disconnect,
   }),
   useWalletManager: () => ({
+    getAccount: mocks.cosmos.getAccount,
     getChainWalletState: () => mocks.cosmos.walletState,
   }),
   useWalletModal: () => ({ close: mocks.cosmos.close }),
@@ -119,6 +123,7 @@ describe('EVM wallet error placement', () => {
     mocks.walletConnect.walletName = 'metamask';
     mocks.evmWallet.address = '';
     mocks.evmWallet.error = WALLET_ERROR;
+    mocks.evmWallet.provider = { request: vi.fn() };
     mocks.evmWallet.connect.mockReset();
     mocks.evmWallet.connect.mockResolvedValue(undefined);
     mocks.dispatch.mockClear();
@@ -126,6 +131,10 @@ describe('EVM wallet error placement', () => {
     mocks.trackingUser.mockResolvedValue('tracked');
     mocks.cosmos.connect.mockReset();
     mocks.cosmos.connect.mockResolvedValue(undefined);
+    mocks.cosmos.disconnect.mockReset();
+    mocks.cosmos.disconnect.mockResolvedValue(undefined);
+    mocks.cosmos.getAccount.mockReset();
+    mocks.cosmos.getAccount.mockResolvedValue({ address: 'lumera1connectedaccount' });
     mocks.cosmos.walletState = {
       walletState: 'Connected',
       account: { address: 'lumera1connectedaccount' },
@@ -200,27 +209,55 @@ describe('EVM wallet error placement', () => {
     );
   });
 
-  it('publishes a manually selected Keplr target before connecting', async () => {
+  it('arms the in-flight guard for the whole Keplr connect attempt, however it was selected', async () => {
+    // Keplr is auto-preselected (MetaMask provider absent), so the user never
+    // clicks the Keplr tile. The guard must still cover the attempt.
     mocks.reduxWallet.isModalOpen = true;
+    mocks.evmWallet.provider = null as never;
+    let finishConnect: () => void = () => undefined;
+    mocks.cosmos.connect.mockReturnValue(new Promise<void>((resolve) => {
+      finishConnect = resolve;
+    }));
     render(createElement(WalletModalComponent));
 
-    fireEvent.click(await screen.findByRole('button', { name: /keplr/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^connect$/i }));
+
+    // Selecting an option dispatches nothing app-wide; only the Connect
+    // action publishes the in-flight wallet, before awaiting the extension.
     expect(mocks.dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({
-        payload: {
-          status: true,
-          preferredWalletName: 'keplr-extension',
-        },
-      }),
+      setWalletConnecting({ walletName: 'keplr-extension' }),
+    );
+    expect(mocks.dispatch).not.toHaveBeenCalledWith(
+      setWalletName({ walletName: 'keplr-extension' }),
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^connect$/i }));
-    await waitFor(() => expect(mocks.cosmos.connect).toHaveBeenCalledOnce());
+    finishConnect();
     await waitFor(() => expect(mocks.dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({
-        payload: { walletName: 'keplr-extension' },
-      }),
+      setWalletName({ walletName: 'keplr-extension' }),
     ));
+    // The guard is released only after the selection is committed, so there
+    // is no render where the guard is down but the old wallet is still
+    // selected.
+    const dispatched = mocks.dispatch.mock.calls.map(([action]) => action);
+    const guardReleasedAt = dispatched.findIndex(
+      (action) => action.type === setWalletConnecting.type
+        && action.payload.walletName === '',
+    );
+    const walletSelectedAt = dispatched.findIndex(
+      (action) => action.type === setWalletName.type
+        && action.payload.walletName === 'keplr-extension',
+    );
+    expect(guardReleasedAt).toBeGreaterThan(walletSelectedAt);
+  });
+
+  it('does not dispatch app-wide actions for a mere wallet-option click', async () => {
+    mocks.reduxWallet.isModalOpen = true;
+    render(createElement(WalletModalComponent));
+    mocks.dispatch.mockClear();
+
+    fireEvent.click(await screen.findByRole('button', { name: /keplr/i }));
+
+    expect(mocks.dispatch).not.toHaveBeenCalled();
   });
 
   it('does not select Keplr when interchain-kit resolves without an account', async () => {
@@ -240,10 +277,50 @@ describe('EVM wallet error placement', () => {
       'Keplr account access was rejected.',
     );
     expect(mocks.dispatch).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        payload: { walletName: 'keplr-extension' },
-      }),
+      setWalletName({ walletName: 'keplr-extension' }),
     );
+    // The guard is released so the runtime synchronizer can reconcile the
+    // residue interchain-kit leaves behind (currentWalletName, Rejected state).
+    expect(mocks.dispatch).toHaveBeenCalledWith(
+      setWalletConnecting({ walletName: '' }),
+    );
+    // And the half-connected session is rolled back for a clean retry.
+    await waitFor(() => expect(mocks.cosmos.disconnect).toHaveBeenCalled());
+  });
+
+  it('rejects a connect whose fresh account read fails, despite stale store state', async () => {
+    // interchain-kit sets Connected before reading the account and its store
+    // may still hold a rehydrated account from a previous session. Selection
+    // must require a fresh account read from the extension.
+    mocks.reduxWallet.isModalOpen = true;
+    mocks.cosmos.getAccount.mockResolvedValue(undefined);
+    render(createElement(WalletModalComponent));
+
+    fireEvent.click(await screen.findByRole('button', { name: /keplr/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^connect$/i }));
+
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      'Keplr did not return a connected account.',
+    );
+    expect(mocks.dispatch).not.toHaveBeenCalledWith(
+      setWalletName({ walletName: 'keplr-extension' }),
+    );
+    await waitFor(() => expect(mocks.cosmos.disconnect).toHaveBeenCalled());
+  });
+
+  it('maps the extension startup race to a recoverable message', async () => {
+    mocks.reduxWallet.isModalOpen = true;
+    mocks.cosmos.walletState = {
+      walletState: 'NotExist',
+      account: null,
+      errorMessage: 'Client not exist',
+    };
+    render(createElement(WalletModalComponent));
+
+    fireEvent.click(await screen.findByRole('button', { name: /keplr/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^connect$/i }));
+
+    expect((await screen.findByRole('alert')).textContent).toMatch(/reload the page/i);
   });
 
   it('records the tracked address only after wallet tracking succeeds', async () => {

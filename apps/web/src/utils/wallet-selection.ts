@@ -77,6 +77,38 @@ export const getAlternativeWalletName = ({
   return '';
 };
 
+interface KeplrConnectionState {
+  walletState?: string;
+  account?: { address?: string } | null;
+  errorMessage?: string;
+}
+
+/**
+ * Judges whether an interchain-kit chain-wallet state represents a live,
+ * usable Keplr connection. Returns a user-presentable problem description, or
+ * null when the connection is genuinely live. Needed because interchain-kit's
+ * connect() resolves even after a rejection or account-read failure — the
+ * outcome only exists in this state object. State values mirror
+ * @interchain-kit/core's WalletState string enum.
+ */
+export const getKeplrConnectionIssue = (
+  state?: KeplrConnectionState | null,
+): string | null => {
+  if (!state || state.walletState === 'NotExist') {
+    // interchain-kit probes for the extension once at startup; when Keplr
+    // injects later the stored state stays NotExist with the raw library
+    // message 'Client not exist'. Only a reload re-runs that probe.
+    return 'Keplr was not detected when the app loaded. Reload the page and try again.';
+  }
+  if (state.walletState !== 'Connected') {
+    return state.errorMessage || 'Keplr did not connect.';
+  }
+  if (!state.account?.address) {
+    return 'Keplr did not return a connected account.';
+  }
+  return null;
+};
+
 interface PersistedInterchainWalletState {
   state?: {
     chainWalletState?: Array<{
