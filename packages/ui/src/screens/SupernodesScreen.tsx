@@ -987,7 +987,9 @@ export const SupernodesScreen = () => {
                       </td>
                       <td className='text-left align-top !py-2 md:!py-[10px]'>
                         <div className='block md:hidden text-lumera-label mb-1'>Hardware:</div>
-                        {!Number(supernode?.metrics_report?.status.CPUCores) && !Number(supernode?.metrics_report?.status?.CPUCores) && !Number(supernode?.metrics_report?.status.CPUCores) ?
+                        {!Number(supernode?.metrics_report?.status?.CPUCores)
+                          || !Number(supernode?.metrics_report?.status?.MemoryTotalGb)
+                          || !Number(supernode?.metrics_report?.status?.StorageTotalBytes) ?
                           <>—</> :
                           <>
                             <div className='whitespace-nowrap'>
