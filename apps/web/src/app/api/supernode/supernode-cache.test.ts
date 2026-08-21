@@ -13,6 +13,13 @@ const makeItem = (ip: string) => ({
   ip_address: ip,
 })
 
+const makeDistinctItem = (ip: string, suffix: string) => ({
+  ...makeItem(ip),
+  supernode_account: `lumera1${suffix.padEnd(39, 'a')}`,
+  validator_address: `lumeravaloper1${suffix.padEnd(39, 'b')}`,
+  validator_moniker: `Node ${suffix}`,
+})
+
 const makeMarker = (address: string): IMarker => ({
   latLng: [1, 2],
   name: 'Cached',
@@ -124,5 +131,55 @@ describe('mergeSupernodeLocations', () => {
       '6.6.6.6:4444',
       '7.7.7.7:4444',
     ])
+  })
+
+  it('keeps current identities when multiple supernodes share one endpoint', async () => {
+    const locate = vi.fn()
+    const address = '8.8.8.8:4444'
+    const first = makeDistinctItem(address, '1')
+    const second = makeDistinctItem(address, '2')
+    const cached = [
+      { ...makeMarker(address), supernodeAccount: first.supernode_account },
+      { ...makeMarker(address), supernodeAccount: second.supernode_account },
+    ]
+
+    const { results } = await mergeSupernodeLocations(
+      [first, second],
+      cached,
+      locate,
+    )
+
+    expect(results.map((marker) => marker.supernodeAccount)).toEqual([
+      first.supernode_account,
+      second.supernode_account,
+    ])
+    expect(results.map((marker) => marker.validatorMoniker)).toEqual([
+      first.validator_moniker,
+      second.validator_moniker,
+    ])
+    expect(locate).not.toHaveBeenCalled()
+  })
+
+  it('normalizes cached endpoints and refreshes stale metadata', async () => {
+    const locate = vi.fn()
+    const item = makeItem('9.9.9.9:4444')
+    item.validator_moniker = 'Current moniker'
+    const cached = {
+      ...makeMarker('9.9.9.9:4444 '),
+      validatorMoniker: 'Old moniker',
+    }
+
+    const { results, isUpdate } = await mergeSupernodeLocations(
+      [item],
+      [cached],
+      locate,
+    )
+
+    expect(results[0]).toEqual(expect.objectContaining({
+      address: '9.9.9.9:4444',
+      validatorMoniker: 'Current moniker',
+    }))
+    expect(isUpdate).toBe(true)
+    expect(locate).not.toHaveBeenCalled()
   })
 })

@@ -14,7 +14,11 @@ export const hubUserSchema = z.object({
     .string()
     .trim()
     .min(20, { message: 'Address is required' })
-    .max(50, { message: 'Invalid address' }),
+    .max(50, { message: 'Invalid address' })
+    // EVM addresses are case-insensitive. Canonicalizing them prevents the
+    // same wallet from creating separate analytics rows when a provider
+    // alternates between checksum and lowercase formatting.
+    .transform((value) => /^0x/i.test(value) ? value.toLowerCase() : value),
   acquisitionSource: z
     .string()
     .trim()

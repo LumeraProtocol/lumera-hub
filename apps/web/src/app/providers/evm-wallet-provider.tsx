@@ -49,6 +49,7 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
   // before, so a slow passive sync that started earlier can never overwrite
   // the result of a user action (or of a newer sync).
   const walletStateSequenceRef = useRef(0);
+  const manuallyDisconnectedRef = useRef(false);
 
   useEffect(() => {
     const detectProvider = () => {
@@ -94,6 +95,7 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
   );
 
   const connect = useCallback(async () => {
+    manuallyDisconnectedRef.current = false;
     setError('');
     setConnecting(true);
     try {
@@ -122,6 +124,13 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
   }, [ensureConfiguredNetwork, provider]);
 
   const disconnect = useCallback(async () => {
+    // Invalidate passive reads and update the UI before an optional wallet RPC.
+    // Some providers leave permission revocation pending indefinitely; that
+    // must not let an older sync reconnect the wallet in the meantime.
+    manuallyDisconnectedRef.current = true;
+    walletStateSequenceRef.current += 1;
+    setAddress('');
+    setError('');
     try {
       await provider?.request({
         method: 'wallet_revokePermissions',
@@ -130,9 +139,6 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Some injected wallets do not implement permission revocation.
     }
-    setAddress('');
-    setError('');
-    walletStateSequenceRef.current += 1;
   }, [provider]);
 
   useEffect(() => {
@@ -147,9 +153,12 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     const syncAccounts = async () => {
+      if (manuallyDisconnectedRef.current) return;
       walletStateSequenceRef.current += 1;
       const syncId = walletStateSequenceRef.current;
-      const isStale = () => cancelled || syncId !== walletStateSequenceRef.current;
+      const isStale = () => cancelled
+        || manuallyDisconnectedRef.current
+        || syncId !== walletStateSequenceRef.current;
 
       let activeAddress: string;
       try {

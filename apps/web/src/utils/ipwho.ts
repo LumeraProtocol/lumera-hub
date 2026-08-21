@@ -2,7 +2,7 @@
  * Shared mapping from an ipwho.is response to the marker location shape used
  * by the Cascade map. Both the server route (which resolves DNS first) and the
  * browser fallback in useCascade consume this, so the field mapping cannot
- * drift between them. ipwho.is accepts DNS hostnames as well as IP literals.
+ * drift between them. The server resolves DNS names before calling ipwho.is.
  */
 export interface IpWhoResponse {
   success?: boolean

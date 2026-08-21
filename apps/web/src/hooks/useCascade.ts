@@ -10,9 +10,10 @@ import useTrackingCascadeDownload from '@/hooks/useTrackingCascadeDownload';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import * as instance from '@/utils/api';
 import { getCascadeBalanceMicroLume } from '@/utils/cascade-balance';
-import { delay, isValidIPv4 } from '@/utils/helpers';
+import { delay } from '@/utils/helpers';
 import { mapIpWhoLocation } from '@/utils/ipwho';
 import {
+  canUseBrowserIpGeolocation,
   getAbstractIpLocationUrl,
   getSupernodeHost,
 } from '@/utils/supernode-address';
@@ -388,7 +389,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
   };
 
-  const fetchLocationFromIpWho = async (host: string) => {
+  const fetchLocationFromIpWho = useCallback(async (host: string) => {
     try {
       const { data } = await instance.getExternal(`https://ipwho.is/${encodeURIComponent(host)}`);
       if (data?.success === false) {
@@ -398,9 +399,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     } catch (error) {
       throw new Error((error as Error)?.message ||  'An unknown error occurred.')
     }
-  }
+  }, []);
 
-  const fetchLocationFromIpLocate = async (ip: string) => {
+  const fetchLocationFromIpLocate = useCallback(async (ip: string) => {
     try {
       const client = getIpLocateClient();
       if (!client) {
@@ -420,9 +421,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     } catch (error) {
       throw new Error((error as Error)?.message ||  'An unknown error occurred.')
     }
-  }
+  }, []);
 
-  const fetchLocationFromAbstractApi = async (ip: string) => {
+  const fetchLocationFromAbstractApi = useCallback(async (ip: string) => {
     try {
       const url = getAbstractIpLocationUrl(
         ip,
@@ -444,14 +445,16 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     } catch (error) {
       throw new Error((error as Error)?.message ||  'An unknown error occurred.')
     }
-  }
+  }, []);
 
-  const fetchLocationForIP = async (ip: string) => {
+  const fetchLocationForIP = useCallback(async (ip: string) => {
+    // Hostnames are resolved by the server route. Passing them to browser IP
+    // services produces 4xx responses and can expose an unconfigured API key.
+    if (!canUseBrowserIpGeolocation(ip)) {
+      return null;
+    }
     let data = null;
     try {
-      // ipwho.is accepts DNS hostnames as well as IP literals, so
-      // hostname-addressed supernodes keep a browser-side fallback when the
-      // server route cannot resolve them (rate limit, DNS egress blocked).
       const result = await fetchLocationFromIpWho(ip);
       if (result) {
         data = result;
@@ -460,7 +463,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       // noop
     }
     // The remaining providers accept IP literals only.
-    if (!data && isValidIPv4(ip)) {
+    if (!data) {
       try {
         const result = await fetchLocationFromIpLocate(ip);
         if (result) {
@@ -470,7 +473,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         // noop
       }
     }
-    if (!data && isValidIPv4(ip)) {
+    if (!data) {
       try {
         const result = await fetchLocationFromAbstractApi(ip);
         if (result) {
@@ -481,9 +484,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       }
     }
     return data;
-  }
+  }, [fetchLocationFromAbstractApi, fetchLocationFromIpLocate, fetchLocationFromIpWho]);
 
-  const readSupernodeFile = async (supernodes: ISupernode[]) => {
+  const readSupernodeFile = useCallback(async (supernodes: ISupernode[]) => {
     try {
       if (!supernodes?.length) {
         return [];
@@ -500,7 +503,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     } catch {
       return [];
     }
-  }
+  }, []);
 
   const getChartMarker = useCallback(async (items: ISupernode[]) => {
     try {
@@ -512,7 +515,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         const supernode = supernodeData?.find((s) => s.address.trim() === address.trim());
         if (!supernode) {
           const data = await fetchLocationForIP(ip);
-          if (data?.latitude && data?.longitude) {
+          if (data?.latitude != null && data?.longitude != null) {
             results.push({
               latLng: [data.latitude, data.longitude],
               name: data?.city || '',
@@ -539,7 +542,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         theme: "dark",
       });
     }
-  }, [markers]);
+  }, [fetchLocationForIP, readSupernodeFile]);
 
   const fetchSupernodes = async (cursor = '') => {
     try {
@@ -591,7 +594,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
     setFetchSummaryLoading(false);
     setMarkerLoading(false);
-  }, [address, getChartMarker]);
+  }, [getChartMarker]);
   getSummaryRef.current = getSummary;
 
   const fetchMyFiles = async (nextKey = '') => {

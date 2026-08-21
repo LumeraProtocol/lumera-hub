@@ -37,6 +37,17 @@ describe('wallet connect tracking marker', () => {
     expect(isConnectTracked(storage, ADDRESS_B)).toBe(true);
   });
 
+  it('treats differently-cased EVM addresses as the same wallet', () => {
+    const checksummed = '0xAbCdEf1234567890AbCdEf1234567890AbCdEf12';
+    const lowercase = checksummed.toLowerCase();
+
+    markConnectTracked(storage, checksummed);
+    markConnectTracked(storage, lowercase);
+
+    expect(isConnectTracked(storage, lowercase)).toBe(true);
+    expect(JSON.parse(storage.getItem('new_connect') || '[]')).toEqual([lowercase]);
+  });
+
   it('clears all tracked addresses on disconnect', () => {
     markConnectTracked(storage, ADDRESS_A);
     clearTrackedConnects(storage);

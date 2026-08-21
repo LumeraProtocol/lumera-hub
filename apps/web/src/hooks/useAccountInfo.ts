@@ -307,6 +307,7 @@ const useAccountInfo = () => {
       }));
     }
     void fetchData();
+    return () => fetchRequest.invalidate();
   }, [address, fetchData, fetchRequest]);
 
   const handleClaimButtonClick = async () => {

@@ -3,7 +3,10 @@ import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as instance from '@/utils/api'
-import useTrackingUser, { type TrackingOutcome } from './useTrackingUser'
+import useTrackingUser, {
+  isPermanentTrackingFailure,
+  type TrackingOutcome,
+} from './useTrackingUser'
 
 vi.mock('@/utils/api', () => ({
   postExternal: vi.fn(),
@@ -86,4 +89,11 @@ describe('useTrackingUser', () => {
 
     warn.mockRestore()
   })
+
+  it.each([408, 425, 429, 500, undefined])(
+    'treats retryable status %s as transient',
+    (status) => {
+      expect(isPermanentTrackingFailure(status)).toBe(false)
+    },
+  )
 })

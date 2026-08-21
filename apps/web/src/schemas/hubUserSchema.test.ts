@@ -76,4 +76,15 @@ describe('hubUserSchema', () => {
 
     expect(result.success).toBe(false);
   });
+
+  it('canonicalizes EVM addresses before persistence', () => {
+    const result = hubUserSchema.safeParse({
+      address: '0xAbCdEf1234567890AbCdEf1234567890AbCdEf12',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.address).toBe(
+      '0xabcdef1234567890abcdef1234567890abcdef12',
+    );
+  });
 });

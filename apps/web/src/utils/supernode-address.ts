@@ -1,3 +1,5 @@
+import { isValidIPv4 } from '@/utils/helpers'
+
 /** Extracts the DNS name or IP from the `host:port` shape used by SN Scope. */
 export const getSupernodeHost = (endpoint: string): string => {
   const normalized = endpoint.trim()
@@ -17,6 +19,11 @@ export const getSupernodeHost = (endpoint: string): string => {
 
   return normalized
 }
+
+/** Browser geolocation providers only accept an IPv4 literal. DNS resolution
+ * for hostname-addressed supernodes is deliberately kept in the server route.
+ */
+export const canUseBrowserIpGeolocation = (host: string) => isValidIPv4(host)
 
 export const getAbstractIpLocationUrl = (
   ip: string,

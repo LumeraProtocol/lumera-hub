@@ -9,6 +9,9 @@
  */
 const STORAGE_KEY = 'new_connect';
 
+const normalizeAddress = (address: string) =>
+  /^0x/i.test(address) ? address.toLowerCase() : address;
+
 interface MarkerStorage {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -30,12 +33,15 @@ const readTrackedAddresses = (storage: MarkerStorage): string[] => {
 };
 
 export const isConnectTracked = (storage: MarkerStorage, address: string) =>
-  readTrackedAddresses(storage).includes(address);
+  readTrackedAddresses(storage)
+    .map(normalizeAddress)
+    .includes(normalizeAddress(address));
 
 export const markConnectTracked = (storage: MarkerStorage, address: string) => {
   const tracked = readTrackedAddresses(storage);
-  if (tracked.includes(address)) return;
-  storage.setItem(STORAGE_KEY, JSON.stringify([...tracked, address]));
+  const normalizedAddress = normalizeAddress(address);
+  if (tracked.map(normalizeAddress).includes(normalizedAddress)) return;
+  storage.setItem(STORAGE_KEY, JSON.stringify([...tracked, normalizedAddress]));
 };
 
 export const clearTrackedConnects = (storage: MarkerStorage) => {
