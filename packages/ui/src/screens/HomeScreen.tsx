@@ -56,7 +56,7 @@ import { DENOM } from '@/contants/network';
 import { formatPortfolioAmount, getPortfolioData } from '@/utils/portfolio';
 import {
   formatGovernanceVote,
-  getGovernanceVoteValue,
+  getGovernanceVoteFormValue,
   GovernanceVote,
 } from '@/utils/governance-votes';
 
@@ -247,7 +247,7 @@ export const VoteModal = ({
   }
 
   const currentVoteLabel = formatGovernanceVote(currentVote);
-  const currentVoteValue = getGovernanceVoteValue(currentVote);
+  const currentVoteValue = getGovernanceVoteFormValue(currentVote);
 
   if (transactionHash) {
     return (
@@ -373,7 +373,7 @@ export const VoteModal = ({
                     Current vote: <strong className='text-white'>{currentVoteLabel}</strong>. Submitting a new vote replaces it.
                   </p>
                 ) : null}
-                <RadioGroup aria-labelledby="Select one item" defaultValue={currentVoteValue || '1'} name="option" id="option" onValueChange={onOptionChange}>
+                <RadioGroup aria-labelledby="Select one item" defaultValue={currentVoteValue} name="option" id="option" onValueChange={onOptionChange}>
                   <div className='flex items-center gap-6'>
                     {VOTE_OPTIONS?.map((item) => (
                       <div className='flex items-center gap-3' key={item.value}>
@@ -1016,8 +1016,7 @@ export const HomeScreen = ({
 
   const handleVotePress = (item: IProposal) => {
     handleResetError();
-    const currentVoteValue = getGovernanceVoteValue(userVotes[item.id]);
-    onOptionChange(currentVoteValue || '1');
+    onOptionChange(getGovernanceVoteFormValue(userVotes[item.id]));
     setVoteOpen(true);
     setSelectedItem(item);
   }

@@ -16,7 +16,6 @@ const useSnagStake = () => {
   const [txHash, setTxhash] = useState('');
 
   const verifyStaked = async () => {
-    setLoading(true);
     setMessage({
       type: '',
       content: '',
@@ -28,6 +27,8 @@ const useSnagStake = () => {
       });
       return;
     }
+
+    setLoading(true);
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const walletAddress = urlParams.get('walletAddress');
@@ -51,8 +52,9 @@ const useSnagStake = () => {
         type: 'error',
         content: (error as Error)?.message ||  'An unknown error occurred.',
       });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return {

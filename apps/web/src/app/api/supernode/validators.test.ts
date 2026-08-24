@@ -25,4 +25,19 @@ describe('supernodeListSchema', () => {
       ]),
     ).toThrow()
   })
+
+  it('describes invalid Bech32 address bodies as characters, not hexadecimal', () => {
+    const result = supernodeListSchema.safeParse([
+      {
+        ...supernode,
+        supernode_account: 'not-a-lumera-address',
+      },
+    ])
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain('38-39 characters')
+      expect(result.error.issues[0]?.message).not.toContain('hex characters')
+    }
+  })
 })

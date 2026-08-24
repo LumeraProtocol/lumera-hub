@@ -26,7 +26,7 @@ import { IProposal } from '@/hooks/useProposals';
 import { formatNumber, formatToken } from '@/utils/format';
 import {
   formatGovernanceVote,
-  getGovernanceVoteValue,
+  getGovernanceVoteFormValue,
   GovernanceVote,
 } from '@/utils/governance-votes';
 import { VoteModal } from './HomeScreen';
@@ -277,8 +277,7 @@ export const GovernanceScreen = ({
 
   const handleVotePress = (item: IProposal) => {
     handleResetError();
-    const currentVoteValue = getGovernanceVoteValue(userVotes[item.id]);
-    onOptionChange(currentVoteValue || '1');
+    onOptionChange(getGovernanceVoteFormValue(userVotes[item.id]));
     setVoteOpen(true);
     setSelectedItem(item);
   }

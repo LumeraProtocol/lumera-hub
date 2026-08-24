@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   formatGovernanceVote,
+  getGovernanceVoteFormValue,
   getGovernanceVoteValue,
   GovernanceVote,
 } from './governance-votes';
@@ -41,5 +42,15 @@ describe('formatGovernanceVote', () => {
       { option: 'VOTE_OPTION_YES', weight: '0.500000000000000000' },
       { option: 'VOTE_OPTION_NO', weight: '0.500000000000000000' },
     ]))).toBe('');
+  });
+
+  it('defaults a proposal without a prior vote to Yes for display and submission', () => {
+    expect(getGovernanceVoteFormValue()).toBe('1');
+  });
+
+  it('preserves an existing vote when a proposal dialog opens', () => {
+    expect(getGovernanceVoteFormValue(vote([
+      { option: 'VOTE_OPTION_NO', weight: '1.000000000000000000' },
+    ]))).toBe('3');
   });
 });

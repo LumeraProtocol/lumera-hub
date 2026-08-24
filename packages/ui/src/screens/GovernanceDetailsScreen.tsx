@@ -24,7 +24,7 @@ import { IBlock, IVote } from '@/hooks/useGovernanceDetails';
 import { formatAddress, formatToken } from '@/utils/format';
 import {
   formatGovernanceVote,
-  getGovernanceVoteValue,
+  getGovernanceVoteFormValue,
   GovernanceVote,
 } from '@/utils/governance-votes';
 import { DENOM } from '@/contants/network';
@@ -204,8 +204,7 @@ export const GovernanceDetailsScreen = ({
 
   const handleVotePress = () => {
     vote.handleResetError();
-    const currentVoteValue = getGovernanceVoteValue(vote.currentVote);
-    vote.onOptionChange(currentVoteValue || '1');
+    vote.onOptionChange(getGovernanceVoteFormValue(vote.currentVote));
     vote.setVoteOpen(true);
   }
 

@@ -32,6 +32,9 @@ export const getGovernanceVoteValue = (vote?: GovernanceVote | null) => {
   return VOTE_OPTION_VALUES[vote.options[0].option] || '';
 };
 
+export const getGovernanceVoteFormValue = (vote?: GovernanceVote | null) =>
+  getGovernanceVoteValue(vote) || '1';
+
 export const formatGovernanceVote = (vote?: GovernanceVote | null) => {
   const options = vote?.options?.filter(({ weight }) => Number(weight) > 0) || [];
 
