@@ -1,14 +1,11 @@
-import React from 'react'
 import {
   YStack,
-  H2,
   Button,
   Card,
   H3,
   Input,
 } from 'tamagui';
 import {
-  Logs,
   Search,
   Activity,
   Coins,
@@ -19,15 +16,23 @@ import dayjs from 'dayjs';
 import { LandmarkIcon, Hourglass, BadgeCheck, List } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
-import Loading from '@/components/Loading';
+import AppButton from '@/components/AppButton';
+import SectionTitle from '@/components/SectionTitle';
+import { AppLoading } from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
 import CreateProposalModal from '@/components/CreateProposalModal';
-import Skeleton from '@/components/Skeleton';
+import CountDown from '@/components/CountDown';
 import { IProposal } from '@/hooks/useProposals';
 import { formatNumber, formatToken } from '@/utils/format';
+import {
+  formatGovernanceVote,
+  getGovernanceVoteFormValue,
+  GovernanceVote,
+} from '@/utils/governance-votes';
 import { VoteModal } from './HomeScreen';
 
 interface IGovernanceScreen {
+  transactionUnavailableReason: string;
   selectedItem: IProposal | null;
   setSelectedItem: (item: IProposal) => void;
   isLoading: boolean,
@@ -95,6 +100,7 @@ interface IGovernanceScreen {
     handleCloseCongratulationsModal: () => void;
   };
   voteTransactionHash?: string;
+  userVotes: Record<string, GovernanceVote>;
   onCloseVoteCongratulationsModal?: () => void;
   createProposal: {
     step: number;
@@ -135,6 +141,7 @@ interface IGovernanceScreen {
 }
 
 export const GovernanceScreen = ({
+  transactionUnavailableReason,
   isLoading,
   governances,
   sumary,
@@ -148,6 +155,7 @@ export const GovernanceScreen = ({
   isSumaryLoading,
   nextKey,
   voteTransactionHash,
+  userVotes,
   selectedItem,
   createProposal,
   setSelectedItem,
@@ -165,15 +173,15 @@ export const GovernanceScreen = ({
     switch (status) {
       case 'PROPOSAL_STATUS_PASSED':
         return (
-          <div className='btn-green'>
-            <Button>
+          <div className='btn-green not-button cursor-default'>
+            <Button className=''>
               <CheckCircle /> <span>Passed</span>
             </Button>
           </div>
         )
       case 'PROPOSAL_STATUS_DEPOSIT_PERIOD':
         return (
-          <div className='btn-yellow'>
+          <div className='btn-yellow not-button cursor-default'>
             <Button>
               <Coins /> <span>Deposit</span>
             </Button>
@@ -181,7 +189,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_VOTING_PERIOD':
         return (
-          <div className='btn-emerald'>
+          <div className='btn-emerald not-button cursor-default'>
             <Button>
               <Timer /> <span>Voting</span>
             </Button>
@@ -189,7 +197,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_UNSPECIFIED':
         return (
-          <div className='btn-purple'>
+          <div className='btn-purple not-button cursor-default'>
             <Button>
               <Activity /> <span>Unspecified</span>
             </Button>
@@ -197,7 +205,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_REJECTED':
         return (
-          <div className='btn-red'>
+          <div className='btn-red not-button cursor-default'>
             <Button>
               <Activity /> <span>Rejected</span>
             </Button>
@@ -205,7 +213,7 @@ export const GovernanceScreen = ({
         )
       case 'PROPOSAL_STATUS_FAILED':
         return (
-          <div className='btn-red'>
+          <div className='btn-red not-button cursor-default'>
             <Button>
               <Activity /> <span>Failed</span>
             </Button>
@@ -230,14 +238,29 @@ export const GovernanceScreen = ({
     if (['PROPOSAL_STATUS_FAILED', 'PROPOSAL_STATUS_REJECTED'].includes(item?.status) || (isExpired && item.status !== 'PROPOSAL_STATUS_VOTING_PERIOD')) {
       return null;
     }
+    const currentVote = userVotes[item.id];
+    const currentVoteLabel = formatGovernanceVote(currentVote);
+
     return (
       <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
-        <div className='btn-primary flex justify-end gap-3'>
+        <div className='flex flex-wrap items-center justify-end gap-3'>
+          {currentVoteLabel ? (
+            <span className='mr-auto text-sm text-lumera-label'>Your vote: <strong className='text-white'>{currentVoteLabel}</strong></span>
+          ) : null}
           {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
-            <Button onPress={() => handleVotePress(item)}>Vote</Button> : null
+            <AppButton
+              disabled={Boolean(transactionUnavailableReason)}
+              onClick={() => handleVotePress(item)}
+            >{currentVote ? 'Change vote' : 'Vote'}</AppButton> : null
           }
-          <Button onPress={() => handleDepositClick(item)}>Deposit</Button>
+          <AppButton
+            disabled={Boolean(transactionUnavailableReason)}
+            onClick={() => handleDepositClick(item)}
+          >Deposit</AppButton>
         </div>
+        {transactionUnavailableReason ? (
+          <p className='text-sm text-left mt-2'>{transactionUnavailableReason}</p>
+        ) : null}
       </div>
     );
   }
@@ -254,20 +277,26 @@ export const GovernanceScreen = ({
 
   const handleVotePress = (item: IProposal) => {
     handleResetError();
+    onOptionChange(getGovernanceVoteFormValue(userVotes[item.id]));
     setVoteOpen(true);
     setSelectedItem(item);
   }
 
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
-      <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
-        <H2 className='!font-bold text-white !text-[32px] leading-none'>Governance</H2>
-        <div className='btn-primary'>
-          <Button onPress={createProposal.onOpenCreateProposalModalClick}>
-            <span className='font-bold whitespace-nowrap'>Create Proposal</span>
-          </Button>
-        </div>
+      <div className='flex justify-end gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
+        <AppButton
+          onClick={createProposal.onOpenCreateProposalModalClick}
+          disabled={!address || Boolean(transactionUnavailableReason)}
+        >
+          <span className='whitespace-nowrap'>Create Proposal</span>
+        </AppButton>
       </div>
+      {transactionUnavailableReason ? (
+        <div className='w-full rounded-md bg-lumera-sub-card p-3 text-sm text-lumera-label'>
+          {transactionUnavailableReason}
+        </div>
+      ) : null}
       <div className='relative w-full'>
         <div className='mt-5 grid grid-cols-4 gap-6 w-full governance-overview relative'>
           <Card elevate size="$4" bordered className='w-full'>
@@ -277,15 +306,20 @@ export const GovernanceScreen = ({
                   <List className="w-8 h-8 text-indigo-400"/>
                 </div>
                 <div>
-                  <H3 className='text-sm text-lumera-label !leading-none'>Total Proposals</H3>
-                  <div className='leading-none mt-1'>
-                    <span className='text-3xl font-bold text-white'>
-                      {isSumaryLoading ?
-                        <Skeleton /> : <>
-                          {formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })}
-                        </>
-                      }
-                    </span>
+                  <SectionTitle className='!mb-0'>Total Proposals</SectionTitle>
+                  <div className='leading-none mt-1 relative min-h-9'>
+                    {isSumaryLoading ?
+                      <AppLoading
+                        isLoading
+                        hideOverlay
+                        className="w-8 h-8 !border-2"
+                        iconWidth={18}
+                        iconHeight={18}
+                        containerClassName='relative w-8 h-8 z-50'
+                      /> :  <span className='text-2xl font-bold text-white'>
+                        {formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })}
+                      </span>
+                    }
                   </div>
                 </div>
               </div>
@@ -298,15 +332,20 @@ export const GovernanceScreen = ({
                   <BadgeCheck className="w-8 h-8 text-green-400"/>
                 </div>
                 <div>
-                  <H3 className='text-sm text-lumera-label !leading-none'>Passed</H3>
-                  <div className='leading-none mt-1'>
-                    <span className='text-3xl font-bold text-white'>
-                      {isSumaryLoading ?
-                        <Skeleton /> : <>
-                          {formatNumber(sumary?.passed || 0, { decimalsLength: 0 })}
-                        </>
-                      }
-                    </span>
+                  <SectionTitle className='!mb-0'>Passed</SectionTitle>
+                  <div className='leading-none mt-1 relative min-h-9'>
+                    {isSumaryLoading ?
+                      <AppLoading
+                        isLoading
+                        hideOverlay
+                        className="w-8 h-8 !border-2"
+                        iconWidth={18}
+                        iconHeight={18}
+                        containerClassName='relative w-8 h-8 z-50'
+                      /> :  <span className='text-2xl font-bold text-white'>
+                        {formatNumber(sumary?.passed || 0, { decimalsLength: 0 })}
+                      </span>
+                    }
                   </div>
                 </div>
               </div>
@@ -319,15 +358,20 @@ export const GovernanceScreen = ({
                   <Hourglass className="w-8 h-8 text-amber-400"/>
                 </div>
                 <div>
-                  <H3 className='text-sm text-lumera-label !leading-none'>Voting Period</H3>
-                  <div className='leading-none mt-1'>
-                    <span className='text-3xl font-bold text-white'>
-                      {isSumaryLoading ?
-                        <Skeleton /> : <>
-                          {formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days
-                        </>
-                      }
-                    </span>
+                  <SectionTitle className='!mb-0'>Voting Period</SectionTitle>
+                  <div className='leading-none mt-1 relative min-h-9'>
+                    {isSumaryLoading ?
+                      <AppLoading
+                        isLoading
+                        hideOverlay
+                        className="w-8 h-8 !border-2"
+                        iconWidth={18}
+                        iconHeight={18}
+                        containerClassName='relative w-8 h-8 z-50'
+                      /> :  <span className='text-2xl font-bold text-white'>
+                        {formatNumber(Number(sumary.votingPeriodParam.replace('s', '')) / 86400, { decimalsLength: 0 })} Days
+                      </span>
+                    }
                   </div>
                 </div>
               </div>
@@ -340,19 +384,23 @@ export const GovernanceScreen = ({
                   <LandmarkIcon className="w-8 h-8 text-sky-400"/>
                 </div>
                 <div>
-                  <H3 className='text-sm text-lumera-label !leading-none !whitespace-nowrap'>Deposit Required</H3>
-                  <div className='leading-none mt-1'>
+                  <SectionTitle className='!mb-0'>Deposit Required</SectionTitle>
+                  <div className='leading-none mt-1 relative min-h-9'>
                     {isSumaryLoading ?
-                      <Skeleton /> : <>
-                        <span className='text-3xl font-bold text-white'>
-                          {formatToken({
+                      <AppLoading
+                        isLoading
+                        hideOverlay
+                        className="w-8 h-8 !border-2"
+                        iconWidth={18}
+                        iconHeight={18}
+                        containerClassName='relative w-8 h-8 z-50'
+                      /> :  <span className='text-2xl font-bold text-white'>
+                        {formatToken({
                             amount: sumary.depositRequiredParam.amount,
                             denom: sumary.depositRequiredParam.denom,
                           }, false, '0,0')}<span className='text-xl ml-1'>LUME</span>
-                        </span>
-                      </>
+                      </span>
                     }
-
                   </div>
                 </div>
               </div>
@@ -361,115 +409,143 @@ export const GovernanceScreen = ({
         </div>
         <Card elevate size="$4" bordered className='w-full p-5 mt-4'>
           <div className='flex justify-between items-center governance-control relative'>
-            <Loading isLoading={isSumaryLoading} />
-            <div className='overflow-x-auto w-full'>
-              <ul className='tabs-secondary flex-nowrap min-w-[670px]'>
-                <li className={`tab-item ${!currentTab ? 'active' : ''}`}>
-                  <button
-                    className='tab-button whitespace-nowrap'
-                    onClick={() => onTabChange('')}
-                  >
-                    All ({formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })})
-                  </button>
-                </li>
-                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? 'active' : ''}`}>
-                  <button
-                    className='tab-button whitespace-nowrap'
-                    onClick={() => onTabChange('PROPOSAL_STATUS_DEPOSIT_PERIOD')}
-                  >
-                    Deposit ({formatNumber(sumary?.depositRequired || 0, { decimalsLength: 0 })})
-                  </button>
-                </li>
-                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_VOTING_PERIOD' ? 'active' : ''}`}>
-                  <button
-                    className='tab-button whitespace-nowrap'
-                    onClick={() => onTabChange('PROPOSAL_STATUS_VOTING_PERIOD')}
-                  >
-                    Voting ({formatNumber(sumary?.votingPeriod || 0, { decimalsLength: 0 })})
-                  </button>
-                </li>
-                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_PASSED' ? 'active' : ''}`}>
-                  <button
-                    className='tab-button whitespace-nowrap'
-                    onClick={() => onTabChange('PROPOSAL_STATUS_PASSED')}
-                  >
-                    Passed ({formatNumber(sumary?.passed || 0, { decimalsLength: 0 })})
-                  </button>
-                </li>
-                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_REJECTED' ? 'active' : ''}`}>
-                  <button
-                    className='tab-button whitespace-nowrap'
-                    onClick={() => onTabChange('PROPOSAL_STATUS_REJECTED')}
-                  >
-                    Rejected ({formatNumber(sumary?.rejected || 0, { decimalsLength: 0 })})
-                  </button>
-                </li>
-                <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_FAILED' ? 'active' : ''}`}>
-                  <button
-                    className='tab-button whitespace-nowrap'
-                    onClick={() => onTabChange('PROPOSAL_STATUS_FAILED')}
-                  >
-                    Failed ({formatNumber(sumary?.failed || 0, { decimalsLength: 0 })})
-                  </button>
-                </li>
-              </ul>
-            </div>
-            <div className='input-wrapper hidden'>
-              <Input id="amount" placeholder="Search validator" className='input has-symbol' />
-              <span className='input-symbol'>
-                <Search />
-              </span>
-            </div>
-          </div>
-          <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 governance-card-wrapper relative'>
-            <Loading isLoading={isLoading} />
-            {!governances?.length && !isLoading ?
-              <div><H3 className='!leading-6'>No data</H3></div> : null
+            {isSumaryLoading ?
+              <div className='tabs-secondary flex-nowrap min-w-[670px] min-h-[48px] relative overflow-hidden'>
+                <AppLoading
+                  isLoading
+                  className="w-9 h-9 !border-2"
+                  iconWidth={18}
+                  iconHeight={18}
+                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-9 h-9 z-50'
+                />
+              </div> :
+              <>
+                <div className='overflow-x-auto w-full'>
+                  <ul className='tabs-secondary flex-nowrap min-w-[670px]'>
+                    <li className={`tab-item ${!currentTab ? 'active' : ''}`}>
+                      <button
+                        className='tab-button whitespace-nowrap'
+                        onClick={() => onTabChange('')}
+                      >
+                        All ({formatNumber(sumary?.totalProposals || 0, { decimalsLength: 0 })})
+                      </button>
+                    </li>
+                    <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? 'active' : ''}`}>
+                      <button
+                        className='tab-button whitespace-nowrap'
+                        onClick={() => onTabChange('PROPOSAL_STATUS_DEPOSIT_PERIOD')}
+                      >
+                        Deposit ({formatNumber(sumary?.depositRequired || 0, { decimalsLength: 0 })})
+                      </button>
+                    </li>
+                    <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_VOTING_PERIOD' ? 'active' : ''}`}>
+                      <button
+                        className='tab-button whitespace-nowrap'
+                        onClick={() => onTabChange('PROPOSAL_STATUS_VOTING_PERIOD')}
+                      >
+                        Voting ({formatNumber(sumary?.votingPeriod || 0, { decimalsLength: 0 })})
+                      </button>
+                    </li>
+                    <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_PASSED' ? 'active' : ''}`}>
+                      <button
+                        className='tab-button whitespace-nowrap'
+                        onClick={() => onTabChange('PROPOSAL_STATUS_PASSED')}
+                      >
+                        Passed ({formatNumber(sumary?.passed || 0, { decimalsLength: 0 })})
+                      </button>
+                    </li>
+                    <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_REJECTED' ? 'active' : ''}`}>
+                      <button
+                        className='tab-button whitespace-nowrap'
+                        onClick={() => onTabChange('PROPOSAL_STATUS_REJECTED')}
+                      >
+                        Rejected ({formatNumber(sumary?.rejected || 0, { decimalsLength: 0 })})
+                      </button>
+                    </li>
+                    <li className={`tab-item ${currentTab === 'PROPOSAL_STATUS_FAILED' ? 'active' : ''}`}>
+                      <button
+                        className='tab-button whitespace-nowrap'
+                        onClick={() => onTabChange('PROPOSAL_STATUS_FAILED')}
+                      >
+                        Failed ({formatNumber(sumary?.failed || 0, { decimalsLength: 0 })})
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+                <div className='input-wrapper hidden'>
+                  <Input id="amount" placeholder="Search validator" className='input has-symbol' />
+                  <span className='input-symbol'>
+                    <Search />
+                  </span>
+                </div>
+              </>
             }
-            {governances?.map((item) => {
-              const { yesPercent, noPercent, noWithVetoPercent, abstainPercent } = getPoolPercent(item);
-              return (
-                <Card elevate size="$4" bordered className='w-full' key={item.id}>
-                  <div className='p-5'>
-                    <div className='flex justify-between items-start gap-6 governance-card-header'>
-                      <div className='flex flex-col'>
-                        <AppLink href={`/governance/${item.id}`}>
-                          <H3 className='!leading-6'>{item.title}</H3>
-                        </AppLink>
-                      </div>
-                      {getStatus(item.status)}
-                    </div>
-                    <div className='mt-5 min-h-12'>
-                      {item.summary}
-                    </div>
-                    <div className='mt-5'>
-                      <div className='status-bar-wrapper'>
-                        <div className='status-bar-yes' style={{ width: `${yesPercent}%` }}></div>
-                        <div className='status-bar-no' style={{ width: `${noPercent}%` }}></div>
-                        <div className='status-bar-no-with-veto' style={{ width: `${noWithVetoPercent}%` }}></div>
-                        <div className='status-bar-abstain' style={{ width: `${abstainPercent}%` }}></div>
-                      </div>
-                      <div className='flex justify-between gap-3 mt-2 status-bar-label'>
-                        <div className='text-lumera-label'>
-                          <span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(1)}%
-                        </div>
-                        <div className='text-lumera-label'>
-                          <span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(1)}%
-                        </div>
-                        <div className='text-lumera-label'>
-                          <span className='text-lumera-red-light'>No With Veto</span>: {noWithVetoPercent.toFixed(1)}%
-                        </div>
-                        <div className='text-lumera-label'>
-                          <span className='text-lumera-sub-label'>Abstain</span>: {abstainPercent.toFixed(1)}%
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {getControls(item)}
-                </Card>
-              )
-            })}
           </div>
+
+          {isLoading ?
+            <div className='mt-6 min-h-52 relative'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 governance-card-wrapper relative'>
+              {!governances?.length ?
+                <div><H3 className='!leading-6'>No data</H3></div> : null
+              }
+              {governances?.map((item) => {
+                const { yesPercent, noPercent, noWithVetoPercent, abstainPercent } = getPoolPercent(item);
+                return (
+                  <Card elevate size="$4" bordered className='w-full' key={item.id}>
+                    <div className='p-5'>
+                      <div className='flex justify-between items-start gap-6 governance-card-header'>
+                        <div className='flex flex-col'>
+                          <AppLink href={`/governance/${item.id}`}>
+                            <h3 className='text-base font-bold text-lumera-teal hover:text-lumera-green'>{item.title}</h3>
+                          </AppLink>
+                        </div>
+                        {getStatus(item.status)}
+                      </div>
+                      <div className='mt-5 min-h-12 text-base'>
+                        {item.summary}
+                      </div>
+                      {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' && item.voting_end_time ? (
+                        <div className='mt-3 text-sm text-lumera-label'>
+                          Voting ends in <CountDown targetDate={new Date(item.voting_end_time)} className='whitespace-nowrap' />
+                        </div>
+                      ) : null}
+                      <div className='mt-5'>
+                        <div className='status-bar-wrapper'>
+                          <div className='status-bar-yes' style={{ width: `${yesPercent}%` }}></div>
+                          <div className='status-bar-no' style={{ width: `${noPercent}%` }}></div>
+                          <div className='status-bar-no-with-veto' style={{ width: `${noWithVetoPercent}%` }}></div>
+                          <div className='status-bar-abstain' style={{ width: `${abstainPercent}%` }}></div>
+                        </div>
+                        <div className='flex justify-between gap-3 mt-2 status-bar-label text-base'>
+                          <div className='text-lumera-label'>
+                            <span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(1)}%
+                          </div>
+                          <div className='text-lumera-label'>
+                            <span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(1)}%
+                          </div>
+                          <div className='text-lumera-label'>
+                            <span className='text-lumera-red-light'>No With Veto</span>: {noWithVetoPercent.toFixed(1)}%
+                          </div>
+                          <div className='text-lumera-label'>
+                            <span className='text-lumera-sub-label'>Abstain</span>: {abstainPercent.toFixed(1)}%
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {getControls(item)}
+                  </Card>
+                )
+              })}
+            </div>
+          }
           {nextKey ?
             (
               <div className='w-full flex justify-end mt-2'>
@@ -490,6 +566,7 @@ export const GovernanceScreen = ({
           voteAdvanced={voteAdvanced}
           handleVoteAdvancedChange={handleVoteAdvancedChange}
           transactionHash={voteTransactionHash}
+          currentVote={selectedItem ? userVotes[selectedItem.id] : undefined}
           onCloseCongratulationsModal={onCloseVoteCongratulationsModal}
         />
         <DepositModal

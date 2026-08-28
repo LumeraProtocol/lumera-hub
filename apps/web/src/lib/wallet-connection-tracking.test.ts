@@ -1,0 +1,168 @@
+import { DataSource } from 'typeorm'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+
+import { persistWalletConnection } from './wallet-connection-tracking'
+
+const ADDRESS = '0x1111111111111111111111111111111111111111'
+
+describe('wallet connection persistence', () => {
+  let dataSource: DataSource
+
+  beforeEach(async () => {
+    dataSource = new DataSource({
+      type: 'sqlite',
+      database: ':memory:',
+    })
+    await dataSource.initialize()
+    await dataSource.query(`
+      CREATE TABLE hub_address (
+        address TEXT PRIMARY KEY,
+        first_connected TEXT,
+        last_connected TEXT,
+        total_connected INTEGER,
+        acquisition_source TEXT
+      )
+    `)
+    await dataSource.query(`
+      CREATE TABLE address (
+        address TEXT PRIMARY KEY,
+        timestamp TEXT,
+        type TEXT,
+        created_at TEXT,
+        updated_at TEXT
+      )
+    `)
+    await dataSource.query(`
+      CREATE TABLE hub_address_connected_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        address TEXT NOT NULL,
+        ip TEXT,
+        browser TEXT,
+        other_info TEXT,
+        created_at TEXT NOT NULL,
+        acquisition_source TEXT
+      )
+    `)
+  })
+
+  afterEach(async () => {
+    if (dataSource.isInitialized) {
+      await dataSource.destroy()
+    }
+  })
+
+  it('serializes concurrent first-connect writes without a unique-key failure', async () => {
+    const record = {
+      address: ADDRESS,
+      acquisitionSource: 'Direct',
+      browser: 'Chrome',
+      ip: '127.0.0.1',
+      otherInfo: '{}',
+      timestamp: '2026-08-20T20:30:50.489Z',
+    }
+
+    const results = await Promise.all([
+      persistWalletConnection(dataSource, record),
+      persistWalletConnection(dataSource, {
+        ...record,
+        timestamp: '2026-08-20T20:30:50.490Z',
+      }),
+    ])
+
+    expect(results).toEqual([{ isNewHub: true }, { isNewHub: false }])
+    expect(
+      await dataSource.query(
+        'SELECT address, total_connected FROM hub_address',
+      ),
+    ).toEqual([{ address: ADDRESS, total_connected: 2 }])
+    expect(await dataSource.query('SELECT address FROM address')).toEqual([
+      { address: ADDRESS },
+    ])
+    expect(
+      await dataSource.query(
+        'SELECT COUNT(*) AS count FROM hub_address_connected_log',
+      ),
+    ).toEqual([{ count: 2 }])
+  })
+
+  it('never reports isNewHub for a hub another process registered first', async () => {
+    // Simulates a second server process committing the same address's first
+    // connect in the window between anything this call reads from hub_address
+    // and its own write: reads see an empty table, but by the time this call
+    // writes, the row exists. The first-connect decision must come from the
+    // write itself, not from a prior read.
+    const injectCompetingFirstConnect = (manager: {
+      query: (sql: string, params?: unknown[]) => Promise<unknown>
+    }) =>
+      manager.query(
+        `
+        INSERT INTO hub_address (
+          address, first_connected, last_connected, total_connected, acquisition_source
+        ) VALUES (?, ?, ?, 1, ?)
+        ON CONFLICT(address) DO NOTHING
+        `,
+        [ADDRESS, '2026-08-20T20:30:50.000Z', '2026-08-20T20:30:50.000Z', 'Direct'],
+      )
+
+    const racingDataSource = {
+      transaction: (run: (manager: unknown) => Promise<unknown>) =>
+        dataSource.transaction((manager) => {
+          let injected = false
+          const racingManager = {
+            query: async (sql: string, params?: unknown[]) => {
+              const touchesHubAddress = /\bhub_address\b/i.test(sql)
+              const isWrite = /^\s*(INSERT|UPDATE|DELETE)/i.test(sql)
+              if (touchesHubAddress && isWrite && !injected) {
+                injected = true
+                await injectCompetingFirstConnect(manager)
+              }
+              const result = await manager.query(sql, params)
+              if (touchesHubAddress && !isWrite && !injected) {
+                injected = true
+                await injectCompetingFirstConnect(manager)
+              }
+              return result
+            },
+          }
+          return run(racingManager)
+        }),
+    }
+
+    const result = await persistWalletConnection(
+      racingDataSource as unknown as DataSource,
+      {
+        address: ADDRESS,
+        acquisitionSource: 'Direct',
+        browser: 'Chrome',
+        ip: '127.0.0.1',
+        otherInfo: '{}',
+        timestamp: '2026-08-20T20:30:50.489Z',
+      },
+    )
+
+    expect(result).toEqual({ isNewHub: false })
+    expect(
+      await dataSource.query(
+        'SELECT address, total_connected FROM hub_address',
+      ),
+    ).toEqual([{ address: ADDRESS, total_connected: 2 }])
+  })
+
+  it('rolls back the whole connection record when a required write fails', async () => {
+    await dataSource.query('DROP TABLE hub_address_connected_log')
+
+    await expect(
+      persistWalletConnection(dataSource, {
+        address: ADDRESS,
+        acquisitionSource: 'Direct',
+        browser: null,
+        ip: '127.0.0.1',
+        otherInfo: '{}',
+        timestamp: '2026-08-20T20:30:50.489Z',
+      }),
+    ).rejects.toThrow()
+
+    expect(await dataSource.query('SELECT * FROM hub_address')).toEqual([])
+    expect(await dataSource.query('SELECT * FROM address')).toEqual([])
+  })
+})

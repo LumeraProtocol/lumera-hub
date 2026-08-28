@@ -1,0 +1,134 @@
+import { Card } from 'tamagui';
+import ReactECharts from 'echarts-for-react';
+import dayjs from 'dayjs';
+
+import SectionTitle from '@/components/SectionTitle';
+import { AppLoading } from '@/components/Loading';
+import { ITracking } from '@/hooks/admin/useTracking';
+import { formatMessageType } from '@/utils/format';
+import { useSelector } from '@/redux/hooks';
+
+interface ITransactionChart {
+  isLoading: boolean;
+  trackings: ITracking[];
+}
+
+export default function TransactionChart({
+  isLoading,
+  trackings,
+}: ITransactionChart) {
+  const { startDate, endDate } = useSelector((state) => state.admin);
+
+  const getOption = () => {
+    let dates: string[] = [];
+    let data: number[] = [];
+    const end = dayjs(endDate);
+    const start = dayjs(startDate);
+    const diff = end.diff(start, 'day');
+    for (let i = 0; i < diff; i++) {
+      const currentDate = dayjs(start).add(i, 'day').format('YYYY-MM-DD');
+      dates.push(dayjs(start).add(i, 'day').format('MM/DD/YYYY'));
+      const item = trackings.find((t) => t.date === currentDate);
+      if (item) {
+        data.push(item.total_transaction + item.cascade_upload);
+      } else {
+        data.push(0);
+      }
+    }
+
+    return {
+      tooltip: {
+        position: 'right',
+        trigger: 'axis',
+        formatter: function (params: any) {
+          const param = params[0];
+          const tracking = trackings[param.dataIndex];
+          let html = '';
+          if (tracking && tracking?.transaction_extra) {
+            const parseTransactions = JSON.parse(tracking.transaction_extra);
+            html += '<ul class="mt-1 pl-3 list-inside list-disc">';
+            for (const item of parseTransactions) {
+              const messageType = formatMessageType(item.message_type);
+              html += `
+                <li class="flex justify-between gap-6">
+                  <span>- ${messageType}:</span>
+                  <span class="font-bold">${item.total}</span>
+                </li>`;
+            }
+            html += '</ul>';
+          }
+          return `
+            <div>
+              <div class="text-sm">${param.name}</div>
+              <div class="text-sm mt-1">${param.marker} <span>Total transactions</span>: <span class="font-bold">${param.value}</span></div>
+              ${html}
+            </div>`;
+        }
+      },
+      grid: {
+        top: 8,
+        bottom: 2,
+        left: 14,
+        right: 14,
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        splitLine: {
+          show: false,
+        },
+        data: dates,
+        axisLabel: {
+          showMinLabel: true,
+          showMaxLabel: true,
+          interval: Math.floor((data.length - 1) / 2),
+        },
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: {
+          lineStyle: {
+            color: '#2a323f',
+          },
+        },
+      },
+      series: [
+        {
+          name: 'Transactions',
+          type: 'line',
+          itemStyle: {
+            color: '#47C78A'
+          },
+          data,
+        }
+      ]
+    };
+  }
+
+  return (
+    <Card elevate size="$4" bordered className='!flex-1 !basis-1/3 !min-w-0'>
+      <Card.Header padded>
+        <SectionTitle className="mb-0">Transactions</SectionTitle>
+      </Card.Header>
+      <div className='p-5'>
+        {isLoading ?
+          <div className='min-h-[188px] relative w-full'>
+            <AppLoading
+              isLoading
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
+          </div> :
+          <>
+            {trackings?.length ?
+              <ReactECharts option={getOption()} className='w-full' style={{ height: '160px' }} /> :
+              <div className='text-lg flex items-center justify-center w-full h-full min-h-40'>No data</div>
+            }
+          </>
+        }
+      </div>
+    </Card>
+  );
+}

@@ -2,16 +2,16 @@ import { useState } from 'react';
 import {
   Card,
   SizableText,
-  H3,
   Input,
   Label,
   Text,
-  Button,
 } from 'tamagui';
 import { Calculator } from '@tamagui/lucide-icons';
 import {  RefreshCcw } from 'lucide-react';
 
-import Skeleton from '@/components/Skeleton';
+import { AppLoading } from '@/components/Loading';
+import AppButton from '@/components/AppButton';
+import SectionTitle from '@/components/SectionTitle';
 import { RATE_VALUE } from '@/contants';
 import { DENOM } from '@/contants/network';
 import { formatTokenDisplay } from '@/utils/format';
@@ -19,6 +19,7 @@ import { formatTokenDisplay } from '@/utils/format';
 interface IRewardsCalculator {
   apr: number;
   availableAmount: number;
+  canDelegate: boolean;
   isLoading: boolean;
   onStakingButtonClick: (amount: string) => void;
   onRefreshBalance: () => void;
@@ -27,6 +28,7 @@ interface IRewardsCalculator {
 export default function RewardsCalculator({
   apr,
   availableAmount,
+  canDelegate,
   isLoading,
   onStakingButtonClick,
   onRefreshBalance,
@@ -74,17 +76,26 @@ export default function RewardsCalculator({
       <Card.Header padded>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6 w-full rewards-calculator-wrapper'>
           <div className='w-full'>
-            <H3 className='!flex gap-2 items-center rewards-calculator-icon'><Calculator /> <span>Stake LUME</span></H3>
+            <SectionTitle className='rewards-calculator-icon flex gap-2 items-center'><Calculator /> <span>Stake LUME</span></SectionTitle>
             <Text className='text-lumera-label text-base'>Estimate your potential rewards based on current network APR</Text>
             <div className='mt-5'>
               <div className='flex justify-between items-center gap-3'>
-                <Label htmlFor="amount" className='text-base !font-semibold'>
+                <Label htmlFor="amount" className='!text-base !font-semibold'>
                   Amount
                 </Label>
                 {availableAmount ?
                   <div className='text-sm font-normal flex gap-2 items-center'>
                     {isLoading ?
-                      <Skeleton /> :
+                      <div className='relative min-h-9 w-9 mr-1'>
+                        <AppLoading
+                          isLoading
+                          hideOverlay
+                          className="w-8 h-8 !border-3"
+                          iconWidth={16}
+                          iconHeight={16}
+                          containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-8 h-8 z-50'
+                        />
+                      </div> :
                       <>
                         <button type="button" onClick={onRefreshBalance} className='cursor-pointer'>
                           <RefreshCcw className='w-4 h-4' />
@@ -119,35 +130,43 @@ export default function RewardsCalculator({
               {error ?
                 <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null
               }
-              <div className={`${!amount || amount === '0' ? 'btn-secondary' : 'btn-primary'} mt-5`}>
-                <Button onPress={handleStakingClick} disabled={!amount || amount === '0'}>
-                  <span className='font-bold'>Continue to Staking</span>
-                </Button>
+              <div className={`${!canDelegate || !amount || amount === '0' ? 'btn-secondary' : 'btn-primary'} mt-5`}>
+                <AppButton onClick={handleStakingClick} disabled={!canDelegate || !amount || amount === '0'}>
+                  <span>{canDelegate ? 'Continue to Staking' : 'Connect Keplr to stake'}</span>
+                </AppButton>
               </div>
             </div>
           </div>
           <Card elevate size="$4" bordered className='w-full estimated-rewards-card'>
             <Card.Header padded>
-              <H3>Estimated Staking Rewards</H3>
-              <div className='mt-3 grid grid-cols-2 gap-2 estimated-rewards-results'>
+              <SectionTitle className='mb-0'>Estimated Staking Rewards</SectionTitle>
+              <div className='mt-3 grid grid-cols-2 gap-2 estimated-rewards-results text-base'>
                 <div className='flex flex-col'>
                   <SizableText className='text-lumera-label'>1 Day</SizableText>
-                  <Text className='!text-lumera-green'><span className='font-bold text-base'>{estimatedRewards.toFixed(2)}</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
+                  <Text className='!text-lumera-green'>
+                    <span className='font-bold text-base'>{estimatedRewards.toFixed(2)}</span> <SizableText className='text-lumera-label !text-base'>LUME</SizableText>
+                  </Text>
                 </div>
                 <div className='flex flex-col'>
                   <SizableText className='text-lumera-label'>7 Days</SizableText>
-                  <Text className='!text-lumera-green'><span className='font-bold text-base'>{(estimatedRewards * 7).toFixed(2)}</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
+                  <Text className='!text-lumera-green'>
+                    <span className='font-bold text-base'>{(estimatedRewards * 7).toFixed(2)}</span> <SizableText className='text-lumera-label !text-base'>LUME</SizableText>
+                  </Text>
                 </div>
                 <div className='flex flex-col'>
                   <SizableText className='text-lumera-label'>30 Days</SizableText>
-                  <Text className='!text-lumera-green'><span className='font-bold text-base'>{(estimatedRewards * 30).toFixed(2)}</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
+                  <Text className='!text-lumera-green'>
+                    <span className='font-bold text-base'>{(estimatedRewards * 30).toFixed(2)}</span> <SizableText className='text-lumera-label !text-base'>LUME</SizableText>
+                  </Text>
                 </div>
                 <div className='flex flex-col'>
                   <SizableText className='text-lumera-label'>365 Days</SizableText>
-                  <Text className='!text-lumera-green'><span className='font-bold text-base'>{(estimatedRewards * 365).toFixed(2)}</span> <SizableText className='text-lumera-label'>LUME</SizableText></Text>
+                  <Text className='!text-lumera-green'>
+                    <span className='font-bold text-base'>{(estimatedRewards * 365).toFixed(2)}</span> <SizableText className='text-lumera-label !text-base'>LUME</SizableText>
+                  </Text>
                 </div>
               </div>
-              <div className='!mt-3 text-lumera-label text-sm'>* All calculations are estimates based on the current APR and are subject to change.</div>
+              <div className='mt-3 text-lumera-label text-base'>* All calculations are estimates based on the current APR and are subject to change.</div>
             </Card.Header>
           </Card>
         </div>

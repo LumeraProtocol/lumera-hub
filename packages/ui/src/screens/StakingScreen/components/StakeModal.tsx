@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import {
-  H3,
   Input,
   Label,
-  Button,
   Dialog,
   VisuallyHidden,
   Checkbox,
@@ -15,8 +13,10 @@ import {
 } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import Skeleton from '@/components/Skeleton';
+import AppButton from '@/components/AppButton';
+import SectionTitle from '@/components/SectionTitle';
 import { RATE_VALUE } from '@/contants';
 import { IValidator } from '@/types';
 import { DENOM } from '@/contants/network';
@@ -104,7 +104,7 @@ export default function StakeModal({
             </VisuallyHidden>
             <div className='withdraw-main-content relative p-5'>
               <div className='flex justify-between items-center mb-4'>
-                <H3 className='text-lumera-label text-[32px]'>Stake {info?.description?.moniker}</H3>
+                <SectionTitle className='mb-0'>Stake {info?.description?.moniker}</SectionTitle>
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseContinueToStakingModal}><CircleX /></button>
               </div>
               <div className='mt-2 text-center'>
@@ -121,13 +121,13 @@ export default function StakeModal({
                     View Transaction
                   </AppLink>
                 </div>
-                <div className='mt-2'>
-                  <button
-                    className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
+                <div className='mt-2 flex justify-center'>
+                  <AppButton
+                    className='cursor-pointer'
                     onClick={onCloseContinueToStakingModal}
                   >
                     Back to Staking
-                  </button>
+                  </AppButton>
                 </div>
               </div>
             </div>
@@ -177,9 +177,15 @@ export default function StakeModal({
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
           <div className='withdraw-main-content relative p-5'>
-            <Loading isLoading={isLoading} />
+            <AppLoading
+              isLoading={isLoading}
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
             <div className='flex justify-between items-center mb-4'>
-              <H3 className='text-lumera-label text-[32px]'>Stake LUME</H3>
+              <SectionTitle className='mb-0'>Stake LUME</SectionTitle>
               <button className='btn-close-modal cursor-pointer' onClick={onClose}><CircleX /></button>
             </div>
             <div className='mt-5 relative'>
@@ -243,10 +249,10 @@ export default function StakeModal({
                   I understand that unstaking will take 21 days for LUME to become liquid upon withdrawal.
                 </Label>
               </div>
-              <div className={`${!isYes ? 'btn-secondary' : 'btn-primary'} mt-8 full`}>
-                <Button onPress={onSendClick} disabled={!isYes}>
-                  <span className='font-bold'>Stake</span>
-                </Button>
+              <div className={`${!isYes ? 'btn-secondary' : 'btn-primary'} mt-8 full flex justify-end`}>
+                <AppButton onClick={onSendClick} disabled={!isYes}>
+                  <span>Stake</span>
+                </AppButton>
               </div>
               {error && !isLoading ?
                 <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null

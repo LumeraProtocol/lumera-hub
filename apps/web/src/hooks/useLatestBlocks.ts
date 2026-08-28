@@ -39,7 +39,7 @@ const useLatestBlocks = () => {
         setBlocks(prev => [...mergeArraysById(prev, [data?.block]).sort((a, b) => Number(b.header.height) - Number(a.header.height))].slice(0, 100));
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+      setError((error as Error)?.message ||  'An unknown error occurred.');
     }
   }
 
@@ -59,11 +59,10 @@ const useLatestBlocks = () => {
     try {
       const { data: { result } } = await axios.get(`${RPC_ENDPOINT}/block_search?query="block.height > 0"&page=1&per_page=100&order_by="desc"`);
       setBlocks(result.blocks.map((item: TBlock) => item.block))
-
-      intervalRef.current = setInterval(() => fetchLatestBlock(), 6000);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+      setError((error as Error)?.message ||  'An unknown error occurred.');
     }
+    intervalRef.current = setInterval(() => fetchLatestBlock(), 5000);
     setFetchBlockLoading(false);
   }
 

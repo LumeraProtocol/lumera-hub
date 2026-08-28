@@ -29,10 +29,19 @@
     "typescript": "5.8.3"
   },
   "engines": {
-    "node": ">=24 <25"
+    "node": ">=24 <27"
   },
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
+  },
+  "pnpm": {
+    "packageExtensions": {
+      "@interchainjs/utils@*": {
+        "dependencies": {
+          "@noble/hashes": "^1.8.0"
+        }
+      }
+    }
   }
 }

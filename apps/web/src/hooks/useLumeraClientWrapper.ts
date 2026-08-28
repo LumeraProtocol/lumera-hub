@@ -19,7 +19,7 @@ export function useLumeraClientWrapper() {
       }
 
       try {
-        const importedModule = await import('react-lumera-sdk');
+        const importedModule = await import('sdk-js-react');
         cachedModule = importedModule;
         setModule(importedModule);
       } catch (err) {

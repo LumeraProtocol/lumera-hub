@@ -6,6 +6,7 @@ interface IAppLink {
   className?: string;
   target?: string;
   rel?: string;
+  id?: string;
   children: ReactNode;
 }
 
@@ -19,6 +20,7 @@ export default function AppLink({
   className = 'text-lumera-teal hover:text-lumera-green',
   target = '',
   rel = '',
+  id = '',
 }: IAppLink) {
   const props: DynamicProps = {};
   if (target) {
@@ -28,7 +30,7 @@ export default function AppLink({
     props.rel = rel;
   }
   return (
-    <Link href={href} className={className} target={target}>
+    <Link href={href} className={className} target={target} id={id}>
       {children}
     </Link>
   );

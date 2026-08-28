@@ -5,12 +5,7 @@ import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import dynamic from 'next/dynamic';
 
-const JVectorMapWithNoSSR = dynamic(
-  () => import('@react-jvectormap/core').then((mod) => mod.VectorMap),
-  {
-    ssr: false,
-  }
-);
+import { UPLOAD_MAX_FILES } from '@/contants';
 
 const CascadeScreen = dynamic(
   () => import('@lumera-hub/ui/src/screens/CascadeScreen').then((mod) => mod.CascadeScreen),
@@ -31,7 +26,7 @@ export default function Page() {
       </Helmet>
       <div className="cascade-content">
         <CascadeScreen
-          JVectorMapWithNoSSR={JVectorMapWithNoSSR}
+          maxFiles={Number(UPLOAD_MAX_FILES)}
         />
       </div>
     </>

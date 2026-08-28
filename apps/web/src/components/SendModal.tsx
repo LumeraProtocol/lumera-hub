@@ -1,7 +1,5 @@
 import {
   YStack,
-  H3,
-  Button,
   Dialog,
   Label,
   Input,
@@ -11,12 +9,15 @@ import {
 import { CircleX, Check as CheckIcon } from '@tamagui/lucide-icons';
 
 import { formatTokenDisplay } from '@/utils/format';
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
 import { DENOM } from '@/contants/network';
+import SectionTitle from '@/components/SectionTitle';
+import AppButton from '@/components/AppButton';
 import { RATE_VALUE } from '@/contants';
 
 interface IVoteModal {
+  isEvm: boolean;
   isOpen: boolean;
   isVoteLoading: boolean;
   error: string | null;
@@ -40,6 +41,7 @@ interface IVoteModal {
 }
 
 export default function SendModal({
+    isEvm,
     isOpen,
     isVoteLoading,
     error,
@@ -100,10 +102,14 @@ export default function SendModal({
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
               </div>
               <div className='mt-4'>
-                <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! send completed successfully.</H3>
+                <SectionTitle className='!text-green-500 !leading-0'>Congratulations! send completed successfully.</SectionTitle>
               </div>
               <div className='mt-3'>
+                {isEvm ? (
+                  <span className='font-mono text-sm break-all'>{transactionHash}</span>
+                ) : (
                 <AppLink href={`/tx/${transactionHash}`} className='text-lumera-teal hover:text-lumera-green text-sm'>View Transaction</AppLink>
+                )}
               </div>
             </div>
           </Dialog.Content>
@@ -153,9 +159,15 @@ export default function SendModal({
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
           <div className='withdraw-main-content relative'>
-            <Loading isLoading={isVoteLoading} />
+            <AppLoading
+              isLoading={isVoteLoading}
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
             <div className='flex justify-between items-center'>
-              <H3 className='text-lumera-label text-[32px]'>Send</H3>
+              <SectionTitle>Send</SectionTitle>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseDailogChange}><CircleX /></button>
             </div>
             <div className='mt-1'>
@@ -166,6 +178,7 @@ export default function SendModal({
                   placeholder="Sender"
                   className='input'
                   value={optionsAdvanced.senderAddress}
+                  disabled={isEvm}
                   onChangeText={(newValue) => onInputChange('senderAddress', newValue)}
                 />
               </div>
@@ -175,7 +188,7 @@ export default function SendModal({
               <div className='input-wrapper'>
                 <Input
                   id="recipient"
-                  placeholder="Recipient"
+                  placeholder={isEvm ? 'Lumera or 0x address' : 'Recipient'}
                   className='input'
                   value={optionsAdvanced.recipient}
                   onChangeText={(newValue) => onInputChange('recipient', newValue)}
@@ -207,7 +220,7 @@ export default function SendModal({
               </div>
             </div>
 
-            {showAdvanced ?
+            {showAdvanced && !isEvm ?
               <div className='mt-1'>
                 <div>
                   <Label htmlFor="fees" className='text-base'>Fees</Label>
@@ -251,7 +264,7 @@ export default function SendModal({
 
             <YStack space="$2" marginTop="$3">
               <div className='flex justify-between items-center'>
-                <div className='flex gap-3 items-center'>
+                {!isEvm ? <div className='flex gap-3 items-center'>
                   <Checkbox
                     id="advanced"
                     size="$4"
@@ -266,9 +279,9 @@ export default function SendModal({
                   <Label size="$4" htmlFor="advanced">
                     Advanced
                   </Label>
-                </div>
+                </div> : null}
                 <div className='btn-primary flex justify-end mt-3'>
-                  <Button onPress={onSendClick} disabled={isVoteLoading}>Send</Button>
+                  <AppButton onClick={onSendClick} disabled={isVoteLoading}>Send</AppButton>
                 </div>
               </div>
             </YStack>

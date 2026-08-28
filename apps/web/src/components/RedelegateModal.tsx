@@ -1,6 +1,4 @@
 import {
-  H3,
-  Button,
   Dialog,
   Label,
   Input,
@@ -14,9 +12,14 @@ import {
   Check as CheckCircle,
 } from 'lucide-react';
 
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import { IValidator } from '@/types/validator';
 import AppLink from '@/components/AppLink';
+import SectionTitle from '@/components/SectionTitle';
+import AppButton from '@/components/AppButton';
+import {
+  formatToken,
+} from '@/utils/format';
 
 interface IRedelegateModal {
   isOpen: boolean;
@@ -99,7 +102,7 @@ export default function RedelegateModal({
             </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
               <div className='flex justify-between items-center'>
-                <H3 className='text-lumera-label text-[32px]'>Redelegate from Validator</H3>
+                <SectionTitle>Redelegate from Validator</SectionTitle>
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
               </div>
               <div className='mt-2 text-center'>
@@ -118,13 +121,13 @@ export default function RedelegateModal({
                     View Transaction
                   </AppLink>
                 </div>
-                <div className='mt-2 pb-3'>
-                  <button
-                    className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
+                <div className='mt-2 pb-3 flex justify-center'>
+                  <AppButton
+                    className='cursor-pointer'
                     onClick={onCloseCongratulationsModal}
                   >
                     Back to Staking
-                  </button>
+                  </AppButton>
                 </div>
               </div>
             </div>
@@ -175,9 +178,15 @@ export default function RedelegateModal({
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
           <div className='withdraw-main-content relative'>
-            <Loading isLoading={isRedelegateLoading} />
+            <AppLoading
+              isLoading={isRedelegateLoading}
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
             <div className='flex justify-between items-center'>
-              <H3 className='text-lumera-label text-[32px]'>Redelegate from Validator</H3>
+              <SectionTitle>Redelegate from Validator</SectionTitle>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseDailogChange}><CircleX /></button>
             </div>
             <div className='mt-1 hidden'>
@@ -244,14 +253,20 @@ export default function RedelegateModal({
               <div className='flex items-center justify-between'>
                 <Label htmlFor="amount" className='text-base'>Amount</Label>
                 <div className='text-sm font-normal flex gap-2 items-center text-gray-600'>
-                  <span>Available: {numeral(availableAmount).format('0.[000000]')}</span>
+                  <span>Available: {formatToken({
+                                    amount: availableAmount.toString(),
+                                    denom: 'ulume',
+                                  }, true, '0,0.[000000]')}</span>
                   <button type='button' className='bg-lumera-teal rounded-[9px] text-white py-0.5 px-2 text-[12px] cursor-pointer' onClick={() => onInputChange('amount', `${availableAmount}`)}>MAX</button>
                 </div>
               </div>
               <div className='input-wrapper'>
                 <Input
                   id="amount"
-                  placeholder={`Available: ${numeral(availableAmount).format('0.[000000]')} lume`}
+                  placeholder={`Available: ${formatToken({
+                                    amount: availableAmount.toString(),
+                                    denom: 'ulume',
+                                  }, true, '0,0.[000000]')} lume`}
                   className='input has-symbol'
                   value={optionsAdvanced.amount}
                   onChangeText={(newValue) => onInputChange('amount', newValue)}
@@ -260,10 +275,10 @@ export default function RedelegateModal({
               </div>
             </div>
 
-            <div className='mt-5 btn-primary full'>
-              <Button onPress={onSendClick} disabled={isRedelegateLoading}>
+            <div className='mt-5 btn-primary full flex justify-end'>
+              <AppButton onClick={onSendClick} disabled={isRedelegateLoading}>
                 <strong>Restake</strong>
-              </Button>
+              </AppButton>
             </div>
             {error && !isRedelegateLoading ?
               <div className='text-lumera-red-light mt-3 max-w-sm'>{error}</div> : null

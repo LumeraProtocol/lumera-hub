@@ -1,7 +1,5 @@
 import {
   YStack,
-  H3,
-  Button,
   Dialog,
   Label,
   Input,
@@ -13,7 +11,9 @@ import {
 import { CircleX, Check as CheckIcon, ChevronDown } from '@tamagui/lucide-icons';
 
 import { formatTokenDisplay } from '@/utils/format';
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
+import SectionTitle from '@/components/SectionTitle';
+import AppButton from '@/components/AppButton';
 import { IValidator } from '@/types/validator';
 import AppLink from '@/components/AppLink';
 import { DENOM } from '@/contants/network';
@@ -104,7 +104,7 @@ export default function DelegateModal({
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
               </div>
               <div className='mt-4'>
-                <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! delegate completed successfully.</H3>
+                <SectionTitle className='!text-green-500 !leading-0'>Congratulations! delegate completed successfully.</SectionTitle>
               </div>
               <div className='mt-3'>
                 <AppLink href={`/tx/${transactionHash}`} className='text-lumera-teal hover:text-lumera-green text-sm'>View Transaction</AppLink>
@@ -157,9 +157,15 @@ export default function DelegateModal({
             <Dialog.Title></Dialog.Title>
           </VisuallyHidden>
           <div className='withdraw-main-content relative'>
-            <Loading isLoading={isVoteLoading} />
+            <AppLoading
+              isLoading={isVoteLoading}
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
             <div className='flex justify-between items-center'>
-              <H3 className='text-lumera-label text-[32px]'>Stake</H3>
+              <SectionTitle>Stake</SectionTitle>
               <button className='btn-close-modal cursor-pointer' onClick={onCloseDailogChange}><CircleX /></button>
             </div>
             <div className='mt-1'>
@@ -295,7 +301,7 @@ export default function DelegateModal({
                   </Label>
                 </div>
                 <div className='btn-primary flex justify-end mt-3'>
-                  <Button onPress={onSendClick} disabled={isVoteLoading}>Send</Button>
+                  <AppButton onClick={onSendClick} disabled={isVoteLoading}>Send</AppButton>
                 </div>
               </div>
             </YStack>

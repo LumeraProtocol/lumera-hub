@@ -1,19 +1,17 @@
+import { useMemo } from 'react';
 import {
   YStack,
-  H2,
-  Paragraph,
   Card,
-  H3,
 } from 'tamagui';
-import { Wallet } from '@tamagui/lucide-icons';
 import { fromHex, toBase64 } from '@cosmjs/encoding';
 import { Coins } from 'lucide-react';
 
 import UnbondModal from '@/components/UnbondModal';
 import RedelegateModal from '@/components/RedelegateModal';
-import Skeleton from '@/components/Skeleton';
-import { ConnectWalletButton } from '@/components/ConnectWallet';
+import { AppLoading } from '@/components/Loading';
+import NoWalletConnected from '@/components/NoWalletConnected';
 import AppButton from '@/components/AppButton';
+import SectionTitle from '@/components/SectionTitle';
 import { RATE_VALUE } from '@/contants';
 import { DelegationResponse } from '@/hooks/useAccountInfo';
 import {
@@ -47,6 +45,7 @@ import Activities from './components/Activities';
 interface IStakingScreen {
   address: string;
   delegateOptions: {
+    canDelegate: boolean;
     isVoteLoading: boolean;
     error: string | null;
     optionsAdvanced: {
@@ -74,12 +73,17 @@ interface IStakingScreen {
     onCloseContinueToStakingModal: () => void;
     onSelectValidator: (validator: string) => void;
     onStakingAmountChange: (amount: string) => void;
+    onSwitchWallet: () => void;
   };
   staking: {
     validators: IValidator[];
     totalValidators: string;
     currentTab: string;
     isLoading: boolean;
+    isRefreshing: boolean;
+    refreshProgress: number;
+    lastUpdated: number | null;
+    refreshError: string;
     params: {
       bond_denom: string;
       historical_entries: number;
@@ -121,6 +125,7 @@ interface IStakingScreen {
       customMemo: string,
       rewards: string,
     ) => void;
+    onRefresh: () => Promise<void>;
   };
   accountInfo: AccountInfoData | null;
   claim: {
@@ -242,6 +247,27 @@ export const StakingScreen = ({
 
   const totalPower = calculateTotalPower(getValidators());
 
+  const validatorUptime = useMemo(() => {
+    const signingByAddress = new Map(
+      staking.signingInfos.map((item) => [valconsToBase64(item.address), item]),
+    );
+    const window = Number(staking.slashingParams.signed_blocks_window || 0);
+    const uptimeByOperator = new Map<string, number>();
+
+    for (const validator of [...delegateOptions.validators, ...staking.validators]) {
+      const hex = consensusPubkeyToHexAddress(validator.consensus_pubkey);
+      const signing = hex ? signingByAddress.get(toBase64(fromHex(hex))) : undefined;
+      uptimeByOperator.set(
+        validator.operator_address,
+        signing && window > 0
+          ? (window - Number(signing.missed_blocks_counter)) / window
+          : 0,
+      );
+    }
+
+    return uptimeByOperator;
+  }, [delegateOptions.validators, staking.signingInfos, staking.slashingParams.signed_blocks_window, staking.validators]);
+
   const getMyTotalStaked = () => {
     if (staking.validatorTab === 'my') {
       return accountInfo?.delegations?.reduce((total, item) => Number(item.balance.amount) + total, 0) || 0;
@@ -250,16 +276,7 @@ export const StakingScreen = ({
   }
 
   const getUptime = (validator: IValidator) => {
-    const slashingParams = staking.slashingParams;
-    const signingInfos = staking.signingInfos;
-    const hex = consensusPubkeyToHexAddress(validator.consensus_pubkey);
-    const window = Number(slashingParams.signed_blocks_window || 0);
-    const signing = signingInfos.find((item) => {
-      return toBase64(fromHex(hex)) === valconsToBase64(item.address)
-    });
-    return signing && window > 0
-      ? (window - Number(signing.missed_blocks_counter)) / window
-      : 0
+    return validatorUptime.get(validator.operator_address) ?? 0;
   }
 
   const getTotalRewards = () => {
@@ -347,10 +364,18 @@ export const StakingScreen = ({
             <div className='grid grid-cols-1 md:grid-cols-2 w-full gap-6 mt-6 staking-summary-wrapper relative'>
               <Card elevate size="$4" bordered className='w-full'>
                 <Card.Header padded>
-                  <H3 className='text-lumera-label'>Total Staked LUME</H3>
-                  <div className='text-[40px] font-bold text-white !leading-11'>
+                  <SectionTitle className='mb-0'>Total Staked LUME</SectionTitle>
+                  <div className='text-4xl font-bold text-white leading-11 mt-2'>
                     {staking.isLoading ?
-                      <Skeleton /> : <>
+                      <div className='relative min-h-11'>
+                        <AppLoading
+                          isLoading
+                          className="w-10 h-10 !border-2"
+                          iconWidth={20}
+                          iconHeight={20}
+                          containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                        />
+                      </div> : <>
                         {staking.bondedTokens ? formatToken({
                           amount: `${staking.bondedTokens}`,
                           denom: staking.params.bond_denom,
@@ -362,10 +387,18 @@ export const StakingScreen = ({
               </Card>
               <Card elevate size="$4" bordered className='w-full'>
                 <Card.Header padded>
-                  <H3 className='text-lumera-label'>Staking Rewards APR</H3>
-                  <div className='!text-lumera-green font-bold text-[40px] !leading-11'>
+                  <SectionTitle className='mb-0'>Staking Rewards APR</SectionTitle>
+                  <div className='text-lumera-green font-bold text-4xl leading-11 mt-2'>
                     {staking.isAPRLoading ?
-                      <Skeleton /> : <>
+                      <div className='relative min-h-11'>
+                        <AppLoading
+                          isLoading
+                          className="w-10 h-10 !border-2"
+                          iconWidth={20}
+                          iconHeight={20}
+                          containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                        />
+                      </div> : <>
                         {staking.apr ? staking.apr.toFixed(2) : 0}%
                       </>
                     }
@@ -376,6 +409,7 @@ export const StakingScreen = ({
             <RewardsCalculator
               apr={staking.apr}
               availableAmount={getTotalBalances(accountInfo)}
+              canDelegate={delegateOptions.canDelegate}
               onStakingButtonClick={delegateOptions.onStakingButtonClick}
               onRefreshBalance={onRefreshBalance}
               isLoading={isAccountInfoLoading}
@@ -389,47 +423,50 @@ export const StakingScreen = ({
           </> :
           <div className='mt-6'>
             {!address ?
-              <Card elevate size="$4" bordered className='w-full'>
-                <div className='flex flex-col items-center justify-center min-h-[80vh]'>
-                  <div className="w-20 h-20 rounded-full grid place-items-center staking-icon wallet">
-                    <Wallet size="$3" />
-                  </div>
-                  <H2 className='font-bold text-white text-[32px] leading-none !mt-5 text-center'>Connect Your Wallet</H2>
-                  <Paragraph className='text-base text-lumera-gray mx-auto max-w-[400px] text-center !mt-3'>Please connect your wallet to view this page and interact with the Lumera ecosystem.</Paragraph>
-                  <div className='text-center mt-4'>
-                    <ConnectWalletButton />
-                  </div>
-                </div>
-              </Card> :
+              <NoWalletConnected /> :
               <Card elevate size="$4" bordered className='w-full'>
                 <Card.Header padded>
                   <div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6 mt-6 ">
                       <div>
-                        <p className="text-sm text-gray-400">My Staking Amount</p>
-                        <p className="text-2xl sm:text-3xl font-bold text-white">
-                            {staking.isLoading || isAccountInfoLoading ?
-                              <Skeleton /> : <>
-                                  {formatToken({
-                                  amount: `${getMyTotalStaked()}`,
-                                  denom: staking.params.bond_denom,
-                                }, true, '0,0.[000000]')}
-                              </>
-                            }
-                        </p>
+                        <p className="text-base text-gray-400 mb-2">My Staking Amount</p>
+                        {staking.isLoading || isAccountInfoLoading ?
+                          <div className='relative min-h-9'>
+                            <AppLoading
+                              isLoading
+                              className="w-8 h-8 !border-3"
+                              iconWidth={16}
+                              iconHeight={16}
+                              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-8 h-8 z-50'
+                            />
+                          </div> :
+                          <p className="text-2xl sm:text-3xl font-bold text-white">
+                            {formatToken({
+                              amount: `${getMyTotalStaked()}`,
+                              denom: staking.params.bond_denom,
+                            }, true, '0,0.[000000]')}
+                          </p>
+                        }
                       </div>
                       <div>
-                        <p className="text-sm text-gray-400">Claimable Rewards</p>
-                        <p className="text-2xl sm:text-3xl font-bold text-teal-400">
+                        <p className="text-base text-gray-400 mb-2">Claimable Rewards</p>
                           {staking.isLoading || isAccountInfoLoading ?
-                            <Skeleton /> : <>
+                            <div className='relative min-h-9'>
+                              <AppLoading
+                                isLoading
+                                className="w-8 h-8 !border-3"
+                                iconWidth={16}
+                                iconHeight={16}
+                                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-8 h-8 z-50'
+                              />
+                            </div> :
+                            <p className="text-2xl sm:text-3xl font-bold text-teal-400">
                               {formatToken({
                                 amount: `${getTotalRewards()}`,
                                 denom: staking.params.bond_denom,
                               }, true, '0,0.[000000]')}
-                            </>
+                            </p>
                           }
-                        </p>
                       </div>
                     </div>
                     <AppButton
@@ -499,7 +536,7 @@ export const StakingScreen = ({
       <UnbondModal
         isOpen={unbondOptions.isOpenModal}
         isUnbondLoading={unbondOptions.isUnbondLoading}
-        availableAmount={parseFloat(unbondOptions.availableAmount || '0')}
+        availableAmount={Number(unbondOptions.availableAmount?.replaceAll(',', '') || '0')}
         onAdvancedCheckedChange={unbondOptions.onAdvancedCheckedChange}
         onCloseDailogChange={unbondOptions.onCloseDailogChange}
         onInputChange={unbondOptions.onInputChange}
@@ -514,7 +551,7 @@ export const StakingScreen = ({
       <RedelegateModal
         isOpen={redelegateOptions.isOpenModal}
         isRedelegateLoading={redelegateOptions.isRedelegateLoading}
-        availableAmount={parseFloat(redelegateOptions.availableAmount || '0')}
+        availableAmount={Number(redelegateOptions.availableAmount?.replaceAll(',', '') || '0')}
         onAdvancedCheckedChange={redelegateOptions.onAdvancedCheckedChange}
         onCloseDailogChange={redelegateOptions.onCloseDailogChange}
         onInputChange={redelegateOptions.onInputChange}

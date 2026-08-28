@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   MsgDelegate,
 } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
 
-import * as instance from '@/utils/api';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { DENOM } from '@/contants/network';
 import { extractValidNumber } from '@/utils/helpers';
@@ -11,15 +10,21 @@ import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contan
 import {
   IValidator,
 } from '@/types';
+import { fetchBondedValidators } from '@/utils/staking-validators';
+import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 
 interface UseDepositOptions {
   callback?: () => void;
   customMemo?: string;
   availableAmount?: string;
+  validators?: IValidator[];
+  totalValidators?: string;
+  isValidatorDataLoading?: boolean;
 }
 
 const useDelegate = (options: UseDepositOptions = {}) => {
-  const { address, getClient } = useWalletConnect();
+  const { trackingHubTransaction } = useTrackingHubTransaction();
+  const { address, getClient, isEvm } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
   const [optionsAdvanced, setOptionsAdvanced] = useState({
     senderAddress: address,
@@ -37,22 +42,35 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const [isFetchValidatorLoading, setFetchValidatorLoading] = useState(false);
   const [transactionHash, setTransactionHash] = useState('');
   const [selectedModal, setSelectedModal] = useState('');
+  const effectiveValidators = options.validators ?? validators;
 
-  const fetchValidator = async () => {
+  const fetchValidator = useCallback(async () => {
     setFetchValidatorLoading(true);
     try {
-      const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=1000&status=BOND_STATUS_BONDED&pagination.count_total=true');
+      const data = await fetchBondedValidators();
       setValidators(data.validators);
       setTotalValidators(data.pagination.total);
     } catch (e) {
       console.error('API Error:', e);
     }
     setFetchValidatorLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
-    fetchValidator();
-  }, []);
+    if (options.validators === undefined) {
+      fetchValidator();
+    }
+  }, [fetchValidator, options.validators]);
+
+  useEffect(() => {
+    if (address && !optionsAdvanced.senderAddress) {
+      setOptionsAdvanced(prev => ({
+        ...prev,
+        senderAddress: address,
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address]);
 
   useEffect(() => {
     if (options?.customMemo) {
@@ -80,7 +98,7 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const handleInputChange = (name: string, value: string) => {
     let newOptionsAdvanced = optionsAdvanced;
     if (name === 'validator') {
-      const item = validators.find((v) => v.operator_address === value);
+      const item = effectiveValidators.find((v) => v.operator_address === value);
       if (item) {
         newOptionsAdvanced = {
           ...newOptionsAdvanced,
@@ -101,6 +119,10 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   const handleSendClick = async () => {
     setError('');
     setTransactionHash('');
+    if (isEvm) {
+      setError('Staking requires a Keplr wallet connection.');
+      return;
+    }
     if (!optionsAdvanced?.amount || Number(optionsAdvanced.amount) <= 0) {
       setError('Please enter amount.');
       return
@@ -159,6 +181,12 @@ const useDelegate = (options: UseDepositOptions = {}) => {
         if (options?.callback) {
           options.callback();
         }
+        await trackingHubTransaction({
+          hash: result.transactionHash,
+          creator: address,
+          message_type: 'cosmos.staking.v1beta1.MsgDelegate',
+          price: Number(optionsAdvanced.amount) * RATE_VALUE,
+        });
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unknown error occurred.');
@@ -219,14 +247,15 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   }
 
   return {
+    canDelegate: !isEvm,
     error,
     showAdvanced,
     isLoading,
     optionsAdvanced,
-    validators,
+    validators: effectiveValidators,
     isOpenModal,
-    totalValidators,
-    isFetchValidatorLoading,
+    totalValidators: options.totalValidators ?? totalValidators,
+    isFetchValidatorLoading: options.isValidatorDataLoading ?? isFetchValidatorLoading,
     transactionHash,
     selectedModal,
     handleStakingAmountChange,

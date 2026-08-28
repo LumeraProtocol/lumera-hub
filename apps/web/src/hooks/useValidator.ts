@@ -37,7 +37,7 @@ const useValidator = () => {
       setTotalDelegators(Number(result.total_count));
     } catch (error) {
       console.error(error)
-      setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+      setError((error as Error)?.message ||  'An unknown error occurred.');
     }
     setFetchDelegatorsLoading(false);
   }
@@ -48,7 +48,7 @@ const useValidator = () => {
       const { data } = await instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=1000&status=BOND_STATUS_BONDED&pagination.count_total=true');
       setValidators(data.validators);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+      setError((error as Error)?.message ||  'An unknown error occurred.');
     }
     setFetchValidatorsLoading(false);
   }
@@ -63,7 +63,7 @@ const useValidator = () => {
       setSlashingParams(slashingParamsRes.data.params);
       setSigningInfos(signingInfosRes.data.info);
     } catch (error) {
-      console.error(error instanceof Error ? error.message : 'An unknown error occurred.');
+      console.error((error as Error)?.message ||  'An unknown error occurred.');
     }
     setFetchParamsLoading(false);
   }

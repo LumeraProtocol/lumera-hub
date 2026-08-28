@@ -1,4 +1,5 @@
 import numeral from 'numeral';
+import dayjs from 'dayjs';
 
 import { CHAIN_NAME } from '@/contants/network';
 import { getChains } from '@/utils/helpers';
@@ -153,4 +154,74 @@ export const formatTokenDisplay = (
   }
 
   return result;
+}
+
+const toTruncPrecision3 = (number: number) => {
+  let result: number;
+  if (number < 10) {
+    result = Math.trunc(number * 100) / 100;
+  } else if (number < 100) {
+    result = Math.trunc(number * 10) / 10;
+  } else if (number < 1000) {
+    result = Math.trunc(number);
+  } else {
+    result = Math.trunc(number);
+  }
+
+  if (number < 0.1) {
+    return (Math.trunc(number * 10) / 10).toString();
+  } else if (number < 1) {
+    return (Math.trunc(number * 100) / 100).toString();
+  }
+  return result.toString();
+}
+
+export const formatBytes = (bytes: number, fractionDigits = 0) => {
+  if (bytes < 1024) {
+    return bytes + ' Bytes';
+  }
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  let i = Math.floor(Math.log(bytes) / Math.log(1024));
+  let result = bytes / Math.pow(1024, i);
+  if (result >= 1000) {
+    i++;
+    result /= 1024;
+  }
+  return fractionDigits > 0 ? result.toFixed(fractionDigits) : toTruncPrecision3(result) + ' ' + sizes[i];
+};
+
+export const formatKb = (bytes: number) => {
+  if (bytes < 1024) {
+    return bytes + ' KB';
+  }
+  const sizes = ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  let i = Math.floor(Math.log(bytes) / Math.log(1024));
+  let result = bytes / Math.pow(1024, i);
+  if (result >= 1000) {
+    i++;
+    result /= 1024;
+  }
+  return toTruncPrecision3(result) + ' ' + sizes[i];
+};
+
+export const convertDateToTracking = (date: string | null) => {
+  if (!date) {
+    return '';
+  }
+  return dayjs(date).format('YYYY-MM-DD')
+}
+
+export const formatMessageType = (type: string) => {
+  const parts = type.split('.');
+  const methodName = parts[parts.length - 1];
+
+  const cleanName = methodName.startsWith('Msg')
+    ? methodName.slice(3)
+    : methodName;
+
+  const words = cleanName
+    .replace(/([A-Z])/g, ' $1')
+    .trim();
+
+  return words;
 }

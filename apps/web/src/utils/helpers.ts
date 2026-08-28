@@ -1,4 +1,5 @@
 import numeral from 'numeral';
+import dayjs from 'dayjs';
 import {
   fromBase64,
   fromBech32,
@@ -6,12 +7,42 @@ import {
   toHex,
 } from '@cosmjs/encoding';
 import { Ripemd160, sha256 } from '@cosmjs/crypto';
-import chainMainnet from 'chain-registry/mainnet'
-import chainTestnet from 'chain-registry/testnet';
+import { assetList as mainnetAssets, chain as mainnetChain } from 'chain-registry/mainnet/lumera';
+import { assetList as testnetAssets, chain as testnetChain } from 'chain-registry/testnet/lumeratestnet';
 export { parseCoins } from '@cosmjs/stargate';
 import { MsgDelegate } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import updateLocale from 'dayjs/plugin/updateLocale';
+
+dayjs.extend(relativeTime);
+dayjs.extend(updateLocale);
+dayjs.updateLocale('en', {
+  relativeTime: {
+    future: 'in %s',
+    past: '%s ago',
+    s: '%ds',
+    m: '1m',
+    mm: '%dm',
+    h: 'an hour',
+    hh: '%d hours',
+    d: 'a day',
+    dd: '%d days',
+    M: 'a month',
+    MM: '%d months',
+    y: 'a year',
+    yy: '%d years',
+  },
+});
 
 import { IValidator } from '@/types/validator';
+import {
+  CHAIN_ID,
+  CHAIN_NAME,
+  DENOM,
+  NETWORK_PROFILE,
+  REST_AI_URL,
+  RPC_ENDPOINT,
+} from '@/contants/network';
 
 export const getMessages = (msgs: { '@type'?: string; typeUrl?: string }[]) => {
   if (msgs) {
@@ -82,13 +113,22 @@ export const mapAmount = (events:{type: string, attributes: {key: string, value:
     .map(x => x.key==='amount'? x.value : String.fromCharCode(...fromBase64(x.value)))
 }
 
+/** Sums the micro-LUME (`DENOM`) coins of a balance/reward list, ignoring
+ * every other denomination. */
+export const sumMicroLumeAmounts = (
+  coins: Array<{ denom: string; amount: string }> | null | undefined,
+) => (coins ?? []).reduce(
+  (total, coin) => coin.denom === DENOM ? total + Number(coin.amount) : total,
+  0,
+);
+
 export const getChains = () => {
-  if (process.env.NEXT_PUBLIC_NODE_ENV === 'devnet') {
+  if (NETWORK_PROFILE === 'devnet') {
     const lumeraChain = {
-      chainName: 'lumera-testnet',
+      chainName: CHAIN_NAME,
       status: 'live',
       networkType: 'testnet',
-      chainId: 'lumera-devnet-1',
+      chainId: CHAIN_ID,
       chainType: "cosmos",
       prettyName: 'Lumera Devnet',
       chainSymbol: 'lumera-testnet',
@@ -100,7 +140,7 @@ export const getChains = () => {
       fees: {
         feeTokens: [
           {
-            denom: 'ulume',
+            denom: DENOM,
             fixedMinGasPrice: '0.025',
             lowGasPrice: '0.025',
             averageGasPrice: '0.025',
@@ -114,13 +154,13 @@ export const getChains = () => {
       apis: {
         rpc: [
           {
-            address: 'https://rpc.pastel.network',
+            address: RPC_ENDPOINT,
             provider: 'lumera',
           },
         ],
         rest: [
           {
-            address: 'https://lcd.pastel.network',
+            address: REST_AI_URL,
             provider: 'lumera',
           },
         ],
@@ -135,13 +175,13 @@ export const getChains = () => {
       features: ['cosmwasm'],
     };
     const lumeraAssets = {
-      chainName: 'lumera-testnet',
+      chainName: CHAIN_NAME,
       assets: [
         {
           description: 'Lumera native token on Lumera Devnet',
           denomUnits: [
             {
-              denom: 'ulume',
+              denom: DENOM,
               exponent: 0,
               aliases: ['microlume'],
             },
@@ -169,15 +209,25 @@ export const getChains = () => {
       chains: [lumeraChain],
     }
   }
-  if (process.env.NEXT_PUBLIC_NODE_ENV === 'dev') {
-    return {
-      assetLists: chainTestnet.assetLists,
-      chains: chainTestnet.chains,
-    }
-  }
+
+  const { chain, assets } = NETWORK_PROFILE === 'testnet'
+    ? { chain: testnetChain, assets: testnetAssets }
+    : { chain: mainnetChain, assets: mainnetAssets };
+
   return {
-    assetLists: chainMainnet.assetLists,
-    chains: chainMainnet.chains,
+    assetLists: [{ ...assets, chainName: CHAIN_NAME }],
+    chains: [
+      {
+        ...chain,
+        chainName: CHAIN_NAME,
+        chainId: CHAIN_ID,
+        apis: {
+          ...chain.apis,
+          rpc: [{ address: RPC_ENDPOINT, provider: 'Lumera Hub profile' }],
+          rest: [{ address: REST_AI_URL, provider: 'Lumera Hub profile' }],
+        },
+      },
+    ],
   }
 }
 
@@ -218,19 +268,11 @@ export const convertUint8ArrayToJson = (encodedBytes: Uint8Array) => {
 export const getSimplifiedType = (type: string) => {
   if (type.startsWith('image')) return 'Image';
   if (type.startsWith('video')) return 'Video';
-  if (type === 'pdf') return 'PDF';
-  if (['zip', 'x-zip-compressed', 'rar', '7z'].includes(type)) return 'Archive';
+  if (type === 'document') return 'Document';
+  if (type === 'program') return 'Program';
+  if (['archive'].includes(type)) return 'Archive';
   return 'Other';
 }
-
-export const formatBytes = (bytes: number, decimals = 2) => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-};
 
 export const extractValidNumber = (value: string) => {
   let cleaned = value.replace(/[^0-9.]/g, '');
@@ -241,4 +283,143 @@ export const extractValidNumber = (value: string) => {
   }
 
   return cleaned;
+}
+
+export const isValidIPv4 = (ip: string) => {
+  try {
+    const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    return ipv4Regex.test(ip) && ip !== '0.0.0.0';
+  } catch {
+    return false;
+  }
+}
+
+export const delay = (time: number) => {
+  return new Promise((resolve) => setTimeout(resolve, time));
+};
+
+export const generateUrlCheck = (domain: string, loyaltyRuleId: string, actionType: string) => {
+  let path = `${domain}loyalty/${loyaltyRuleId}`;
+  if (actionType === 'referralLink' || actionType === 'inviteUsersUploadToCascade') {
+    path = `${domain}referral/${loyaltyRuleId}`;
+  }
+  let prefix = '';
+  switch (actionType) {
+    case 'staked':
+      prefix = '/stake';
+      break;
+    case 'delegate':
+      prefix = '/delegate';
+      break;
+    case 'redelegated':
+      prefix = '/redelegate';
+      break;
+    case 'balance':
+      prefix = '/balance';
+      break;
+    case 'claim':
+      prefix = '/claim';
+      break;
+    case 'supernode':
+      prefix = '/supernode';
+      break;
+    case 'send':
+      prefix = '/send';
+      break;
+    case 'sendTransactions':
+      prefix = '/send-transactions';
+      break;
+    case 'interactModules':
+      prefix = '/interact-modules';
+      break;
+    case 'firstTimeDelegation':
+      prefix = '/first-time-delegation';
+      break;
+    case 'stakeLUME':
+      prefix = '/stake-lume';
+      break;
+    case 'decentralizationStake':
+      prefix = '/decentralization-stake';
+      break;
+    case 'claimRewards':
+      prefix = '/claim-rewards';
+      break;
+    case 'compoundRewards':
+      prefix = '/compound-rewards';
+      break;
+    case 'firstUploadCascade':
+      prefix = '/first-upload-cascade';
+      break;
+    case 'uploadedToCascade':
+      prefix = '/uploaded-to-cascade';
+      break;
+    case 'uptime':
+      prefix = '/uptime';
+      break;
+    case 'storageRequests':
+      prefix = '/storage-requests';
+      break;
+    case 'referralLink':
+      prefix = '/referral-link';
+      break;
+    case 'inviteUsersUploadToCascade':
+      prefix = '/invite-users-upload-to-cascade';
+      break;
+    case 'stakeForFullSeason':
+      prefix = '/stake-for-full-season';
+      break;
+    case 'textInput':
+      prefix = '/text-input';
+      break;
+  }
+  if (actionType === 'connect') {
+    return domain;
+  }
+  return `${path}${prefix}`;
+}
+
+export const isValidEmail = (email: string) => {
+  if (!email || email.length > 254) return false;
+
+  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  return regex.test(email.trim());
+}
+
+export const validator = (address: string, validators: IValidator[]) => {
+  if (!address) {
+    return {
+      name: address,
+      identity: '',
+    };
+  }
+
+  const txt = toHex(fromBase64(address)).toUpperCase();
+  const validator = validators.find(
+    (x) => consensusPubkeyToHexAddress(x.consensus_pubkey) === txt
+  );
+  return {
+    name: validator?.description?.moniker || '',
+    identity: validator?.description?.identity || '',
+  };
+}
+
+export const toDay = (time?: string | number| Date, format = 'long') => {
+  if (!time) return '';
+  if (format === 'long') {
+    return dayjs(time).format('YYYY-MM-DD HH:mm');
+  }
+  if (format === 'date') {
+    return dayjs(time).format('YYYY-MM-DD');
+  }
+  if (format === 'time') {
+    return dayjs(time).format('HH:mm:ss');
+  }
+  if (format === 'from') {
+    return dayjs(time).fromNow();
+  }
+  if (format === 'to') {
+    return dayjs(time).toNow();
+  }
+  return dayjs(time).format('YYYY-MM-DD HH:mm:ss');
 }

@@ -38,3 +38,14 @@ yarn-error.log*
 *.pem
 
 #.tamagui/
+
+# database file
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Runtime-generated Supernode location cache
+/apps/web/data/supernodes.json
+
+# Superdesign local design context and temporary templates
+.superdesign/

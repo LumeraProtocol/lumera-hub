@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { H3, Card } from 'tamagui';
+import { Card } from 'tamagui';
 import { fromBase64, toHex } from '@cosmjs/encoding';
 import { RefreshCcw } from 'lucide-react';
 import dayjs from 'dayjs';
 import { decodeTxRaw } from '@cosmjs/proto-signing';
 
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
+import SectionTitle from '@/components/SectionTitle';
 import { IFullBlock } from '@/types';
 import { IValidator } from '@/types/validator';
 import { consensusPubkeyToHexAddress, hashTx, getMessages } from '@/utils/helpers';
@@ -201,230 +202,241 @@ export const BlockDetailsScreen = ({
   }
 
   return (
-    <div className="space-y-8 relative text-lumera-label">
-      <Loading isLoading={isLoading} />
-      <Card elevate size="$4" bordered className='w-full'>
-        <Card.Header padded>
-          <H3 className='text-lumera-label'>#{block?.block?.header?.height}</H3>
-          <div className='mt-3'>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Hash</div>
-              <div className='w-full'>
-                <HexOutput hash={block?.block_id?.hash || ''} />
+    <div className="space-y-8 relative text-lumera-label text-base">
+       {isLoading ?
+        <div className='relative min-h-[76vh]'>
+          <AppLoading
+            isLoading
+            className="w-10 h-10 !border-2"
+            iconWidth={20}
+            iconHeight={20}
+            containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+          />
+        </div> : <>
+          <Card elevate size="$4" bordered className='w-full'>
+            <Card.Header padded>
+              <SectionTitle className='mb-0'>#{block?.block?.header?.height}</SectionTitle>
+              <div className='mt-3'>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Hash</div>
+                  <div className='w-full'>
+                    <HexOutput hash={block?.block_id?.hash || ''} />
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Part Set Header</div>
+                  <div className="w-full truncate">
+                    <PartSetHeader
+                      hash={block?.block_id?.part_set_header?.hash || ''}
+                      total={block?.block_id?.part_set_header?.total || 0}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Part Set Header</div>
-              <div className="w-full truncate">
-                <PartSetHeader
-                  hash={block?.block_id?.part_set_header?.hash || ''}
-                  total={block?.block_id?.part_set_header?.total || 0}
-                />
-              </div>
-            </div>
-          </div>
-        </Card.Header>
-      </Card>
+            </Card.Header>
+          </Card>
 
-      <Card elevate size="$4" bordered className='w-full mt-5'>
-        <Card.Header padded>
-          <H3 className='text-lumera-label'>Block Header</H3>
-          <div className='mt-3'>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Version</div>
-              <div className="w-full truncate">
-                <Version
-                  app={block?.block?.header?.version?.app || ''}
-                  block={block?.block?.header?.version?.block  || ''}
-                />
+          <Card elevate size="$4" bordered className='w-full mt-5'>
+            <Card.Header padded>
+              <SectionTitle className='mb-0'>Block Header</SectionTitle>
+              <div className='mt-3'>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Version</div>
+                  <div className="w-full truncate">
+                    <Version
+                      app={block?.block?.header?.version?.app || ''}
+                      block={block?.block?.header?.version?.block  || ''}
+                    />
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Chain Id</div>
+                  <div className="w-full truncate">
+                    {block?.block?.header?.chain_id|| ''}
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Height</div>
+                  <div className="w-full truncate">
+                    {block?.block?.header?.height|| ''}
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Time</div>
+                  <div className="w-full truncate">
+                    {dayjs(block?.block?.header?.time).format('MMMM DD, YYYY')} at {dayjs(block?.block?.header?.time).format('hh:mm:ss A')}
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Last Block Id</div>
+                  <div className="w-full truncate">
+                    <LastBlockID
+                      hash={block?.block?.header?.last_block_id?.hash || ''}
+                      part_set_header={block?.block?.header?.last_block_id?.part_set_header}
+                    />
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Last Commit Hash</div>
+                  <div className="w-full truncate">
+                    <HexOutput hash={block?.block?.header?.last_commit_hash || ''} />
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Data Hash</div>
+                  <div className="w-full truncate">
+                    <HexOutput hash={block?.block?.header?.data_hash || ''} />
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Validators Hash</div>
+                  <div className="w-full truncate">
+                    <HexOutput hash={block?.block?.header?.validators_hash || ''} />
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Next Validators Hash</div>
+                  <div className="w-full truncate">
+                    <HexOutput hash={block?.block?.header?.next_validators_hash || ''} />
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Consensus Hash</div>
+                  <div className="w-full truncate">
+                    <HexOutput hash={block?.block?.header?.consensus_hash || ''} />
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>App Hash</div>
+                  <div className="w-full truncate">
+                    <HexOutput hash={block?.block?.header?.app_hash || ''} />
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Last Results Hash</div>
+                  <div className="w-full truncate">
+                    <HexOutput hash={block?.block?.header?.last_results_hash || ''} />
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Evidence Hash</div>
+                  <div className="w-full truncate">
+                    <HexOutput hash={block?.block?.header?.evidence_hash || ''} />
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Proposer Address</div>
+                  <div className="w-full truncate">
+                    {getValidatorName(block?.block?.header?.proposer_address || '')}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Chain Id</div>
-              <div className="w-full truncate">
-                {block?.block?.header?.chain_id|| ''}
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Height</div>
-              <div className="w-full truncate">
-                {block?.block?.header?.height|| ''}
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Time</div>
-              <div className="w-full truncate">
-                {dayjs(block?.block?.header?.time).format('MMMM DD, YYYY')} at {dayjs(block?.block?.header?.time).format('hh:mm:ss A')}
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Last Block Id</div>
-              <div className="w-full truncate">
-                <LastBlockID
-                  hash={block?.block?.header?.last_block_id?.hash || ''}
-                  part_set_header={block?.block?.header?.last_block_id?.part_set_header}
-                />
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Last Commit Hash</div>
-              <div className="w-full truncate">
-                <HexOutput hash={block?.block?.header?.last_commit_hash || ''} />
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Data Hash</div>
-              <div className="w-full truncate">
-                <HexOutput hash={block?.block?.header?.data_hash || ''} />
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Validators Hash</div>
-              <div className="w-full truncate">
-                <HexOutput hash={block?.block?.header?.validators_hash || ''} />
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Next Validators Hash</div>
-              <div className="w-full truncate">
-                <HexOutput hash={block?.block?.header?.next_validators_hash || ''} />
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Consensus Hash</div>
-              <div className="w-full truncate">
-                <HexOutput hash={block?.block?.header?.consensus_hash || ''} />
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>App Hash</div>
-              <div className="w-full truncate">
-                <HexOutput hash={block?.block?.header?.app_hash || ''} />
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Last Results Hash</div>
-              <div className="w-full truncate">
-                <HexOutput hash={block?.block?.header?.last_results_hash || ''} />
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Evidence Hash</div>
-              <div className="w-full truncate">
-                <HexOutput hash={block?.block?.header?.evidence_hash || ''} />
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Proposer Address</div>
-              <div className="w-full truncate">
-                {getValidatorName(block?.block?.header?.proposer_address || '')}
-              </div>
-            </div>
-          </div>
-        </Card.Header>
-      </Card>
+            </Card.Header>
+          </Card>
 
-      <Card elevate size="$4" bordered className='w-full mt-5'>
-        <Card.Header padded>
-          <H3 className='text-lumera-label'>Transactions</H3>
-          <div className='mt-3'>
-            <div className="overflow-x-auto">
-              {block?.block?.data?.txs?.length ?
-                <table className="table w-full md:min-w-[550px]">
-                  <thead className='hidden md:table-header-group'>
-                    <tr className='text-sm'>
-                      <th align='left' className='w-1/2'>Hash</th>
-                      <th align='left' className='w-1/4'>Msgs</th>
-                      <th align='left' className='w-1/4'>Memo</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm">
-                    {block.block.data.txs.map((t) => {
-                      const hash = hashTx(fromBase64(t));
-                      const tx = decodeTxRaw(fromBase64(t));
-                      return (
-                        <tr key={hash} className='flex flex-col gap-1 md:table-row'>
-                          <td>
-                            <div className="md:hidden font-semibold text-gray-500 mr-2">Hash: </div>
-                            <AppLink href={`/tx/${hash}`}>{formatAddress(hash, 15, -6)}</AppLink>
-                          </td>
-                          <td className='!py-0'>
-                            <div className="md:hidden font-semibold text-gray-500 mr-2">Msgs: </div>
-                            <span>{getMessages(tx.body.messages)}</span>
-                          </td>
-                          <td>
-                            <div className="md:hidden font-semibold text-gray-500 mr-2">Memo: </div>
-                            <span>{tx.body.memo}</span>
-                          </td>
+          <Card elevate size="$4" bordered className='w-full mt-5'>
+            <Card.Header padded>
+              <SectionTitle className='mb-0'>Transactions</SectionTitle>
+              <div className='mt-3'>
+                <div className="overflow-x-auto">
+                  {block?.block?.data?.txs?.length ?
+                    <table className="table w-full md:min-w-[550px]">
+                      <thead className='hidden md:table-header-group'>
+                        <tr className='text-sm'>
+                          <th align='left' className='w-1/2'>Hash</th>
+                          <th align='left' className='w-1/4'>Msgs</th>
+                          <th align='left' className='w-1/4'>Memo</th>
                         </tr>
-                      )
-                    })}
-                  </tbody>
-                </table> :
-                <div className="text-center">No Transactions</div>
-              }
-            </div>
-          </div>
-        </Card.Header>
-      </Card>
+                      </thead>
+                      <tbody className="text-sm">
+                        {block.block.data.txs.map((t, index) => {
+                          const hash = hashTx(fromBase64(t));
+                          const tx = decodeTxRaw(fromBase64(t));
+                          return (
+                            <tr key={hash} className={`flex flex-col gap-1 md:table-row ${index % 2 === 0 ? '!bg-gray-900' : ''} hover:!bg-gray-800/60 transition-colors`}>
+                              <td>
+                                <div className="md:hidden font-semibold text-gray-500 mr-2">Hash: </div>
+                                <AppLink href={`/tx/${hash}`}>{formatAddress(hash, 15, -6)}</AppLink>
+                              </td>
+                              <td className='!py-0'>
+                                <div className="md:hidden font-semibold text-gray-500 mr-2">Msgs: </div>
+                                <span>{getMessages(tx.body.messages)}</span>
+                              </td>
+                              <td>
+                                <div className="md:hidden font-semibold text-gray-500 mr-2">Memo: </div>
+                                <span>{tx.body.memo}</span>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table> :
+                    <div className="text-center">No Transactions</div>
+                  }
+                </div>
+              </div>
+            </Card.Header>
+          </Card>
 
-      <Card elevate size="$4" bordered className='w-full mt-5'>
-        <Card.Header padded>
-          <H3 className='text-lumera-label'>Last Commit</H3>
-          <div className='mt-3'>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Height</div>
-              <div className="w-full truncate">
-                {block?.block?.last_commit?.height}
+          <Card elevate size="$4" bordered className='w-full mt-5'>
+            <Card.Header padded>
+              <SectionTitle className='mb-0'>Last Commit</SectionTitle>
+              <div className='mt-3'>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Height</div>
+                  <div className="w-full truncate">
+                    {block?.block?.last_commit?.height}
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Round</div>
+                  <div className="w-full truncate">
+                    {block?.block?.last_commit?.round}
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Block Id</div>
+                  <div className="w-full truncate">
+                    <LastBlockID
+                      hash={block?.block?.last_commit?.block_id?.hash || ''}
+                      part_set_header={block?.block?.last_commit?.block_id?.part_set_header}
+                    />
+                  </div>
+                </div>
+                <div className='flex items-center flex-col md:flex-row py-3 px-4'>
+                  <div className='w-full md:w-52 text-gray-500'>Signatures</div>
+                  <div className="overflow-auto max-h-[380px] max-w-full">
+                    <table className="table w-full">
+                      <thead>
+                        <tr className='text-sm'>
+                          <th align='left'>Block Id Flag</th>
+                          <th align='left'>Validator Address	</th>
+                          <th align='left'>Timestamp</th>
+                          <th align='left'>Signature</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm">
+                        {block?.block?.last_commit?.signatures?.map((item, index) => (
+                          <tr key={index}>
+                            <td>{item.block_id_flag}</td>
+                            <td>{getValidatorName(item.validator_address)}</td>
+                            <td className='whitespace-nowrap'>
+                              {dayjs(item.timestamp).format('MMMM DD, YYYY')} at {dayjs(item.timestamp).format('hh:mm:ss A')}
+                            </td>
+                            <td>
+                              <HexOutput hash={item.signature} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Round</div>
-              <div className="w-full truncate">
-                {block?.block?.last_commit?.round}
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row border-b border-lumera-navy py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Block Id</div>
-              <div className="w-full truncate">
-                <LastBlockID
-                  hash={block?.block?.last_commit?.block_id?.hash || ''}
-                  part_set_header={block?.block?.last_commit?.block_id?.part_set_header}
-                />
-              </div>
-            </div>
-            <div className='flex items-center flex-col md:flex-row py-3 px-4'>
-              <div className='w-full md:w-52 text-gray-500'>Signatures</div>
-              <div className="overflow-auto max-h-[380px] max-w-full">
-                <table className="table w-full">
-                  <thead>
-                    <tr className='text-sm'>
-                      <th align='left'>Block Id Flag</th>
-                      <th align='left'>Validator Address	</th>
-                      <th align='left'>Timestamp</th>
-                      <th align='left'>Signature</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm">
-                    {block?.block?.last_commit?.signatures?.map((item, index) => (
-                      <tr key={index}>
-                        <td>{item.block_id_flag}</td>
-                        <td>{getValidatorName(item.validator_address)}</td>
-                        <td className='whitespace-nowrap'>
-                          {dayjs(item.timestamp).format('MMMM DD, YYYY')} at {dayjs(item.timestamp).format('hh:mm:ss A')}
-                        </td>
-                        <td>
-                          <HexOutput hash={item.signature} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </Card.Header>
-      </Card>
+            </Card.Header>
+          </Card>
+        </>
+      }
     </div>
   )
 }

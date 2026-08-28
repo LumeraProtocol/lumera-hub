@@ -5,6 +5,7 @@ interface IWalletState {
   address: string;
   isConnected: boolean;
   walletName: string;
+  preferredWalletName: string;
   isModalOpen: boolean;
 }
 
@@ -13,6 +14,7 @@ const initialState: IWalletState = {
   isConnected: false,
   isModalOpen: false,
   walletName: '',
+  preferredWalletName: '',
 };
 
 type TAddressAction = {
@@ -25,6 +27,7 @@ type TConnectedAction = {
 
 type TModalOpenAction = {
   status: boolean;
+  preferredWalletName?: string;
 };
 
 type TWalletnameAction = {
@@ -46,6 +49,12 @@ export const walletSlice = createSlice({
     },
     setModalOpen: (state, { payload }: PayloadAction<TModalOpenAction>) => {
       state.isModalOpen = payload.status;
+      // Opening without an explicit target keeps whatever target is already
+      // stored, so a programmatic re-open cannot clear a switch the user has
+      // in progress. Closing always clears it.
+      state.preferredWalletName = payload.status
+        ? payload.preferredWalletName ?? state.preferredWalletName
+        : '';
     },
   },
 });

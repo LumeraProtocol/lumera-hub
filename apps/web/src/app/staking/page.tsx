@@ -10,10 +10,11 @@ import useStaking from '@/hooks/useStaking';
 import useAccountInfo from '@/hooks/useAccountInfo';
 import useUnbond from '@/hooks/useUnbond';
 import useRedelegate from '@/hooks/useRedelegate';
+import { KEPLR_WALLET_NAME } from '@/utils/wallet-selection';
 
 export default function Page() {
-  const { address } = useWalletConnect();
-  const staking = useStaking(address);
+  const { address, isEvm, openConnectView } = useWalletConnect();
+  const staking = useStaking(address, isEvm);
   const {
     loading,
     accountInfo,
@@ -30,9 +31,13 @@ export default function Page() {
     handleToggleClaimModal,
     handleCloseCongratulationsModal,
   } = useAccountInfo();
+
   const delegate = useDelegate({
     availableAmount: `${getTotalBalances(accountInfo)}`,
     callback: fetchData,
+    validators: staking.activeValidators,
+    totalValidators: staking.totalValidators,
+    isValidatorDataLoading: staking.isLoading,
   });
   const unbond = useUnbond({
     callback: () => {
@@ -40,6 +45,7 @@ export default function Page() {
       fetchData();
     },
   });
+
   const redelegate = useRedelegate({
     callback: () => {
       staking.fetchUnbondingDelegations();
@@ -63,6 +69,7 @@ export default function Page() {
           isAccountInfoLoading={loading}
           onRefreshBalance={fetchData}
           delegateOptions={{
+            canDelegate: delegate.canDelegate,
             isVoteLoading: delegate.isLoading,
             error: delegate.error,
             optionsAdvanced: delegate.optionsAdvanced,
@@ -83,6 +90,10 @@ export default function Page() {
             onCloseContinueToStakingModal: delegate.handleCloseContinueToStakingModal,
             onSelectValidator: delegate.handleSelectValidator,
             onStakingAmountChange: delegate.handleStakingAmountChange,
+            // The shared connect entry point handles the non-EVM profile
+            // (where the redux-driven picker is not mounted) by opening the
+            // interchain-kit modal instead.
+            onSwitchWallet: () => openConnectView(KEPLR_WALLET_NAME),
           }}
           staking={{
             totalValidators: staking.totalValidators,
@@ -90,6 +101,10 @@ export default function Page() {
             currentTab: staking.currentTab,
             params: staking.params,
             isLoading: staking.isLoading,
+            isRefreshing: staking.isRefreshing,
+            refreshProgress: staking.refreshProgress,
+            lastUpdated: staking.lastUpdated,
+            refreshError: staking.error,
             slashingParams: staking.slashingParams,
             signingInfos: staking.signingInfos,
             validatorTab: staking.validatorTab,
@@ -106,6 +121,7 @@ export default function Page() {
             handleOpenModal: staking.handleOpenModal,
             handleCloseModal: staking.handleCloseModal,
             handleShowConfirmModal: staking.handleShowConfirmModal,
+            onRefresh: staking.refreshOverview,
           }}
           claim={{
             onClaimButtonClick: handleClaimButtonClick,

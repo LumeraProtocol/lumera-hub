@@ -1,0 +1,207 @@
+import { Card } from 'tamagui';
+import ReactECharts from 'echarts-for-react';
+import dayjs from 'dayjs';
+
+import SectionTitle from '@/components/SectionTitle';
+import { AppLoading } from '@/components/Loading';
+import { ITracking } from '@/hooks/admin/useTracking';
+import { useSelector } from '@/redux/hooks';
+
+interface ICascadeChart {
+  isLoading: boolean;
+  trackings: ITracking[];
+}
+
+export default function CascadeChart({
+  isLoading,
+  trackings,
+}: ICascadeChart) {
+  const { startDate, endDate } = useSelector((state) => state.admin);
+
+  const getOption = () => {
+    let dates: string[] = [];
+    let data1: number[] = [];
+    let data2: number[] = [];
+
+    const end = dayjs(endDate);
+    const start = dayjs(startDate);
+    const diff = end.diff(start, 'day');
+    for (let i = 0; i < diff; i++) {
+      const currentDate = dayjs(start).add(i, 'day').format('YYYY-MM-DD');
+      const item = trackings.find((t) => t.date === currentDate);
+      dates.push(dayjs(start).add(i, 'day').format('MM/DD/YYYY'));
+      if (item) {
+        data1.push(item.cascade_upload);
+        data2.push(item.cascade_download);
+      } else {
+        data1.push(0);
+        data2.push(0);
+      }
+    }
+
+    return {
+      tooltip: {
+        trigger: 'axis',
+        formatter: function (params: any) {
+          let uploadHtml = '';
+          let downloadHtml = '';
+          params.forEach((param: any, index: number) => {
+            const tracking = trackings[param.dataIndex];
+            if (index === 0) {
+              uploadHtml += `
+                <div class="text-sm mt-1">${param.marker} <span>${param.seriesName}</span>: <span class="font-bold">${param.value}</span></div>
+                <ul class="mt-1 pl-3 list-inside list-disc">
+                  <li class="flex justify-between gap-6">
+                    <span>- Total images:</span>
+                    <span class="font-bold">${tracking?.cascade_image || 0} files</span>
+                  </li>
+                  <li class="flex justify-between gap-6">
+                    <span>- Total videos:</span>
+                    <span class="font-bold">${tracking?.cascade_video || 0} files</span>
+                  </li>
+                  <li class="flex justify-between gap-6">
+                    <span>- Total programs:</span>
+                    <span class="font-bold">${tracking?.cascade_program || 0} files</span>
+                  </li>
+                  <li class="flex justify-between gap-6">
+                    <span>- Total archives:</span>
+                    <span class="font-bold">${tracking?.cascade_archive || 0} files</span>
+                  </li>
+                  <li class="flex justify-between gap-6">
+                    <span>- Total docs:</span>
+                    <span class="font-bold">${tracking?.cascade_document || 0} files</span>
+                  </li>
+                  <li class="flex justify-between gap-6">
+                    <span>- Total other:</span>
+                    <span class="font-bold">${tracking?.cascade_other || 0} files</span>
+                  </li>
+                </ul>
+              `;
+            } else {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const cascadeDownloadExtra: any = tracking?.cascade_download_extra;
+              const download = cascadeDownloadExtra ? JSON.parse(cascadeDownloadExtra) : null;
+              downloadHtml += `
+                <div class="text-sm mt-1">${param.marker} <span>${param.seriesName}</span>: <span class="font-bold">${param.value}</span></div>
+                <ul class="mt-1 pl-3 list-inside list-disc">
+                  <li class="flex justify-between gap-6">
+                    <span>- Total images:</span>
+                    <span class="font-bold">${download?.image || 0} files</span>
+                  </li>
+                  <li class="flex justify-between gap-6">
+                    <span>- Total videos:</span>
+                    <span class="font-bold">${download?.video || 0} files</span>
+                  </li>
+                  <li class="flex justify-between gap-6">
+                    <span>- Total programs:</span>
+                    <span class="font-bold">${download?.program || 0} files</span>
+                  </li>
+                  <li class="flex justify-between gap-6">
+                    <span>- Total archives:</span>
+                    <span class="font-bold">${download?.archive || 0} files</span>
+                  </li>
+                  <li class="flex justify-between gap-6">
+                    <span>- Total docs:</span>
+                    <span class="font-bold">${download?.document || 0} files</span>
+                  </li>
+                  <li class="flex justify-between gap-6">
+                    <span>- Total other:</span>
+                    <span class="font-bold">${download?.other || 0} files</span>
+                  </li>
+                </ul>
+              `;
+            }
+          });
+
+          return `
+            <div>
+              <div class="text-sm">${params[0].name}</div>
+              <div class="flex items-start gap-6">
+                <div class="border-r border-gray-200 pr-6">
+                  ${uploadHtml}
+                </div>
+                <div>
+                  ${downloadHtml}
+                </div>
+              </div>
+            </div>
+          `;
+        },
+      },
+      grid: {
+        top: 8,
+        bottom: 2,
+        left: 10,
+        right: 10,
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        splitLine: {
+          show: false,
+        },
+        data: dates,
+        axisLabel: {
+          showMinLabel: true,
+          showMaxLabel: true,
+          interval: Math.floor((data1.length - 1) / 2),
+        },
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: {
+          lineStyle: {
+            color: '#2a323f',
+          },
+        },
+      },
+      series: [
+        {
+          name: 'Cascade upload',
+          type: 'line',
+          symbol: 'none',
+          itemStyle: {
+            color: '#47C78A'
+          },
+          data: data1,
+        },
+        {
+          name: 'Cascade download',
+          type: 'line',
+          symbol: 'none',
+          itemStyle: {
+            color: '#e77975'
+          },
+          data: data2,
+        }
+      ]
+    };
+  }
+
+  return (
+    <Card elevate size="$4" bordered className='!flex-1 !basis-1/3 !min-w-0'>
+      <Card.Header padded>
+        <SectionTitle className="mb-0">Cascade upload & download</SectionTitle>
+      </Card.Header>
+      <div className='p-5'>
+        {isLoading ?
+          <div className='min-h-40 relative w-full'>
+            <AppLoading
+              isLoading
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
+          </div> :
+          <>
+            {trackings?.length ?
+              <ReactECharts option={getOption()} className='w-full' style={{ height: '160px' }} /> :
+              <div className='text-lg flex items-center justify-center w-full h-full min-h-40'>No data</div>
+            }
+          </>
+        }
+      </div>
+    </Card>
+  );
+}

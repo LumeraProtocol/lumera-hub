@@ -12,21 +12,28 @@ import { ChevronLeft } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
 import ReactPaginate from 'react-paginate';
 
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import DepositModal from '@/components/DepositModal';
 import CountDown from '@/components/CountDown';
 import PastTime from '@/components/PastTime';
 import AppLink from '@/components/AppLink';
+import SectionTitle from '@/components/SectionTitle';
 import { IProposal } from '@/hooks/useProposals';
 import { VOTE_LIMIT } from '@/hooks/useGovernanceDetails';
 import { IBlock, IVote } from '@/hooks/useGovernanceDetails';
 import { formatAddress, formatToken } from '@/utils/format';
+import {
+  formatGovernanceVote,
+  getGovernanceVoteFormValue,
+  GovernanceVote,
+} from '@/utils/governance-votes';
 import { DENOM } from '@/contants/network';
 import { VoteModal } from './HomeScreen';
 
 import 'react-paginate/theme/basic/react-paginate.css';
 
 interface IGovernanceDetailsScreen {
+  transactionUnavailableReason: string;
   isLoading: boolean;
   isVoteLoading: boolean;
   governance: IProposal | null;
@@ -74,6 +81,7 @@ interface IGovernanceDetailsScreen {
     setVoteOpen: (status: boolean) => void;
     handleResetError: () => void;
     transactionHash: string;
+    currentVote?: GovernanceVote;
     handleCloseCongratulationsModal: () => void;
   };
   block: IBlock | null;
@@ -92,6 +100,7 @@ interface IVoteChartOptions {
 const COLORS = ['#2dd4bf', '#f87171', '#fb923c', '#9ca3af'];
 
 export const GovernanceDetailsScreen = ({
+  transactionUnavailableReason,
   isLoading,
   governance,
   pool,
@@ -113,7 +122,7 @@ export const GovernanceDetailsScreen = ({
     }
     return (
       <div>
-        <H3 className='text-lumera-label'>Description</H3>
+        <SectionTitle>Description</SectionTitle>
         <div className='w-full'>
             {governance.summary}
         </div>
@@ -195,6 +204,7 @@ export const GovernanceDetailsScreen = ({
 
   const handleVotePress = () => {
     vote.handleResetError();
+    vote.onOptionChange(getGovernanceVoteFormValue(vote.currentVote));
     vote.setVoteOpen(true);
   }
 
@@ -209,14 +219,32 @@ export const GovernanceDetailsScreen = ({
     if (['PROPOSAL_STATUS_FAILED', 'PROPOSAL_STATUS_REJECTED'].includes(governance?.status) || (isExpired && governance.status !== 'PROPOSAL_STATUS_VOTING_PERIOD')) {
       return null;
     }
+    const currentVoteLabel = formatGovernanceVote(vote.currentVote);
+
     return (
       <div className='text-lumera-label text-right bg-lumera-sub-card p-3 rounded-9'>
-        <div className='btn-primary flex justify-end gap-3'>
-          {governance.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
-            <Button onPress={handleVotePress}>Vote</Button> : null
-          }
-          <Button onPress={() => handleDepositClick(governance)}>Deposit</Button>
+        <div className='flex flex-wrap items-center justify-end gap-3'>
+          {currentVoteLabel ? (
+            <span className='mr-auto text-sm text-lumera-label'>Your vote: <strong className='text-white'>{currentVoteLabel}</strong></span>
+          ) : null}
+          {governance.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ? (
+            <div className='btn-primary'>
+              <Button
+                disabled={Boolean(transactionUnavailableReason)}
+                onPress={handleVotePress}
+              >{vote.currentVote ? 'Change vote' : 'Vote'}</Button>
+            </div>
+          ) : null}
+          <div className='btn-primary'>
+            <Button
+              disabled={Boolean(transactionUnavailableReason)}
+              onPress={() => handleDepositClick(governance)}
+            >Deposit</Button>
+          </div>
         </div>
+        {transactionUnavailableReason ? (
+          <p className='text-sm text-left mt-2'>{transactionUnavailableReason}</p>
+        ) : null}
       </div>
     );
   }
@@ -260,48 +288,48 @@ export const GovernanceDetailsScreen = ({
     switch (status) {
       case 'PROPOSAL_STATUS_PASSED':
         return (
-          <div className='btn-green'>
-            <span className='is_Button rounded-2xl px-3 py-1'>
+          <div className='btn-green not-button'>
+            <span className='is_Button rounded-2xl px-3 py-1.5'>
               <span>Passed</span>
             </span>
           </div>
         )
       case 'PROPOSAL_STATUS_DEPOSIT_PERIOD':
         return (
-          <div className='btn-yellow'>
-            <span className='is_Button rounded-2xl px-3 py-1'>
+          <div className='btn-yellow not-button'>
+            <span className='is_Button rounded-2xl px-3 py-1.5'>
               <span>Deposit</span>
             </span>
           </div>
         )
       case 'PROPOSAL_STATUS_VOTING_PERIOD':
         return (
-          <div className='btn-emerald'>
-            <span className='is_Button rounded-2xl px-3 py-1'>
+          <div className='btn-emerald not-button'>
+            <span className='is_Button rounded-2xl px-3 py-1.5'>
               <span>Voting</span>
             </span>
           </div>
         )
       case 'PROPOSAL_STATUS_UNSPECIFIED':
         return (
-          <div className='btn-purple'>
-            <span className='is_Button rounded-2xl px-3 py-1'>
+          <div className='btn-purple not-button'>
+            <span className='is_Button rounded-2xl px-3 py-1.5'>
               <span>Unspecified</span>
             </span>
           </div>
         )
       case 'PROPOSAL_STATUS_REJECTED':
         return (
-          <div className='btn-black'>
-            <span className='is_Button rounded-2xl px-3 py-1'>
+          <div className='btn-black not-button'>
+            <span className='is_Button rounded-2xl px-3 py-1.5'>
               <span>Rejected</span>
             </span>
           </div>
         )
       case 'PROPOSAL_STATUS_FAILED':
         return (
-          <div className='btn-red'>
-            <span className='is_Button rounded-2xl px-3 py-1'>
+          <div className='btn-red not-button'>
+            <span className='is_Button rounded-2xl px-3 py-1.5'>
               <span>Failed</span>
             </span>
           </div>
@@ -457,197 +485,235 @@ export const GovernanceDetailsScreen = ({
       <div className='text-left'>
         <AppLink href='/governance' className="flex items-start gap-2 text-gray-400 hover:text-white transition-colors mb-4 text-sm"><ChevronLeft className="w-5 h-5"/>Back to Proposals</AppLink>
       </div>
-      <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
-        <H2 className='!font-bold text-white !text-[32px] sm:!text-[42px] !leading-[1.2]'>
-          {governance?.title}
-        </H2>
-        {getStatus(governance?.status || '')}
-      </div>
+      {!isLoading ?
+        <div className='flex justify-between gap-5 w-full items-center flex-wrap sm:flex-nowrap'>
+          <H2 className='!font-bold text-white !text-[32px] !leading-[1.2]'>
+            {governance?.title}
+          </H2>
+          {getStatus(governance?.status || '')}
+        </div> : null
+      }
       <div className="w-full relative mt-5">
-        <Loading isLoading={isLoading} />
-        <Card elevate size="$4" bordered className='p-5 w-full'>
-          {getMessage()}
-        </Card>
-        <Card elevate size="$4" bordered className='p-5 w-full mt-5'>
-          <H3>Results</H3>
-          <div className='mt-5'>
-            <div className='status-bar-wrapper'>
-              <div className='status-bar-yes' style={{ width: `${turnout}%` }}></div>
-            </div>
-            <div className='flex justify-between gap-3 mt-2'>
-              <div className='text-lumera-label'>
-                <span className='text-lumera-green-light'>Turnout</span>: {turnout.toFixed(2)}%
-              </div>
-            </div>
-          </div>
-          <div className='mt-5'>
-            <div className='text-base mb-3'>Threshold</div>
-            <div className='status-bar-wrapper'>
-              <div className='status-bar-yes' style={{ width: `${yesPercent}%` }}></div>
-              <div className='status-bar-no' style={{ width: `${noPercent}%` }}></div>
-            </div>
-            <div className='flex justify-between gap-3 mt-2 status-bar-label-detail'>
-              <div className='text-lumera-label'>
-                <span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(2)}%
-              </div>
-              <div className='text-lumera-label'>
-                <span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(2)}%
-              </div>
-            </div>
-          </div>
-          <div className='mt-5'>
-            <div className='text-base mb-3'>Voting Period</div>
-            <div className='status-bar-wrapper'>
-              <div className='status-bar-yes' style={{ width: `${voteTimePercent}%` }}></div>
-            </div>
-            {governance?.voting_end_time ? (
-              <div className='flex justify-end gap-3 mt-2 status-bar-label-detail text-lumera-label text-sm'>
-                {voteTimeLeft > 0 ?
-                  <span>{voteTimeLeft} day(s)</span> :
-                  <span>Ends on {dayjs(governance.voting_end_time).format('MMM DD, YYYY')} at {dayjs(governance.voting_end_time).format('hh:mm A')}</span>
-                }
-              </div>
-            ) : null }
-          </div>
-          <div className="mt-5">
-            {getControls()}
-          </div>
-        </Card>
-        {governance ?
-          <Card elevate size="$4" bordered className='p-5 w-full mt-5'>
-            <H3>Timeline</H3>
-            <div className='mt-3'>
-              <div className="flex items-start justify-between flex-col sm:flex-row">
-                <div>
-                  <span className='w-2.5 h-2.5 rounded-full bg-amber-600 inline-block mr-2'></span> <span>Submited at: </span> <span>{getDate(governance?.submit_time)}</span>
+        {isLoading ?
+          <div className='relative min-h-[76vh]'>
+            <AppLoading
+              isLoading
+              className="w-10 h-10 !border-2"
+              iconWidth={20}
+              iconHeight={20}
+              containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+            />
+          </div> :
+          <div>
+            <Card elevate size="$4" bordered className='p-5 w-full'>
+              {getMessage()}
+            </Card>
+            <Card elevate size="$4" bordered className='p-5 w-full mt-5'>
+              <SectionTitle className='mb-0'>Results</SectionTitle>
+              <div className='mt-5'>
+                <div className='status-bar-wrapper'>
+                  <div className='status-bar-yes' style={{ width: `${turnout}%` }}></div>
                 </div>
-                <div className='pl-5 sm:pl-0'><PastTime pastDate={new Date(governance?.submit_time)} /></div>
-              </div>
-              <div className="flex items-start justify-between mt-3 flex-col sm:flex-row">
-                <div>
-                  <span className='w-2.5 h-2.5 rounded-full bg-green-800 inline-block mr-2'></span> <span>Deposited at: </span> <span>{getDate(governance?.status === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? governance?.deposit_end_time : governance?.voting_start_time)}</span>
-                </div>
-                <div className='pl-5 sm:pl-0'><PastTime pastDate={new Date(governance?.status === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? governance?.deposit_end_time : governance?.voting_start_time)} /></div>
-              </div>
-              <div className='mt-3'>
-                <div className="flex items-start justify-between flex-col sm:flex-row">
-                  <div>
-                    <span className='w-2.5 h-2.5 rounded-full bg-green-600 inline-block mr-2'></span> <span>Voting start from </span> <span>{getDate(governance?.voting_start_time)}</span>
-                    <div className='pl-5'>
-                      <CountDown targetDate={new Date(governance?.voting_end_time)} />
-                    </div>
+                <div className='flex justify-between gap-3 mt-2'>
+                  <div className='text-lumera-label'>
+                    <span className='text-lumera-green-light'>Turnout</span>: {turnout.toFixed(2)}%
                   </div>
-                  <div className='pl-5 sm:pl-0'><PastTime pastDate={new Date(governance?.voting_start_time)} /></div>
                 </div>
               </div>
-              <div className='mt-3'>
-                <div className="flex items-start justify-between flex-col sm:flex-row">
-                  <div>
-                    <span className='w-2.5 h-2.5 rounded-full bg-green-500 inline-block mr-2'></span> <span>Voting end</span> <span>{getDate(governance?.voting_end_time)}</span>
-                    <div className='pl-5'>
-                      <SizableText className='text-sm text-lumera-label'>Current Status: {getStatusText(governance?.status)}</SizableText>
-                    </div>
+              <div className='mt-5'>
+                <div className='text-base mb-3'>Threshold</div>
+                <div className='status-bar-wrapper'>
+                  <div className='status-bar-yes' style={{ width: `${yesPercent}%` }}></div>
+                  <div className='status-bar-no' style={{ width: `${noPercent}%` }}></div>
+                </div>
+                <div className='flex justify-between gap-3 mt-2 status-bar-label-detail'>
+                  <div className='text-lumera-label'>
+                    <span className='text-lumera-green-light'>Yes</span>: {yesPercent.toFixed(2)}%
                   </div>
-                  <div className='pl-5 sm:pl-0'><PastTime pastDate={new Date(governance?.voting_end_time)} /></div>
+                  <div className='text-lumera-label'>
+                    <span className='text-lumera-red-light'>No</span>: {noPercent.toFixed(2)}%
+                  </div>
                 </div>
               </div>
-              {governance?.messages?.length && governance.messages[0]['@type']?.endsWith('SoftwareUpgradeProposal') ?
+              <div className='mt-5'>
+                <div className='text-base mb-3'>Voting Period</div>
+                <div className='status-bar-wrapper'>
+                  <div className='status-bar-yes' style={{ width: `${voteTimePercent}%` }}></div>
+                </div>
+                {governance?.voting_end_time ? (
+                  <div className='flex justify-end gap-3 mt-2 status-bar-label-detail text-lumera-label text-sm'>
+                    {voteTimeLeft > 0 ?
+                      <span>{voteTimeLeft} day(s)</span> :
+                      <span>Ends on {dayjs(governance.voting_end_time).format('MMM DD, YYYY')} at {dayjs(governance.voting_end_time).format('hh:mm A')}</span>
+                    }
+                  </div>
+                ) : null }
+              </div>
+              <div className="mt-5">
+                {getControls()}
+              </div>
+            </Card>
+            {governance ?
+              <Card elevate size="$4" bordered className='p-5 w-full mt-5'>
+                <SectionTitle className='mb-0'>Timeline</SectionTitle>
                 <div className='mt-3'>
                   <div className="flex items-start justify-between flex-col sm:flex-row">
                     <div>
-                      <span className='w-2.5 h-2.5 rounded-full bg-yellow-600 inline-block mr-2'></span> <span>Upgrade Plan {Number(governance.messages[0]?.plan?.height || 0) > 0 ? '(EST)' : getDate(governance.messages[0].plan.time)}</span>
-                      <div className='pl-5'>
-                        <CountDown targetDate={new Date(governance?.voting_end_time)} />
-                      </div>
+                      <span className='w-2.5 h-2.5 rounded-full bg-amber-600 inline-block mr-2'></span> <span>Submited at: </span> <span>{getDate(governance?.submit_time)}</span>
                     </div>
-                    <div className='pl-5 sm:pl-0'><PastTime pastDate={new Date(upgradeCountdown())} /></div>
+                    <div className='pl-5 sm:pl-0'><PastTime pastDate={new Date(governance?.submit_time)} /></div>
                   </div>
-                </div> : null
-              }
-            </div>
-          </Card> : null
+                  <div className="flex items-start justify-between mt-3 flex-col sm:flex-row">
+                    <div>
+                      <span className='w-2.5 h-2.5 rounded-full bg-green-800 inline-block mr-2'></span> <span>Deposited at: </span> <span>{getDate(governance?.status === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? governance?.deposit_end_time : governance?.voting_start_time)}</span>
+                    </div>
+                    <div className='pl-5 sm:pl-0'><PastTime pastDate={new Date(governance?.status === 'PROPOSAL_STATUS_DEPOSIT_PERIOD' ? governance?.deposit_end_time : governance?.voting_start_time)} /></div>
+                  </div>
+                  <div className='mt-3'>
+                    <div className="flex items-start justify-between flex-col sm:flex-row">
+                      <div>
+                        <span className='w-2.5 h-2.5 rounded-full bg-green-600 inline-block mr-2'></span> <span>Voting start from </span> <span>{getDate(governance?.voting_start_time)}</span>
+                        <div className='pl-5'>
+                          <CountDown targetDate={new Date(governance?.voting_end_time)} />
+                        </div>
+                      </div>
+                      <div className='pl-5 sm:pl-0'><PastTime pastDate={new Date(governance?.voting_start_time)} /></div>
+                    </div>
+                  </div>
+                  <div className='mt-3'>
+                    <div className="flex items-start justify-between flex-col sm:flex-row">
+                      <div>
+                        <span className='w-2.5 h-2.5 rounded-full bg-green-500 inline-block mr-2'></span> <span>Voting end</span> <span>{getDate(governance?.voting_end_time)}</span>
+                        <div className='pl-5'>
+                          <SizableText className='text-sm text-lumera-label'>Current Status: {getStatusText(governance?.status)}</SizableText>
+                        </div>
+                      </div>
+                      <div className='pl-5 sm:pl-0'><PastTime pastDate={new Date(governance?.voting_end_time)} /></div>
+                    </div>
+                  </div>
+                  {governance?.messages?.length && governance.messages[0]['@type']?.endsWith('SoftwareUpgradeProposal') ?
+                    <div className='mt-3'>
+                      <div className="flex items-start justify-between flex-col sm:flex-row">
+                        <div>
+                          <span className='w-2.5 h-2.5 rounded-full bg-yellow-600 inline-block mr-2'></span> <span>Upgrade Plan {Number(governance.messages[0]?.plan?.height || 0) > 0 ? '(EST)' : getDate(governance.messages[0].plan.time)}</span>
+                          <div className='pl-5'>
+                            <CountDown targetDate={new Date(governance?.voting_end_time)} />
+                          </div>
+                        </div>
+                        <div className='pl-5 sm:pl-0'><PastTime pastDate={new Date(upgradeCountdown())} /></div>
+                      </div>
+                    </div> : null
+                  }
+                </div>
+              </Card> : null
+            }
+          </div>
         }
         <Card elevate size="$4" bordered className='p-5 w-full mt-5'>
-            <H3>Votes & Voters</H3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full mt-3">
-              <div className="w-full">
-                <div>
-                  <ReactECharts option={getOption({
-                      yes: yes.value ? Number(formatToken({ amount: `${yes.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
-                      no: yes.value ? Number(formatToken({ amount: `${no.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
-                      noWithVeto: yes.value ? Number(formatToken({ amount: `${noWithVeto.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
-                      abstain: yes.value ? Number(formatToken({ amount: `${abstain.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
-                  })} style={{ height: '240px', width: '100%' }} />
-                </div>
-                <div className="w-full mt-4 space-y-2">
-                  <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[0] }}></div>
-                      <span className="text-gray-300">Yes</span>
-                    </div>
-                    <span className="font-semibold text-white">
-                      {formatToken({ amount: `${yes.value}`, denom: DENOM }, true, '0,0')} ({yes.percent}%)
-                    </span>
+          <SectionTitle className='mb-0'>Votes & Voters</SectionTitle>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full mt-3">
+            <div className="w-full">
+              {isLoading ?
+                <div className='relative min-h-[424px]'>
+                  <AppLoading
+                    isLoading
+                    className="w-10 h-10 !border-2"
+                    iconWidth={20}
+                    iconHeight={20}
+                    containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                  />
+                </div> :
+                <>
+                  <div>
+                    <ReactECharts option={getOption({
+                        yes: yes.value ? Number(formatToken({ amount: `${yes.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
+                        no: yes.value ? Number(formatToken({ amount: `${no.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
+                        noWithVeto: yes.value ? Number(formatToken({ amount: `${noWithVeto.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
+                        abstain: yes.value ? Number(formatToken({ amount: `${abstain.value}`, denom: DENOM, }, false).replaceAll(',', '')) : 0,
+                    })} style={{ height: '240px', width: '100%' }} />
                   </div>
-                  <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[1] }}></div>
-                      <span className="text-gray-300">No</span>
+                  <div className="w-full mt-4 space-y-2">
+                    <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[0] }}></div>
+                        <span className="text-gray-300">Yes</span>
+                      </div>
+                      <span className="font-semibold text-white">
+                        {formatToken({ amount: `${yes.value}`, denom: DENOM }, true, '0,0')} ({yes.percent}%)
+                      </span>
                     </div>
-                    <span className="font-semibold text-white">
-                      {formatToken({ amount: `${no.value}`, denom: DENOM }, true, '0,0')} ({no.percent}%)
-                    </span>
+                    <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[1] }}></div>
+                        <span className="text-gray-300">No</span>
+                      </div>
+                      <span className="font-semibold text-white">
+                        {formatToken({ amount: `${no.value}`, denom: DENOM }, true, '0,0')} ({no.percent}%)
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[2] }}></div>
+                        <span className="text-gray-300">No with Veto</span>
+                      </div>
+                      <span className="font-semibold text-white">
+                        {formatToken({ amount: `${noWithVeto.value}`, denom: DENOM }, true, '0,0')} ({noWithVeto.percent}%)
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[3] }}></div>
+                        <span className="text-gray-300">Abstain</span>
+                      </div>
+                      <span className="font-semibold text-white">
+                        {formatToken({ amount: `${abstain.value}`, denom: DENOM }, true, '0,0')} ({abstain.percent}%)
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[2] }}></div>
-                      <span className="text-gray-300">No with Veto</span>
-                    </div>
-                    <span className="font-semibold text-white">
-                      {formatToken({ amount: `${noWithVeto.value}`, denom: DENOM }, true, '0,0')} ({noWithVeto.percent}%)
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm p-2 bg-gray-900/50 rounded-md">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[3] }}></div>
-                      <span className="text-gray-300">Abstain</span>
-                    </div>
-                    <span className="font-semibold text-white">
-                      {formatToken({ amount: `${abstain.value}`, denom: DENOM }, true, '0,0')} ({abstain.percent}%)
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className='w-full relative'>
-                <Loading isLoading={isVoteLoading} />
-                <div className="space-y-2 lg:h-96 overflow-y-auto pr-2">
-                  {votes.map((voter, index) => (
-                    <div key={`${index}-${voter.proposal_id}-${voter.voter}`} className="flex justify-between items-center p-3 bg-gray-900/50 rounded-md">
-                      <span className="font-mono text-sm text-gray-300 truncate">{formatAddress(voter.voter, 10, -10)}</span>
-                      {VoterTypePill(voter)}
-                    </div>
-                  ))}
-                </div>
-                {Number(totalVotes) > 0 ?
-                  <div className="flex justify-between items-center mt-4 flex-col sm:flex-row">
-                    <div className='whitespace-nowrap'>Total pages: {totalVotes * VOTE_LIMIT}</div>
-                    <div className='w-auto paginate-wrapper mt-3 sm:mt-0'>
-                      <ReactPaginate
-                        breakLabel="..."
-                        nextLabel=">"
-                        onPageChange={handlePageClick}
-                        pageRangeDisplayed={2}
-                        marginPagesDisplayed={1}
-                        pageCount={totalVotes}
-                        previousLabel="<"
-                        renderOnZeroPageCount={null}
-                        className='react-paginate'
-                      />
-                    </div>
-                  </div> : null }
-              </div>
+                </>
+              }
             </div>
+
+            <div className='w-full relative'>
+              {isVoteLoading ?
+                <div className='relative min-h-[424px]'>
+                  <AppLoading
+                    isLoading
+                    className="w-10 h-10 !border-2"
+                    iconWidth={20}
+                    iconHeight={20}
+                    containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                  />
+                </div> :
+                <>
+                  <div className="space-y-2 lg:h-96 overflow-y-auto pr-2">
+                    {votes.map((voter, index) => (
+                      <div key={`${index}-${voter.proposal_id}-${voter.voter}`} className="flex justify-between items-center p-3 bg-gray-900/50 rounded-md">
+                        <span className="font-mono text-sm text-gray-300 truncate">{formatAddress(voter.voter, 10, -10)}</span>
+                        {VoterTypePill(voter)}
+                      </div>
+                    ))}
+                  </div>
+                  {Number(totalVotes) > 0 ?
+                    <div className="flex justify-between items-center mt-4 flex-col sm:flex-row">
+                      <div className='whitespace-nowrap'>Total pages: {totalVotes * VOTE_LIMIT}</div>
+                      <div className='w-auto paginate-wrapper mt-3 sm:mt-0'>
+                        <ReactPaginate
+                          breakLabel="..."
+                          nextLabel=">"
+                          onPageChange={handlePageClick}
+                          pageRangeDisplayed={2}
+                          marginPagesDisplayed={1}
+                          pageCount={totalVotes}
+                          previousLabel="<"
+                          renderOnZeroPageCount={null}
+                          className='react-paginate'
+                        />
+                      </div>
+                    </div> : null }
+                </>}
+            </div>
+          </div>
         </Card>
       </div>
       <VoteModal
@@ -662,6 +728,7 @@ export const GovernanceDetailsScreen = ({
         voteAdvanced={vote.voteAdvanced}
         handleVoteAdvancedChange={vote.handleVoteAdvancedChange}
         transactionHash={vote.transactionHash}
+        currentVote={vote.currentVote}
         onCloseCongratulationsModal={vote.handleCloseCongratulationsModal}
       />
       <DepositModal

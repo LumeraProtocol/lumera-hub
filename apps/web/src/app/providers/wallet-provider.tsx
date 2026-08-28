@@ -3,86 +3,162 @@
 import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { Provider } from 'react-redux';
-import { WCWallet } from '@interchain-kit/core';
 import { PersistGate } from 'redux-persist/integration/react';
-import { ChainProvider } from '@interchain-kit/react';
+import { ChainProvider, useWalletManager } from '@interchain-kit/react';
+import { WalletState } from '@interchain-kit/core';
 import { keplrWallet } from '@interchain-kit/keplr-extension';
-import { leapWallet } from '@interchain-kit/leap-extension';
-import { cosmostationWallet } from '@interchain-kit/cosmostation-extension';
 import { ThemeProvider, OverlaysManager } from '@interchain-ui/react';
 import '@interchain-ui/react/styles';
 
 import {
   CHAIN_NAME,
-  WALLET_CONNECT_PROJECTID,
-  WALLET_CONNECT_RELAY_URL,
-  WALLET_CONNECT_NAME,
-  WALLET_CONNECT_DESCRIPTION,
-  WALLET_CONNECT_URL,
-  WALLET_CONNECT_ICON,
+  IS_EVM_NETWORK,
 } from '@/contants/network';
 import { getChains } from '@/utils/helpers';
+import {
+  KEPLR_WALLET_NAME,
+  METAMASK_WALLET_NAME,
+  suppressPersistedKeplrConnection,
+} from '@/utils/wallet-selection';
+import { useSelector } from '@/redux/hooks';
 import { RegistryProvider } from "./RegistryContext";
+import { EvmWalletProvider } from './evm-wallet-provider';
 import store, { persistor } from '@/store';
 
-export function WebWalletProviders({ children }: { children: React.ReactNode }) {
-  const { chains, assetLists } = getChains();
-  const isBrowser = typeof window !== 'undefined';
-  // Resolve chain & assets only in the browser to avoid throwing during Next.js prerender/export
-  // Use loose typing to avoid importing chain-registry types; runtime values come from the registry data.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [chainData, setChainData] = React.useState<{ chain: any; assets: any } | null>(null);
-  React.useEffect(() => {
-    if (!isBrowser || chainData) return;
-    const foundChain = chains.find(({ chainName }) => chainName === CHAIN_NAME);
-    const foundAssets = assetLists.find(({ chainName }) => chainName === CHAIN_NAME);
+function InterchainWalletModeSynchronizer() {
+  // Narrow, primitive selectors: this component mounts above the whole app
+  // and must not re-render on unrelated wallet-slice writes (address,
+  // connection flags, modal toggles).
+  const walletName = useSelector((state) => state.wallet.walletName);
+  // A Keplr connect attempt that is in flight right now must not be torn
+  // down mid-approval. The flag lives in the non-persisted walletFlow slice
+  // and is scoped to the attempt (set/cleared by the wallet chooser's connect
+  // handler), so neither a reload nor an abandoned picker can latch the
+  // suspension: persisted modal state alone never suspends the synchronizer.
+  const isSwitchingToKeplr = useSelector(
+    (state) => state.walletFlow.connectingWalletName === KEPLR_WALLET_NAME,
+  );
+  const {
+    currentWalletName,
+    getChainWalletState,
+    setCurrentChainName,
+    setCurrentWalletName,
+    updateChainWalletState,
+  } = useWalletManager();
+  const keplrState = getChainWalletState(KEPLR_WALLET_NAME, CHAIN_NAME);
 
-    if (!foundChain || !foundAssets) {
-      console.warn(
-        `Chain or assets not found for ${CHAIN_NAME}. Available chains: ${chains
-          .map((c) => c.chainName)
-          .join(', ')}`
-      );
-      return;
+  React.useLayoutEffect(() => {
+    if (
+      !IS_EVM_NETWORK
+      || walletName !== METAMASK_WALLET_NAME
+      || isSwitchingToKeplr
+    ) return;
+
+    if (
+      keplrState
+      && (keplrState.walletState !== WalletState.Disconnected || keplrState.account)
+    ) {
+      updateChainWalletState(KEPLR_WALLET_NAME, CHAIN_NAME, {
+        walletState: WalletState.Disconnected,
+        account: undefined,
+        errorMessage: '',
+      });
     }
-    setChainData({ chain: foundChain, assets: foundAssets });
-  }, [isBrowser, chains, assetLists]);
-  // Setup WalletConnect with custom metadata
-  const walletConnect = React.useMemo(() => new WCWallet(undefined, {
-    projectId: WALLET_CONNECT_PROJECTID,
-    relayUrl: WALLET_CONNECT_RELAY_URL,
-    metadata: {
-      name: WALLET_CONNECT_NAME,
-      description: WALLET_CONNECT_DESCRIPTION,
-      url: WALLET_CONNECT_URL,
-      icons: [WALLET_CONNECT_ICON],
-    },
-  }), []);
+    if (currentWalletName === KEPLR_WALLET_NAME) {
+      setCurrentWalletName('');
+      setCurrentChainName('');
+    }
+  }, [
+    currentWalletName,
+    isSwitchingToKeplr,
+    keplrState,
+    setCurrentChainName,
+    setCurrentWalletName,
+    updateChainWalletState,
+    walletName,
+  ]);
+
+  return null;
+}
+
+const getConfiguredChainData = () => {
+  const { chains, assetLists } = getChains();
+  const chain = chains.find(({ chainName }) => chainName === CHAIN_NAME);
+  const assets = assetLists.find(({ chainName }) => chainName === CHAIN_NAME);
+
+  // Every app surface calls interchain-kit hooks, including EVM-only screens.
+  // Rendering children before ChainProvider exists throws synchronously from
+  // useWalletManager, so resolve the static profile data during render instead
+  // of installing the provider one effect later.
+  if (!chain || !assets) {
+    throw new Error(
+      `Chain or assets not found for ${CHAIN_NAME}. Available chains: ${chains
+        .map((item) => item.chainName)
+        .join(', ')}`
+    );
+  }
+  // The handcrafted devnet entry is structurally compatible at runtime, but
+  // chain-registry's generated type requires metadata fields it does not use.
+  // Keep the cast at this single provider boundary.
+  return { chain, assets } as {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    chain: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    assets: any;
+  };
+};
+
+export function WalletRuntimeProviders({ children }: { children: React.ReactNode }) {
+  const walletName = useSelector((state) => state.wallet.walletName);
+  const isSwitchingToKeplr = useSelector(
+    (state) => state.walletFlow.connectingWalletName === KEPLR_WALLET_NAME,
+  );
+  // Build-time constants in, so resolve once: this provider re-renders on
+  // every walletName change and ChainProvider ignores new chain objects
+  // anyway (it keeps its WalletManager in a ref).
+  const chainData = React.useMemo(getConfiguredChainData, []);
+  const isBrowser = typeof window !== 'undefined';
+  React.useEffect(() => {
+    // The persisted-storage scrub pauses together with the in-memory
+    // synchronizer above: a remount during a MetaMask→Keplr approval (Strict
+    // Mode, PersistGate boundary) must not erase the freshly persisted Keplr
+    // session from 'interchain-kit-store'.
+    if (
+      isBrowser
+      && IS_EVM_NETWORK
+      && walletName === METAMASK_WALLET_NAME
+      && !isSwitchingToKeplr
+    ) {
+      suppressPersistedKeplrConnection(window.localStorage);
+    }
+  }, [isBrowser, isSwitchingToKeplr, walletName]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const walletAdapters: any = [keplrWallet, leapWallet, cosmostationWallet, walletConnect];
+  const walletAdapters: any = React.useMemo(() => [keplrWallet], []);
 
+  return (
+    <HelmetProvider>
+      <ThemeProvider>
+        <RegistryProvider>
+          <EvmWalletProvider>
+            <ChainProvider wallets={walletAdapters} chains={[chainData.chain]} assetLists={[chainData.assets]}>
+              <InterchainWalletModeSynchronizer />
+              {children}
+              <OverlaysManager />
+            </ChainProvider>
+          </EvmWalletProvider>
+        </RegistryProvider>
+      </ThemeProvider>
+    </HelmetProvider>
+  )
+}
+
+export function WebWalletProviders({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <HelmetProvider>
-          <ThemeProvider>
-            <RegistryProvider>
-              {isBrowser && chainData ? (
-                <ChainProvider wallets={walletAdapters} chains={[chainData.chain]} assetLists={[chainData.assets]}>
-                  {children}
-                  <OverlaysManager />
-                </ChainProvider>
-              ) : (
-                // During SSR or while resolving on client, render app shell without ChainProvider to avoid build-time throws
-                <>
-                  {children}
-                </>
-              )}
-            </RegistryProvider>
-          </ThemeProvider>
-        </HelmetProvider>
+        <WalletRuntimeProviders>{children}</WalletRuntimeProviders>
       </PersistGate>
     </Provider>
-  )
+  );
 }

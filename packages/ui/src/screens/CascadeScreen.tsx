@@ -1,21 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   YStack,
   Card,
   H3,
-  Paragraph,
   Input,
   Checkbox,
+  Dialog,
+  VisuallyHidden,
+  RadioGroup,
+  Label,
+  Tooltip,
+  Popover,
+  Adapt,
+  Sheet,
 } from 'tamagui';
 import Dropzone from 'react-dropzone';
-import { CloudUpload } from '@tamagui/lucide-icons';
-import { worldMill } from "@react-jvectormap/world";
+import { CloudUpload, Wallet } from '@tamagui/lucide-icons';
 import {
   Search,
   Download,
-  ArrowUpRight,
   ImageIcon,
   Video,
   FileText,
@@ -23,224 +28,264 @@ import {
   FileIcon,
   Check as CheckIcon,
   CircleX,
+  Trash2,
+  CircleCheckBig,
+  MonitorCog,
 } from 'lucide-react';
+import ReactPaginate from 'react-paginate';
+import dayjs from 'dayjs';
+import { NetworkOverview, NodeData, EdgeData } from 'earth-map-3d-react';
+import ReactECharts from 'echarts-for-react';
 
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import Skeleton from '@/components/Skeleton';
 import AppButton from '@/components/AppButton';
 import AppLink from '@/components/AppLink';
-import { ConnectWalletButton } from '@/components/ConnectWallet';
-import useCascade, { FILES_TYPE, TFileTypeKey, IMarker } from '@/hooks/useCascade';
-import { formatAddress } from '@/utils/format';
-import { getSimplifiedType, formatBytes } from '@/utils/helpers';
+import SectionTitle from '@/components/SectionTitle';
+import NoWalletConnected from '@/components/NoWalletConnected';
+import useCascade, {
+  FILES_TYPE,
+  TFileTypeKey,
+  IMarker,
+  ISelectedFile,
+  IMyFile,
+  ITEM_PER_PAGE,
+  TUploadCascadeInfo,
+} from '@/hooks/useCascade';
+import { formatAddress, formatBytes, formatNumber } from '@/utils/format';
+import { getSimplifiedType } from '@/utils/helpers';
 import { useLumeraClientWrapper } from '@/hooks/useLumeraClientWrapper';
 
+import 'react-paginate/theme/basic/react-paginate.css';
+
 interface ICascadeScreen {
-  JVectorMapWithNoSSR: any;
+  maxFiles: number;
 }
 
 interface ICascadeContent {
-  JVectorMapWithNoSSR: any;
-  module: any;
+  client: any;
+  maxFiles: number;
 }
 
 interface ISuperNodeMap {
-  JVectorMapWithNoSSR: any;
   markers: IMarker[];
 }
 
-const countryNames: { [key: string]: string } = {
-  AR: "Argentina",
-  AU: "Australia",
-  BH: "Bahrain",
-  BR: "Brazil",
-  CM: "Cameroon",
-  CA: "Canada",
-  CN: "China",
-  CO: "Colombia",
-  CU: "Cuba",
-  FR: "France",
-  GL: "Greenland",
-  GU: "Guam",
-  HK: "Hong Kong",
-  IN: "India",
-  ID: "Indonesia",
-  IL: "Israel",
-  IT: "Italy",
-  JP: "Japan",
-  MO: "Macau",
-  MV: "Maldives",
-  MX: "Mexico",
-  NZ: "New Zealand",
-  NO: "Norway",
-  PY: "Paraguay",
-  PE: "Peru",
-  QA: "Qatar",
-  RU: "Russia",
-  SN: "Senegal",
-  SG: "Singapore",
-  ZA: "South Africa",
-  ES: "Spain",
-  TW: "Taiwan",
-  TZ: "Tanzania",
-  GB: "United Kingdom",
-  // US: "United States",
-  UZ: "Uzbekistan",
-  VN: "Vietnam",
+interface IActionFeeModal {
+  isOpen: boolean;
+  isUploading: boolean;
+  uploadedFiles: TUploadCascadeInfo[];
+  address: string;
+  onCloseModal: () => void;
+  onCancelClick: () => void;
+  onOkClick: () => void;
+  handlePublicFile: (fileName: string, status: boolean) => void;
+  onRemoveUploadFile: (file: TUploadCascadeInfo) => void;
+}
+
+interface IUploadCascadeSuccessModal {
+  isOpen: boolean;
+  uploadedFiles: TUploadCascadeInfo[];
+  onCloseModal: () => void;
+}
+
+const generateFullEdges = (nodeIds: number[]) => {
+  const edges: { from: number; to: number }[] = [];
+  for (let i = 0; i < nodeIds.length; i++) {
+    for (let j = i + 1; j < nodeIds.length; j++) {
+      edges.push({ from: nodeIds[i], to: nodeIds[j] });
+    }
+  }
+  return edges;
 };
 
-const SuperNodeMap = React.memo(({ JVectorMapWithNoSSR, markers }: ISuperNodeMap) => {
-  const [selectedMarker, seSelectedMarker] = useState<IMarker | null>(null);
+const getChartData = (markers: IMarker[]) =>{
+  const nodes: NodeData[] = [];
+  markers.forEach((market, index) => {
+    nodes.push({
+      id: index,
+      lat: market.latLng[0],
+      lng: market.latLng[1],
+      name: market.city,
+      country: market.country,
+      countryCode: market.country_code.toLowerCase(),
+    })
+  });
+  const edges: EdgeData[] = generateFullEdges(nodes.map((node) => node.id));
+  const countries = Object.values(
+    nodes.reduce((acc: Record<string, { code: string; count: number; sumLat: number; sumLng: number; country: string }>, node) => {
+      const code = node.countryCode;
+      if (!acc[code]) {
+        acc[code] = { code, count: 0, sumLat: 0, sumLng: 0, country: node.country };
+      }
+      acc[code].count += 1;
+      acc[code].sumLat += node.lat;
+      acc[code].sumLng += node.lng;
+      return acc;
+    }, {})
+  ).map(({ code, country, count, sumLat, sumLng }) => ({
+    code,
+    country,
+    count,
+    avgLat: sumLat / count,
+    avgLng: sumLng / count,
+  }));
 
-  if (!JVectorMapWithNoSSR || !markers?.length) {
-    return (
-      <div className='min-h-80'></div>
-    );
+  const countryEdges = edges
+    .map((edge) => {
+      const fromNode = nodes.find((n) => n.id === edge.from);
+      const toNode = nodes.find((n) => n.id === edge.to);
+      return { fromCode: fromNode?.countryCode || '', toCode: toNode?.countryCode || '' };
+    })
+    .filter((edge) => edge.fromCode && edge.toCode && edge.fromCode !== edge.toCode)
+    .reduce((acc: any, edge) => {
+      if (!acc.some((e: any) =>
+        (e.fromCode === edge.fromCode && e.toCode === edge.toCode) ||
+        (e.fromCode === edge.toCode && e.toCode === edge.fromCode)
+      )) {
+        acc.push(edge);
+      }
+      return acc;
+    }, []);
+
+  return {
+    countries,
+    countryEdges,
   }
+}
 
-  const handleMarkerClick = (code: string) => {
-    const index = parseInt(code);
-    const selectedMarker = markers[index];
-    seSelectedMarker(selectedMarker);
+const Marker = ({ marker }: { marker: IMarker }) => {
+  return (
+    <>
+      <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+        <div className='w-full md:w-60 text-gray-500 whitespace-nowrap'>Supernode Account:</div>
+        <div className="w-full truncate">
+          {formatAddress(marker.supernodeAccount, 15, -6)}
+        </div>
+      </div>
+      {marker.validatorAddress ?
+        <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+          <div className='w-full md:w-60 text-gray-500'>Validator Name:</div>
+          <div className="w-full truncate">
+            <AppLink href={`/staking/${marker.validatorAddress}`}>
+              {marker.validatorMoniker}
+            </AppLink>
+          </div>
+        </div> : null
+      }
+      {marker.validatorAddress ?
+        <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+          <div className='w-full md:w-60 text-gray-500'>Validator Address:</div>
+          <div className="w-full truncate">
+            <AppLink href={`/staking/${marker.validatorAddress}`}>
+              {formatAddress(marker.validatorAddress, 15, -6)}
+            </AppLink>
+          </div>
+        </div> : null
+      }
+      <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+        <div className='w-full md:w-60 text-gray-500'>IP:</div>
+        <div className="w-full truncate">
+          {marker.address}
+        </div>
+      </div>
+      <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+        <div className='w-full md:w-60 text-gray-500'>P2pPort:</div>
+        <div className="w-full truncate">
+          {marker.p2pPort}
+        </div>
+      </div>
+      <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+        <div className='w-full md:w-60 text-gray-500'>City:</div>
+        <div className="w-full truncate">
+          {marker.city}
+        </div>
+      </div>
+      <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
+        <div className='w-full md:w-60 text-gray-500'>Country:</div>
+        <div className="w-full truncate">
+          {marker.country}
+        </div>
+      </div>
+    </>
+  )
+}
+
+const SuperNodeMap = React.memo(({ markers }: ISuperNodeMap) => {
+  const [selectedMarkers, seSelectedMarkers] = React.useState<IMarker[]>([]);
+
+  const { countries, countryEdges } = getChartData(markers);
+
+  const handleNodeClick = (countryCode: string) => {
+    const items = markers.filter((market) => market.country_code.toLowerCase() === countryCode.toLowerCase());
+    seSelectedMarkers(items);
   }
 
   return (
-    <div style={{ width: "100%", height: "500px" }}>
-      <JVectorMapWithNoSSR
-        map={worldMill}
-        backgroundColor="#151d29"
-        zoomOnScroll={true}
-        zoomMax={8}
-        regionStyle={{
-          initial: {
-            fill: "#0e1420",
-            stroke: "none",
-          },
-          hover: {
-            cursor: "pointer",
-          },
-        }}
-        regionLabelStyle={{
-          initial: {
-            fill: "#373c44",
-            fontSize: 12,
-            fontWeight: "bold",
-          },
-          hover: {
-            fill: "#373c44",
-          },
-        }}
-        labels={{
-          regions: {
-            render: (code: string) => countryNames[code] || '',
-            offsets: (code: string) => {
-              return [0, 0];
-            },
-          },
-        }}
-        markerStyle={{
-          initial: {
-            r: 5,
-            fill: "#078A8A",
-            stroke: "#2a323f",
-            "stroke-width": 1,
-          },
-          hover: {
-            r: 6,
-            stroke: "#2a323f",
-          },
-        }}
-        markers={markers}
-        onMarkerClick={(event: Event, code: string) => handleMarkerClick(code)}
-      />
-      {selectedMarker ? (
-        <>
-          <div className='fixed top-0 right-0 z-[100] bottom-0 transform-3d transition-all duration-300'>
-            <Card elevate size="$4" bordered className='!h-full'>
-              <div className='relative'>
-                <div className='text-right my-2 pr-5'>
-                  <button className='cursor-pointer' onClick={() => seSelectedMarker(null)}>
-                    <CircleX />
-                  </button>
-                </div>
-                <div className='h-full p-5 overflow-y-auto max-h-[90vh]'>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500 whitespace-nowrap'>Supernode Account:</div>
-                    <div className="w-full truncate">
-                      {formatAddress(selectedMarker.supernodeAccount, 15, -6)}
-                    </div>
+    <React.Suspense fallback={<Skeleton className='min-h-[190px] !mb-0' />}>
+      <div className='w-full h-[200px]'>
+        <NetworkOverview
+          countries={countries}
+          countryEdges={countryEdges}
+          className='w-full h-[200px]'
+          fov={60}
+          onFlagClick={handleNodeClick}
+          badgeBg="#078A8A"
+          countFont='normal 140px Arial'
+        />
+        {selectedMarkers?.length ? (
+          <>
+            <div className='fixed top-0 right-0 z-[100] bottom-0 transform-3d transition-all duration-300'>
+              <Card elevate size="$4" bordered className='!h-full'>
+                <div className='relative'>
+                  <div className='text-right my-2 pr-5'>
+                    <button className='cursor-pointer' onClick={() => seSelectedMarkers([])}>
+                      <CircleX />
+                    </button>
                   </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>Validator Address:</div>
-                    <div className="w-full truncate">
-                      <AppLink href={`/staking/${selectedMarker.validatorAddress}`}>
-                        {formatAddress(selectedMarker.validatorAddress, 15, -6)}
-                      </AppLink>
-                    </div>
-                  </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>IP:</div>
-                    <div className="w-full truncate">
-                      {selectedMarker.address}
-                    </div>
-                  </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>P2pPort:</div>
-                    <div className="w-full truncate">
-                      {selectedMarker.p2pPort}
-                    </div>
-                  </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>Height:</div>
-                    <div className="w-full truncate">
-                      <AppLink href={`/block/${selectedMarker.height}`}>
-                        {selectedMarker.height}
-                      </AppLink>
-                    </div>
-                  </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>City:</div>
-                    <div className="w-full truncate">
-                      {selectedMarker.city}
-                    </div>
-                  </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>Country:</div>
-                    <div className="w-full truncate">
-                      {selectedMarker.country}
-                    </div>
-                  </div>
-                  <div className='flex items-center flex-col md:flex-row py-1 md:py-3 px-4'>
-                    <div className='w-full md:w-60 text-gray-500'>Continent:</div>
-                    <div className="w-full truncate">
-                      {selectedMarker.continent}
-                    </div>
+                  <div className='h-full p-5 overflow-y-auto max-h-[90vh]'>
+                    {selectedMarkers.map((marker, index) => (
+                      <React.Fragment key={marker.address}>
+                        <Marker marker={marker} />
+                        {index < selectedMarkers.length - 1 ?
+                          <div className='my-3 w-full h-[1px] bg-lumera-navy'></div> : null
+                        }
+                      </React.Fragment>
+                    ))}
                   </div>
                 </div>
-              </div>
-            </Card>
-          </div>
-          <div className='fixed inset-0 z-50 bg-black/10' onClick={() => seSelectedMarker(null)}></div>
-        </>
-      ): null
-      }
-    </div>
+              </Card>
+            </div>
+            <div className='fixed inset-0 z-50 bg-black/10' onClick={() => seSelectedMarkers([])}></div>
+          </>
+        ): null
+        }
+      </div>
+    </React.Suspense>
   );
 });
 
-const getFileIcon = (type: string) => {
-  const simpleType = getSimplifiedType(type);
-  switch (simpleType) {
-    case 'Image': return <ImageIcon className="w-6 h-6 text-blue-400" />;
-    case 'Video': return <Video className="w-6 h-6 text-purple-400" />;
-    case 'PDF': return <FileText className="w-6 h-6 text-red-400" />;
-    case 'Archive': return <FileArchive className="w-6 h-6 text-yellow-400" />;
-    default: return <FileIcon className="w-6 h-6 text-gray-400" />;
+export const getFileIcon = (type: string, className = 'w-4 h-4') => {
+  switch (type) {
+    case 'Image': return <ImageIcon className={`${className} text-blue-400`} />;
+    case 'Video': return <Video className={`${className} text-purple-400`} />;
+    case 'Document': return <FileText className={`${className} text-red-400`} />;
+    case 'Program': return <MonitorCog className={`${className} text-emerald-500`} />;
+    case 'Archive': return <FileArchive className={`${className} text-yellow-400`} />;
+    default: return <FileIcon className={`${className} text-gray-400`} />;
   }
 };
 
-export const CascadeScreen = React.memo(({
-  JVectorMapWithNoSSR,
+const checkSelectedFile = (selectedFiles: ISelectedFile[], file: IMyFile) => {
+  const existFile = selectedFiles.find((f) => f.actionID === file.actionID);
+  if (existFile) {
+    return true;
+  }
+  return false;
+}
+
+export const CascadeScreen = ({
+  maxFiles,
 }: ICascadeScreen) => {
   const { module, isLoaded, error } = useLumeraClientWrapper();
 
@@ -248,31 +293,1155 @@ export const CascadeScreen = React.memo(({
     return (
       <div className='w-full h-full relative flex items-center justify-center min-h-[82vh]'>
         <div className='inline-flex items-center gap-3 w-auto'>
-          <div>
-            <Loading isLoading className='relative !top-0 !left-0 !transform-none' />
-          </div>
-          <span>Loading ...</span>
+          <AppLoading
+            isLoading
+            className="w-10 h-10 !border-2"
+            iconWidth={20}
+            iconHeight={20}
+            containerClassName='relative w-10 h-10 z-50'
+          />
+          <span>Downloading SDK ...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <CascadeContent module={module} JVectorMapWithNoSSR={JVectorMapWithNoSSR} />
+    <CascadeContent
+      client={module}
+      maxFiles={maxFiles}
+    />
   );
-});
+};
+
+const ActionFeeModal = ({
+  isOpen,
+  uploadedFiles,
+  address,
+  isUploading,
+  onCloseModal,
+  onCancelClick,
+  onOkClick,
+  handlePublicFile,
+  onRemoveUploadFile,
+}: IActionFeeModal) => {
+  const handleCloseModal = () => {
+    if (!isUploading) {
+      onCloseModal();
+    }
+  }
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={handleCloseModal}
+      modal
+    >
+      <Dialog.Trigger asChild>
+      </Dialog.Trigger>
+
+      <Dialog.Portal>
+        <Dialog.Overlay
+          key="overlay"
+          animation="quick"
+          opacity={0.5}
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
+          zIndex={1000}
+        />
+
+        <Dialog.Content
+          bordered
+          elevate
+          key="content"
+          animation={[
+            'quick',
+            {
+              opacity: {
+                overshootClamping: true,
+              },
+            },
+          ]}
+          enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+          exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+          x={0}
+          scale={1}
+          opacity={1}
+          y={0}
+          zIndex={1001}
+        >
+          <VisuallyHidden>
+            <Dialog.Title></Dialog.Title>
+          </VisuallyHidden>
+          <div className="relative p-3">
+            <div className='mx-auto max-w-[550px] sm:w-[550px]'>
+              <SectionTitle className='mb-4'>Upload Files - {uploadedFiles.length} file(s)</SectionTitle>
+              <div className='max-h-[56vh] overflow-y-auto overflow-x-hidden max-w-[92vw] sm:max-w-full'>
+                {uploadedFiles?.map((file) => (
+                  <Card key={file.fileName} className='mb-2 px-3 py-2'>
+                    <div className='flex gap-3 items-center justify-between'>
+                      <div className='flex gap-4 items-center w-full'>
+                        <div>
+                          {getFileIcon(getSimplifiedType(file.type), 'w-6 h-6')}
+                        </div>
+                        <div>
+                          <div className='whitespace-nowrap truncate max-w-[55vw] sm:max-w-[400px]'>{file.fileName}</div>
+                          <div className='text-[13px] text-lumera-gray flex flex-col sm:flex-row'>
+                            <span>Size: {formatBytes(file.fileSize)}</span>
+                            <span className='mx-1 hidden sm:inline-block'>-</span>
+                            <span>Fee: {file.uploadFee}</span>
+                          </div>
+                          <div className='flex gap-2 sm:items-center sm:mt-2 flex-col sm:flex-row'>
+                            <span className='font-normal text-sm'>Set this file:</span>
+                            <RadioGroup
+                              onValueChange={(value) => handlePublicFile(file.fileName, value === 'public')}
+                              disabled={isUploading}
+                              value={file.isPublic ? 'public' : 'private'}
+                            >
+                              <div className='flex items-center gap-6'>
+                                <div className='flex items-center gap-2'>
+                                  <RadioGroup.Item value='private' id={`radiogroup-private-${file.fileName}`} size="$4">
+                                    <RadioGroup.Indicator />
+                                  </RadioGroup.Item>
+                                  <Label size="$4" id={`radiogroup-private-${file.fileName}`} className='!leading-none'>
+                                    Private
+                                  </Label>
+                                </div>
+                                <div className='flex items-center gap-2'>
+                                  <RadioGroup.Item value='public' id={`radiogroup-public-${file.fileName}`} size="$4">
+                                    <RadioGroup.Indicator />
+                                  </RadioGroup.Item>
+                                  <Label size="$4" id={`radiogroup-public-${file.fileName}`} className='!leading-none'>
+                                    Public
+                                  </Label>
+                                </div>
+                              </div>
+                            </RadioGroup>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        {file.status === 'error' ?
+                          <CircleX className='w-5 h-5 text-red-500' /> : null
+                        }
+                        {file.status === 'done' ?
+                          <CircleCheckBig className='w-5 h-5 text-lumera-teal' /> : null
+                        }
+                        {uploadedFiles.length > 1 && !isUploading ?
+                          <button className='cursor-pointer' onClick={() => onRemoveUploadFile(file)}>
+                            <Trash2 className='w-5 h-5 text-red-500' />
+                          </button> : null
+                        }
+                      </div>
+                    </div>
+                    {file.message ?
+                      <div className='w-full mt-1 relative text-sm text-red-500'>
+                        {file.message}
+                      </div> : null
+                    }
+                    {isUploading && !['done', 'error'].includes(file.status || '') ?
+                      <div className='w-full mt-1 relative bg-gray-500 rounded-2xl overflow-hidden h-[6px]'>
+                        <div className='w-0 absolute top-0 left-0 bg-lumera-teal rounded-2xl slideBackForth h-[6px]'></div>
+                      </div> : null
+                    }
+                  </Card>
+                ))}
+              </div>
+            </div>
+            {!isUploading ?
+              <div className='flex justify-end mt-5 gap-3'>
+                <AppButton
+                  variant="secondary"
+                  onClick={onCancelClick}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton onClick={onOkClick} className='min-w-[100px]'>
+                  {address ? 'Continue' :
+                    <>
+                      <Wallet size="$1" /> <span className="ml-1">Connect Wallet</span>
+                    </>
+                  }
+                </AppButton>
+              </div> : null
+            }
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog>
+  );
+}
+
+const UploadCascadeSuccessModal = ({
+  isOpen,
+  uploadedFiles,
+  onCloseModal,
+}: IUploadCascadeSuccessModal) => {
+
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={onCloseModal}
+      modal
+    >
+      <Dialog.Trigger asChild>
+      </Dialog.Trigger>
+
+      <Dialog.Portal>
+        <Dialog.Overlay
+          key="overlay"
+          animation="quick"
+          opacity={0.5}
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
+          zIndex={1000}
+        />
+
+        <Dialog.Content
+          bordered
+          elevate
+          key="content"
+          animation={[
+            'quick',
+            {
+              opacity: {
+                overshootClamping: true,
+              },
+            },
+          ]}
+          enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+          exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+          x={0}
+          scale={1}
+          opacity={1}
+          y={0}
+          zIndex={1001}
+        >
+          <VisuallyHidden>
+            <Dialog.Title></Dialog.Title>
+          </VisuallyHidden>
+          <div className='withdraw-main-content relative p-5 max-w-[550px] sm:w-[550px]'>
+            <div className='flex justify-between items-center'>
+              <div>&nbsp;</div>
+              <button className='btn-close-modal cursor-pointer' onClick={onCloseModal}><CircleX /></button>
+            </div>
+            <div className='mt-4 text-center'>
+              <SectionTitle className='!text-green-500 !leading-0 mb-0'>Congratulations! upload completed successfully.</SectionTitle>
+            </div>
+            <div className='mt-4'>
+              <div className='max-h-[56vh] overflow-y-auto overflow-x-hidden'>
+                {uploadedFiles?.map((file) => (
+                  <Card key={file.fileName} className='mb-2 px-3 py-2'>
+                    <div className='flex gap-3 items-center justify-between'>
+                      <div className='flex gap-3 items-center'>
+                        <div>
+                          {getFileIcon(getSimplifiedType(file.type), 'w-6 h-6')}
+                        </div>
+                        <div>
+                          <div className='whitespace-nowrap truncate max-w-[55vw] sm:max-w-[400px]'>{file.fileName}</div>
+                          <div className='text-[13px] text-lumera-gray flex flex-col sm:flex-row'>
+                            <span>Size: {formatBytes(file.fileSize)}</span>
+                            <span className='mx-1 hidden sm:inline-block'>-</span>
+                            <span>Fee: {file.uploadFee}</span>
+                          </div>
+                          <div className='text-[13px]'>Public: {!file.isPublic ? 'No' : 'Yes'}</div>
+                        </div>
+                      </div>
+                      <div>
+                        {file.status === 'error' ?
+                          <CircleX className='w-5 h-5 text-red-500' /> : null
+                        }
+                        {file.status === 'done' ?
+                          <CircleCheckBig className='w-5 h-5 text-lumera-teal' /> : null
+                        }
+                      </div>
+                    </div>
+                    {file.status === 'error' ?
+                      <div className='w-full mt-1 relative text-sm text-red-500'>
+                        {file.message}
+                      </div> : null
+                    }
+                  </Card>
+                ))}
+              </div>
+            </div>
+            <div className='mt-3 pb-3 text-center flex justify-center'>
+              <AppButton
+                className='cursor-pointer'
+                onClick={onCloseModal}
+              >
+                Back to Cascade
+              </AppButton>
+            </div>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog>
+  );
+}
+
+export const getFileStatus = (state: string) => {
+  if (!state) {
+    return '--';
+  }
+  return state.replaceAll('ACTION_STATE_', '').replaceAll('_', ' ').toLocaleLowerCase();
+}
+
+export const getStatusColor = (state: string) => {
+  if (!state) {
+    return '';
+  }
+  switch (state) {
+    case 'ACTION_STATE_EXPIRED':
+      return 'text-red-700';
+    case 'ACTION_STATE_DONE':
+      return 'text-lumera-green';
+    case 'ACTION_STATE_PENDING':
+      return 'text-lumera-warning';
+    default:
+      return '';
+  }
+}
+
+interface INetworkStorage {
+  isFetchSummaryLoading: boolean;
+  networkStorage: {
+    totalSupernode: number;
+    usedStorageBytes: number;
+    availableStorageBytes: number;
+    networkStorage: string;
+  };
+}
+
+const NetworkStorage = ({
+  isFetchSummaryLoading,
+  networkStorage,
+}: INetworkStorage) => {
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: function(params: any) {
+        return `<div class="px-2 py-1">
+          <div class="font-bold">${params.seriesName}</div>
+          <div>
+            ${params.marker} <span class="font-bold">${params.name}</span>: ${params.value}%
+          </div>
+        </div>`;
+      }
+    },
+    grid: {
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+      containLabel: true
+    },
+    series: [
+      {
+        name: 'Network Storage',
+        type: 'pie',
+        radius: ['60%', '100%'],
+        center: ['50%', '60%'],
+        top: 0,
+        bottom: -50,
+        left: 0,
+        right: 0,
+        startAngle: 180,
+        endAngle: 360,
+        data: [
+          {
+            value: networkStorage.usedStorageBytes,
+            name: 'Used',
+            itemStyle: {
+              color: '#078A8A',
+            },
+          },
+          {
+            value: networkStorage.availableStorageBytes,
+            name: 'Available',
+            itemStyle: {
+              color: '#9da3ae',
+            },
+          }
+        ],
+        label: {
+          show: true,
+          backgroundColor: 'transparent',
+          borderWidth: 0,
+          shadowBlur: 0,
+          shadowColor: 'transparent',
+          shadowOffsetX: 0,
+          shadowOffsetY: 0,
+          color: '#fff',
+          position: 'outer',
+        },
+        labelLine: {
+          show: true,
+          length: 10,
+          length2: 5,
+          lineStyle: {
+            color: '#fff'
+          }
+        }
+      }
+    ]
+  };
+
+  return (
+    <Card elevate size="$4" bordered className='w-full'>
+      <Card.Header padded>
+        <SectionTitle className="mb-0">Network Storage</SectionTitle>
+        <div className='mt-2.5'>
+          {isFetchSummaryLoading ?
+            <div className='min-h-[176px] mt-[10px] relative'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <>
+              <div className='h-36'>
+                <ReactECharts option={option} className='w-full' style={{ height: '144px' }} />
+              </div>
+              <div className='text-center'>
+                <div className='font-bold leading-[1.1]'>
+                  <span className='text-4xl'>{networkStorage.networkStorage}</span>
+                </div>
+                <div className='text-lumera-label text-base'>Total data stored across all supernodes.</div>
+              </div>
+            </>
+          }
+        </div>
+      </Card.Header>
+    </Card>
+  );
+}
+
+interface IYourUsage {
+  address: string;
+  isMyFilesLoading: boolean;
+  isMyFilesLoadMore: boolean;
+  myUsage: {
+    size: string;
+    uploaded: number;
+  };
+  fileSizes: Record<TFileTypeKey, number>;
+}
+
+type TSerie = {
+  name: string;
+  type: string;
+  stack: string;
+  data: number[];
+  itemStyle: {
+    color: string;
+    borderRadius: number;
+  };
+  label: {
+    show: boolean;
+  };
+}
+
+type TLable = {
+  name: string;
+  color: string;
+  percent: number;
+}
+
+const COLORS = ['#088a8a', '#47c78a', '#bce4a6', '#ff9a30', '#ffae3e', '#fed847'];
+
+const getYourUsageChartOption = (fileSizes: Record<TFileTypeKey, number>) => {
+  const series: TSerie[] = [];
+  let index = 0;
+  const totalSize = Object.values(fileSizes).reduce((sum, value) => sum + value, 0);
+  const labels: TLable[] = [];
+  for (const type of FILES_TYPE) {
+    if (fileSizes[type.value] > 0) {
+      const percent = (fileSizes[type.value] / totalSize) * 100
+      series.push({
+        name: type.label,
+        type: 'bar',
+        stack: 'total',
+        data: [percent],
+        itemStyle: {
+          color: COLORS[index],
+          borderRadius: 0
+        },
+        label: {
+          show: false
+        }
+      });
+      labels.push({
+        name: type.label,
+        color: COLORS[index],
+        percent,
+      });
+      index++;
+    }
+  }
+
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: function(params: any) {
+        return `<div class="px-2 py-1">
+          <div class="font-bold">${params.seriesName}</div>
+          <div>
+            ${params.marker} <span class="font-bold">Total</span>: ${formatNumber(params.value)}%
+          </div>
+        </div>`;
+      }
+    },
+    legend: {
+      show: false
+    },
+    grid: {
+      left: 0,
+      right: 0,
+      bottom: 0,
+      top: 0,
+      containLabel: false
+    },
+    xAxis: {
+      type: 'value',
+      name: '',
+      axisLabel: {
+        show: false
+      },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { show: false }
+    },
+    yAxis: {
+      type: 'category',
+      data: ['Total'],
+      name: '',
+      axisLabel: {
+        show: false
+      },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { show: false }
+    },
+    series: series.map((serie, index) => {
+      if (index === 0) {
+        return ({
+          ...serie,
+          itemStyle: {
+            color: COLORS[index],
+            borderRadius: [10, 0, 0, 10],
+          },
+        });
+      }
+      if (index === series.length - 1) {
+        return ({
+          ...serie,
+          itemStyle: {
+            color: COLORS[index],
+            borderRadius: [0, 10, 10, 0],
+          },
+        });
+      }
+      return ({
+        ...serie,
+        itemStyle: {
+          color: COLORS[index],
+          borderRadius: 0,
+        },
+      });
+    }),
+  };
+  return {
+    option,
+    labels,
+    totalSize,
+  };
+}
+
+const YourUsage = ({
+  address,
+  isMyFilesLoading,
+  isMyFilesLoadMore,
+  myUsage,
+  fileSizes,
+}: IYourUsage) => {
+  const { option, labels, totalSize } = getYourUsageChartOption(fileSizes);
+
+  return (
+    <Card elevate size="$4" bordered className='w-full'>
+      <Card.Header padded className='h-full'>
+        <SectionTitle>Your Usage</SectionTitle>
+        {address ?
+          <>
+            {
+              isMyFilesLoading || isMyFilesLoadMore ? (
+                <div className='min-h-[176px] relative'>
+                  <AppLoading
+                    isLoading
+                    className="w-10 h-10 !border-2"
+                    iconWidth={20}
+                    iconHeight={20}
+                    containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                  />
+                </div>
+              ) : (
+                <div className='h-full'>
+                  {totalSize ?
+                    <>
+                      <div className='h-[100px]'>
+                        <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
+                      </div>
+                      <div className='font-bold text-white leading-[1.1] text-center'>
+                        <span className='text-4xl'>{myUsage.size}</span> <span className='font-normal text-lumera-label'>/</span> <span className='text-base whitespace-nowrap font-normal text-lumera-label'>{myUsage.uploaded} Files</span>
+                      </div>
+                      <ul className='mt-3 list-none flex flex-wrap gap-x-4 gap-y-2 text-[13px]'>
+                        {labels.map((label, index) => (
+                          <li key={`${label.name}-${index}`} className='w-[30%] flex items-center gap-2'>
+                            <span className='block w-3 h-3 rounded-full' style={{ backgroundColor: label.color }}></span> <span>{label.name}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </> :
+                    <div className='flex items-center justify-center h-full w-full text-4xl font-bold'>No data.</div>
+                  }
+                </div>
+              )
+            }
+          </> : (
+            <NoWalletConnected variant='small' />
+          )
+        }
+      </Card.Header>
+    </Card>
+  )
+}
+
+interface IFiles {
+  address: string;
+  isMyFilesLoadMore: boolean;
+  isAllDownloading: boolean;
+  isDownloading: boolean;
+  isMyFilesLoading: boolean;
+  fileSearch: string;
+  selectedFiles: ISelectedFile[];
+  memoizedFilteredFiles: IMyFile[];
+  currentOffset: number;
+  selectedFileDownload: string[];
+  totalPage: number;
+  recentlyUploaded: IMyFile[];
+  isRecentlyUploadedLoading: boolean;
+  fileCounts: Record<TFileTypeKey, number>;
+  fileTypeFilter: string[];
+  currentTab: string;
+  handleTabChange: (tab: string) => void;
+  getTypeFilter: () => string;
+  handleFileSearchChange: (keyword: string) => void;
+  handleDownloadAllFile: () => void;
+  handleSelectAll: (checked: boolean) => void;
+  handleSelectFile: (file: IMyFile) => void;
+  handleDownloadFile: (file: IMyFile) => void;
+  handlePageClick: ({ selected }: { selected: number }) => void;
+  handleFileTypeFilterChange: (type: string) => void;
+}
+
+const Files = ({
+  address,
+  isMyFilesLoadMore,
+  fileSearch,
+  selectedFiles,
+  isAllDownloading,
+  isDownloading,
+  memoizedFilteredFiles,
+  isMyFilesLoading,
+  currentOffset,
+  selectedFileDownload,
+  totalPage,
+  recentlyUploaded,
+  isRecentlyUploadedLoading,
+  fileCounts,
+  fileTypeFilter,
+  currentTab,
+  handleTabChange,
+  handlePageClick,
+  handleDownloadFile,
+  getTypeFilter,
+  handleFileSearchChange,
+  handleDownloadAllFile,
+  handleSelectAll,
+  handleSelectFile,
+  handleFileTypeFilterChange,
+}: IFiles) => {
+  return (
+    <div className='mt-6 w-full relative'>
+      <Card elevate size="$4" bordered className='w-full !p-[18px]'>
+        {address ?
+          <div className="w-full mb-6">
+            <ul className='flex gap-0 list-none tabs'>
+              <li className={`tab-item ${currentTab === 'myFiles' ? 'active' : ''}`}>
+                <button
+                  className='tab-button cursor-pointer px-3'
+                  onClick={() => handleTabChange('myFiles')}
+                >
+                  My Files
+                </button>
+              </li>
+              <li className={`tab-item ${currentTab === 'recentlyUploaded' ? 'active' : ''}`}>
+                <button
+                  className='tab-button cursor-pointer px-3'
+                  onClick={() => handleTabChange('recentlyUploaded')}
+                >
+                  Public Files
+                </button>
+              </li>
+            </ul>
+          </div> : <div className="w-full mb-6">
+            <SectionTitle className="mb-0">Public Files</SectionTitle>
+          </div>
+        }
+        {address && currentTab === 'myFiles' ? (
+          <>
+            <div className="flex items-center justify-end w-full gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <div className="flex items-center w-auto">
+                  {isMyFilesLoadMore ? (
+                    <div className='min-w-[180px] relative min-h-11 rounded-lg overflow-hidden'>
+                      <AppLoading
+                        isLoading
+                        className="w-8 h-8 !border-2"
+                        iconWidth={16}
+                        iconHeight={16}
+                        containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-8 h-8 z-50'
+                      />
+                    </div>
+                  ) : (
+                    <Popover size="$5" allowFlip stayInFrame offset={5} resize>
+                      <Popover.Trigger asChild>
+                        <button
+                          type='button'
+                          className='border border-gray-700 rounded-lg py-2 px-4 min-h-11 bg-gray-900/50 w-[180px] text-left whitespace-nowrap truncate text-sm'
+                        >
+                          Types: <span className='capitalize'>{getTypeFilter()}</span>
+                        </button>
+                      </Popover.Trigger>
+
+                      <Adapt platform="touch">
+                        <Sheet animation="medium" modal dismissOnSnapToBottom>
+                          <Sheet.Frame>
+                            <Adapt.Contents />
+                          </Sheet.Frame>
+                          <Sheet.Overlay
+                            animation="lazy"
+                            enterStyle={{ opacity: 0 }}
+                            exitStyle={{ opacity: 0 }}
+                          />
+                        </Sheet>
+                      </Adapt>
+
+                      <Popover.Content
+                        borderWidth={1}
+                        borderColor="$borderColor"
+                        enterStyle={{ y: -10, opacity: 0 }}
+                        exitStyle={{ y: -10, opacity: 0 }}
+                        elevate
+                        animation={[
+                          'quick',
+                          {
+                            opacity: {
+                              overshootClamping: true,
+                            },
+                          },
+                        ]}
+                      >
+                        <Popover.Arrow borderWidth={1} borderColor="$borderColor" />
+
+                        <YStack gap="$1">
+                          <div>
+                            {FILES_TYPE.map(type => {
+                              if (!Number(fileCounts[type.value as TFileTypeKey])) {
+                                return null;
+                              }
+                              return (
+                                <div key={type.value} className='flex gap-3 items-center'>
+                                  <Checkbox
+                                    id={`file-type-${type.value.toLowerCase()}`}
+                                    size="$4"
+                                    checked={fileTypeFilter.includes(type.value)}
+                                    onCheckedChange={() => handleFileTypeFilterChange(type.value)}
+                                  >
+                                    <Checkbox.Indicator>
+                                      <CheckIcon />
+                                    </Checkbox.Indicator>
+                                  </Checkbox>
+                                  <Label size={"$4"} htmlFor={`file-type-${type.value.toLowerCase()}`}>
+                                    {type.label} ({fileCounts[type.value as TFileTypeKey]})
+                                  </Label>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </YStack>
+                      </Popover.Content>
+                    </Popover>
+                  )}
+                </div>
+                <div className="relative w-full sm:w-auto">
+                  <div className='input-wrapper'>
+                    <Input
+                      id="keyword"
+                      placeholder="Search my files..."
+                      className='input  has-symbol'
+                      value={fileSearch}
+                      onChangeText={handleFileSearchChange}
+                    />
+                    <span className='input-symbol'>
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {selectedFiles.length > 0 &&
+              <div className="bg-gray-700/50 p-3 rounded-lg flex justify-between items-center mb-4">
+                <span className="text-sm font-semibold text-white">{selectedFiles.length} file(s) selected</span>
+                <AppButton variant="secondary" className={`!py-1.5 !px-4 ${isAllDownloading ? 'opacity-40 cursor-default' : ''}`} onClick={handleDownloadAllFile} disabled={isAllDownloading}>
+                  <Download className="w-4 h-4" /> {isAllDownloading ? 'Downloading' : 'Download as .zip'}
+                </AppButton>
+              </div>
+            }
+            {isMyFilesLoading ?
+              <div className='relative min-h-60'>
+                <AppLoading
+                  isLoading
+                  className="w-10 h-10 !border-2"
+                  iconWidth={20}
+                  iconHeight={20}
+                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                />
+              </div> :
+              <div className='md:overflow-x-auto '>
+                <div className="space-y-2 md:min-w-[1130px]">
+                  <table className='w-full border-separate border-spacing-y-2'>
+                    <thead className='hidden md:table-header-group text-gray-400 text-sm'>
+                      <tr>
+                        <th className='px-2 py-3'>
+                          <div className='flex items-start gap-1'>
+                            <div className='w-7'>
+                              <Checkbox
+                                id="checkAll"
+                                size="$4"
+                                checked={selectedFiles.length === memoizedFilteredFiles.length && memoizedFilteredFiles.length > 0}
+                                onCheckedChange={handleSelectAll}
+                              >
+                                <Checkbox.Indicator>
+                                  <CheckIcon />
+                                </Checkbox.Indicator>
+                              </Checkbox>
+                            </div>
+                            <span>Name</span>
+                          </div>
+                        </th>
+                        <th align='left' className='px-2 py-3'>Public</th>
+                        <th align='left' className='px-2 py-3'>Status</th>
+                        <th align='left' className='px-2 py-3'>TX ID</th>
+                        <th align='right' className='px-2 py-3'>Price</th>
+                        <th align='right' className='px-2 py-3'>Fee</th>
+                        <th align='right' className='px-2 py-3'>Size</th>
+                        <th align='left' className='px-2 py-3'>Last Modified</th>
+                        <th align='right' className='px-2 py-3'>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className='text-base'>
+                      {!memoizedFilteredFiles?.length && !isMyFilesLoadMore ? (
+                        <tr className={'!bg-gray-900 hover:!bg-gray-800/60 rounded-lg'}>
+                          <td colSpan={9} className='px-2 py-3'>
+                            <H3 className='text-2xl'>No files</H3>
+                          </td>
+                        </tr>
+                      ) : null }
+                      {memoizedFilteredFiles.slice(currentOffset, currentOffset + ITEM_PER_PAGE).map((file, index) => {
+                        const isDisabledButton = selectedFileDownload.includes(file.actionID) || file.state !== 'ACTION_STATE_DONE' || file.size <= 0;
+                        const txId = file.txId;
+                        const lastModified = file.lastModified;
+                        const fee = file.fee;
+                        const isExpired = file.state === 'ACTION_STATE_EXPIRED';
+                        return (
+                          <tr key={index} className={`${index % 2 === 0 ? '!bg-gray-900' : ''} hover:!bg-gray-800/60 transition-colors rounded-lg flex flex-col md:table-row text-base`}>
+                            <td className='px-2 pt-3 pb-1 md:py-3'>
+                              <div className='flex items-center w-full gap-1'>
+                                <div className='w-7'>
+                                  <Checkbox
+                                    id="checkAll"
+                                    size="$4"
+                                    checked={checkSelectedFile(selectedFiles, file)}
+                                    onCheckedChange={() => handleSelectFile(file)}
+                                  >
+                                    <Checkbox.Indicator>
+                                      <CheckIcon />
+                                    </Checkbox.Indicator>
+                                  </Checkbox>
+                                </div>
+                                <div className='w-auto'>
+                                  <Tooltip>
+                                    <Tooltip.Trigger>
+                                      <div className='flex items-center gap-2 w-full'>
+                                        {getFileIcon(getSimplifiedType(file.type))}
+                                        <span className="font-medium text-white max-w-[180px] truncate">{file.name}</span>
+                                      </div>
+                                    </Tooltip.Trigger>
+                                    <Tooltip.Content
+                                      enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                      exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                      scale={1}
+                                      x={0}
+                                      y={0}
+                                      opacity={1}
+                                      animation={[
+                                        'quick',
+                                        {
+                                          opacity: {
+                                            overshootClamping: true,
+                                          },
+                                        },
+                                      ]}
+                                    >
+                                      <div className='text-white'>
+                                        {file.name}
+                                      </div>
+                                    </Tooltip.Content>
+                                  </Tooltip>
+                                </div>
+                              </div>
+                            </td>
+                            <td className='px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Public: </span>
+                              <span>{file.isPublic ? 'Yes' : 'No'}</span>
+                            </td>
+                            <td className='px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Status: </span>
+                              <span className={`capitalize ${getStatusColor(file.state)}`}>{getFileStatus(file.state)}</span>
+                            </td>
+                            <td className='px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
+                              {txId && !isExpired ?
+                                <AppLink
+                                  href={`/tx/${txId}`}
+                                  className="font-mono text-lumera-teal hover:text-lumera-green truncate inline-flex items-center gap-1.5"
+                                >
+                                  {formatAddress(txId, 6, -4)}
+                                </AppLink> : '--'
+                              }
+                            </td>
+                            <td className='md:text-right px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Price: </span>
+                              <span className=' whitespace-nowrap'>{!isExpired ? file.price : '0 LUME'}</span>
+                            </td>
+                            <td className='md:text-right px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Fee: </span>
+                              <span className=' whitespace-nowrap'>{!isExpired ? fee : '0 LUME'}</span>
+                            </td>
+                            <td className='md:text-right px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
+                              <span className=' whitespace-nowrap'>{formatBytes(!isExpired ? file.size : 0)}</span>
+                            </td>
+                            <td className='px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2 whitespace-nowrap">Last Modified: </span>
+                              {lastModified ?
+                              <span className='whitespace-nowrap'>
+                                {dayjs(lastModified).format('MM/DD/YYYY')} at {dayjs(lastModified).format('HH:mm:ss')}
+                              </span> : '--'}
+                            </td>
+                            <td className='md:text-right px-2 pt-1 pb-3 md:py-3'>
+                              <div className='flex md:justify-end w-full'>
+                                <AppButton
+                                  variant="primary"
+                                  className={`!px-4 !text-sm w-full md:w-auto max-w-40 !font-normal ${isDisabledButton ? 'cursor-default opacity-30 !bg-gray-700 hover:!bg-gray-700' : ''}`}
+                                  onClick={() => handleDownloadFile(file)}
+                                  disabled={isDisabledButton}
+                                >
+                                  <Download className="w-3 h-3"/>
+                                </AppButton>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
+            {isMyFilesLoadMore && !isMyFilesLoading ?
+              <div className='my-3'>Searching for more data</div> : null
+            }
+            {isAllDownloading || isDownloading ?
+              <div className='fixed right-2 bottom-2 z-50'>
+                <Card elevate bordered className='w-full !overflow-hidden'>
+                  <div className='px-5 py-3 flex items-center gap-2'>
+                    <AppLoading
+                      isLoading
+                      hideOverlay
+                      className="w-8 h-8 !border-2"
+                      iconWidth={18}
+                      iconHeight={18}
+                      containerClassName='relative w-8 h-8 z-50'
+                    /> Downloading ....
+                  </div>
+                </Card>
+              </div> : null
+            }
+            {totalPage > 1 && !isMyFilesLoadMore && !isMyFilesLoading ?
+              <div className="paginate-wrapper pt-3">
+                <ReactPaginate
+                  breakLabel="..."
+                  nextLabel=">"
+                  onPageChange={handlePageClick}
+                  pageRangeDisplayed={3}
+                  pageCount={totalPage}
+                  previousLabel="<"
+                  renderOnZeroPageCount={null}
+                  className='react-paginate'
+                />
+              </div> : null
+            }
+          </>
+        ) : null}
+        {!address || currentTab === 'recentlyUploaded' ?
+          <>
+            {isRecentlyUploadedLoading ?
+              <div className='relative min-h-60'>
+                <AppLoading
+                  isLoading
+                  className="w-10 h-10 !border-2"
+                  iconWidth={20}
+                  iconHeight={20}
+                  containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                />
+              </div> :
+              <div className='md:overflow-x-auto '>
+                <div className="space-y-2 max-w-[1130px] md:max-w-full md:min-w-[900px] md:w-full">
+                  <table className='w-full border-separate border-spacing-y-2'>
+                    <thead className='hidden md:table-header-group text-gray-400 text-sm'>
+                      <tr>
+                        <th className='px-2 py-3'>
+                          <div className='flex items-start'>
+                            <span>Name</span>
+                          </div>
+                        </th>
+                        <th align='left' className='px-2 py-3'>TX ID</th>
+                        <th align='right' className='px-2 py-3'>Price</th>
+                        <th align='right' className='px-2 py-3'>Fee</th>
+                        <th align='right' className='px-2 py-3'>Size</th>
+                        <th align='left' className='px-2 py-3'>Last Modified</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {!recentlyUploaded?.length ? (
+                        <tr className='bg-gray-900/40 hover:bg-gray-800/60 rounded-lg'>
+                          <td colSpan={9} className='px-2 py-3'>
+                            <H3 className='text-2xl'>No files</H3>
+                          </td>
+                        </tr>
+                        ) : null }
+                      {recentlyUploaded.map((file, index) => {
+                        const txId = file.txId;
+                        const lastModified = file.lastModified;
+                        const fee = file.fee;
+                        const isExpired = file.state === 'ACTION_STATE_EXPIRED';
+                        return (
+                          <tr key={index} className='odd:bg-gray-900/40 even:bg-gray-900 hover:bg-gray-800/60 rounded-lg flex flex-col md:table-row text-base'>
+                            <td className='px-2 pt-3 pb-1 md:py-3'>
+                              <div className='flex items-start w-full gap-2'>
+                                <div className='w-auto'>
+                                  <Tooltip>
+                                    <Tooltip.Trigger>
+                                      <div className='flex items-center gap-2 w-full'>
+                                        {getFileIcon(getSimplifiedType(file.type))}
+                                        <span className="font-medium text-white max-w-[180px] truncate">{file.name}</span>
+                                      </div>
+                                    </Tooltip.Trigger>
+                                    <Tooltip.Content
+                                      enterStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                      exitStyle={{ x: 0, y: -5, opacity: 0, scale: 0.9 }}
+                                      scale={1}
+                                      x={0}
+                                      y={0}
+                                      opacity={1}
+                                      animation={[
+                                        'quick',
+                                        {
+                                          opacity: {
+                                            overshootClamping: true,
+                                          },
+                                        },
+                                      ]}
+                                    >
+                                      <div className='text-white'>
+                                        {file.name}
+                                      </div>
+                                    </Tooltip.Content>
+                                  </Tooltip>
+                                </div>
+                              </div>
+                            </td>
+                            <td className='px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
+                              {txId && !isExpired ?
+                                <AppLink
+                                  href={`/tx/${txId}`}
+                                  className="font-mono text-lumera-teal hover:text-lumera-green truncate inline-flex items-center gap-1.5"
+                                >
+                                  {formatAddress(txId, 6, -4)}
+                                </AppLink> : '--'
+                              }
+                            </td>
+                            <td className='md:text-right px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Price: </span>
+                              <span className=' whitespace-nowrap'>{!isExpired ? file.price : '0 LUME'}</span>
+                            </td>
+                            <td className='md:text-right px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Fee: </span>
+                              <span className=' whitespace-nowrap'>{!isExpired ? fee : '0 LUME'}</span>
+                            </td>
+                            <td className='md:text-right px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
+                              <span className=' whitespace-nowrap'>{formatBytes(!isExpired ? file.size : 0)}</span>
+                            </td>
+                            <td className='px-2 py-1 md:py-3'>
+                              <span className="md:hidden font-semibold text-gray-500 mr-2 whitespace-nowrap">Last Modified: </span>
+                              {lastModified ?
+                              <span className='whitespace-nowrap'>
+                                {dayjs(lastModified).format('MM/DD/YYYY')} at {dayjs(lastModified).format('HH:mm:ss')}
+                              </span> : '--'}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
+          </> : null
+        }
+      </Card>
+    </div>
+  )
+}
 
 export const CascadeContent = React.memo(({
-  JVectorMapWithNoSSR,
-  module,
+  client,
+  maxFiles,
 }: ICascadeContent) => {
-  const client = React.useMemo(() => module.useLumeraClient(), [module]);
+  const memoizedClient = React.useMemo(() => client, [client]);
 
   const {
     isUploading,
     error,
     isFetchSummaryLoading,
-    summary,
+    networkStorage,
     address,
     fileCounts,
     fileTypeFilter,
@@ -280,79 +1449,125 @@ export const CascadeContent = React.memo(({
     selectedFiles,
     filteredFiles,
     markers,
-    isDownloading,
     isMyFilesLoading,
     isMarkerLoading,
-    handleDownloadAllFile: onDownloadAllFile,
-    handleDownloadFile: onDownloadClick,
-    handleSelectFile: onSelectFile,
-    handleSelectAll: onSelectAll,
-    handleFileSearchChange: onFileSearchChange,
-    handleFileTypeFilterChange: onFileTypeFilterChange,
-    handleUploadCascade: onFileChange,
-  } = useCascade({ lumeraSdk: client });
+    selectedModal,
+    uploadCascadeInfo,
+    myUsage,
+    totalPage,
+    isMyFilesLoadMore,
+    selectedFileDownload,
+    isAllDownloading,
+    isDownloading,
+    currentOffset,
+    recentlyUploaded,
+    isRecentlyUploadedLoading,
+    fileSizes,
+    currentTab,
+    handleTabChange,
+    handlePublicFile,
+    openActionFeeModal,
+    closeActionFeeModal,
+    handleDownloadAllFile,
+    handleDownloadFile,
+    handleSelectFile,
+    handleSelectAll,
+    handleFileSearchChange,
+    handleFileTypeFilterChange,
+    handleUploadCascade,
+    handlePageClick,
+    handleCloseUploadCascadeSuccessModal,
+    handleRemoveUploadFile,
+    handleDropRejected,
+  } = useCascade({ sdkjsReact: memoizedClient });
 
   const memoizedFilteredFiles = React.useMemo(() => filteredFiles, [filteredFiles, fileSearch, fileTypeFilter]);
 
+  const getTypeFilter = () => {
+    const selectedFilter = FILES_TYPE.filter((file) => fileTypeFilter.some((value) => value === file.value));
+    return selectedFilter.map((f) => f.value).join(', ');
+  }
+
   return (
-    <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
-      <div className="flex justify-between gap-6 w-full cascade-overview relative">
-        <Card elevate size="$4" bordered className='cascade-top-left'>
+    <YStack flex={1} alignItems="center" justifyContent="center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full cascade-overview relative">
+        <YourUsage
+          address={address}
+          isMyFilesLoading={isMyFilesLoading}
+          isMyFilesLoadMore={isMyFilesLoadMore}
+          myUsage={myUsage}
+          fileSizes={fileSizes}
+        />
+        <NetworkStorage
+          isFetchSummaryLoading={isFetchSummaryLoading}
+          networkStorage={networkStorage}
+        />
+        <Card elevate size="$4" bordered className='w-full'>
           <Card.Header padded>
-            <H3 className='text-white'>Network Storage</H3>
-            <div className='font-bold text-lumera-blue-light leading-[1.1]'>
-              {
-                isFetchSummaryLoading ? <Skeleton /> : <>
-                  <span className='text-[40px]'>{summary.networkStorage}</span> <span className='text-xl whitespace-nowrap'>({summary.totalSupernode} Active Supernodes)</span>
-                </>
+            <div className='flex justify-between items-center'>
+              <SectionTitle className="mb-0 flex gap-2">
+                <>
+                  {isFetchSummaryLoading ?
+                  <div className='relative w-6'>
+                    <AppLoading
+                      isLoading
+                      hideOverlay
+                      className="w-6 h-6 !border-2"
+                      iconWidth={10}
+                      iconHeight={10}
+                      containerClassName='w-6 h-6 z-50'
+                    />
+                  </div> : networkStorage.totalSupernode}
+                </> Supernodes
+              </SectionTitle>
+              <AppLink
+                href='/supernodes'
+                className="font-mono text-lumera-teal hover:text-lumera-green truncate inline-flex items-center gap-1.5"
+              >
+                View all
+              </AppLink>
+            </div>
+            <div className='mt-4'>
+              {isMarkerLoading ?
+                <div className='min-h-[176px] relative mt-1'>
+                  <AppLoading
+                    isLoading
+                    className="w-10 h-10 !border-2"
+                    iconWidth={20}
+                    iconHeight={20}
+                    containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                  />
+                </div> : <SuperNodeMap markers={markers} />
               }
             </div>
-            <div className='text-lumera-label mt-2'>Total data stored across all supernodes.</div>
           </Card.Header>
-        </Card>
-        <Card elevate size="$4" bordered className='cascade-top-right'>
-          <Card.Header padded>
-            <H3 className='text-white'>Your Usage</H3>
-            {address ?
-              <>
-                {
-                  isFetchSummaryLoading ? <Skeleton /> : <>
-                    <div className='font-bold text-white leading-[1.1]'>
-                      <span className='text-[40px]'>{summary.myUsage}</span> <span className='text-xl whitespace-nowrap'>({summary.myUploaded} Files Uploaded)</span>
-                    </div>
-                  </>
-                }
-                <div className='text-lumera-label mt-2'>Your contribution to the network.</div>
-              </> : <>
-                <Paragraph className='text-base text-lumera-gray'>Please connect your wallet to view this section.</Paragraph>
-                <div className='mt-3'>
-                  <ConnectWalletButton />
-                </div>
-              </>
-            }
-          </Card.Header>
-        </Card>
-      </div>
-      <div className='mt-6 w-full'>
-        <Card elevate size="$4" bordered className='w-full relative overflow-hidden'>
-          <Loading isLoading={isMarkerLoading} />
-          <SuperNodeMap JVectorMapWithNoSSR={JVectorMapWithNoSSR} markers={markers} />
         </Card>
       </div>
       <div className='mt-6 w-full relative'>
-        <Loading isLoading={isUploading} />
-        <Dropzone onDrop={onFileChange} multiple={false}>
+        <AppLoading
+          isLoading={isUploading}
+          className="w-10 h-10 !border-2"
+          iconWidth={20}
+          iconHeight={20}
+          containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+          overlayClassName='rounded-[9px]'
+        />
+        <Dropzone onDrop={openActionFeeModal} multiple maxFiles={maxFiles} onDropRejected={handleDropRejected}>
           {({getRootProps, getInputProps}) => (
-            <div {...getRootProps()} className='dropzone-wrapper flex flex-col justify-center items-center'>
+            <div
+              {...getRootProps()}
+              className='dropzone-wrapper flex flex-col justify-center items-center cursor-pointer'
+            >
               <input {...getInputProps()} />
               <div className='text-center'>
                 <div className='upload-icon flex justify-center'>
                   <CloudUpload />
                 </div>
-                <div className='mt-2'>Drag & drop files here</div>
-                <div className='text-sm text-lumera-label mt-3'>or</div>
-                <div className='mt-2 flex justify-center btn-blue'>
-                  <AppButton className='font-bold'>Browse Files</AppButton>
+                <div className='flex items-center gap-1.5 text-base'>
+                  <div>Drag & drop files here or</div>
+                  <div className='flex justify-center text-lumera-teal'>
+                    Browse
+                  </div>
                 </div>
                 {error ?
                   <div className='mt-5 text-red-600'>{error}</div> : null
@@ -362,138 +1577,49 @@ export const CascadeContent = React.memo(({
           )}
         </Dropzone>
       </div>
-      <div className='mt-6 w-full relative'>
-        <Loading isLoading={isMyFilesLoading} />
-        <Card elevate size="$4" bordered className='w-full !p-[18px]'>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <h2 className="text-xl font-semibold text-white">My Files</h2>
-            <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-              <div className="flex items-center border border-gray-700 rounded-lg p-1 bg-gray-900/50 gap-1 overflow-x-auto">
-                {FILES_TYPE.map(type => (
-                  <button
-                    key={type.value}
-                    onClick={() => onFileTypeFilterChange(type.value)}
-                    className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap ${fileTypeFilter === type.value ? 'bg-lumera-teal text-white' :
-                      'text-gray-300 hover:bg-lumera-teal'}`}
-                  >
-                    {type.label} ({fileCounts[type.value as TFileTypeKey]})
-                  </button>
-                ))}
-              </div>
-              <div className="relative w-full md:w-auto">
-                <div className='input-wrapper'>
-                  <Input
-                    id="keyword"
-                    placeholder="Search my files..."
-                    className='input  has-symbol'
-                    value={fileSearch}
-                    onChangeText={onFileSearchChange}
-                  />
-                  <span className='input-symbol'>
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {selectedFiles.length > 0 &&
-            <div className="bg-gray-700/50 p-3 rounded-lg flex justify-between items-center mb-4">
-              <span className="text-sm font-semibold text-white">{selectedFiles.length} file(s) selected</span>
-              <AppButton variant="secondary" className="!py-1.5 !px-4" onClick={onDownloadAllFile}>
-                <Download className="w-4 h-4" /> Download as .zip
-              </AppButton>
-            </div>
-          }
-          <div className='md:overflow-x-auto '>
-            <div className="space-y-2 md:min-w-[1050px]">
-              <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-gray-400 uppercase items-center">
-                <div className="col-span-5">
-                  <div className='flex items-start'>
-                    <div className='w-10'>
-                      <Checkbox
-                        id="checkAll"
-                        size="$4"
-                        checked={selectedFiles.length === memoizedFilteredFiles.length && memoizedFilteredFiles.length > 0}
-                        onCheckedChange={onSelectAll}
-                      >
-                        <Checkbox.Indicator>
-                          <CheckIcon />
-                        </Checkbox.Indicator>
-                      </Checkbox>
-                    </div>
-                    <span>Name</span>
-                  </div>
-                </div>
-                <div className="col-span-2">Last Modified</div>
-                <div className="col-span-2">TX ID</div>
-                <div className="col-span-1 text-right">Size</div>
-                <div className="col-span-2 text-right">Action</div>
-              </div>
-              {memoizedFilteredFiles.map((file, index) => (
-                <div key={file.name || index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-900/40 hover:bg-gray-800/60 p-4 rounded-lg">
-                  <div className="col-span-full md:col-span-5 flex items-center gap-4">
-                    <div className='flex items-start'>
-                      <div className='w-10'>
-                        <Checkbox
-                          id={`check-${index}`}
-                          size="$4"
-                          checked={selectedFiles.includes(file.name)}
-                          onCheckedChange={() => onSelectFile(file)}
-                        >
-                          <Checkbox.Indicator>
-                            <CheckIcon />
-                          </Checkbox.Indicator>
-                        </Checkbox>
-                      </div>
-                      <div className='flex items-start flex-wrap gap-2'>
-                        {getFileIcon(getSimplifiedType(file.type))}
-                        <span className="font-medium text-white truncate">{file.name}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-span-full md:col-span-2 text-sm text-gray-400">
-                    <span className="md:hidden font-semibold text-gray-500 mr-2">Last Modified: </span>
-                    {new Date(file.lastModified).toLocaleDateString()}
-                  </div>
-                  <div className="col-span-full md:col-span-2 text-sm">
-                    <span className="md:hidden font-semibold text-gray-500 mr-2">TX ID: </span>
-                    <AppLink
-                      href={`/tx/${file.txId}`}
-                      className="font-mono text-indigo-400 hover:underline truncate inline-flex items-center gap-1.5"
-                    >
-                      {formatAddress(file.txId, 6, -6)}<ArrowUpRight className="w-3 h-3"/>
-                    </AppLink>
-                  </div>
-                  <div className="col-span-full md:col-span-1 text-sm text-gray-300 md:text-right">
-                    <span className="md:hidden font-semibold text-gray-500 mr-2">Size: </span>
-                    {formatBytes(file.size)}
-                  </div>
-                  <div className="col-span-full md:col-span-2 flex justify-start md:justify-end">
-                    <AppButton
-                      variant="secondary"
-                      className="!py-1.5 !px-4 text-sm w-full md:w-auto max-w-40"
-                      onClick={() => onDownloadClick(file)}
-                    >
-                      <Download className="w-4 h-4"/> Download
-                    </AppButton>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {isDownloading ?
-        <div className='fixed right-2 bottom-2 z-50'>
-          <Card elevate bordered className='w-full !overflow-hidden'>
-            <div className='px-5 py-3 flex items-center gap-2'>
-              <Loading isLoading className='relative !top-0 !left-0 !transform-none' /> Downloading ....
-            </div>
-          </Card>
-        </div> : null
-      }
+      <Files
+        address={address}
+        isMyFilesLoadMore={isMyFilesLoadMore}
+        fileSearch={fileSearch}
+        selectedFiles={selectedFiles}
+        isAllDownloading={isAllDownloading}
+        isDownloading={isDownloading}
+        memoizedFilteredFiles={memoizedFilteredFiles}
+        isMyFilesLoading={isMyFilesLoading}
+        currentOffset={currentOffset}
+        selectedFileDownload={selectedFileDownload}
+        totalPage={totalPage}
+        recentlyUploaded={recentlyUploaded}
+        isRecentlyUploadedLoading={isRecentlyUploadedLoading}
+        fileCounts={fileCounts}
+        fileTypeFilter={fileTypeFilter}
+        currentTab={currentTab}
+        handleTabChange={handleTabChange}
+        handlePageClick={handlePageClick}
+        handleDownloadFile={handleDownloadFile}
+        getTypeFilter={getTypeFilter}
+        handleFileSearchChange={handleFileSearchChange}
+        handleDownloadAllFile={handleDownloadAllFile}
+        handleSelectAll={handleSelectAll}
+        handleSelectFile={handleSelectFile}
+        handleFileTypeFilterChange={handleFileTypeFilterChange}
+      />
+      <ActionFeeModal
+        uploadedFiles={uploadCascadeInfo}
+        address={address}
+        isUploading={isUploading}
+        isOpen={selectedModal === 'upload-cascade'}
+        onCancelClick={closeActionFeeModal}
+        onCloseModal={closeActionFeeModal}
+        onOkClick={handleUploadCascade}
+        handlePublicFile={handlePublicFile}
+        onRemoveUploadFile={handleRemoveUploadFile}
+      />
+      <UploadCascadeSuccessModal
+        isOpen={selectedModal === 'upload-cascade-success'}
+        onCloseModal={handleCloseUploadCascadeSuccessModal}
+        uploadedFiles={uploadCascadeInfo}
+      />
     </YStack>
   )
-});
+})

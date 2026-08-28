@@ -3,3 +3,39 @@ export const GAS_RATIO = 1.5;
 export const FEE_VALUE = '2000';
 export const FEE_RATIO = 0.028;
 export const RATE_VALUE = 1000000;
+export const UPLOAD_MAX_FILES = process.env.NEXT_PUBLIC_UPLOAD_MAX_FILES || 15;
+export const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+export const DOCUMENT_EXT = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'ppt', 'pptx'];
+export const VIDEO_EXT = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
+export const ARCHIVE_EXT = ['zip', 'rar', '7z'];
+export const PROGRAM_EXT = ['exe', 'bat', 'sh', 'dll', 'app'];
+export const USER_RULE = [
+  {
+    value: 'admin',
+    label: 'Admin'
+  },
+  {
+    value: 'user',
+    label: 'User'
+  },
+];
+export const USER_TYPE = [
+  {
+    value: 'email',
+    label: 'Email'
+  },
+  {
+    value: 'wallet',
+    label: 'Wallet'
+  },
+];
+export const USER_STATUS = [
+  {
+    value: '1',
+    label: 'Active'
+  },
+  {
+    value: '0',
+    label: 'UnActive'
+  },
+];

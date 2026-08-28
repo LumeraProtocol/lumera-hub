@@ -30,7 +30,7 @@ const useBlockDetails = () => {
       const { data } = await instance.get(`/cosmos/base/tendermint/v1beta1/blocks/${height}`);
       setBlock(data);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+      setError((error as Error)?.message ||  'An unknown error occurred.');
     }
     setLoading(false);
   }

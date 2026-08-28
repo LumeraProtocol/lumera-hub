@@ -3,12 +3,9 @@ import dayjs from 'dayjs';
 import ReactECharts from 'echarts-for-react';
 import {
   YStack,
-  H2,
-  Paragraph,
   Card,
   H3,
   H4,
-  Button,
   Text,
   SizableText,
   Dialog,
@@ -31,29 +28,48 @@ import {
   ClockPlus,
   Layers,
   Check as CheckCircle,
+  Blocks,
+  Landmark,
+  ChartNoAxesCombined,
+  LockKeyhole,
+  DollarSign,
+  Users,
+  Upload,
 } from 'lucide-react';
 
-import Loading from '@/components/Loading';
+import { AppLoading } from '@/components/Loading';
 import AppLink from '@/components/AppLink';
-import { ConnectWalletButton } from '@/components/ConnectWallet';
+import AppButton from '@/components/AppButton';
+import { NAV_ITEMS } from '@/components/layout/AppShell';
+import NoWalletConnected from '@/components/NoWalletConnected';
+import SectionTitle from '@/components/SectionTitle';
+import VersionsInfo from '@/components/VersionsInfo';
 import Skeleton from '@/components/Skeleton';
+import CountDown from '@/components/CountDown';
 import { AccountInfoData, getTotalRewards } from '@/hooks/useAccountInfo';
 import useAppRouter from '@/hooks/useAppRouter';
 import { IRecentActivity, TMessage } from '@/hooks/useRecentActivity';
 import { IProposal, VOTE_OPTIONS, broadcastModeOptions } from '@/hooks/useProposals';
+import useStats from '@/hooks/useStats';
 import { formatToken, formatTokenDisplay } from '@/utils/format';
-import { NAV_ITEMS } from '@/components/layout/AppShell';
 import { DENOM } from '@/contants/network';
+import { formatPortfolioAmount, getPortfolioData } from '@/utils/portfolio';
+import {
+  formatGovernanceVote,
+  getGovernanceVoteFormValue,
+  GovernanceVote,
+} from '@/utils/governance-votes';
 
 dayjs.extend(relativeTime);
 
-const COLORS = ['#4d4adc', '#62bbf3'];
+const COLORS = ['#078A8A', '#47C78A'];
 
 interface IHomeScreen {
   address: string;
   loading: boolean;
   accountInfo: AccountInfoData | null;
   proposals: IProposal[];
+  userVotes: Record<string, GovernanceVote>;
   isProposalLoading: boolean;
   recentActivities: IRecentActivity[];
   isRecentActivityLoading: boolean;
@@ -95,6 +111,13 @@ interface IPortfolioOverviewChart {
   liquid: number;
 }
 
+interface IPortfolioTooltipParams {
+  marker?: string;
+  name?: string;
+  value?: number;
+  percent?: number;
+}
+
 interface IVoteModal {
   isOpen: boolean;
   setOpen: (status: boolean) => void;
@@ -112,6 +135,7 @@ interface IVoteModal {
   };
   handleVoteAdvancedChange: (name: string, value: string) => void;
   transactionHash?: string;
+  currentVote?: GovernanceVote;
   onCloseCongratulationsModal?: () => void;
 }
 
@@ -141,14 +165,21 @@ interface IClaimableRewardsModal {
 const getOption = (data: IPortfolioOverviewChart) => {
   return {
     tooltip: {
-      trigger: 'item'
+      trigger: 'item',
+      // The series carries micro-denom totals, so format the value instead of
+      // letting the default tooltip print raw micro-LUME.
+      formatter: (params: IPortfolioTooltipParams) => [
+        `${params.marker || ''}${params.name || ''}:`,
+        `<strong>${formatPortfolioAmount(Number(params.value || 0))} LUME</strong>`,
+        `(${params.percent || 0}%)`,
+      ].join(' '),
     },
     color: COLORS,
     series: [
       {
         name: 'Portfolio Overview',
         type: 'pie',
-        radius: ['50%', '70%'],
+        radius: ['90%', '55%'],
         label: {
           show: false,
           position: 'center'
@@ -162,19 +193,6 @@ const getOption = (data: IPortfolioOverviewChart) => {
         ]
       }
     ]
-  }
-}
-
-const getPortfolioData = (accountInfo: AccountInfoData | null) => {
-  let stacked = 0;
-  let liquid = 0;
-  if (accountInfo) {
-    stacked = accountInfo.delegations.reduce((total, item) => Number(item.balance.amount) + total, 0)
-    liquid = accountInfo.balances.reduce((total, item) => Number(item.amount) + total, 0)
-  }
-  return {
-    stacked,
-    liquid,
   }
 }
 
@@ -216,6 +234,7 @@ export const VoteModal = ({
   voteAdvanced,
   handleVoteAdvancedChange,
   transactionHash,
+  currentVote,
   onCloseCongratulationsModal,
 }: IVoteModal) => {
   if (!isOpen) {
@@ -226,6 +245,9 @@ export const VoteModal = ({
   const handleAdvancedCheckedChange = (checked: boolean) => {
     setShowAdvanced(checked);
   }
+
+  const currentVoteLabel = formatGovernanceVote(currentVote);
+  const currentVoteValue = getGovernanceVoteFormValue(currentVote);
 
   if (transactionHash) {
     return (
@@ -274,10 +296,10 @@ export const VoteModal = ({
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
               </div>
               <div className='mt-4'>
-                <H3 className='!text-green-500 text-[32px] !leading-0'>Congratulations! vote completed successfully.</H3>
+                <SectionTitle className='!text-green-500 !leading-0'>Congratulations! vote completed successfully.</SectionTitle>
               </div>
               <div className='mt-3'>
-                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-teal hover:text-lumera-green text-sm'>View Transaction</AppLink>
+                <AppLink href={`/tx/${transactionHash}`} className='text-lumera-teal hover:text-lumera-green text-base'>View Transaction</AppLink>
               </div>
             </div>
           </Dialog.Content>
@@ -327,9 +349,15 @@ export const VoteModal = ({
               <Dialog.Title></Dialog.Title>
             </VisuallyHidden>
             <div className='vote-main-content relative'>
-              <Loading isLoading={isVoteLoading} />
+              <AppLoading
+                isLoading={isVoteLoading}
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
               <div className='flex justify-between items-center'>
-                <H3 className='text-lumera-label text-[32px]'>Vote</H3>
+                <SectionTitle className='mb-0'>Vote</SectionTitle>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
               </div>
               <div className='mt-1'>
@@ -340,7 +368,12 @@ export const VoteModal = ({
               </div>
               <div className='mt-1'>
                 <Label htmlFor="option" className='text-base'>Option</Label>
-                <RadioGroup aria-labelledby="Select one item" defaultValue="1" name="option" id="option" onValueChange={onOptionChange}>
+                {currentVoteLabel ? (
+                  <p className='mb-2 text-sm text-lumera-label'>
+                    Current vote: <strong className='text-white'>{currentVoteLabel}</strong>. Submitting a new vote replaces it.
+                  </p>
+                ) : null}
+                <RadioGroup aria-labelledby="Select one item" defaultValue={currentVoteValue} name="option" id="option" onValueChange={onOptionChange}>
                   <div className='flex items-center gap-6'>
                     {VOTE_OPTIONS?.map((item) => (
                       <div className='flex items-center gap-3' key={item.value}>
@@ -452,7 +485,7 @@ export const VoteModal = ({
                     </Label>
                   </div>
                   <div className='btn-primary flex justify-end mt-3'>
-                    <Button onPress={() => onVoteClick(item)} disabled={isVoteLoading}>Send</Button>
+                    <AppButton onClick={() => onVoteClick(item)} disabled={isVoteLoading}>Send</AppButton>
                   </div>
                 </div>
               </YStack>
@@ -525,7 +558,7 @@ export const ClaimableRewardsModal = ({
             </VisuallyHidden>
             <div className='withdraw-main-content relative text-center p-5 max-w-[450px]'>
               <div className='flex justify-between items-center'>
-                <H3 className='text-lumera-label text-[32px]'>Claim Rewards</H3>
+                <SectionTitle className='mb-0'>Claim Rewards</SectionTitle>
                 <button className='btn-close-modal cursor-pointer' onClick={onCloseCongratulationsModal}><CircleX /></button>
               </div>
               <div className='mt-2 text-center'>
@@ -544,13 +577,13 @@ export const ClaimableRewardsModal = ({
                     View Transaction
                   </AppLink>
                 </div>
-                <div className='mt-2 pb-3'>
-                  <button
-                    className='cursor-pointer bg-lumera-teal hover:bg-lumera-green text-white rounded-[9px] px-4 py-2'
+                <div className='mt-2 pb-3 w-full flex justify-center'>
+                  <AppButton
+                    className='cursor-pointer'
                     onClick={onCloseCongratulationsModal}
                   >
                     {backButtonText}
-                  </button>
+                  </AppButton>
                 </div>
               </div>
             </div>
@@ -601,9 +634,15 @@ export const ClaimableRewardsModal = ({
               <Dialog.Title></Dialog.Title>
             </VisuallyHidden>
             <div className='withdraw-main-content relative max-w-[450px]'>
-              <Loading isLoading={isVoteLoading} />
+              <AppLoading
+                isLoading={isVoteLoading}
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
               <div className='flex justify-between items-center'>
-                <H3 className='text-lumera-label text-[32px]'>Withdraw</H3>
+                <SectionTitle className='mb-0'>Withdraw</SectionTitle>
                 <button className='btn-close-modal cursor-pointer' onClick={() => setOpen(false)}><CircleX /></button>
               </div>
               <div className='mt-1 hidden'>
@@ -612,18 +651,18 @@ export const ClaimableRewardsModal = ({
                   <Input id="sender" placeholder="Sender" className='input' defaultValue={sender} readOnly />
                 </div>
               </div>
-              <div className='mt-5 text-lg'>
+              <div className='mt-5 text-base'>
                 Claim <strong>{message?.amount} LUME</strong> available rewards from <strong>{message?.from}</strong> Delegation Now!
               </div>
 
-              <div className='mt-5'>
+              <div className='mt-5 flex justify-end w-full'>
                 {error && !isVoteLoading ?
                   <div className='text-lumera-red-light'>{error}</div> : null
                 }
-                <div className='btn-primary full mt-3'>
-                  <Button onPress={onSendClick} disabled={isVoteLoading}>
-                    <span className='font-bold'>Claim</span>
-                  </Button>
+                <div className='btn-primary full'>
+                  <AppButton onClick={onSendClick} disabled={isVoteLoading}>
+                    <span>Claim</span>
+                  </AppButton>
                 </div>
               </div>
 
@@ -634,11 +673,165 @@ export const ClaimableRewardsModal = ({
   )
 }
 
+const Stats = () => {
+  const { isLoading, isLatestBlockLoading, stats, latestBlock, redirect } = useStats();
+
+  return (
+    <div className='grid grid-cols-2 sm:grid-cols-3 1-5xl:grid-cols-6 gap-6'>
+      <Card elevate size="$4" bordered className='w-full hover:!bg-[#171f1f] transition-colors duration-300 cursor-pointer hover:!border-lumera-teal'>
+        <div className='p-[18px]' onClick={() => redirect('/blocks')}>
+          {isLatestBlockLoading ?
+            <div className='relative min-h-[100px] block w-full'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='flex items-center gap-2 flex-col justify-center'>
+              <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+                <Blocks className='w-5 h-5 text-blue-400' />
+              </div>
+              <div className="text-center">
+                <div className='text-base font-bold'>{latestBlock.height}</div>
+                <div className='text-base text-lumera-label'>Block Height</div>
+              </div>
+            </div>
+          }
+        </div>
+      </Card>
+      <Card elevate size="$4" bordered className='w-full hover:!bg-[#171f1f] transition-colors duration-300 cursor-pointer hover:!border-lumera-teal'>
+        <div className='p-[18px]' onClick={() => redirect('/staking#validators')}>
+          {isLatestBlockLoading ?
+            <div className='relative min-h-[100px] block w-full'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='flex items-center gap-2 flex-col justify-center'>
+              <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+                <Users className='w-5 h-5 text-lumera-red-light' />
+              </div>
+              <div className="text-center">
+                <div className='text-base font-bold'>{latestBlock.validators}</div>
+                <div className='text-base text-lumera-label'>Validators</div>
+              </div>
+            </div>
+          }
+        </div>
+      </Card>
+      <Card elevate size="$4" bordered className='w-full'>
+        <div className='p-[18px]'>
+          {isLoading ?
+            <div className='relative min-h-[100px] block w-full'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='flex items-center gap-2 flex-col justify-center'>
+              <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+                <DollarSign className='w-5 h-5 text-teal-400' />
+              </div>
+              <div className="text-center">
+                <div className='text-base font-bold'>{stats.supply}</div>
+                <div className='text-base text-lumera-label'>Supply</div>
+              </div>
+            </div>
+          }
+        </div>
+      </Card>
+      <Card elevate size="$4" bordered className='w-full'>
+        <div className='p-[18px]'>
+          {isLoading ?
+            <div className='relative min-h-[100px] block w-full'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='flex items-center gap-2 flex-col justify-center'>
+              <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+                <LockKeyhole className='w-5 h-5 text-amber-600' />
+              </div>
+              <div className="text-center">
+                <div className='text-base font-bold'>{stats.bondedTokens}</div>
+                <div className='text-base text-lumera-label'>Bonded Tokens</div>
+              </div>
+            </div>
+          }
+        </div>
+      </Card>
+      <Card elevate size="$4" bordered className='w-full'>
+        <div className='p-[18px]'>
+          {isLoading ?
+            <div className='relative min-h-[100px] block w-full'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='flex items-center gap-2 flex-col justify-center'>
+              <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+                <ChartNoAxesCombined className='w-5 h-5 text-blue-800' />
+              </div>
+              <div className="text-center">
+                <div className='text-base font-bold'>{stats.inflation}</div>
+                <div className='text-base text-lumera-label'>Inflation</div>
+              </div>
+            </div>
+          }
+        </div>
+      </Card>
+      <Card elevate size="$4" bordered className='w-full'>
+        <div className='p-[18px]'>
+          {isLoading ?
+            <div className='relative min-h-[100px] block w-full'>
+              <AppLoading
+                isLoading
+                className="w-10 h-10 !border-2"
+                iconWidth={20}
+                iconHeight={20}
+                containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+              />
+            </div> :
+            <div className='flex items-center gap-2 flex-col justify-center'>
+              <div className="rounded-full grid place-items-center bg-lumera-icon-bg p-3">
+                <Landmark className='w-5 h-5 text-amber-400' />
+              </div>
+              <div className="text-center">
+                <div className='text-base font-bold'>{stats.communityPool} <span className='text-sm'>LUME</span></div>
+                <div className='text-base text-lumera-label'>Community Pool</div>
+              </div>
+            </div>
+          }
+        </div>
+      </Card>
+    </div>
+  )
+}
+
 export const HomeScreen = ({
   address,
   loading,
   accountInfo,
   proposals,
+  userVotes,
   isProposalLoading,
   recentActivities,
   isRecentActivityLoading,
@@ -672,6 +865,25 @@ export const HomeScreen = ({
     const message = formatMessage(messages)?.toLowerCase();
 
     switch (message) {
+      case 'requestaction':
+        return (
+          <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
+            <div className="rounded-full grid place-items-center recent-activity-icon">
+              <Upload className='w-5 h-5 text-teal-400' />
+            </div>
+            <div className='w-full flex flex-col'>
+              <Text className='!text-base'>
+                Cascade upload {formatToken({
+                  amount: `${parseInt((messages[0] as any)?.price)}`,
+                  denom: DENOM,
+                }, true, '0,0.[000000]')}
+              </Text>
+              <SizableText className='!text-sm text-lumera-label leading-none'>
+                {dayjs(item.timestamp).fromNow()}
+              </SizableText>
+            </div>
+          </div>
+        )
       case 'delegate':
         return (
           <div className='flex justify-between gap-3 mb-3' key={item.txhash}>
@@ -679,7 +891,7 @@ export const HomeScreen = ({
               <Layers className='w-5 h-5 text-teal-400' />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>
+              <Text className='!text-base'>
                 Staked {messages[0].amount.denom === 'lume' ? formatToken({
                   amount: `${messages[0].amount.amount}`,
                   denom: 'lume',
@@ -701,7 +913,7 @@ export const HomeScreen = ({
               <BanknoteArrowUp className='w-5 h-5 text-lumera-red-light' />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>
+              <Text className='!text-base'>
                 Deposit {formatToken({
                   amount: `${messages[0].amount[0].amount}`,
                   denom: messages[0].amount[0].denom,
@@ -720,7 +932,7 @@ export const HomeScreen = ({
               <Unlink className='w-5 h-5 text-red-600' />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>
+              <Text className='!text-base'>
                 Unbond {messages[0]?.amount?.length ? formatToken({
                   amount: `${messages[0].amount[0].amount}`,
                   denom: messages[0].amount[0].denom,
@@ -742,7 +954,7 @@ export const HomeScreen = ({
               <ClockPlus className='w-5 h-5 text-lumera-blue-light' />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>
+              <Text className='!text-base'>
                 Begin redelegate {formatToken({
                   amount: `${messages?.[0]?.amount?.amount}`,
                   denom: messages?.[0]?.amount?.denom,
@@ -761,7 +973,7 @@ export const HomeScreen = ({
               <ArrowUpRight className="w-5 h-5 text-lumera-green" />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>Send {formatToken({
+              <Text className='!text-base'>Send {formatToken({
                     amount: `${messages[0].amount[0].amount}`,
                     denom: DENOM,
                   }, true, '0,0.[000000]')}</Text>
@@ -779,7 +991,7 @@ export const HomeScreen = ({
                 <Star className="w-5 h-5 text-amber-400" />
               </div>
               <div className='w-full flex flex-col'>
-                <Text>Claimed {formatToken({
+                <Text className='!text-base'>Claimed {formatToken({
                                   amount: `${amount?.value.replace('ulume', '').replace('stake', '')}`,
                                   denom: DENOM,
                                 }, true, '0,0.[000000]')} in rewards</Text>
@@ -794,7 +1006,7 @@ export const HomeScreen = ({
               <Vote className="w-5 h-5 text-indigo-400" />
             </div>
             <div className='w-full flex flex-col'>
-              <Text>{formatMessage(messages)}</Text>
+              <Text className='!text-base'>{formatMessage(messages)}</Text>
               <SizableText className='!text-sm text-lumera-label leading-none'>{dayjs(item.timestamp).fromNow()}</SizableText>
             </div>
           </div>
@@ -804,6 +1016,7 @@ export const HomeScreen = ({
 
   const handleVotePress = (item: IProposal) => {
     handleResetError();
+    onOptionChange(getGovernanceVoteFormValue(userVotes[item.id]));
     setVoteOpen(true);
     setSelectedItem(item);
   }
@@ -813,116 +1026,135 @@ export const HomeScreen = ({
   }
 
   return (
-    <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
+    <>
       {!address ?
-        <Card elevate size="$4" bordered className='w-full'>
-          <div className='flex items-center justify-center h-[84vh]'>
-            <div className='flex flex-col gap-3 justify-between items-center max-w-[450px] text-center mt-10'>
-              <div className="w-20 h-20 grid place-items-center">
-                <img src="/lumera-symbol.svg" alt="Lumera" />
-              </div>
-              <H2 className='font-bold text-white text-[32px] leading-none'>Welcome to the Lumera Hub</H2>
-              <Paragraph className='text-base text-lumera-gray'>Connect your wallet to manage assets, participate in governance, and access the full suite of Lumera services.</Paragraph>
-              <div className='text-center'>
-                <ConnectWalletButton />
-              </div>
-            </div>
-          </div>
-        </Card> :
         <>
+          <Stats />
+          <div className='mt-6'>
+            <NoWalletConnected variant='home' />
+          </div>
+        </> :
+        <YStack flex={1} alignItems="center" justifyContent="center" gap="$2">
           <div className='w-full flex flex-col gap-6'>
+            <Stats />
             <div className='grid grid-cols-2 gap-6 w-full overview-wrapper'>
               <Card bordered className='w-full portfolio-overview'>
                 <Card.Header padded>
-                  <H3>Portfolio Overview</H3>
-                  <div className='mt-5 flex justify-between items-center chart-wrapper'>
-                    <div className='w-1/2 relative'>
-                      <Loading isLoading={loading} />
-                      <ReactECharts option={getOption({
-                        stacked: Number(formatTokenDisplay({
-                                amount: `${stacked}`,
-                                denom: DENOM,
-                              }, false, '0,0.[000000]')),
-                        liquid: Number(formatTokenDisplay({
-                                amount: `${liquid}`,
-                                denom: DENOM,
-                              }, false, '0,0.[000000]'))
-                        })} style={{ height: '200px', width: '100%' }} />
-                    </div>
-                    <div className='w-1/2'>
-                      <div>
-                        <div className='flex gap-1 items-center'>
-                          <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[0] }}></span>
-                          <SizableText className='text-lumera-label !font-bold'>Staked</SizableText>
-                        </div>
-                        <div className='text-2xl font-bold'>
-                          {loading ?
-                           <Skeleton /> : <>
-                              {formatTokenDisplay({
-                                amount: `${stacked}`,
-                                denom: DENOM,
-                              }, false, '0,0.[000000]')} <span className='text-lg whitespace-nowrap'>LUME</span>
-                            </>
-                          }
+                  <SectionTitle className='mb-2'>Portfolio Overview</SectionTitle>
+                  <div className='mt-5 flex justify-between items-center chart-wrapper relative min-h-[200px]'>
+                    {loading ?
+                      <AppLoading
+                        isLoading
+                        hideOverlay
+                        className="w-10 h-10 !border-2"
+                        iconWidth={20}
+                        iconHeight={20}
+                        containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                      /> : (
+                        <>
+                          <div className='w-1/2 relative'>
+                            <ReactECharts option={getOption({
+                              stacked: Number(formatTokenDisplay({
+                                      amount: `${stacked}`,
+                                      denom: DENOM,
+                                    }, false, '0,0.[000000]')),
+                              liquid: Number(formatTokenDisplay({
+                                      amount: `${liquid}`,
+                                      denom: DENOM,
+                                    }, false, '0,0.[000000]'))
+                              })} style={{ height: '200px', width: '100%' }} />
                           </div>
-                      </div>
-                      <div className='mt-4'>
-                        <div className='flex gap-1 items-center'>
-                          <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[1] }}></span>
-                          <SizableText className='text-lumera-label !font-bold'>Liquid</SizableText>
-                        </div>
-                        <div className='text-2xl font-bold'>
-                          {loading ?
-                            <Skeleton /> :
-                            <>
-                              {formatTokenDisplay({
-                                amount: `${liquid}`,
-                                denom: DENOM,
-                              }, false, '0,0.[000000]')} <span className='text-lg whitespace-nowrap'>LUME</span>
-                            </>
-                          }
-                        </div>
-                      </div>
-                    </div>
+                          <div className='w-1/2'>
+                            <div>
+                              <div className='flex gap-1 items-center'>
+                                <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[0] }}></span>
+                                <SizableText className='text-lumera-label !text-base'>Staked</SizableText>
+                              </div>
+                              <div className='text-xl font-bold'>
+                                {formatTokenDisplay({
+                                  amount: `${stacked}`,
+                                  denom: DENOM,
+                                }, false, '0,0.[000000]')} <span className='whitespace-nowrap'>LUME</span>
+                                </div>
+                            </div>
+                            <div className='mt-4'>
+                              <div className='flex gap-1 items-center'>
+                                <span className='w-3 h-3 rounded-full block' style={{ backgroundColor: COLORS[1] }}></span>
+                                <SizableText className='text-lumera-label !text-base'>Liquid</SizableText>
+                              </div>
+                              <div className='text-xl font-bold'>
+                                {formatTokenDisplay({
+                                  amount: `${liquid}`,
+                                  denom: DENOM,
+                                }, false, '0,0.[000000]')} <span className='whitespace-nowrap'>LUME</span>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )
+                    }
                   </div>
                 </Card.Header>
               </Card>
               <div className='grid grid-cols-2 gap-6 w-full balance-rewards-overview'>
                 <Card elevate size="$4" bordered className='w-full total-balance'>
                   <Card.Header padded>
-                    <H3 className='text-lumera-label'>Total Balance</H3>
+                    <SectionTitle className='mb-2'>Total Balance</SectionTitle>
                     <div>
-                      <H4 className='!text-white !font-bold !text-3xl'>
-                        {loading ?
-                          <Skeleton /> :
-                          <>
-                            {formatTokenDisplay({
-                              amount: `${stacked + liquid}`,
-                              denom: DENOM,
-                            })} <span className='text-xl whitespace-nowrap'>LUME</span>
-                          </>
-                        }
-                      </H4>
+                      {loading ?
+                        <div className='min-h-16 relative mt-5'>
+                          <AppLoading
+                            isLoading
+                            hideOverlay
+                            className="w-10 h-10 !border-2"
+                            iconWidth={20}
+                            iconHeight={20}
+                            containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                          />
+                        </div> :
+                        <H4 className='!text-white !font-bold !text-2xl'>
+                          {formatTokenDisplay({
+                            amount: `${stacked + liquid}`,
+                            denom: DENOM,
+                          })} <span className='whitespace-nowrap'>LUME</span>
+                        </H4>
+                      }
                     </div>
                   </Card.Header>
                 </Card>
                 <Card elevate size="$4" bordered className='w-full claimable-rewards'>
                   <Card.Header padded>
-                    <H3 className='text-lumera-label'>Claimable Rewards</H3>
+                    <SectionTitle className='mb-2'>Claimable Rewards</SectionTitle>
                     <div>
-                      <H4 className='!text-lumera-green !font-bold !text-3xl'>
-                        {loading ? <Skeleton /> :
-                          <>
-                          {formatTokenDisplay({
-                            amount: `${getTotalRewards(accountInfo)}`,
-                            denom: DENOM,
-                          }, false, '0,0.[0000]')} <span className='text-xl whitespace-nowrap'>LUME</span>
-                          </>
-                        }
-                      </H4>
-                      <div className='mt-4 btn-full btn-secondary'>
-                        <Button onPress={() => handleToggleClaimModal(true)} disabled={isClaimLoading || loading}>Claim All Rewards</Button>
-                      </div>
+                      {loading ?
+                        <div className='min-h-16 relative mt-5'>
+                          <AppLoading
+                            isLoading
+                            hideOverlay
+                            className="w-10 h-10 !border-2"
+                            iconWidth={20}
+                            iconHeight={20}
+                            containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                          />
+                        </div> :
+                        <>
+                          <H4 className='!text-lumera-green !font-bold !text-2xl'>
+                            {formatTokenDisplay({
+                              amount: `${getTotalRewards(accountInfo)}`,
+                              denom: DENOM,
+                            }, false, '0,0.[0000]')} <span className='whitespace-nowrap'>LUME</span>
+                          </H4>
+                          <div className='mt-4 btn-full btn-secondary'>
+                            <AppButton
+                              onClick={() => handleToggleClaimModal(true)}
+                              disabled={isClaimLoading || loading}
+                              className="w-full"
+                            >
+                              <span>Claim All Rewards</span>
+                            </AppButton>
+                          </div>
+                        </>
+                      }
                     </div>
                   </Card.Header>
                 </Card>
@@ -932,42 +1164,66 @@ export const HomeScreen = ({
               <div className='w-2/3 active-governance-proposals'>
                 <Card elevate size="$4" bordered>
                   <Card.Header padded>
-                    <div className='flex justify-between items-center'>
-                      <H3 className='proposals-title'>Active Governance Proposals</H3>
+                    <div className='flex justify-between sm:items-center flex-col sm:flex-row'>
+                      <SectionTitle className='mb-2'>Active Governance Proposals</SectionTitle>
                       <span
                         onClick={handleViewAllProposalsClick}
-                        className='text-link text-sm whitespace-nowrap cursor-pointer'
+                        className='text-link text-base whitespace-nowrap cursor-pointer text-right'
                       >
                         View All
                       </span>
                     </div>
                     <div className='mt-5'>
                       {isProposalLoading ?
-                        <Skeleton /> :
+                        <div className='min-h-[284px] relative'>
+                          <AppLoading
+                            isLoading
+                            hideOverlay
+                            className="w-10 h-10 !border-2"
+                            iconWidth={20}
+                            iconHeight={20}
+                            containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                          />
+                        </div> :
                         <>
                           {!isProposalLoading && proposals?.length <= 0 ?
                             <div className='flex items-center justify-center min-h-28 md:min-h-[284px] my-2'>
-                              <H3 className='text-2xl'>No active proposals</H3>
-                            </div> : null
-                          }
-                          {proposals?.map((item) => (
-                            <div className='mt-3 flex justify-between gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
-                              <div className='flex flex-col'>
-                                <AppLink href={`/governance/${item.id}`}>
-                                  <Text>{item.title}</Text>
-                                </AppLink>
-                                <SizableText className='text-sm text-lumera-label'>{item.proposer}</SizableText>
-                              </div>
-                              {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
-                                <div className='btn-primary'>
-                                  <Button onPress={() => handleVotePress(item)}>Vote Now</Button>
-                                </div> : null
-                              }
+                              <H3 className='text-3xl'>No active proposals</H3>
+                            </div> : <div className='min-h-[284px]'>
+                              {proposals?.map((item) => {
+                                const currentVote = userVotes[item.id];
+                                const currentVoteLabel = formatGovernanceVote(currentVote);
+
+                                return (
+                                  <div className='mt-3 flex justify-between flex-col sm:flex-row gap-5 w-full sub-card p-3 rounded-md' key={item.id}>
+                                    <div className='flex flex-col min-w-0'>
+                                      <AppLink href={`/governance/${item.id}`}>
+                                        <Text className='!text-base font-bold'>{item.title}</Text>
+                                      </AppLink>
+                                      <SizableText className='!text-base text-lumera-label truncate'>{item.proposer}</SizableText>
+                                      {item.voting_end_time ? (
+                                        <SizableText className='!text-base text-lumera-label'>
+                                          Voting ends in <CountDown targetDate={new Date(item.voting_end_time)} className='whitespace-nowrap' />
+                                        </SizableText>
+                                      ) : null}
+                                      {currentVoteLabel ? (
+                                        <SizableText className='!text-base text-lumera-label'>
+                                          Your vote: <strong className='text-white'>{currentVoteLabel}</strong>
+                                        </SizableText>
+                                      ) : null}
+                                    </div>
+                                    {item.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ?
+                                      <div className='btn-primary shrink-0'>
+                                        <AppButton onClick={() => handleVotePress(item)}>{currentVote ? 'Change vote' : 'Vote Now'}</AppButton>
+                                      </div> : null
+                                    }
+                                  </div>
+                                );
+                              })}
                             </div>
-                          ))}
+                          }
                         </>
                       }
-
                     </div>
                   </Card.Header>
                 </Card>
@@ -975,10 +1231,19 @@ export const HomeScreen = ({
               <div className='w-1/3 recent-activity'>
                 <Card elevate size="$4" bordered>
                   <Card.Header padded>
-                    <H3>Recent Activity</H3>
+                    <SectionTitle className='mb-2'>Recent Activity</SectionTitle>
                     <div className='mt-5'>
                       {isRecentActivityLoading ?
-                        <Skeleton /> :
+                        <div className='min-h-[296px] relative'>
+                          <AppLoading
+                            isLoading
+                            hideOverlay
+                            className="w-10 h-10 !border-2"
+                            iconWidth={20}
+                            iconHeight={20}
+                            containerClassName='absolute top-1/2 left-1/2 -translate-1/2 w-10 h-10 z-50'
+                          />
+                        </div> :
                         <>
                           {recentActivities.slice(0, 6)?.map((item) => getActivity(item))}
                         </>
@@ -1001,6 +1266,7 @@ export const HomeScreen = ({
             voteAdvanced={voteAdvanced}
             handleVoteAdvancedChange={handleVoteAdvancedChange}
             transactionHash={voteTransactionHash}
+            currentVote={selectedItem ? userVotes[selectedItem.id] : undefined}
             onCloseCongratulationsModal={onCloseVoteCongratulationsModal}
           />
           <ClaimableRewardsModal
@@ -1023,8 +1289,9 @@ export const HomeScreen = ({
             }}
             backButtonText="Back to Dashboard"
           />
-        </>
+        </YStack>
       }
-    </YStack>
+      <VersionsInfo />
+    </>
   )
 }

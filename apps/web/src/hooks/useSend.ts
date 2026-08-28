@@ -1,20 +1,38 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   MsgSend,
 } from 'cosmjs-types/cosmos/bank/v1beta1/tx';
+import useLatestRequest from '@/hooks/useLatestRequest';
 import useWalletConnect from '@/hooks/useWalletConnect';
-import { DENOM } from '@/contants/network';
+import { DENOM, EVM_CHAIN_ID } from '@/contants/network';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO, RATE_VALUE } from '@/contants';
 import { Coin } from '@/hooks/useAccountInfo';
 import { extractValidNumber } from '@/utils/helpers';
+import {
+  evmBalanceToMicroLume,
+  getEvmBalance,
+  assertEvmAccountForChain,
+  isEvmTransactionHash,
+  normalizeEvmRecipientAddress,
+  parseEvmAmount,
+} from '@/utils/evm';
+import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 
 interface UseDepositOptions {
-  callback?: () => void;
+  callback?: (transactionHash?: string) => void;
   customMemo?: string;
 }
 
 const useSend = (options: UseDepositOptions = {}) => {
-    const { address, getClient, isConnected } = useWalletConnect();
+    const { trackingHubTransaction } = useTrackingHubTransaction();
+    const {
+      address,
+      getClient,
+      isConnected,
+      isEvm,
+      evmProvider,
+      ensureEvmNetwork,
+    } = useWalletConnect();
     const [isLoading, setLoading] = useState(false);
     const [optionsAdvanced, setOptionsAdvanced] = useState({
         senderAddress: address,
@@ -30,19 +48,62 @@ const useSend = (options: UseDepositOptions = {}) => {
     const [balances, setBalances] = useState<Coin[]>([]);
     const [selectedDenom, setSelectedDenom] = useState<string>('ulume');
     const [transactionHash, setTransactionHash] = useState('');
+    const balanceRequest = useLatestRequest();
 
-    useEffect(() => {
-      if (isConnected) {
-        queryBalances();
+    const queryBalances = useCallback(async (): Promise<void> => {
+      const requestId = balanceRequest.begin();
+      try {
+        if (isEvm) {
+          const balance = await getEvmBalance(address);
+          if (!balanceRequest.isCurrent(requestId)) return;
+          setBalances([{ denom: DENOM, amount: evmBalanceToMicroLume(balance) }]);
+          setSelectedDenom(DENOM);
+          return;
+        }
+
+        const client = await getClient();
+        if (!client) return;
+        const allBalances = await client.getAllBalances(address);
+        if (!balanceRequest.isCurrent(requestId)) return;
+        const positiveBalances = allBalances.filter((balance) => Number(balance.amount) > 0);
+        setBalances(positiveBalances);
+        if (positiveBalances.length > 0) {
+          setSelectedDenom(positiveBalances[0].denom);
+        }
+      } catch {
+        if (balanceRequest.isCurrent(requestId)) setBalances([]);
       }
-    }, [isConnected]);
+    }, [address, balanceRequest, getClient, isEvm]);
 
     useEffect(() => {
-      if (options?.customMemo) {
-        setOptionsAdvanced({
-          ...optionsAdvanced,
-          memo: options?.customMemo,
-        })
+      if (!isConnected || !address) {
+        setBalances([]);
+        return;
+      }
+      setBalances([]);
+      void queryBalances();
+      // The cleanup invalidation alone covers disconnects too: when the
+      // address empties, the previous run's cleanup has already superseded
+      // any in-flight balance query.
+      return () => {
+        balanceRequest.invalidate();
+      };
+    }, [address, balanceRequest, isConnected, queryBalances]);
+
+    useEffect(() => {
+      setOptionsAdvanced((current) => ({
+        ...current,
+        senderAddress: address,
+      }));
+    }, [address]);
+
+    useEffect(() => {
+      const customMemo = options?.customMemo;
+      if (customMemo) {
+        setOptionsAdvanced((current) => ({
+          ...current,
+          memo: customMemo,
+        }));
       }
     }, [options?.customMemo]);
 
@@ -85,16 +146,48 @@ const useSend = (options: UseDepositOptions = {}) => {
           setError('Please enter sender.');
           return
       }
-      if (!optionsAdvanced.fees) {
+      if (!isEvm && !optionsAdvanced.fees) {
           setError('Please enter fee.');
           return
       }
-      if (!optionsAdvanced.gas) {
+      if (!isEvm && !optionsAdvanced.gas) {
           setError('Please enter gas.');
           return
       }
       setLoading(true);
       try {
+        if (isEvm) {
+          const recipient = normalizeEvmRecipientAddress(optionsAdvanced.recipient);
+          if (!evmProvider) {
+            throw new Error('No EVM wallet was detected.');
+          }
+          if (!EVM_CHAIN_ID) {
+            throw new Error('The active network does not define an EVM chain ID.');
+          }
+
+          await ensureEvmNetwork();
+          const activeAddress = await assertEvmAccountForChain(
+            evmProvider,
+            address,
+            EVM_CHAIN_ID
+          );
+          const transactionHash = await evmProvider.request({
+            method: 'eth_sendTransaction',
+            params: [{
+              from: activeAddress,
+              to: recipient,
+              value: parseEvmAmount(optionsAdvanced.amount),
+            }],
+          });
+          if (!isEvmTransactionHash(transactionHash)) {
+            throw new Error('EVM wallet returned an invalid transaction hash.');
+          }
+          setTransactionHash(transactionHash);
+          resetData();
+          options.callback?.(transactionHash);
+          return;
+        }
+
         const client = await getClient();
         const msg = {
           typeUrl: '/cosmos.bank.v1beta1.MsgSend',
@@ -125,31 +218,20 @@ const useSend = (options: UseDepositOptions = {}) => {
           setTransactionHash(result?.transactionHash);
           resetData();
           if (options?.callback) {
-            options.callback();
+            options.callback(result.transactionHash);
           }
+          await trackingHubTransaction({
+            hash: result.transactionHash,
+            creator: address,
+            message_type: 'cosmos.bank.v1beta1.MsgSend',
+            price: Number(optionsAdvanced.amount) * RATE_VALUE,
+          });
         }
       } catch (error) {
-          setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+          setError((error instanceof Error && error.message) || 'An unknown error occurred.');
       }
       setLoading(false);
     }
-
-    const queryBalances = async (): Promise<void> => {
-      try {
-        const client = await getClient();
-        if (!client) {
-          return
-        }
-        const allBalances = await client.getAllBalances(address);
-        setBalances(allBalances.filter(b => parseInt(b.amount) > 0));
-        if (allBalances.length > 0) {
-          setSelectedDenom(allBalances[0].denom);
-        }
-      } catch {
-        // console.error('Query balances error:', err);
-        // noop
-      }
-    };
 
     const handleCloseCongratulationsModal = () => {
         setTransactionHash('');

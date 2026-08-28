@@ -50,46 +50,57 @@ export type TSignatures = {
 }
 
 export interface IBlock {
-    header: {
-        version: {
-            block: string;
-            app: string;
-        };
-        chain_id: string;
-        height: string;
-        time: string;
-        last_block_id: {
-            hash: string;
-            part_set_header: {
-                total: number;
-                hash: string;
-            };
-        };
-        last_commit_hash: string;
-        data_hash: string;
-        validators_hash: string;
-        next_validators_hash: string;
-        consensus_hash: string;
-        app_hash: string;
-        last_results_hash: string;
-        evidence_hash: string;
-        proposer_address: string;
+  header: {
+      version: {
+          block: string;
+          app: string;
+      };
+      chain_id: string;
+      height: string;
+      time: string;
+      last_block_id: {
+          hash: string;
+          part_set_header: {
+              total: number;
+              hash: string;
+          };
+      };
+      last_commit_hash: string;
+      data_hash: string;
+      validators_hash: string;
+      next_validators_hash: string;
+      consensus_hash: string;
+      app_hash: string;
+      last_results_hash: string;
+      evidence_hash: string;
+      proposer_address: string;
+  };
+  data: {
+      txs: string[];
+  };
+  last_commit: {
+    height: string;
+    round: number;
+    block_id: {
+        hash: string;
+        part_set_header: {
+        total: number;
+        hash: string;
+        }
     };
-    data: {
-        txs: string[];
+    signatures: TSignatures[];
+  }
+}
+
+export interface IBlockResponse {
+  block: IBlock;
+  block_id: {
+    hash: string;
+    part_set_header: {
+      hash: string;
+      total: number;
     };
-    last_commit: {
-        height: string;
-        round: number;
-        block_id: {
-           hash: string;
-           part_set_header: {
-            total: number;
-            hash: string;
-           }
-        };
-        signatures: TSignatures[];
-    }
+  }
 }
 
 export interface IProposal {
@@ -186,6 +197,8 @@ export type TMessage = {
     validator_address: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     amount: any;
+    metadata?: string;
+    price?: string;
 }
 
 export type TOption = {
@@ -283,6 +296,11 @@ export type ViewId =
   | "nfts"
   | "wallet"
   | "block"
+  | "user"
+  | "tracking"
+  | "blocks"
+  | "portal"
+  | "injhub"
 
 export interface IFullBlock {
   block: IBlock;
@@ -293,4 +311,192 @@ export interface IFullBlock {
       total: number;
     };
   };
+}
+
+
+interface ITransaction {
+  action_price: string;
+  action_price_denom: string;
+  block_time: string;
+  flow_payee: string;
+  flow_payer: string;
+  gas_used: number;
+  gas_wanted: number;
+  height: number;
+  tx_fee: string;
+  tx_fee_denom: string;
+  tx_hash: string;
+  tx_type: string;
+}
+
+export interface IActionDetail {
+  block_height: number;
+  creator: string;
+  decoded: {
+    data_hash: string;
+    file_name: string;
+    public: boolean;
+    rq_ids_ic: number;
+    rq_ids_ids: string[];
+    rq_ids_max: number;
+    signatures: string;
+  };
+  finalize_tx_id: string;
+  finalize_tx_time: string;
+  id: string;
+  mime_type: string;
+  price: {
+    amount: string;
+    denom: string;
+  };
+  register_tx_id: string;
+  register_tx_time: string;
+  schema_version: string;
+  size: number;
+  state: string;
+  super_nodes: string[];
+  timestamp: string;
+  transactions: ITransaction[];
+  type: string;
+}
+
+export const VIEW_TITLES: Record<ViewId, string> = {
+  dashboard: "Dashboard",
+  staking: "Staking",
+  governance: "Governance",
+  cascade: "Cascade",
+  sense: "Sense",
+  inference: "Inference",
+  nfts: "NFTs",
+  wallet: "Wallet",
+  block: "Block Details",
+  blocks: "Blocks",
+  user: 'Users',
+  portal: 'Portal',
+  tracking: "Active Hub Users",
+  injhub: "Injhub",
+}
+
+export type TFromMessage = {
+  [key: string]: string;
+}
+
+export type TSupernode = {
+  supernode_account: string;
+  validator_address: string;
+  validator_moniker: string;
+  current_state: string;
+  ip_address: string;
+  p2p_port: number;
+  protocol_version: string;
+  actual_version: string;
+  cpu_usage_percent: number;
+  cpu_cores: number;
+  memory_total_gb: number;
+  memory_used_gb: number;
+  memory_usage_percent: number;
+  storage_total_bytes: number;
+  storage_used_bytes: number;
+  storage_usage_percent: number;
+  hardware_summary: string;
+  peers_count: number;
+  uptime_seconds: number;
+  rank: number;
+  p2p_db_size_mb: number;
+  p2p_records: number;
+  last_status_check: string;
+  is_status_api_available: boolean;
+  metrics_report: {
+    ports: {
+      p2p: boolean;
+      p2pPort: number;
+      port1: boolean;
+      port1Num: number;
+    },
+    status: {
+      Available: boolean;
+      CPUCores: number;
+      CPUUsagePercent: number;
+      HardwareSummary: string;
+      MemoryTotalGb: number;
+      MemoryUsagePercent: number;
+      MemoryUsedGb: number;
+      P2PDbSizeMb: number;
+      P2PRecords: number;
+      PeersCount: number;
+      Rank: number;
+      StorageTotalBytes: number;
+      StorageUsagePercent: number;
+      StorageUsedBytes: number;
+      UptimeSeconds: number;
+      Version: string;
+    }
+  },
+  schema_version: string;
+  last_successful_probe: string;
+  failed_probe_counter: number;
+  last_known_actual_version: string;
+}
+
+export type TSupernodesStats = {
+  total_cpu_cores: number;
+  total_memory_gb: number;
+  total_storage_bytes: number;
+  used_storage_bytes: number;
+  available_storage_bytes: number;
+  storage_used_percent: number;
+  storage_available_percent: number;
+  total_p2p_db_size_mb: number;
+  total_p2p_records: number;
+  available_supernodes: number;
+  schema_version: string;
+}
+
+export type TPoolState = {
+  balance: Coin[];
+  last_distribution_height: string;
+  eligible_sn_count: string;
+}
+
+export type TSupernodeAccount = {
+  "@type": string;
+  base_account: {
+    address: string;
+    pub_key: string | null;
+    account_number: string;
+    sequence: string;
+  };
+  name: string;
+  permissions: string[];
+}
+
+export type TVersion = {
+  version: string;
+  nodes_total: number;
+  nodes_available: number;
+  nodes_unavailable: number;
+  is_latest: number;
+}
+
+export type TMatrix = {
+  latest_version: string;
+  versions: TVersion[];
+}
+
+export type TActionsStats = {
+  total: number;
+  states: {
+    ACTION_STATE_DONE: number;
+    ACTION_STATE_EXPIRED: number;
+    ACTION_STATE_PENDING: number;
+    ACTION_STATE_APPROVED: number;
+  };
+}
+
+export type TRefer = {
+  lumeraAddress: string;
+  referAddress: string;
+  claim: number;
+  claimCascade: number;
+  created_at: string;
 }
