@@ -14,6 +14,8 @@ import { getDelegations } from '@/utils/portfolio'
 import { toSummary, turnoutPct, tallyShares } from '@/utils/governance-view'
 import { GovernanceListScreen } from '@lumera-hub/ui/src/screens/hub/GovernanceScreen'
 import { useHub } from '@lumera-hub/ui/src/hub/session'
+import { ProposeDrawer } from '@/components/hub/ProposeDrawer'
+import { TxDrawer } from '@/components/hub/TxDrawer'
 
 const compact = (micro: number) => {
   const n = micro / RATE_VALUE
@@ -29,7 +31,20 @@ export default function Page() {
   const hub = useHub()
   const [filter, setFilter] = useState('all')
 
-  const { isLoading, governances, requiredDeposit } = useGovernances()
+  const {
+    isLoading,
+    governances,
+    requiredDeposit,
+    step,
+    proposal,
+    msg,
+    transactionHash,
+    fetchGovernances,
+    handleInputChange,
+    handleNextSteps,
+    handleBackClick,
+    handleCreateProposalClick,
+  } = useGovernances()
   const { bondedTokens } = useStaking()
   const { accountInfo } = useAccountInfo(hub.isWatching ? { address: hub.address } : {})
   const { stats } = useStats()
@@ -39,14 +54,15 @@ export default function Page() {
   }, [])
 
   const bonded = Number(bondedTokens) || 0
-  const requiredDepositMicro = Number(requiredDeposit) || 0
+  // GOVERNANCE_STATS.depositRequired is in LUME, not micro-LUME.
+  const requiredDepositLume = Number(requiredDeposit) || 0
 
   const summaries = useMemo(
     () =>
       (governances || []).map((p) =>
-        toSummary(p, bonded, requiredDepositMicro, () => router.push(`/governance/${p.id}`)),
+        toSummary(p, bonded, requiredDepositLume * RATE_VALUE, () => router.push(`/governance/${p.id}`)),
       ),
-    [bonded, governances, requiredDepositMicro, router],
+    [bonded, governances, requiredDepositLume, router],
   )
 
   const counts = useMemo(() => {
@@ -103,15 +119,48 @@ export default function Page() {
           hub.gate(
             {
               title: 'Create a proposal',
-              line: requiredDepositMicro
-                ? `Submitting requires a ${compact(requiredDepositMicro)} deposit`
+              line: requiredDepositLume
+                ? `Submitting requires a ${requiredDepositLume.toLocaleString('en-US')} LUME deposit`
                 : 'Submitting requires a deposit',
             },
-            // The five-step wizard is unchanged for now; gating just makes sure
-            // a wallet is present before the reader starts filling it in.
-            () => router.push('/governance?compose=1'),
+            () => hub.openDrawer({ kind: 'propose' }),
           )
         }
+      />
+
+      <ProposeDrawer
+        step={step}
+        proposal={proposal}
+        requiredDeposit={String(requiredDeposit)}
+        message={msg}
+        onInputChange={handleInputChange}
+        onNext={handleNextSteps}
+        onBack={handleBackClick}
+        onSubmit={() =>
+          hub.openDrawer({
+            kind: 'tx',
+            intent: {
+              title: 'Submit proposal',
+              lineLabel: 'Proposal',
+              line: proposal.title || 'Untitled proposal',
+              extra: {
+                k: 'Initial deposit',
+                v: `${proposal.initialDeposit || '0'} LUME`,
+                tone:
+                  Number(proposal.initialDeposit) >= requiredDepositLume
+                    ? ('green' as const)
+                    : ('warn' as const),
+              },
+            },
+          })
+        }
+      />
+
+      <TxDrawer
+        onBroadcast={handleCreateProposalClick}
+        error={msg?.type === 'error' ? msg.message : undefined}
+        transactionHash={transactionHash}
+        onDone={() => fetchGovernances()}
       />
     </>
   )
