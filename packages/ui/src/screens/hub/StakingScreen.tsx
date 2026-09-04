@@ -58,7 +58,7 @@ export type ValidatorRow = {
 
 export type StakingMode = 'delegate' | 'undelegate' | 'redelegate'
 
-const GRID = 'minmax(180px,1fr) 132px 74px 74px 92px'
+const GRID = 'minmax(180px,1fr) 132px 68px 74px 84px 58px'
 
 export function StakingScreen({
   loading,
@@ -80,7 +80,8 @@ export function StakingScreen({
   onAmountChange,
   onSubmit,
   onOpenProfile,
-  networkFee = '0.0025 LUME',
+  maxRedelegationEntries,
+  minCommissionRate,
 }: {
   loading?: boolean
   validators: ValidatorRow[]
@@ -100,7 +101,10 @@ export function StakingScreen({
   onAmountChange: (v: string) => void
   onSubmit: () => void
   onOpenProfile?: (key: string) => void
-  networkFee?: string
+  /** staking params max_entries — concurrent redelegations per validator pair. */
+  maxRedelegationEntries?: number | null
+  /** staking params min_commission_rate, 0–100. */
+  minCommissionRate?: number | null
 }) {
   const hub = useHub()
   const [sort, setSort] = useState<'power' | 'apr' | 'commission'>('power')
@@ -181,6 +185,11 @@ export function StakingScreen({
                 { key: 'commission', label: 'Commission' },
               ]}
             />
+            {minCommissionRate != null ? (
+              <span className="w-full text-small text-text-muted lg:w-auto">
+                Floor {minCommissionRate.toFixed(0)}%
+              </span>
+            ) : null}
           </div>
 
           <div className="overflow-x-auto">
@@ -195,6 +204,7 @@ export function StakingScreen({
                 <span className="text-right">FEE</span>
                 <span className="text-right">UPTIME</span>
                 <span className="text-right">APR</span>
+                <span />
               </div>
 
               {loading ? (
@@ -238,18 +248,6 @@ export function StakingScreen({
                           </span>
                           <span className="truncate text-small text-text-tertiary">{v.note}</span>
                         </div>
-                        {onOpenProfile ? (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onOpenProfile(v.key)
-                            }}
-                            className="ml-auto flex-none cursor-pointer rounded-chip border border-line-edge bg-transparent px-[9px] py-1.5 text-small font-medium text-text-tertiary transition-colors hover:border-line-accent hover:text-lumera-green lg:hidden"
-                          >
-                            Info
-                          </button>
-                        ) : null}
                       </div>
 
                       <div className="flex flex-col gap-1.5">
@@ -272,6 +270,19 @@ export function StakingScreen({
                         <span className="text-text-muted lg:hidden">APR </span>
                         {v.apr != null ? `${v.apr.toFixed(1)}%` : '—'}
                       </span>
+                      {onOpenProfile ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onOpenProfile(v.key)
+                          }}
+                          aria-label={`About ${v.name}`}
+                          className="col-span-2 cursor-pointer justify-self-start rounded-chip border border-line-edge bg-transparent px-[9px] py-1.5 text-small font-medium text-text-tertiary transition-colors hover:border-line-accent hover:text-lumera-green lg:col-span-1 lg:justify-self-end"
+                        >
+                          Info
+                        </button>
+                      ) : null}
                     </div>
                   )
                 })
@@ -489,7 +500,7 @@ export function StakingScreen({
               <div className="h-px bg-line-hairline" />
               <div className="flex items-baseline justify-between">
                 <span className="text-small text-text-muted">Network fee</span>
-                <span className="font-mono text-base tnum text-text-muted">{networkFee}</span>
+                <span className="text-small text-text-muted">Estimated at signing</span>
               </div>
               {mode === 'undelegate' ? (
                 <>
@@ -504,7 +515,11 @@ export function StakingScreen({
                   <div className="h-px bg-line-hairline" />
                   <span className="text-small leading-[1.5] text-text-muted text-pretty">
                     Redelegation is instant and skips unbonding, so rewards keep accruing. The same
-                    stake cannot be moved again until the unbonding period elapses.
+                    stake cannot be moved again until the unbonding period elapses
+                    {maxRedelegationEntries
+                      ? `, and each validator pair allows ${maxRedelegationEntries} at a time`
+                      : ''}
+                    .
                   </span>
                 </>
               ) : null}

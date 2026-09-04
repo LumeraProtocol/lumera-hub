@@ -52,8 +52,9 @@ export type UnbondingRow = {
   amount: string
   completes: string
   remaining: string
-  /** Elapsed share of the unbonding period, 0–100. */
-  pct: number
+  /** Elapsed share of the unbonding period, 0–100. Null when the chain's
+   *  unbonding parameter did not load, in which case no bar is drawn. */
+  pct: number | null
 }
 
 type RangeKey = 'all' | '7' | '30' | '90'
@@ -225,7 +226,7 @@ export function WalletScreen({
                 </span>
                 <span className="font-mono text-small tnum text-warn">{u.remaining}</span>
               </div>
-              <Bar pct={u.pct} tone="warn" height={6} />
+              {u.pct != null ? <Bar pct={u.pct} tone="warn" height={6} /> : null}
               <span className="text-small text-text-muted">
                 Earning nothing while it unbonds. Returns to your liquid balance on {u.completes}.
               </span>

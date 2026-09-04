@@ -79,7 +79,8 @@ export type OpenProposal = {
   abstain: number
   veto: number
   quorum: number
-  quorumNeeded: number
+  /** From the chain's tally params. Null when it did not load. */
+  quorumNeeded: number | null
   onOpen: () => void
   onVote: () => void
 }
@@ -356,9 +357,11 @@ export function DashboardScreen({
                     <span className="text-small text-text-tertiary">Quorum</span>
                     <span className="font-mono text-base font-medium tnum text-text-secondary">
                       {proposal.quorum.toFixed(1)}%{' '}
-                      <span className="text-text-muted">
-                        / {proposal.quorumNeeded.toFixed(1)}% needed
-                      </span>
+                      {proposal.quorumNeeded != null ? (
+                        <span className="text-text-muted">
+                          / {proposal.quorumNeeded.toFixed(1)}% needed
+                        </span>
+                      ) : null}
                     </span>
                   </div>
                   <Button variant="accent" locked={hub.gated} onClick={proposal.onVote}>

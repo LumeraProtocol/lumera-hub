@@ -1,5 +1,5 @@
 import { sha256 } from '@cosmjs/crypto';
-import { fromBase64, toBech32 } from '@cosmjs/encoding';
+import { fromBase64, fromBech32, toBech32 } from '@cosmjs/encoding';
 
 /**
  * Derives a validator's consensus address from its consensus public key.
@@ -24,6 +24,26 @@ export const consensusAddressFromPubkey = (
   } catch {
     // A key in an unexpected format is not worth failing the page over; the
     // caller renders "—" for uptime instead.
+    return null;
+  }
+};
+
+/**
+ * The account address behind a validator's operator address.
+ *
+ * `lumeravaloper1…` and `lumera1…` wrap the same 20-byte payload under
+ * different prefixes, so a validator's self-delegation can be looked up
+ * without asking the chain for a second record.
+ */
+export const accountAddressFromOperator = (
+  operatorAddress: string,
+  prefix = 'lumera',
+): string | null => {
+  if (!operatorAddress) return null;
+  try {
+    const { data } = fromBech32(operatorAddress);
+    return toBech32(prefix, data);
+  } catch {
     return null;
   }
 };

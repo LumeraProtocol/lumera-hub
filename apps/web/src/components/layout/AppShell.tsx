@@ -28,6 +28,7 @@ import AppLink from '@/components/AppLink';
 import { PORTAL_URL, CHAIN_ID, IS_TESTNET, NETWORK_LABEL, FAUCET_URL } from '@/contants/network';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import useChainHead from '@/hooks/useChainHead';
+import useHubNotifications from '@/hooks/useHubNotifications';
 import { showGlobalApiErrorToast } from '@/utils/global-api-error';
 
 import { useSelector, useDispatch } from '@/redux/hooks';
@@ -246,6 +247,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const hub = useHub();
   const { height, reachable } = useChainHead();
+  const notifications = useHubNotifications(hub.address || undefined);
 
   useEffect(() => {
     dispatch(setError({ message: null, status: null }))
@@ -385,6 +387,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             >
               <BellIcon />
             </button>
+            {notifications.length ? (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-ink-800 bg-lumera-green px-1 font-mono text-[10px] leading-none font-semibold text-ink-800"
+              >
+                {notifications.length}
+              </span>
+            ) : null}
             {notifOpen ? (
               <>
                 <div
@@ -396,12 +406,72 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <div className="flex items-center justify-between border-b border-line-hairline px-4 py-[13px]">
                     <h3 className="m-0 text-base font-semibold text-text-primary">Notifications</h3>
                   </div>
-                  <div className="px-4 py-8 text-center text-base text-text-muted">
-                    {hub.isConnected
-                      ? 'Nothing to report.'
-                      : hub.isWatching
-                        ? 'Alerts follow the connected wallet, not a watched address.'
-                        : 'Connect a wallet for alerts about your position.'}
+                  {notifications.length ? (
+                    <div className="max-h-[392px] overflow-y-auto">
+                      {notifications.map((n) => (
+                        <button
+                          key={n.id}
+                          type="button"
+                          onClick={() => {
+                            setNotifOpen(false)
+                            router.push(n.href)
+                          }}
+                          className="flex w-full cursor-pointer gap-[11px] border-b border-line-hairline px-4 py-[13px] text-left transition-colors last:border-b-0 hover:bg-ink-600"
+                        >
+                          <span
+                            className={cx(
+                              'mt-[5px] h-1.5 w-1.5 flex-none rounded-full',
+                              n.tone === 'green'
+                                ? 'bg-lumera-green'
+                                : n.tone === 'warn'
+                                  ? 'bg-warn'
+                                  : n.tone === 'danger'
+                                    ? 'bg-danger'
+                                    : 'bg-text-muted',
+                            )}
+                          />
+                          <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+                            <span className="flex items-baseline gap-2">
+                              <span
+                                className={cx(
+                                  'font-mono text-micro font-medium tracking-[0.08em]',
+                                  n.tone === 'green'
+                                    ? 'text-lumera-green'
+                                    : n.tone === 'warn'
+                                      ? 'text-warn'
+                                      : 'text-text-tertiary',
+                                )}
+                              >
+                                {n.kind.toUpperCase()}
+                              </span>
+                              <span className="ml-auto text-small text-text-muted">{n.when}</span>
+                            </span>
+                            <span className="text-base leading-[1.35] font-medium text-text-primary text-pretty">
+                              {n.title}
+                            </span>
+                            <span className="text-small leading-[1.5] text-text-tertiary text-pretty">
+                              {n.body}
+                            </span>
+                            <span className="text-small font-medium text-lumera-green">
+                              {n.cta} →
+                            </span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-8 text-center text-base text-text-muted">
+                      {hub.hasPosition
+                        ? 'Nothing needs your attention.'
+                        : 'Connect or watch an address for alerts about its position.'}
+                    </div>
+                  )}
+                  <div className="border-t border-line-hairline bg-ink-800 px-4 py-2.5 text-center text-small text-text-muted">
+                    {hub.isWatching
+                      ? 'Derived from the watched address'
+                      : hub.isConnected
+                        ? 'Derived from your position on chain'
+                        : 'Rewards, votes and unbonding land here'}
                   </div>
                 </div>
               </>

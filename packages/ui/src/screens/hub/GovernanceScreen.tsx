@@ -49,7 +49,8 @@ export type ProposalSummary = {
   veto: number
   /** Turnout as a share of bonded stake, 0–100. */
   quorum: number
-  quorumNeeded: number
+  /** From the chain's tally params. Null when it did not load. */
+  quorumNeeded: number | null
   depositProgress?: { have: string; need: string; pct: number }
   onOpen: () => void
 }
@@ -209,7 +210,8 @@ export function GovernanceListScreen({
                         <span className="text-danger">No {p.no.toFixed(1)}%</span>
                       </span>
                       <span className="font-mono tnum text-text-muted">
-                        Quorum {p.quorum.toFixed(1)}% / {p.quorumNeeded.toFixed(1)}%
+                        Quorum {p.quorum.toFixed(1)}%
+                        {p.quorumNeeded != null ? ` / ${p.quorumNeeded.toFixed(1)}%` : ''}
                       </span>
                     </div>
                   </div>
@@ -244,7 +246,10 @@ export function GovernanceListScreen({
 export type ProposalDetail = ProposalSummary & {
   description: string
   totalVoted: string
-  thresholdNeeded: number
+  /** From the chain's tally params. Null when it did not load. */
+  thresholdNeeded: number | null
+  vetoThreshold: number | null
+  votingPeriod: string | null
   timeline: Array<{ label: string; when: string; state: 'done' | 'pending' | 'failed' }>
   tally: Array<{ label: string; pct: number; amount: string; className: string }>
 }
@@ -275,8 +280,11 @@ export function GovernanceDetailScreen({
   }
 
   const isLive = proposal.status === 'Voting'
-  const quorumMet = proposal.quorum >= proposal.quorumNeeded
-  const aboveThreshold = proposal.yes > proposal.thresholdNeeded
+  // A threshold the chain did not report is unknown, not met.
+  const quorumMet = proposal.quorumNeeded != null && proposal.quorum >= proposal.quorumNeeded
+  const aboveThreshold =
+    proposal.thresholdNeeded != null && proposal.yes > proposal.thresholdNeeded
+  const vetoed = proposal.vetoThreshold != null && proposal.veto > proposal.vetoThreshold
 
   return (
     <div className="animate-fade flex flex-col gap-[18px]">
@@ -393,22 +401,29 @@ export function GovernanceDetailScreen({
                 <div className="flex items-baseline justify-between">
                   <span className="text-small text-text-muted">Quorum</span>
                   <span className="font-mono text-small font-medium tnum text-text-secondary">
-                    {proposal.quorum.toFixed(1)}% of {proposal.quorumNeeded.toFixed(1)}%
+                    {proposal.quorum.toFixed(1)}%
+                    {proposal.quorumNeeded != null ? ` of ${proposal.quorumNeeded.toFixed(1)}%` : ''}
                   </span>
                 </div>
                 <Bar
-                  pct={Math.min(100, (proposal.quorum / proposal.quorumNeeded) * 100)}
+                  pct={
+                    proposal.quorumNeeded
+                      ? Math.min(100, (proposal.quorum / proposal.quorumNeeded) * 100)
+                      : 0
+                  }
                   tone={quorumMet ? 'gradient' : 'warn'}
                   height={7}
                 />
                 <span className="text-small leading-[1.5] text-text-muted text-pretty">
-                  {quorumMet
-                    ? isLive
-                      ? 'Quorum reached. The tally will be counted.'
-                      : 'Quorum was reached, so the tally was counted.'
-                    : isLive
-                      ? 'Below quorum. If the deadline passes here, the proposal fails regardless of the tally.'
-                      : 'Quorum was never reached.'}
+                  {proposal.quorumNeeded == null
+                    ? 'The chain did not report a quorum threshold.'
+                    : quorumMet
+                      ? isLive
+                        ? 'Quorum reached. The tally will be counted.'
+                        : 'Quorum was reached, so the tally was counted.'
+                      : isLive
+                        ? 'Below quorum. If the deadline passes here, the proposal fails regardless of the tally.'
+                        : 'Quorum was never reached.'}
                 </span>
               </div>
 
@@ -418,24 +433,62 @@ export function GovernanceDetailScreen({
                 <div className="flex items-baseline justify-between">
                   <span className="text-small text-text-muted">Threshold</span>
                   <span className="font-mono text-small font-medium tnum text-text-secondary">
-                    {proposal.yes.toFixed(1)}% of {proposal.thresholdNeeded.toFixed(1)}%
+                    {proposal.yes.toFixed(1)}%
+                    {proposal.thresholdNeeded != null
+                      ? ` of ${proposal.thresholdNeeded.toFixed(1)}%`
+                      : ''}
                   </span>
                 </div>
                 <Bar
-                  pct={Math.min(100, (proposal.yes / proposal.thresholdNeeded) * 100)}
+                  pct={
+                    proposal.thresholdNeeded
+                      ? Math.min(100, (proposal.yes / proposal.thresholdNeeded) * 100)
+                      : 0
+                  }
                   tone={aboveThreshold ? 'gradient' : 'warn'}
                   height={7}
                 />
                 <span className="text-small leading-[1.5] text-text-muted text-pretty">
-                  {isLive
-                    ? aboveThreshold
-                      ? 'Above threshold on current votes.'
-                      : 'Below the majority needed to pass.'
-                    : aboveThreshold
-                      ? 'Cleared the majority.'
-                      : 'Fell short of the majority.'}
+                  {proposal.thresholdNeeded == null
+                    ? 'The chain did not report a pass threshold.'
+                    : isLive
+                      ? aboveThreshold
+                        ? 'Above threshold on current votes.'
+                        : 'Below the majority needed to pass.'
+                      : aboveThreshold
+                        ? 'Cleared the majority.'
+                        : 'Fell short of the majority.'}
                 </span>
               </div>
+
+              {proposal.vetoThreshold != null ? (
+                <>
+                  <div className="h-px bg-line-hairline" />
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-small text-text-muted">Veto</span>
+                      <span
+                        className={cx(
+                          'font-mono text-small font-medium tnum',
+                          vetoed ? 'text-danger' : 'text-text-secondary',
+                        )}
+                      >
+                        {proposal.veto.toFixed(1)}% of {proposal.vetoThreshold.toFixed(1)}%
+                      </span>
+                    </div>
+                    <Bar
+                      pct={Math.min(100, (proposal.veto / proposal.vetoThreshold) * 100)}
+                      tone={vetoed ? 'danger' : 'muted'}
+                      height={7}
+                    />
+                    <span className="text-small leading-[1.5] text-text-muted text-pretty">
+                      {vetoed
+                        ? 'Veto threshold passed. The proposal fails and the deposit is burned.'
+                        : 'Below the veto threshold. Reaching it fails the proposal outright and burns the deposit.'}
+                    </span>
+                  </div>
+                </>
+              ) : null}
             </div>
           </Card>
 

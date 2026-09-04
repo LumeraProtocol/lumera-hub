@@ -15,7 +15,7 @@ import React, { useState } from 'react'
 import QRCode from 'react-qr-code'
 
 import { CHAIN_ID, DENOM } from '@/contants/network'
-import { RATE_VALUE } from '@/contants'
+import { RATE_VALUE, GAS_LIMIT, FEE_RATIO } from '@/contants'
 import { formatNumber } from '@/utils/format'
 import { useHub, short, copyText, LUMERA_ADDRESS } from '@lumera-hub/ui/src/hub/session'
 import { Drawer } from '@lumera-hub/ui/src/hub/Drawer'
@@ -30,8 +30,15 @@ import {
 } from '@lumera-hub/ui/src/design/primitives'
 
 const TOKEN = DENOM.replace(/^u/, '').toUpperCase()
-// Leaves enough behind to cover the fee when "MAX" is used.
-const FEE_HEADROOM = 0.0025
+
+/*
+ * Headroom left behind by MAX so the transfer can still pay for itself,
+ * computed from the app's own gas configuration rather than a guessed figure.
+ * The true fee depends on the wallet's gas simulation, so this is deliberately
+ * the default-limit estimate.
+ */
+const FEE_HEADROOM = Math.ceil(Number(GAS_LIMIT) * FEE_RATIO) / RATE_VALUE
+const FEE_LABEL = `~${FEE_HEADROOM.toFixed(4).replace(/0+$/, '').replace(/\.$/, '')} ${TOKEN}`
 
 export function SendDrawer({
   availableMicro,
@@ -139,9 +146,7 @@ export function SendDrawer({
       <Well className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between">
           <span className="text-small text-text-muted">Network fee</span>
-          <span className="font-mono text-base tnum text-text-muted">
-            {FEE_HEADROOM} {TOKEN}
-          </span>
+          <span className="font-mono text-base tnum text-text-muted">{FEE_LABEL}</span>
         </div>
         <div className="flex items-baseline justify-between">
           <span className="text-small text-text-muted">Balance after</span>

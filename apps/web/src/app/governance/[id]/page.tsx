@@ -9,9 +9,8 @@ import useDeposit from '@/hooks/useDeposit';
 import useProposals from '@/hooks/useProposals';
 import useStaking from '@/hooks/useStaking';
 import { RATE_VALUE } from '@/contants';
+import useChainParams, { formatDuration } from '@/hooks/useChainParams';
 import {
-  DEFAULT_QUORUM,
-  DEFAULT_THRESHOLD,
   proposalKind,
   readableStatus,
   relativeClock,
@@ -59,6 +58,7 @@ export default function Page({ params }: Props) {
 
   const { isLoading, governance, fetchGovernanceDetail, fetchVotes } = useGovernanceDetails(id);
   const { bondedTokens } = useStaking();
+  const { params: chainParams } = useChainParams();
 
   const proposals = useProposals({
     customMemo: governance?.title ? `Vote for the ${governance.title}` : '',
@@ -101,8 +101,10 @@ export default function Page({ params }: Props) {
       abstain: shares.abstain,
       veto: shares.veto,
       quorum: turnoutPct(votedMicro, bonded),
-      quorumNeeded: DEFAULT_QUORUM,
-      thresholdNeeded: DEFAULT_THRESHOLD,
+      quorumNeeded: chainParams.quorum,
+      thresholdNeeded: chainParams.threshold,
+      vetoThreshold: chainParams.vetoThreshold,
+      votingPeriod: formatDuration(chainParams.votingPeriodSeconds),
       totalVoted: compact(votedMicro),
       timeline: timelineOf(governance, status),
       tally: [
@@ -129,7 +131,7 @@ export default function Page({ params }: Props) {
       ],
       onOpen: () => undefined,
     };
-  }, [bonded, governance]);
+  }, [bonded, chainParams, governance]);
 
   const isDepositPeriod = detail?.status === 'Deposit';
 

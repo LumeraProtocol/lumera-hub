@@ -9,6 +9,8 @@ import useStaking from '@/hooks/useStaking'
 import useAccountInfo from '@/hooks/useAccountInfo'
 import useUnbond from '@/hooks/useUnbond'
 import useRedelegate from '@/hooks/useRedelegate'
+import useChainParams, { formatDuration } from '@/hooks/useChainParams'
+import useValidatorLogos from '@/hooks/useValidatorLogos'
 import { RATE_VALUE } from '@/contants'
 import { DENOM } from '@/contants/network'
 import { formatNumber } from '@/utils/format'
@@ -21,6 +23,7 @@ import {
 } from '@lumera-hub/ui/src/screens/hub/StakingScreen'
 import { useHub } from '@lumera-hub/ui/src/hub/session'
 import { TxDrawer } from '@/components/hub/TxDrawer'
+import { ValidatorDrawer, type ValidatorDetail } from '@/components/hub/ValidatorDrawer'
 
 const lume = (micro: number, digits = 2) =>
   formatNumber(micro / RATE_VALUE, { decimalsLength: digits, currency: 'en-US' })
@@ -43,6 +46,8 @@ export default function Page() {
   const { address, isEvm } = useWalletConnect()
   const hub = useHub()
   const staking = useStaking(address, isEvm)
+  const { params: chainParams } = useChainParams()
+  const logos = useValidatorLogos(staking.activeValidators)
   const { accountInfo, fetchData } = useAccountInfo(
     hub.isWatching ? { address: hub.address } : {},
   )
@@ -122,11 +127,13 @@ export default function Page() {
           key: v.operator_address,
           name,
           initials: initialsOf(name),
+          logo: logos[v.operator_address],
           power,
           commission,
           apr: netAprValue ? netAprValue * (1 - commission / 100) : null,
           uptime,
           mine,
+          missed: missed ?? null,
           note:
             mine > 0
               ? `${lume(mine, 0)} ${DENOM.replace(/^u/, '').toUpperCase()} delegated`
@@ -135,10 +142,11 @@ export default function Page() {
                   ? 'No missed blocks'
                   : `${missed.toLocaleString('en-US')} missed block${missed === 1 ? '' : 's'}`
                 : 'Active',
-        } as ValidatorRow
+        } as ValidatorRow & { missed: number | null }
       })
       .sort((a, b) => b.power - a.power)
   }, [
+    logos,
     missedByConsAddress,
     myStakeByValidator,
     netAprValue,
@@ -158,6 +166,14 @@ export default function Page() {
   const verb = mode === 'undelegate' ? 'Undelegate' : mode === 'redelegate' ? 'Redelegate' : 'Delegate'
   const amountNumber = parseFloat(amount.replace(/,/g, '')) || 0
 
+  // Prefer the params useStaking already fetched; fall back to the shared
+  // chain-params read. Never to a literal.
+  const unbondingSeconds =
+    (staking.params?.unbonding_time
+      ? parseInt(String(staking.params.unbonding_time).replace(/s$/, ''), 10)
+      : null) ?? chainParams.unbondingSeconds
+  const unbondingLabel = formatDuration(unbondingSeconds)
+
   /*
    * All three actions land in the same drawer. Only the intent text and the
    * broadcast call differ, so the review → sign → receipt sequence is written
@@ -174,8 +190,8 @@ export default function Page() {
           : selected.name,
       ...(mode === 'redelegate'
         ? { extra: { k: 'Unbonding', v: 'None — instant', tone: 'green' as const } }
-        : mode === 'undelegate'
-          ? { extra: { k: 'Available in', v: '21 days', tone: 'warn' as const } }
+        : mode === 'undelegate' && unbondingLabel
+          ? { extra: { k: 'Available in', v: unbondingLabel, tone: 'warn' as const } }
           : {}),
     }
     hub.gate(intent, () => {
@@ -194,6 +210,39 @@ export default function Page() {
       hub.openDrawer({ kind: 'tx', intent })
     })
   }
+
+  const profileKey = hub.drawer?.kind === 'validator' ? hub.drawer.name : undefined
+  const profileValidator: ValidatorDetail | undefined = useMemo(() => {
+    if (!profileKey) return undefined
+    const raw = (staking.activeValidators || []).find(
+      (v) => v.operator_address === profileKey,
+    )
+    const row = validators.find((v) => v.key === profileKey)
+    if (!raw || !row) return undefined
+    const rates = raw.commission?.commission_rates
+    return {
+      operatorAddress: raw.operator_address,
+      name: row.name,
+      initials: row.initials,
+      identity: raw.description?.identity || undefined,
+      website: raw.description?.website || undefined,
+      details: raw.description?.details || undefined,
+      jailed: !!raw.jailed,
+      power: row.power,
+      tokensMicro: Number(raw.tokens) || 0,
+      commission: row.commission,
+      maxCommission: rates?.max_rate != null ? Number(rates.max_rate) * 100 : null,
+      maxChangeRate: rates?.max_change_rate != null ? Number(rates.max_change_rate) * 100 : null,
+      commissionUpdated: raw.commission?.update_time || null,
+      missed: (row as ValidatorRow & { missed: number | null }).missed ?? null,
+      signingWindow: signWindow || null,
+      uptime: row.uptime,
+      apr: row.apr,
+      minSelfDelegationMicro:
+        raw.min_self_delegation != null ? Number(raw.min_self_delegation) : null,
+      mineMicro: row.mine,
+    }
+  }, [profileKey, signWindow, staking.activeValidators, validators])
 
   const broadcast =
     mode === 'delegate'
@@ -223,11 +272,9 @@ export default function Page() {
           totalBondedMicro ? `${compact(totalBondedMicro / RATE_VALUE)} LUME` : '—'
         }
         netApr={netAprValue ? `${netAprValue.toFixed(1)}%` : '—'}
-        unbondingDays={
-          staking.params?.unbonding_time
-            ? `${Math.round(parseInt(staking.params.unbonding_time, 10) / 86400)} days`
-            : '21 days'
-        }
+        unbondingDays={unbondingLabel ?? '—'}
+        maxRedelegationEntries={chainParams.maxRedelegationEntries}
+        minCommissionRate={chainParams.minCommissionRate}
         myStake={stakedMicro ? `${lume(stakedMicro, 0)} LUME` : '—'}
         available={available}
         mode={mode}
@@ -242,6 +289,16 @@ export default function Page() {
         amount={amount}
         onAmountChange={setAmount}
         onSubmit={submit}
+        onOpenProfile={(key) => hub.openDrawer({ kind: 'validator', name: key })}
+      />
+
+      <ValidatorDrawer
+        validator={profileValidator}
+        onDelegate={(operatorAddress) => {
+          setSelectedKey(operatorAddress)
+          setMode('delegate')
+          hub.closeDrawer()
+        }}
       />
 
       <TxDrawer

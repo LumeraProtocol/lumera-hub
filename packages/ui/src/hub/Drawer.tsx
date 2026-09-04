@@ -125,10 +125,12 @@ export function TxFlow({
   outcome,
   txHash,
   blockHeight,
+  gasUsed,
+  chargedFee,
   errorDetail,
   explorerUrl,
   chainId,
-  fee = '0.0025 LUME',
+  fee,
   from,
   gasLimit,
   onGasLimitChange,
@@ -140,9 +142,14 @@ export function TxFlow({
   outcome: TxOutcome
   txHash?: string
   blockHeight?: string
+  /** "148,204 / 200,000" once the chain has been read back. */
+  gasUsed?: string
+  /** The fee actually charged, which is only known after inclusion. */
+  chargedFee?: string
   errorDetail?: string
   explorerUrl?: string
   chainId: string
+  /** Pre-signing estimate. The charged figure replaces it on the receipt. */
   fee?: string
   from?: string
   gasLimit: string
@@ -186,7 +193,7 @@ export function TxFlow({
           },
         ]
       : []),
-    { k: 'Fee', v: fee, tone: 'text-text-muted' },
+    ...(fee ? [{ k: 'Network fee', v: fee, tone: 'text-text-muted' }] : []),
   ]
 
   return (
@@ -281,8 +288,32 @@ export function TxFlow({
       {step === 'done' && outcome === 'success' ? (
         <div className="flex flex-col gap-[11px] rounded-[9px] border border-line-accent bg-lumera-teal/10 p-[15px]">
           <span className="text-base font-semibold text-lumera-green">
-            {blockHeight ? `Confirmed in block ${blockHeight}` : 'Confirmed'}
+            {blockHeight ? `Confirmed in block ${blockHeight}` : 'Broadcast to the network'}
           </span>
+          {!blockHeight ? (
+            <span className="text-small leading-[1.5] text-text-muted text-pretty">
+              The transaction was accepted but has not been indexed yet. It will appear in the
+              explorer within a block or two.
+            </span>
+          ) : null}
+          {chargedFee || gasUsed ? (
+            <div className="flex flex-col gap-1.5 border-t border-line-accent/40 pt-2.5">
+              {chargedFee ? (
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-small text-text-muted">Fee charged</span>
+                  <span className="font-mono text-small tnum text-text-secondary">
+                    {chargedFee}
+                  </span>
+                </div>
+              ) : null}
+              {gasUsed ? (
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-small text-text-muted">Gas used</span>
+                  <span className="font-mono text-small tnum text-text-secondary">{gasUsed}</span>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           {txHash ? (
             <span className="font-mono text-small break-all text-text-muted">{txHash}</span>
           ) : null}
@@ -317,8 +348,16 @@ export function TxFlow({
         <div className="flex flex-col gap-[11px] rounded-[9px] border border-danger-edge bg-danger/8 p-[15px]">
           <span className="text-base font-semibold text-danger">Rejected by the chain</span>
           <p className="m-0 text-base leading-[1.6] text-text-secondary text-pretty">
-            The transaction was broadcast but did not complete. The fee was still charged.
+            {blockHeight
+              ? `The transaction reached block ${blockHeight} but did not complete. The fee was still charged.`
+              : 'The transaction was broadcast but did not complete. The fee was still charged.'}
           </p>
+          {gasUsed ? (
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-small text-text-muted">Gas used</span>
+              <span className="font-mono text-small tnum text-text-secondary">{gasUsed}</span>
+            </div>
+          ) : null}
           {errorDetail ? (
             <div className="rounded-inner border border-line-edge bg-ink-800 px-3 py-[11px]">
               <span className="font-mono text-small leading-[1.4] text-text-muted [overflow-wrap:anywhere]">

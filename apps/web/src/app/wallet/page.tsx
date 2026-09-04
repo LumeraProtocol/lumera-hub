@@ -7,6 +7,7 @@ import { Helmet } from 'react-helmet-async'
 import useAccountInfo from '@/hooks/useAccountInfo'
 import useTransaction from '@/hooks/useTransaction'
 import useSend from '@/hooks/useSend'
+import useChainParams from '@/hooks/useChainParams'
 import { RATE_VALUE } from '@/contants'
 import { DENOM } from '@/contants/network'
 import { formatNumber } from '@/utils/format'
@@ -20,6 +21,7 @@ import { WalletScreen, type TxRow, type UnbondingRow } from '@lumera-hub/ui/src/
 import { useHub, copyText, short } from '@lumera-hub/ui/src/hub/session'
 import { TxDrawer } from '@/components/hub/TxDrawer'
 import { SendDrawer, ReceiveDrawer } from '@/components/hub/TransferDrawers'
+import { TxDetailDrawer } from '@/components/hub/TxDetailDrawer'
 
 const TOKEN = DENOM.replace(/^u/, '').toUpperCase()
 
@@ -68,6 +70,8 @@ export default function Page() {
     hub.isWatching ? { address: hub.address } : {},
   )
 
+  const { params: chainParams } = useChainParams()
+
   const send = useSend({
     callback: () => {
       void fetchData()
@@ -107,10 +111,10 @@ export default function Page() {
           status: tx.code === 0 ? 'Success' : 'Failed',
           direction: directionOf(msgType, hub.address, message),
           group: groupOf(msgType),
-          onOpen: () => router.push(`/tx/${tx.txhash}`),
+          onOpen: () => hub.openDrawer({ kind: 'txdetail', hash: tx.txhash }),
         }
       }),
-    [hub.address, router, transactions],
+    [hub, transactions],
   )
 
   const unbondingRows: UnbondingRow[] = useMemo(
@@ -118,24 +122,28 @@ export default function Page() {
       (accountInfo?.unbonding || []).flatMap((u) =>
         u.entries.map((entry, i) => {
           const completes = entry.completion_time ? new Date(entry.completion_time) : null
-          const daysLeft = completes
-            ? Math.max(0, Math.ceil((completes.getTime() - Date.now()) / 86400000))
-            : 0
-          // The chain gives the completion time but not the start, so progress
-          // is derived from the standard 21-day period.
-          const pct = Math.min(100, Math.max(0, ((21 - daysLeft) / 21) * 100))
+          const msLeft = completes ? Math.max(0, completes.getTime() - Date.now()) : 0
+          const daysLeft = completes ? Math.ceil(msLeft / 86400000) : 0
+          // Progress is measured against the chain's own unbonding period. If
+          // it did not load there is no honest denominator, so no bar.
+          const periodMs = chainParams.unbondingSeconds
+            ? chainParams.unbondingSeconds * 1000
+            : null
+          const pct = periodMs
+            ? Math.min(100, Math.max(0, ((periodMs - msLeft) / periodMs) * 100))
+            : null
           return {
             key: `${u.validator_address}-${i}`,
             validator: short(u.validator_address, 14, 6),
             initials: initialsOf(u.validator_address.replace('lumeravaloper', '')),
             amount: `${lume(Number(entry.balance) || 0)} ${TOKEN}`,
             completes: completes ? completes.toLocaleDateString() : '—',
-            remaining: `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`,
+            remaining: completes ? `${daysLeft} day${daysLeft === 1 ? '' : 's'} left` : '—',
             pct,
           }
         }),
       ),
-    [accountInfo?.unbonding],
+    [accountInfo?.unbonding, chainParams.unbondingSeconds],
   )
 
   return (
@@ -184,6 +192,7 @@ export default function Page() {
         }}
       />
       <ReceiveDrawer />
+      <TxDetailDrawer />
 
       <TxDrawer
         onBroadcast={send.handleSendClick}

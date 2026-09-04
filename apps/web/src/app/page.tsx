@@ -11,6 +11,8 @@ import useProposals, { IProposal } from '@/hooks/useProposals';
 import useRecentActivity from '@/hooks/useRecentActivity';
 import useStats from '@/hooks/useStats';
 import useStaking from '@/hooks/useStaking';
+import useChainParams from '@/hooks/useChainParams';
+import useValidatorLogos from '@/hooks/useValidatorLogos';
 import { RATE_VALUE } from '@/contants';
 import { formatNumber } from '@/utils/format';
 import {
@@ -27,6 +29,7 @@ import {
   type OpenProposal,
 } from '@lumera-hub/ui/src/screens/hub/DashboardScreen';
 import { useHub } from '@lumera-hub/ui/src/hub/session';
+import { TxDetailDrawer } from '@/components/hub/TxDetailDrawer';
 
 const lume = (micro: number, digits = 2) =>
   formatNumber(micro / RATE_VALUE, { decimalsLength: digits, currency: 'en-US' });
@@ -66,6 +69,8 @@ export default function Page() {
   const recentActivityData = useRecentActivity();
   const { stats, latestBlock } = useStats();
   const { validators, activeValidators, apr, bondedTokens } = useStaking();
+  const { params: chainParams } = useChainParams();
+  const logos = useValidatorLogos(activeValidators);
 
   const liquid = getAvailableBalances(accountInfo);
   const staked = getDelegations(accountInfo);
@@ -182,6 +187,7 @@ export default function Page() {
             key: d.delegation.validator_address,
             name,
             initials: initialsOf(name),
+            logo: logos[d.delegation.validator_address],
             micro: Number(d.balance.amount) || 0,
             commission: validator?.commission?.commission_rates?.rate,
           };
@@ -192,6 +198,7 @@ export default function Page() {
         key: r.key,
         name: r.name,
         initials: r.initials,
+        logo: r.logo,
         amount: `${lume(r.micro, 0)} LUME`,
         pct: `${((r.micro / total) * 100).toFixed(1)}%`,
         side: r.commission ? `${(Number(r.commission) * 100).toFixed(0)}%` : '—',
@@ -207,11 +214,12 @@ export default function Page() {
       key: v.operator_address,
       name: v.description?.moniker || v.operator_address,
       initials: initialsOf(v.description?.moniker || '··'),
+      logo: logos[v.operator_address],
       amount: `${(((Number(v.tokens) || 0) / (Number(bondedTokens) || 1)) * 100).toFixed(2)}%`,
       pct: `${(((Number(v.tokens) || 0) / leader) * 100).toFixed(0)}%`,
       side: `${(Number(v.commission?.commission_rates?.rate || 0) * 100).toFixed(0)}%`,
     }));
-  }, [accountInfo?.delegations, activeValidators, bondedTokens, hub.hasPosition, router, validators]);
+  }, [accountInfo?.delegations, activeValidators, bondedTokens, hub.hasPosition, logos, router, validators]);
 
   const activity: ActivityRow[] = useMemo(
     () =>
@@ -225,10 +233,10 @@ export default function Page() {
           amount: `#${Number(tx.height).toLocaleString('en-US')}`,
           when: tx.timestamp ? new Date(tx.timestamp).toLocaleDateString() : '',
           direction: /Receive|WithdrawDelegatorReward/.test(kind) ? 'in' : 'out',
-          onOpen: () => router.push(`/tx/${tx.txhash}`),
+          onOpen: () => hub.openDrawer({ kind: 'txdetail', hash: tx.txhash }),
         } as ActivityRow;
       }),
-    [recentActivityData.recentActivity, router],
+    [hub, recentActivityData.recentActivity],
   );
 
   const proposal: OpenProposal | null = useMemo(() => {
@@ -258,10 +266,8 @@ export default function Page() {
       no: pct(counts[1]),
       abstain: pct(counts[2]),
       veto: pct(counts[3]),
-      // The chain's own quorum parameter is not exposed on this endpoint;
-      // 33.4% is the Cosmos SDK default Lumera runs with.
       quorum: (total / (Number(bondedTokens) || total)) * 100,
-      quorumNeeded: 33.4,
+      quorumNeeded: chainParams.quorum,
       onOpen: () => router.push(`/governance/${live.id}`),
       onVote: () =>
         hub.gate(
@@ -269,7 +275,7 @@ export default function Page() {
           () => router.push(`/governance/${live.id}`),
         ),
     };
-  }, [bondedTokens, hub, proposals.proposalsInfo, router]);
+  }, [bondedTokens, chainParams.quorum, hub, proposals.proposalsInfo, router]);
 
   return (
     <>
@@ -300,6 +306,7 @@ export default function Page() {
         }
         onSeeActivity={() => router.push('/wallet')}
       />
+      <TxDetailDrawer />
     </>
   );
 }

@@ -52,13 +52,7 @@ export const tallyShares = (proposal: IProposal) => {
   };
 };
 
-/**
- * Turnout as a share of bonded stake. The gov params endpoint is not read by
- * the list, so the quorum threshold is the Cosmos SDK default Lumera runs with.
- */
-export const DEFAULT_QUORUM = 33.4;
-export const DEFAULT_THRESHOLD = 50;
-
+/** Turnout as a share of bonded stake. */
 export const turnoutPct = (votedTotal: number, bondedTokens: number) =>
   bondedTokens ? (votedTotal / bondedTokens) * 100 : 0;
 
@@ -94,7 +88,8 @@ export const depositProgress = (proposal: IProposal, requiredMicro: number) => {
 export const toSummary = (
   proposal: IProposal,
   bondedTokens: number,
-  requiredDepositMicro: number,
+  requiredDepositMicro: number | null,
+  quorumNeeded: number | null,
   onOpen: () => void,
 ): ProposalSummary => {
   const status = readableStatus(proposal.status);
@@ -112,8 +107,8 @@ export const toSummary = (
     abstain: shares.abstain,
     veto: shares.veto,
     quorum: turnoutPct(shares.total, bondedTokens),
-    quorumNeeded: DEFAULT_QUORUM,
-    ...(status === 'Deposit'
+    quorumNeeded,
+    ...(status === 'Deposit' && requiredDepositMicro
       ? { depositProgress: depositProgress(proposal, requiredDepositMicro) }
       : {}),
     onOpen,
