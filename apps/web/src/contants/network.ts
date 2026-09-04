@@ -16,6 +16,7 @@ export const NETWORK_PROFILES = {
     sdkPreset: 'testnet',
     snscopeUrl: 'https://p1p2p3p4.pastel.network/snscope',
     portalUrl: 'https://portal.testnet.lumera.io/',
+    siteUrl: 'https://hub.testnet.lumera.io',
   },
   testnet: {
     displayName: 'Lumera Testnet',
@@ -32,6 +33,7 @@ export const NETWORK_PROFILES = {
     sdkPreset: 'testnet',
     snscopeUrl: 'https://snscope.testnet.lumera.io',
     portalUrl: 'https://portal.testnet.lumera.io/',
+    siteUrl: 'https://hub.testnet.lumera.io',
   },
   mainnet: {
     displayName: 'Lumera Mainnet',
@@ -48,6 +50,7 @@ export const NETWORK_PROFILES = {
     sdkPreset: 'mainnet',
     snscopeUrl: 'https://snscope.lumera.io',
     portalUrl: 'https://portal.lumera.io/',
+    siteUrl: 'https://hub.lumera.io',
   },
 } as const;
 
@@ -108,3 +111,23 @@ export const SNSCOPE_URL = (process.env.NEXT_PUBLIC_SNSCOPE_URL || ACTIVE_NETWOR
 // private deployment overriding the SDK preset must not have its header
 // Portal link silently repointed.
 export const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || ACTIVE_NETWORK.portalUrl;
+
+// The hub ships as two deployments off one codebase — hub.lumera.io and
+// hub.testnet.lumera.io — distinguished only by NEXT_PUBLIC_NETWORK_PROFILE.
+// Anything that differs between them reads these rather than hardcoding a
+// host, so the mainnet build never advertises testnet URLs and vice versa.
+export const IS_MAINNET = NETWORK_PROFILE === 'mainnet';
+export const IS_TESTNET = !IS_MAINNET;
+
+/** Canonical origin for this deployment. Used for og/canonical metadata. */
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || ACTIVE_NETWORK.siteUrl)
+  .replace(/\/+$/, '');
+
+/** Short label for the network chip and the browser tab. */
+export const NETWORK_LABEL = IS_MAINNET ? 'Mainnet' : ACTIVE_NETWORK.displayName.replace('Lumera ', '');
+
+/**
+ * Optional faucet for non-mainnet deployments. Unset means no faucet exists
+ * yet, and the nav simply does not offer one — better than a link that 404s.
+ */
+export const FAUCET_URL = IS_TESTNET ? (process.env.NEXT_PUBLIC_FAUCET_URL || '') : '';

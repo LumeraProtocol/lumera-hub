@@ -1,48 +1,228 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap');
 @import "tailwindcss";
 
 @source "../../../../packages/ui/src/**/*.tsx";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/*
+ * Lumera Hub design tokens.
+ *
+ * One accent family, not three: everything actionable is teal → green.
+ * Depth is carried by four deliberately separated surfaces rather than five
+ * near-identical ones, so hierarchy survives on an uncalibrated monitor.
+ * Numbers, addresses, hashes and small caps labels are Geist Mono; prose and
+ * controls are Geist.
+ */
 @theme {
-  --color-lumera-gray: #F5F5FA;
-  --color-lumera-green: #47C78A;
-  --color-lumera-teal: #078A8A;
+  /* Surfaces, darkest to lightest. */
+  --color-ink-900: #000c22; /* sidebar */
+  --color-ink-800: #001432; /* page ground */
+  --color-ink-700: #04203f; /* card */
+  --color-ink-600: #062a4c; /* raised: hover, active segment */
+  --color-ink-500: #0a2743; /* inert control (disabled button) */
+
+  /* Lines. Hairline separates rows inside a card; edge outlines the card. */
+  --color-line-hairline: #0c2a48;
+  --color-line-edge: #194366;
+  --color-line-accent: #2c7a62;
+
+  /* Text, strongest to weakest. */
+  --color-text-primary: #f5f5fa;
+  --color-text-secondary: #c6d6e8;
+  --color-text-tertiary: #a9bed6;
+  --color-text-muted: #9db4d0;
+  --color-text-disabled: #5c7794;
+
+  /* Brand. Teal is the deep end of the ramp, green the bright end. */
+  --color-lumera-teal: #078a8a;
+  --color-lumera-green: #47c78a;
+  --color-lumera-green-bright: #6fe0a8;
+  --color-lumera-cyan: #4cc3d6;
+
+  /* Semantic. Each pairs a foreground with the border of its tinted well. */
+  --color-warn: #f2b33d;
+  --color-warn-edge: #5e4718;
+  --color-danger: #f2685c;
+  --color-danger-edge: #5e2a2a;
+  --color-danger-deep: #a33f38;
+  --color-neutral-bar: #2a5580;
+
+  /* Legacy aliases kept so screens not yet redesigned keep rendering. */
+  --color-lumera-gray: #f5f5fa;
   --color-lumera-navy: #001432;
   --color-lumera-sub-label: #6c727f;
   --color-lumera-red-light: #e77975;
-  --color-lumera-label: #9da3ae;
+  --color-lumera-label: #9db4d0;
   --color-lumera-green-light: #68d1bf;
   --color-lumera-blue-light: #838df1;
   --color-lumera-warning: #ffc107;
-  --color-lumera-popover: #1a212e;
-  --color-lumera-icon-bg: #29313e;
-  --color-lumera-red: #f87272;
+  --color-lumera-popover: #04203f;
+  --color-lumera-icon-bg: #062a4c;
+  --color-lumera-red: #f2685c;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+
+  /* The prototype's type ramp. 12.5 and 11 are deliberate, not rounded away. */
+  --text-micro: 11px;
+  --text-micro--line-height: 1.1;
+  --text-small: 12.5px;
+  --text-small--line-height: 1.45;
+  --text-base: 14px;
+  --text-base--line-height: 1.5;
+  --text-lg: 16px;
+  --text-lg--line-height: 1.4;
+  --text-stat: 20px;
+  --text-stat--line-height: 1;
+  --text-stat-lg: 24px;
+  --text-stat-lg--line-height: 1;
+  --text-title: 25px;
+  --text-title--line-height: 1.15;
+
+  --radius-card: 12px;
+  --radius-panel: 11px;
+  --radius-control: 8px;
+  --radius-inner: 7px;
+  --radius-chip: 6px;
+
   --breakpoint-2lg: 71.875rem;
   --breakpoint-1-5xl: 83rem;
   --breakpoint-tiny: 480px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  --background: var(--color-ink-800);
+  --foreground: var(--color-text-primary);
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-ink-800);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Tabular figures everywhere a number can change under the reader: a balance
+   ticking up must not reflow the row it sits in. */
+.tnum,
+.font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  color: var(--color-lumera-green);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-lumera-green-bright);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-lumera-green);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #123a63;
+  border-radius: 9px;
+  border: 2px solid var(--color-ink-800);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #194366;
+}
+
+@keyframes lmBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: "Geist", sans-serif;
+@keyframes lmDrawer {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes lmFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lmRise {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes lmSweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(200%);
+  }
+}
+
+.animate-fade {
+  animation: lmFade 0.18s ease-out;
+}
+
+.animate-rise {
+  animation: lmRise 0.2s ease-out;
+}
+
+.animate-drawer {
+  animation: lmDrawer 0.22s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.animate-blink {
+  animation: lmBlink 2.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade,
+  .animate-rise,
+  .animate-drawer,
+  .animate-blink {
+    animation: none;
+  }
 }

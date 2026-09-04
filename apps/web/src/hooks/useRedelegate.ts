@@ -90,28 +90,25 @@ const useRedelegate = (options: UseDepositOptions = {}) => {
     });
   }
 
+  // Functional update: a redelegation sets source, destination and amount in
+  // sequence, and reading from the closure lost all but the last write.
   const handleInputChange = (name: string, value: string) => {
-    let newOptionsAdvanced = optionsAdvanced;
-    if (name === 'validator') {
-      const item = validators.find((v) => v.operator_address === value);
-      if (item) {
-        newOptionsAdvanced = {
-          ...newOptionsAdvanced,
-          memo: `Stake for ${item?.description?.moniker}`,
+    setOptionsAdvanced((prev) => {
+      let next = prev;
+      if (name === 'validator') {
+        const item = validators.find((v) => v.operator_address === value);
+        if (item) {
+          next = { ...next, memo: `Stake for ${item?.description?.moniker}` };
         }
       }
-    }
-    if (name === 'destinationValidator') {
-      const item = validators.find((v) => v.operator_address === value);
-       newOptionsAdvanced = {
-          ...newOptionsAdvanced,
-          memo: `${newOptionsAdvanced.memo} to ${item?.description?.moniker}`,
-        }
-    }
-
-    setOptionsAdvanced({
-        ...newOptionsAdvanced,
+      if (name === 'destinationValidator') {
+        const item = validators.find((v) => v.operator_address === value);
+        next = { ...next, memo: `${next.memo} to ${item?.description?.moniker}` };
+      }
+      return {
+        ...next,
         [name]: name === 'amount' ? extractValidNumber(value) : value,
+      };
     });
   }
 

@@ -121,11 +121,13 @@ const useSend = (options: UseDepositOptions = {}) => {
       });
     }
 
+    // Functional update so a caller can set recipient, amount and memo back to
+    // back without the later writes clobbering the earlier ones.
     const handleInputChange = (name: string, value: string) => {
-        setOptionsAdvanced({
-            ...optionsAdvanced,
+        setOptionsAdvanced((prev) => ({
+            ...prev,
             [name]: name === 'amount' ? extractValidNumber(value) : value,
-        });
+        }));
     }
 
     const handleShowAdvancedChange = (status: boolean) => {

@@ -26,6 +26,7 @@ import {
 import { setWalletConnecting } from '@/redux/wallet-flow.slice';
 import { useEvmWallet } from '@/app/providers/evm-wallet-provider';
 import useWalletConnect from '@/hooks/useWalletConnect';
+import useDisconnectWallet from '@/hooks/useDisconnectWallet';
 import useTrackingUser from '@/hooks/useTrackingUser';
 import {
   clearTrackedConnects,
@@ -313,6 +314,7 @@ export function ConnectWallet() {
     openConnectView,
     walletName,
   } = useWalletConnect();
+  const disconnectWallet = useDisconnectWallet();
   const menuRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setMenuOpen] = useState(false);
   // Initialized from the live extension probe so the Switch-wallet item is
@@ -361,21 +363,7 @@ export function ConnectWallet() {
 
   const handleDisconnect = async () => {
     setMenuOpen(false);
-    try {
-      if (IS_EVM_NETWORK && walletName === METAMASK_WALLET_NAME) {
-        await evmWallet.disconnect();
-      } else if (IS_EVM_NETWORK && walletName === KEPLR_WALLET_NAME) {
-        await keplrWallet.disconnect();
-      } else {
-        await disconnectCosmos();
-      }
-    } catch {
-      // noop
-    }
-    dispatch(setWalletName({ walletName: '' }));
-    dispatch(setAddress({ address: '' }));
-    dispatch(setConnected({ status: false }));
-    clearTrackedConnects(sessionStorage);
+    await disconnectWallet();
   };
 
   const handleCopyAddress = async (value: string, label: string) => {

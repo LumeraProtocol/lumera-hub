@@ -288,6 +288,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     networkStorage: 'TBD',
     usedStorageBytes: 0,
     availableStorageBytes: 0,
+    usedPercent: 0,
+    availablePercent: 0,
+    totalBytes: 0,
   });
   const [myUsage, setMyUsage] = useState({
     size: '0 Bytes',
@@ -584,8 +587,15 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       setNetworkStorage({
         totalSupernode: snResults.length,
         networkStorage: data?.total_storage_bytes ? `${formatBytes(data.total_storage_bytes)}` : '',
+        // These two hold percentages, not bytes, despite the names — they feed
+        // a used/available pie. The *Percent fields below are the same values
+        // under honest names, plus the raw capacity so callers can show a real
+        // stored figure instead of formatting a percentage as bytes.
         usedStorageBytes: data?.storage_used_percent?.toFixed(2) || 0,
         availableStorageBytes: data?.storage_available_percent?.toFixed(2) || 0,
+        usedPercent: Number(data?.storage_used_percent) || 0,
+        availablePercent: Number(data?.storage_available_percent) || 0,
+        totalBytes: Number(data?.total_storage_bytes) || 0,
       });
       setFetchSummaryLoading(false);
       await getChartMarker(snResults);

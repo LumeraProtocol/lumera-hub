@@ -95,20 +95,22 @@ const useDelegate = (options: UseDepositOptions = {}) => {
     setOpenModal(false);
   }
 
+  // Functional update: callers set the validator and the amount back to back,
+  // and reading `optionsAdvanced` from the closure made the second call
+  // overwrite the first.
   const handleInputChange = (name: string, value: string) => {
-    let newOptionsAdvanced = optionsAdvanced;
-    if (name === 'validator') {
-      const item = effectiveValidators.find((v) => v.operator_address === value);
-      if (item) {
-        newOptionsAdvanced = {
-          ...newOptionsAdvanced,
-          memo: `Stake for ${item?.description?.moniker}`,
+    setOptionsAdvanced((prev) => {
+      let next = prev;
+      if (name === 'validator') {
+        const item = effectiveValidators.find((v) => v.operator_address === value);
+        if (item) {
+          next = { ...next, memo: `Stake for ${item?.description?.moniker}` };
         }
       }
-    }
-    setOptionsAdvanced({
-      ...newOptionsAdvanced,
-      [name]: name === 'amount' ? extractValidNumber(value) : value,
+      return {
+        ...next,
+        [name]: name === 'amount' ? extractValidNumber(value) : value,
+      };
     });
   }
 
@@ -240,10 +242,10 @@ const useDelegate = (options: UseDepositOptions = {}) => {
   }
 
   const handleStakingAmountChange = (amount: string) => {
-    setOptionsAdvanced({
-      ...optionsAdvanced,
+    setOptionsAdvanced((prev) => ({
+      ...prev,
       amount: extractValidNumber(amount),
-    });
+    }));
   }
 
   return {
