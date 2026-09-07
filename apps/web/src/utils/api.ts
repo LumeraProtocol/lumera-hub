@@ -22,6 +22,26 @@ import { setError } from '@/redux/error.slice';
  */
 let activeHostIndex = 0;
 
+/*
+ * A host that has just failed is demoted immediately, before its concurrent
+ * siblings finish. Screens fire ten or more reads at once, so pinning only on
+ * success meant every one of them queued behind the same dead primary and paid
+ * its full timeout — a ten-second blank page even though a healthy fallback
+ * was one hop away.
+ */
+const demote = (index: number) => {
+  if (index === activeHostIndex) {
+    activeHostIndex = (index + 1) % REST_ENDPOINTS.length;
+  }
+};
+
+/*
+ * A dead host usually hangs rather than refusing, so without a ceiling the
+ * request waits on the gateway's own timeout. Ten seconds is longer than any
+ * healthy endpoint measured and short enough not to strand the page.
+ */
+const REQUEST_TIMEOUT_MS = 10000;
+
 /** Which host the hub is currently reading from. Surfaced for diagnostics. */
 export const getActiveRestEndpoint = () => REST_ENDPOINTS[activeHostIndex] ?? REST_ENDPOINTS[0];
 
@@ -110,14 +130,21 @@ const customFetch = (
   const attempt = async (hostIndex: number, tried: number): Promise<any> => {
     const host = REST_ENDPOINTS[hostIndex] ?? REST_ENDPOINTS[0];
     try {
-      const res = await axios.request({ ...options, url: `${host}${url}` });
-      // Pin whichever host answered so the rest of the session skips the
-      // dead ones instead of paying the timeout again on every request.
+      const res = await axios.request({
+        ...options,
+        url: `${host}${url}`,
+        timeout: options.timeout ?? REQUEST_TIMEOUT_MS,
+      });
+      // Pin whichever host answered so the rest of the session goes straight
+      // there.
       activeHostIndex = hostIndex;
       return res;
     } catch (err) {
-      const canRetry = tried + 1 < REST_ENDPOINTS.length && isHostFailure(err);
-      if (!canRetry) {
+      if (!isHostFailure(err)) {
+        return rejectWith(err);
+      }
+      demote(hostIndex);
+      if (tried + 1 >= REST_ENDPOINTS.length) {
         return rejectWith(err);
       }
       return attempt((hostIndex + 1) % REST_ENDPOINTS.length, tried + 1);

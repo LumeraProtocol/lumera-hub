@@ -47,6 +47,22 @@ describe('rpcGet failover', () => {
     expect(get).toHaveBeenCalledTimes(2);
   });
 
+  it('demotes a failing host straight away so concurrent calls skip it', async () => {
+    // Two requests in flight at once, both starting on the dead primary. The
+    // second must not queue behind the primary's timeout as well.
+    get
+      .mockRejectedValueOnce({ response: { status: 504 } })
+      .mockResolvedValue({ data: { ok: true } });
+
+    const { rpcGet, getActiveRpcEndpoint } = await import('./rpc');
+    await rpcGet('/a');
+    expect(getActiveRpcEndpoint()).toBe('https://second.example');
+
+    get.mockClear();
+    await rpcGet('/b');
+    expect(get.mock.calls[0][0]).toBe('https://second.example/b');
+  });
+
   it('pins the host that answered so later calls skip the dead one', async () => {
     get
       .mockRejectedValueOnce({ response: { status: 502 } })

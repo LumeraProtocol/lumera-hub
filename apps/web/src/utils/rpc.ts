@@ -17,6 +17,16 @@ import { RPC_ENDPOINTS } from '@/contants/network';
 
 let activeIndex = 0;
 
+/*
+ * Demote a failing host immediately so concurrent requests skip it rather than
+ * each paying its timeout. See the same note in `api.ts`.
+ */
+const demote = (index: number) => {
+  if (index === activeIndex) {
+    activeIndex = (index + 1) % RPC_ENDPOINTS.length;
+  }
+};
+
 /** Which RPC host is currently in use. */
 export const getActiveRpcEndpoint = () => RPC_ENDPOINTS[activeIndex] ?? RPC_ENDPOINTS[0];
 
@@ -38,13 +48,13 @@ export const rpcGet = async <T = unknown>(path: string, signal?: AbortSignal): P
   const attempt = async (index: number, tried: number): Promise<T> => {
     const host = RPC_ENDPOINTS[index] ?? RPC_ENDPOINTS[0];
     try {
-      const { data } = await axios.get(`${host}${path}`, { signal, timeout: 15000 });
+      const { data } = await axios.get(`${host}${path}`, { signal, timeout: 10000 });
       activeIndex = index;
       return data as T;
     } catch (error) {
-      if (tried + 1 >= RPC_ENDPOINTS.length || !isHostFailure(error)) {
-        throw error;
-      }
+      if (!isHostFailure(error)) throw error;
+      demote(index);
+      if (tried + 1 >= RPC_ENDPOINTS.length) throw error;
       return attempt((index + 1) % RPC_ENDPOINTS.length, tried + 1);
     }
   };
