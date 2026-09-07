@@ -25,11 +25,13 @@ describe('getChains', () => {
     expect(chains[0]).toMatchObject({
       chainName: 'lumera-testnet',
       chainId: 'lumera-testnet-2',
-      apis: {
-        rpc: [{ address: 'https://rpc-testnet.lumeraprotocol.com' }],
-        rest: [{ address: 'https://lcd-testnet.lumeraprotocol.com' }],
-      },
     });
+    // The configured host leads; community fallbacks follow it so a dead
+    // primary does not block signing.
+    expect(chains[0].apis?.rpc?.[0].address).toBe('https://rpc-testnet.lumeraprotocol.com');
+    expect(chains[0].apis?.rest?.[0].address).toBe('https://lcd-testnet.lumeraprotocol.com');
+    expect(chains[0].apis?.rpc?.length).toBeGreaterThan(1);
+    expect(chains[0].apis?.rest?.length).toBeGreaterThan(1);
     expect(assetLists[0].chainName).toBe('lumera-testnet');
   });
 
@@ -44,11 +46,11 @@ describe('getChains', () => {
     expect(chains[0]).toMatchObject({
       chainName: 'lumera',
       chainId: 'lumera-mainnet-1',
-      apis: {
-        rpc: [{ address: 'https://rpc.lumera.io' }],
-        rest: [{ address: 'https://lcd.lumera.io' }],
-      },
     });
+    expect(chains[0].apis?.rpc?.[0].address).toBe('https://rpc.lumera.io');
+    expect(chains[0].apis?.rest?.[0].address).toBe('https://lcd.lumera.io');
+    expect(chains[0].apis?.rpc?.length).toBeGreaterThan(1);
+    expect(chains[0].apis?.rest?.length).toBeGreaterThan(1);
     expect(assetLists[0].chainName).toBe('lumera');
   });
 });

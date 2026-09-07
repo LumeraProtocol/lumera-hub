@@ -131,3 +131,87 @@ export const NETWORK_LABEL = IS_MAINNET ? 'Mainnet' : ACTIVE_NETWORK.displayName
  * yet, and the nav simply does not offer one — better than a link that 404s.
  */
 export const FAUCET_URL = IS_TESTNET ? (process.env.NEXT_PUBLIC_FAUCET_URL || '') : '';
+
+/*
+ * Community fallback endpoints.
+ *
+ * The official `lcd.lumera.io` and `rpc.lumera.io` are a single point of
+ * failure — both were returning 504 while this list was compiled, which left
+ * the mainnet hub with nothing to read. The Lumera community and developer
+ * resources page publishes independently operated nodes; these are the ones
+ * that answered with a permissive CORS header, which is the binding constraint
+ * because the hub calls them straight from the browser.
+ *
+ * Order is by measured latency at the time of writing. `api.ts` walks the list
+ * and remembers whichever host answers, so a dead primary costs one failed
+ * request per session rather than breaking the page.
+ *
+ * Endpoints without `access-control-allow-origin: *` are deliberately absent
+ * even when healthy — Encapsulate and Decentrio on mainnet, Decentrio on
+ * testnet — because the browser cannot use them.
+ */
+const REST_FALLBACKS: Record<NetworkProfile, string[]> = {
+  mainnet: [
+    'https://api.lumera.nodestake.org',
+    'https://lumera-api.linknode.org',
+    'https://lumera-api.polkachu.com',
+    'https://lumera-rest.publicnode.com',
+    'https://lumera-rest.stakerhouse.com',
+    'https://lumera-mainnet-api.corenodehq.xyz',
+  ],
+  testnet: [
+    'https://lumera-testnet-api.polkachu.com',
+    'https://api-t.lumera.nodestake.org',
+    'https://lumera-testnet-api.linknode.org',
+    'https://lumera-testnet-rest.stakerhouse.com',
+    'https://lumera-testnet-api.corenodehq.xyz',
+  ],
+  devnet: [],
+};
+
+const RPC_FALLBACKS: Record<NetworkProfile, string[]> = {
+  mainnet: [
+    'https://lumera-rpc.polkachu.com',
+    'https://lumera-rpc.linknode.org',
+    'https://lumera-rpc.publicnode.com',
+    'https://lumera-rpc.stakerhouse.com',
+    'https://lumera-mainnet-rpc.corenodehq.xyz',
+  ],
+  testnet: [
+    'https://lumera-testnet-rpc.polkachu.com',
+    'https://rpc-t.lumera.nodestake.org',
+    'https://lumera-testnet-rpc.linknode.org',
+    'https://lumera-testnet-rpc.stakerhouse.com',
+  ],
+  devnet: [],
+};
+
+const dedupe = (values: string[]) => {
+  const seen = new Set<string>();
+  return values
+    .map((v) => v.replace(/\/+$/, ''))
+    .filter((v) => v && !seen.has(v) && (seen.add(v), true));
+};
+
+/**
+ * Every REST host the hub may read from, primary first.
+ *
+ * An explicit NEXT_PUBLIC_REST_AI_URL override always leads: a private
+ * deployment pointing at its own node must not silently fall through to a
+ * public one. Set NEXT_PUBLIC_REST_FALLBACKS to a comma-separated list to
+ * replace the community set entirely.
+ */
+export const REST_ENDPOINTS = dedupe([
+  REST_AI_URL,
+  ...(process.env.NEXT_PUBLIC_REST_FALLBACKS
+    ? process.env.NEXT_PUBLIC_REST_FALLBACKS.split(',').map((v) => v.trim())
+    : REST_FALLBACKS[NETWORK_PROFILE]),
+]);
+
+/** Every RPC host, primary first. Same override rules as REST_ENDPOINTS. */
+export const RPC_ENDPOINTS = dedupe([
+  RPC_ENDPOINT,
+  ...(process.env.NEXT_PUBLIC_RPC_FALLBACKS
+    ? process.env.NEXT_PUBLIC_RPC_FALLBACKS.split(',').map((v) => v.trim())
+    : RPC_FALLBACKS[NETWORK_PROFILE]),
+]);
