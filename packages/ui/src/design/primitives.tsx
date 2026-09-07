@@ -449,30 +449,42 @@ export function Avatar({
   src,
   size = 28,
   rounded = 7,
+  alt,
 }: {
   initials: string
   src?: string
   size?: number
   rounded?: number
+  alt?: string
 }) {
+  // Keybase is the only avatar source Cosmos chains have, and it rate-limits
+  // and 404s often enough that a picture cannot be assumed to arrive. The
+  // monogram is always rendered underneath, so a failed or slow image degrades
+  // to initials rather than to an empty box.
+  const [failed, setFailed] = React.useState(false)
+  React.useEffect(() => setFailed(false), [src])
+
   return (
     <div
-      className="flex flex-none items-center justify-center overflow-hidden border border-line-edge bg-ink-600 bg-cover bg-center bg-no-repeat"
-      style={{
-        width: size,
-        height: size,
-        borderRadius: rounded,
-        backgroundImage: src ? `url("${src}")` : undefined,
-      }}
+      className="relative flex flex-none items-center justify-center overflow-hidden border border-line-edge bg-ink-600"
+      style={{ width: size, height: size, borderRadius: rounded }}
     >
-      {src ? null : (
-        <span
-          className="font-mono font-semibold text-lumera-green"
-          style={{ fontSize: Math.max(10, Math.round(size * 0.45)) }}
-        >
-          {initials}
-        </span>
-      )}
+      <span
+        className="font-mono font-semibold text-lumera-green"
+        style={{ fontSize: Math.max(10, Math.round(size * 0.45)) }}
+      >
+        {initials}
+      </span>
+      {src && !failed ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={alt ?? ''}
+          loading="lazy"
+          onError={() => setFailed(true)}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : null}
     </div>
   )
 }
