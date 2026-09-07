@@ -1,12 +1,18 @@
 'use client'
 
 /*
- * Cascade needs the Lumera WASM SDK, which only exists in the browser. The
- * page dynamically imports this container with `ssr: false`; everything that
- * touches the SDK lives below that boundary.
+ * Cascade needs the Lumera WASM SDK, which only exists in the browser, so the
+ * page imports this container with `ssr: false`.
  *
- * The SDK is a multi-megabyte download, so the wait is given a real loading
- * state rather than an empty screen.
+ * The SDK is about ten megabytes and is only used to upload and download
+ * files. Blocking the page on it meant a visitor with no wallet — who cannot
+ * use the drive at all — spent half a minute on "Downloading the Lumera SDK…"
+ * before seeing the network figures, which are plain HTTP reads that need
+ * nothing from it.
+ *
+ * So the page renders straight away and the SDK is fetched only when it is
+ * about to be used: as soon as a wallet is connected, or when the reader
+ * starts an upload or a download.
  */
 
 import React, { useEffect, useMemo } from 'react'
@@ -38,43 +44,38 @@ const TYPE_LABEL: Record<string, string> = {
 }
 
 export default function CascadeContainer() {
-  const { module, isLoaded, error } = useLumeraClientWrapper()
+  const hub = useHub()
+  // Connected readers are the ones who can actually act, so start the download
+  // for them in the background. Everyone else pays nothing.
+  const { module, isLoading, error, load } = useLumeraClientWrapper(hub.isConnected)
 
   useEffect(() => {
     document.title = 'Cascade - Lumera Hub'
   }, [])
 
-  if (error) {
-    return (
-      <div className="flex flex-col gap-[18px]">
-        <PageTitle title="Cascade" subtitle="Permanent storage across the supernode network." />
-        <Notice tone="danger">
-          The Lumera SDK could not be loaded, so the drive is unavailable on this page. Network
-          figures and uploads both depend on it. ({error})
-        </Notice>
-      </div>
-    )
-  }
-
-  if (!isLoaded) {
-    return (
-      <div className="flex flex-col gap-[18px]">
-        <PageTitle title="Cascade" subtitle="Permanent storage across the supernode network." />
-        <Card>
-          <div className="flex flex-col gap-4 px-[18px] py-5">
-            <span className="text-base text-text-muted">Downloading the Lumera SDK…</span>
-            <Skeleton className="h-2 w-full" rounded="rounded-full" />
-          </div>
-        </Card>
-      </div>
-    )
-  }
-
-  return <CascadeBody client={module} />
+  return (
+    <CascadeBody
+      client={module}
+      sdkLoading={isLoading}
+      sdkError={error}
+      ensureSdk={load}
+    />
+  )
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CascadeBody({ client }: { client: any }) {
+function CascadeBody({
+  client,
+  sdkLoading,
+  sdkError,
+  ensureSdk,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client: any
+  sdkLoading: boolean
+  sdkError: string | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ensureSdk: () => Promise<any>
+}) {
   const hub = useHub()
   const memoizedClient = useMemo(() => client, [client])
   const cascade = useCascade({ sdkjsReact: memoizedClient })
@@ -112,9 +113,12 @@ function CascadeBody({ client }: { client: any }) {
         state: f.state,
         selected: (selectedFiles || []).some((s) => s.actionID === f.actionID),
         onToggle: () => handleSelectFile(f),
-        onDownload: () => void handleDownloadFile(f),
+        onDownload: async () => {
+          await ensureSdk()
+          void handleDownloadFile(f)
+        },
       })),
-    [filteredFiles, handleDownloadFile, handleSelectFile, selectedFiles],
+    [ensureSdk, filteredFiles, handleDownloadFile, handleSelectFile, selectedFiles],
   )
 
   const storageBreakdown = useMemo(
@@ -165,15 +169,25 @@ function CascadeBody({ client }: { client: any }) {
       onUpload={() =>
         hub.gate(
           { title: 'Upload to Cascade', line: 'Storage is paid for from your liquid balance' },
-          () => handleUploadCascade(),
+          async () => {
+            // The picker needs the SDK to chunk and sign. If the background
+            // fetch has not finished, wait for it here rather than failing.
+            await ensureSdk()
+            handleUploadCascade()
+          },
         )
       }
       isUploading={isUploading}
       selectedCount={(selectedFiles || []).length}
-      onDownloadSelected={() => void handleDownloadAllFile()}
+      onDownloadSelected={async () => {
+        await ensureSdk()
+        void handleDownloadAllFile()
+      }}
       isDownloading={isAllDownloading}
       storageBreakdown={storageBreakdown}
       regions={regions}
+      sdkLoading={sdkLoading}
+      sdkError={sdkError}
     />
   )
 }

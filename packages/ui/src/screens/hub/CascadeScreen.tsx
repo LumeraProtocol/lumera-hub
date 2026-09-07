@@ -20,6 +20,7 @@ import {
   CardHeader,
   EmptyState,
   Label,
+  Notice,
   PageTitle,
   SegmentBar,
   Segmented,
@@ -64,6 +65,8 @@ export function CascadeScreen({
   isDownloading,
   storageBreakdown,
   regions,
+  sdkLoading,
+  sdkError,
 }: {
   loading?: boolean
   networkStored: string
@@ -85,6 +88,9 @@ export function CascadeScreen({
   isDownloading?: boolean
   storageBreakdown: Array<{ label: string; bytes: number; className: string }>
   regions: Array<{ name: string; count: number }>
+  /** The storage client is downloading. Only blocks upload and download. */
+  sdkLoading?: boolean
+  sdkError?: string | null
 }) {
   const hub = useHub()
 
@@ -97,9 +103,14 @@ export function CascadeScreen({
         title="Cascade"
         subtitle="Permanent storage across the supernode network. Every file is chunked, encrypted and held by multiple nodes."
         actions={
-          <Button variant="primary" locked={hub.gated} onClick={onUpload} disabled={isUploading}>
+          <Button
+            variant="primary"
+            locked={hub.gated}
+            onClick={onUpload}
+            disabled={isUploading || !!sdkError}
+          >
             <UploadIcon size={14} />
-            {isUploading ? 'Uploading…' : 'Upload file'}
+            {isUploading ? 'Uploading…' : sdkLoading ? 'Preparing…' : 'Upload file'}
           </Button>
         }
       />
@@ -148,6 +159,13 @@ export function CascadeScreen({
             ))}
           </div>
         </Card>
+      ) : null}
+
+      {sdkError ? (
+        <Notice tone="danger">
+          The storage client could not be loaded, so uploads and downloads are
+          unavailable on this page. The network figures above are unaffected. ({sdkError})
+        </Notice>
       ) : null}
 
       {hub.isDisconnected ? (
@@ -337,6 +355,9 @@ export function CascadeScreen({
               Uploads are paid for from your liquid balance and priced by size. Public files can be
               fetched by anyone holding the content ID; private files stay encrypted to this
               address.
+              {sdkLoading
+                ? ' The storage client is still downloading; uploads and downloads become available when it finishes.'
+                : ''}
             </span>
           </Well>
         </>
