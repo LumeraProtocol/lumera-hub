@@ -168,10 +168,15 @@ export default function Page() {
 
   // Prefer the params useStaking already fetched; fall back to the shared
   // chain-params read. Never to a literal.
+  // useStaking seeds params with a zero-filled placeholder before the chain
+  // answers, so a non-positive reading here means "not loaded", not "zero".
+  const stakingUnbonding = parseInt(
+    String(staking.params?.unbonding_time ?? '').replace(/s$/, ''),
+    10,
+  )
   const unbondingSeconds =
-    (staking.params?.unbonding_time
-      ? parseInt(String(staking.params.unbonding_time).replace(/s$/, ''), 10)
-      : null) ?? chainParams.unbondingSeconds
+    (Number.isFinite(stakingUnbonding) && stakingUnbonding > 0 ? stakingUnbonding : null) ??
+    chainParams.unbondingSeconds
   const unbondingLabel = formatDuration(unbondingSeconds)
 
   /*

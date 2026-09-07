@@ -54,21 +54,29 @@ const EMPTY: ChainParams = {
   communityTax: null,
 };
 
+/*
+ * Zero is treated as "not loaded" throughout, not as a real value.
+ *
+ * The staking hook seeds its params with a zero-filled placeholder
+ * (`unbonding_time: '0'`, `max_entries: 0`, …) so the shape is present before
+ * the chain answers. Those placeholders are truthy enough to survive a naive
+ * guard and render as though they were real — an unbonding period of
+ * "0 hours", a commission floor of "0%". None of these parameters can
+ * legitimately be zero, so a non-positive reading means the value is unknown.
+ */
+const positiveOrNull = (n: number) => (Number.isFinite(n) && n > 0 ? n : null);
+
 const ratioToPercent = (value?: string | null) => {
-  const n = Number(value);
-  return Number.isFinite(n) && value != null ? n * 100 : null;
+  if (value == null) return null;
+  return positiveOrNull(Number(value) * 100);
 };
 
 const secondsOf = (value?: string | null) => {
   if (!value) return null;
-  const n = parseInt(String(value).replace(/s$/, ''), 10);
-  return Number.isFinite(n) ? n : null;
+  return positiveOrNull(parseInt(String(value).replace(/s$/, ''), 10));
 };
 
-const intOf = (value: unknown) => {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
-};
+const intOf = (value: unknown) => positiveOrNull(Number(value));
 
 // One in-flight request shared by every caller; the parameters change about as
 // often as a governance proposal passes, so refetching per screen is waste.
@@ -112,11 +120,16 @@ const load = async (): Promise<ChainParams> => {
   }
 
   if (distRes.status === 'fulfilled') {
-    next.communityTax = ratioToPercent(distRes.value?.data?.params?.community_tax);
+    // A community tax of zero is legitimate, unlike the others.
+    const tax = Number(distRes.value?.data?.params?.community_tax);
+    next.communityTax = Number.isFinite(tax) ? tax * 100 : null;
   }
 
   return next;
 };
+
+/** True once at least one parameter actually resolved. */
+const hasAnyValue = (p: ChainParams) => Object.values(p).some((v) => v != null);
 
 const useChainParams = () => {
   const [params, setParams] = useState<ChainParams>(cached ?? EMPTY);
@@ -128,7 +141,9 @@ const useChainParams = () => {
     inFlight ??= load();
     inFlight
       .then((next) => {
-        cached = next;
+        // Only remember a read that produced something. Caching an all-null
+        // result would make a transient LCD outage permanent for the session.
+        if (hasAnyValue(next)) cached = next;
         if (!cancelled) setParams(next);
       })
       .catch(() => {
@@ -148,7 +163,7 @@ const useChainParams = () => {
 
 /** "21 days", "3 days", "2 days" — or null when the chain did not answer. */
 export const formatDuration = (seconds: number | null) => {
-  if (seconds == null) return null;
+  if (seconds == null || seconds <= 0) return null;
   const days = seconds / 86400;
   if (days >= 1) {
     const rounded = Math.round(days);
