@@ -1,24 +1,27 @@
 'use client'
 
 /*
- * Protocol updates from X.
+ * Protocol updates.
  *
  * The design shows a feed of Lumera posts. Those posts have to be real, so
- * nothing here is authored: the card either shows what the account actually
- * posted, or says it could not load them.
+ * nothing here is authored: the card shows what Lumera actually published, or
+ * says it could not load anything.
  *
- * There are three tiers, because no single source works for everyone:
+ * The X API is deliberately not used. X retired its monthly plans and now
+ * bills per post read, and its unauthenticated syndication endpoint answers
+ * 429 to everyone, so there is no free way to read that timeline. Nothing here
+ * costs anything:
  *
- *   1. Our own /api/x-feed. Reads the X API server-side, so the bearer token
- *      stays private and ad blockers cannot intercept it, and the posts render
- *      in the hub's own type and colour — which is what the design asks for.
- *      Needs X_BEARER_TOKEN; X's free tier cannot read timelines.
- *   2. X's embed widget. Free and official, but it draws the posts itself in an
- *      iframe, and a good share of visitors run an extension that blocks it.
+ *   1. X's embed widget — the snippet X's own publish tool hands out. Free,
+ *      official, and the genuine timeline. X draws it inside an iframe, so it
+ *      carries X's styling rather than ours, and an ad blocker stops it
+ *      outright for a good share of visitors.
+ *   2. /api/updates — Lumera's Medium feed, for exactly those visitors. No key,
+ *      no quota, and structured, so it renders in the hub's own type and
+ *      colour. Announcements rather than every post, and no reposts/likes
+ *      line: those numbers are not in the feed, and inventing them is the one
+ *      thing this card must never do.
  *   3. A link to the profile.
- *
- * X's public syndication endpoint is deliberately not used: it now answers 200
- * with an empty body for any token, so anything built on it would be broken.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
@@ -39,25 +42,32 @@ declare global {
   }
 }
 
-export type XPost = {
+/** A published article, from the Medium feed. */
+export type Update = {
   id: string
-  text: string
-  createdAt: string
-  replies: number
-  reposts: number
-  likes: number
+  title: string
   url: string
+  publishedAt: string
+  excerpt: string
 }
 
+/*
+ * X's publish tool emits platform.x.com, but that is a 302 to this URL — same
+ * file, one extra round trip on every page load — so go straight to it.
+ *
+ * Which host makes no difference to whether it loads: blockers match the
+ * redirect target, so they stop both. That is the normal failure here, not a
+ * network one, and it is why the fallback below exists.
+ */
 const WIDGET_SRC = 'https://platform.twitter.com/widgets.js'
-const SCRIPT_TIMEOUT_MS = 6000
+const SCRIPT_TIMEOUT_MS = 3000
 /*
  * createTimeline can hang forever rather than rejecting — observed with the
  * script loaded and window.twttr present, the call simply never settled. Every
  * step is therefore raced against a deadline, or the card sits on a skeleton
  * indefinitely.
  */
-const RENDER_TIMEOUT_MS = 6000
+const RENDER_TIMEOUT_MS = 3000
 
 const withTimeout = <T,>(work: Promise<T>, ms: number): Promise<T> =>
   Promise.race([
@@ -98,7 +108,7 @@ const age = (iso: string) => {
   return days < 30 ? `${days}d` : `${Math.round(days / 30)}mo`
 }
 
-type Mode = 'loading' | 'posts' | 'widget' | 'failed'
+type Mode = 'loading' | 'updates' | 'widget' | 'failed'
 
 export function SocialFeed({
   handle = 'lumera',
@@ -113,7 +123,7 @@ export function SocialFeed({
 }) {
   const slot = useRef<HTMLDivElement>(null)
   const [mode, setMode] = useState<Mode>('loading')
-  const [posts, setPosts] = useState<XPost[]>([])
+  const [updates, setUpdates] = useState<Update[]>([])
 
   const renderWidget = useCallback(async () => {
     try {
@@ -146,28 +156,35 @@ export function SocialFeed({
   useEffect(() => {
     let cancelled = false
 
+    /*
+     * Both sources start at once. Chaining them would make every visitor whose
+     * browser blocks X wait out the widget's whole timeout on a skeleton
+     * before anything appeared; this way the fallback is already in hand the
+     * moment the widget gives up.
+     */
     const run = async () => {
-      // Tier 1: our own route, rendered in the hub's styling.
-      try {
-        const res = await fetch('/api/x-feed')
-        if (res.ok) {
-          const json = await res.json()
-          if (cancelled) return
-          if (Array.isArray(json?.posts) && json.posts.length) {
-            setPosts(json.posts)
-            setMode('posts')
-            return
-          }
-        }
-      } catch {
-        // Fall through; the widget may still work.
-      }
-      if (cancelled) return
+      const feed = fetch('/api/updates')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => (Array.isArray(json?.updates) ? (json.updates as Update[]) : []))
+        .catch(() => [] as Update[])
 
-      // Tier 2: X's widget.
+      // Tier 1: the real X timeline, via the embed X's publish tool gives out.
       const rendered = await renderWidget()
       if (cancelled) return
-      setMode(rendered ? 'widget' : 'failed')
+      if (rendered) {
+        setMode('widget')
+        return
+      }
+
+      // Tier 2: Lumera's own announcements, in the hub's type and colour.
+      const items = await feed
+      if (cancelled) return
+      if (items.length) {
+        setUpdates(items)
+        setMode('updates')
+        return
+      }
+      setMode('failed')
     }
 
     void run()
@@ -218,27 +235,22 @@ export function SocialFeed({
           </div>
         ) : null}
 
-        {mode === 'posts'
-          ? posts.map((p) => (
+        {mode === 'updates'
+          ? updates.map((u) => (
               <a
-                key={p.id}
-                href={p.url}
+                key={u.id}
+                href={u.url}
                 target="_blank"
                 rel="noreferrer"
-                className="flex flex-col gap-2 border-b border-line-hairline py-[13px] no-underline last:border-b-0"
+                className="group flex flex-col gap-1.5 border-b border-line-hairline py-[13px] no-underline last:border-b-0"
               >
-                <p className="m-0 text-base leading-[1.55] text-text-secondary text-pretty">
-                  {p.text}
+                <span className="text-base leading-[1.35] font-semibold text-text-primary transition-colors group-hover:text-lumera-green text-pretty">
+                  {u.title}
+                </span>
+                <p className="m-0 line-clamp-2 text-base leading-[1.55] text-text-secondary text-pretty">
+                  {u.excerpt}
                 </p>
-                <div className="flex items-center gap-4">
-                  <span className="font-mono text-small text-text-muted">{age(p.createdAt)}</span>
-                  <span className="text-small text-text-muted">
-                    {p.reposts.toLocaleString('en-US')} reposts
-                  </span>
-                  <span className="text-small text-text-muted">
-                    {p.likes.toLocaleString('en-US')} likes
-                  </span>
-                </div>
+                <span className="font-mono text-small text-text-muted">{age(u.publishedAt)}</span>
               </a>
             ))
           : null}
