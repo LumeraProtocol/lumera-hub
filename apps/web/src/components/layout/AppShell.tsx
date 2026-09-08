@@ -437,6 +437,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               router.push('/wallet')
             }}
             onOpenBlock={(h) => router.push(`/blocks/${h}`)}
+            onSeeAll={(q) => router.push(`/search?q=${encodeURIComponent(q)}`)}
           />
 
           <div className="flex-1" />
