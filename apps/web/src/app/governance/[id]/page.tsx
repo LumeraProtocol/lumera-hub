@@ -10,6 +10,9 @@ import useProposals from '@/hooks/useProposals';
 import useStaking from '@/hooks/useStaking';
 import { RATE_VALUE } from '@/contants';
 import useChainParams, { formatDuration } from '@/hooks/useChainParams';
+import useValidatorLogos from '@/hooks/useValidatorLogos';
+import { accountAddressFromValoper } from '@/utils/consensus-address';
+import { dominantVoteTone, formatGovernanceVote } from '@/utils/governance-votes';
 import {
   proposalKind,
   readableStatus,
@@ -56,8 +59,10 @@ export default function Page({ params }: Props) {
   const router = useRouter();
   const hub = useHub();
 
-  const { isLoading, governance, fetchGovernanceDetail, fetchVotes } = useGovernanceDetails(id);
-  const { bondedTokens } = useStaking();
+  const { isLoading, governance, votes, fetchGovernanceDetail, fetchVotes } =
+    useGovernanceDetails(id);
+  const { bondedTokens, validators } = useStaking();
+  const logos = useValidatorLogos(validators);
   const { params: chainParams } = useChainParams();
 
   const proposals = useProposals({
@@ -80,6 +85,51 @@ export default function Page({ params }: Props) {
   }, [governance?.title]);
 
   const bonded = Number(bondedTokens) || 0;
+
+  /*
+   * Who voted, heaviest first.
+   *
+   * Governance records a vote against the account that cast it, so a validator's
+   * vote arrives under its account address rather than its operator address.
+   * Re-encoding the operator address bridges the two, which is what lets a vote
+   * carry the weight of the stake behind it.
+   *
+   * Only validator votes are ranked. A delegator's weight would need a separate
+   * query per address to establish, and validators hold nearly all of the
+   * bonded stake — so the list is labelled as validators rather than implying
+   * it is every voter.
+   */
+  const voters = useMemo(() => {
+    if (!votes?.length || !validators?.length || !bonded) return [];
+
+    const byAccount = new Map<string, (typeof validators)[number]>();
+    for (const v of validators) {
+      const account = accountAddressFromValoper(v.operator_address);
+      if (account) byAccount.set(account, v);
+    }
+
+    return votes
+      .map((vote) => {
+        const validator = byAccount.get(vote.voter);
+        if (!validator) return null;
+
+        const label = formatGovernanceVote(vote);
+        if (!label) return null;
+
+        return {
+          address: vote.voter,
+          name: validator.description?.moniker || vote.voter,
+          logo: logos[validator.operator_address],
+          vote: label,
+          tone: dominantVoteTone(vote),
+          weight: (Number(validator.tokens) / bonded) * 100,
+          onOpen: () => router.push(`/staking/${validator.operator_address}`),
+        };
+      })
+      .filter((v): v is NonNullable<typeof v> => v !== null)
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 6);
+  }, [bonded, logos, router, validators, votes]);
 
   const detail: ProposalDetail | null = useMemo(() => {
     if (!governance) return null;
@@ -107,6 +157,7 @@ export default function Page({ params }: Props) {
       votingPeriod: formatDuration(chainParams.votingPeriodSeconds),
       totalVoted: compact(votedMicro),
       timeline: timelineOf(governance, status),
+      voters,
       tally: [
         {
           label: 'Yes',

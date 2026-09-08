@@ -47,3 +47,24 @@ export const accountAddressFromOperator = (
     return null;
   }
 };
+
+/**
+ * Derives a validator's own account address from its operator address.
+ *
+ * Governance records a vote against the account that cast it
+ * (`lumera1…`), while the staking module lists validators by operator address
+ * (`lumeravaloper1…`). The two are the same 20 bytes under different prefixes,
+ * so re-encoding bridges them — which is what lets a vote be attributed to the
+ * validator that cast it, and weighted by its stake.
+ */
+export const accountAddressFromValoper = (
+  valoper: string,
+  prefix = 'lumera',
+): string | null => {
+  if (!valoper) return null;
+  try {
+    return toBech32(prefix, fromBech32(valoper).data);
+  } catch {
+    return null;
+  }
+};

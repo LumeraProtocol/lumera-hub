@@ -15,10 +15,12 @@
 
 import React from 'react'
 import {
+  Avatar,
   Badge,
   Bar,
   Button,
   Card,
+  CardHeader,
   DotLabel,
   EmptyState,
   Label,
@@ -252,7 +254,31 @@ export type ProposalDetail = ProposalSummary & {
   votingPeriod: string | null
   timeline: Array<{ label: string; when: string; state: 'done' | 'pending' | 'failed' }>
   tally: Array<{ label: string; pct: number; amount: string; className: string }>
+  /** Who has voted, heaviest first. Empty until any vote is recorded. */
+  voters: Array<{
+    address: string
+    name: string
+    logo?: string
+    /** As cast. A split vote reads "Yes 75%, Abstain 25%", so it is free text. */
+    vote: string
+    /** Colours the row; a split vote takes its heaviest side. */
+    tone: 'yes' | 'no' | 'abstain' | 'veto' | null
+    /** Share of bonded stake this voter carries, 0–100. */
+    weight: number
+    onOpen?: () => void
+  }>
 }
+
+/** "Silk Nodes" -> "SN", so a validator with no logo still reads as itself. */
+const initialsOf = (name: string): string =>
+  name
+    .replace(/[^\p{L}\p{N} ]/gu, ' ')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0] ?? '')
+    .join('')
+    .toUpperCase() || '?'
 
 export function GovernanceDetailScreen({
   loading,
@@ -324,6 +350,32 @@ export function GovernanceDetailScreen({
             </div>
           </Card>
 
+          {proposal.depositProgress ? (
+            <Card>
+              <div className="flex flex-col gap-3 px-[18px] py-4">
+                <div className="flex items-baseline justify-between">
+                  <Label>Deposit progress</Label>
+                  <span className="font-mono text-small tnum text-text-muted">
+                    {proposal.depositProgress.pct.toFixed(0)}%
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-mono text-stat font-semibold tnum text-text-primary">
+                    {proposal.depositProgress.have}
+                  </span>
+                  <span className="text-small text-text-muted">
+                    of {proposal.depositProgress.need}
+                  </span>
+                </div>
+                <Bar pct={proposal.depositProgress.pct} tone="warn" height={7} />
+                <span className="text-small leading-[1.55] text-text-muted text-pretty">
+                  A proposal only reaches a vote once the minimum deposit is met. Anyone may
+                  contribute, and deposits are returned unless the proposal is vetoed.
+                </span>
+              </div>
+            </Card>
+          ) : null}
+
           <Card>
             <div className="flex flex-col gap-4 px-[18px] py-4">
               <div className="flex items-baseline justify-between">
@@ -354,6 +406,60 @@ export function GovernanceDetailScreen({
               </div>
             </div>
           </Card>
+
+          {proposal.voters.length ? (
+            <Card>
+              <CardHeader
+                title="Voters"
+                action={
+                  <span className="text-small text-text-muted">
+                    Top {proposal.voters.length} validators by weight
+                  </span>
+                }
+              />
+              {proposal.voters.map((v) => (
+                <div
+                  key={v.address}
+                  onClick={v.onOpen}
+                  role={v.onOpen ? 'button' : undefined}
+                  tabIndex={v.onOpen ? 0 : undefined}
+                  onKeyDown={(e) => {
+                    if (v.onOpen && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault()
+                      v.onOpen()
+                    }
+                  }}
+                  className={cx(
+                    'grid grid-cols-[minmax(0,1fr)_84px_72px] items-center gap-3 border-b border-line-hairline px-[18px] py-3 last:border-b-0',
+                    v.onOpen && 'cursor-pointer hover:bg-ink-600',
+                  )}
+                >
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <Avatar src={v.logo} initials={initialsOf(v.name)} alt="" size={26} />
+                    <span className="truncate text-base text-text-primary">{v.name}</span>
+                  </div>
+                  <span
+                    className={cx(
+                      'truncate text-small font-medium',
+                      v.tone === 'yes'
+                        ? 'text-lumera-green'
+                        : v.tone === 'no'
+                          ? 'text-danger'
+                          : v.tone === 'veto'
+                            ? 'text-warn'
+                            : 'text-text-muted',
+                    )}
+                    title={v.vote}
+                  >
+                    {v.vote}
+                  </span>
+                  <span className="text-right font-mono text-small tnum text-text-secondary">
+                    {v.weight.toFixed(1)}%
+                  </span>
+                </div>
+              ))}
+            </Card>
+          ) : null}
 
           {proposal.timeline.length ? (
             <Card>
