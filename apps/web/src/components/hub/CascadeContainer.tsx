@@ -18,6 +18,7 @@
 import React, { useEffect, useMemo } from 'react'
 
 import useCascade, { getFileType, type IMyFile } from '@/hooks/useCascade'
+import useNetworkStats, { TIB } from '@/hooks/useNetworkStats'
 import { useLumeraClientWrapper } from '@/hooks/useLumeraClientWrapper'
 import { formatBytes } from '@/utils/format'
 import { CascadeScreen, type CascadeFile } from '@lumera-hub/ui/src/screens/hub/CascadeScreen'
@@ -79,6 +80,9 @@ function CascadeBody({
   const hub = useHub()
   const memoizedClient = useMemo(() => client, [client])
   const cascade = useCascade({ sdkjsReact: memoizedClient })
+  // The chain knows how many SuperNodes are registered and how many Cascade
+  // actions completed; the metrics indexer only knows the nodes that answered.
+  const { stats: net } = useNetworkStats()
 
   const {
     networkStorage,
@@ -152,13 +156,18 @@ function CascadeBody({
     <CascadeScreen
       loading={isMyFilesLoading}
       networkStored={
-        networkStorage.totalBytes && networkStorage.usedPercent
-          ? formatBytes(networkStorage.totalBytes * (networkStorage.usedPercent / 100))
+        net.storageUsedBytes != null && net.storageUsedBytes > 0
+          ? `${(net.storageUsedBytes / TIB).toFixed(1)} TB`
           : '—'
       }
-      networkUsedPercent={networkStorage.usedPercent}
-      networkCapacity={networkStorage.networkStorage || '—'}
-      supernodes={networkStorage.totalSupernode ? String(networkStorage.totalSupernode) : '—'}
+      networkUsedPercent={net.storageUsedPercent ?? undefined}
+      networkCapacity={
+        net.storageTotalBytes ? `${(net.storageTotalBytes / TIB).toFixed(1)} TB` : '—'
+      }
+      supernodes={net.supernodes != null ? String(net.supernodes) : '—'}
+      storedObjects={
+        net.storedObjects != null ? net.storedObjects.toLocaleString('en-US') : '—'
+      }
       myStored={myUsage.size}
       files={files}
       fileCounts={fileCounts as unknown as Record<string, number>}

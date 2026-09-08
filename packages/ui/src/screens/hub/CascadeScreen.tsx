@@ -51,6 +51,7 @@ export function CascadeScreen({
   networkUsedPercent,
   networkCapacity,
   supernodes,
+  storedObjects,
   myStored,
   files,
   fileCounts,
@@ -74,6 +75,8 @@ export function CascadeScreen({
   networkUsedPercent?: number
   networkCapacity: string
   supernodes: string
+  /** Completed Cascade actions — files the network is holding. */
+  storedObjects: string
   myStored: string
   files: CascadeFile[]
   fileCounts: Record<string, number>
@@ -121,11 +124,11 @@ export function CascadeScreen({
             label: 'NETWORK STORED',
             value: networkStored,
           },
+          { label: 'OBJECTS STORED', value: storedObjects },
           {
             label: 'CAPACITY USED',
             value: networkUsedPercent ? `${networkUsedPercent.toFixed(1)}%` : '—',
           },
-          { label: 'NETWORK CAPACITY', value: networkCapacity },
           { label: 'SUPERNODES', value: supernodes },
         ]}
       />
@@ -135,8 +138,12 @@ export function CascadeScreen({
           <CardHeader
             title="Supernodes worldwide"
             action={
+              // Says what this panel counts, so it does not read as
+              // contradicting the registered total above it: only nodes the
+              // metrics indexer reached and whose host resolved to a place
+              // can be put on a map.
               <span className="text-small text-text-muted">
-                Every file is held by several, in several regions
+                {regions.reduce((sum, r) => sum + r.count, 0)} located of {supernodes} registered
               </span>
             }
           />

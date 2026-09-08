@@ -168,10 +168,14 @@ function NetworkPanel({ height, reachable }: { height: number; reachable: boolea
           {CHAIN_ID}
         </span>
       </div>
-      <div className="flex items-baseline justify-between">
-        <span className="text-small text-text-tertiary">Network</span>
-        <Badge tone={IS_TESTNET ? 'warn' : 'neutral'}>{NETWORK_LABEL.toUpperCase()}</Badge>
-      </div>
+      {/* The switch above already names the network, so this row only earns
+          its place when there is no switch to read it from. */}
+      {SIBLING_HUB_URL ? null : (
+        <div className="flex items-baseline justify-between">
+          <span className="text-small text-text-tertiary">Network</span>
+          <Badge tone={IS_TESTNET ? 'warn' : 'neutral'}>{NETWORK_LABEL.toUpperCase()}</Badge>
+        </div>
+      )}
     </div>
   )
 }
