@@ -1,40 +1,33 @@
 'use client'
 
 /*
- * Protocol updates.
+ * Protocol updates from X.
  *
- * The design shows a feed of Lumera posts. Those posts have to be real, so
- * nothing here is authored: the card shows what Lumera actually published, or
- * says it could not load anything.
+ * The design shows a feed of Lumera posts with their engagement counts, and
+ * that is what this renders — the real timeline, in the hub's own type and
+ * colour rather than inside X's iframe. Nothing here is authored: the card
+ * shows what the account actually posted, or says it could not load them.
  *
- * It is not an X timeline, and that is not for want of trying. Every route to
- * one is now closed:
- *
- *   - The API bills per resource returned. At the refresh rate a live card
- *     wants, that runs to more per month than the flat tier it replaced.
- *   - The embed from X's own publish tool no longer renders. Its script loads
- *     and it builds its iframe, but the iframe stays zero-height indefinitely
- *     — measured out to twenty seconds — because X now walls timelines behind
- *     a login, embeds included.
- *   - The unauthenticated syndication endpoint answers 429 to everyone, and
- *     oEmbed only hands back the same dead embed snippet.
- *
- * So the card reads Lumera's Medium feed instead, which needs no key, has no
- * quota, and returns structured items the hub renders in its own type and
- * colour. The account itself stays linked, since that is where the posts are.
+ * The posts come from /api/x-feed, which reads the same unauthenticated
+ * endpoint X's own embed widget calls. No developer app, no key, no bill.
+ * Neither of the obvious routes would have worked: the paid API charges per
+ * post returned, and the embed widget no longer renders for logged-out
+ * visitors — its iframe stays zero-height, because X walls timelines behind a
+ * login now.
  */
 
 import React, { useEffect, useState } from 'react'
 import { Card, CardHeader, Skeleton } from '../design/primitives'
 import { ExternalIcon } from '../design/icons'
 
-/** A published article, from the Medium feed. */
-export type Update = {
+export type XPost = {
   id: string
-  title: string
+  text: string
+  createdAt: string
+  replies: number
+  reposts: number
+  likes: number
   url: string
-  publishedAt: string
-  excerpt: string
 }
 
 /** "2h", "3d" — matching how the design labels post age. */
@@ -49,7 +42,7 @@ const age = (iso: string) => {
   return days < 30 ? `${days}d` : `${Math.round(days / 30)}mo`
 }
 
-type Mode = 'loading' | 'updates' | 'failed'
+type Mode = 'loading' | 'posts' | 'failed'
 
 export function SocialFeed({
   handle = 'lumera',
@@ -61,20 +54,20 @@ export function SocialFeed({
   avatarSrc?: string
 }) {
   const [mode, setMode] = useState<Mode>('loading')
-  const [updates, setUpdates] = useState<Update[]>([])
+  const [posts, setPosts] = useState<XPost[]>([])
 
   useEffect(() => {
     let cancelled = false
 
     void (async () => {
       try {
-        const res = await fetch('/api/updates')
+        const res = await fetch('/api/x-feed')
         if (!res.ok) throw new Error(String(res.status))
         const json = await res.json()
         if (cancelled) return
-        const items: Update[] = Array.isArray(json?.updates) ? json.updates : []
-        setUpdates(items)
-        setMode(items.length ? 'updates' : 'failed')
+        const items: XPost[] = Array.isArray(json?.posts) ? json.posts : []
+        setPosts(items)
+        setMode(items.length ? 'posts' : 'failed')
       } catch {
         if (!cancelled) setMode('failed')
       }
@@ -127,22 +120,27 @@ export function SocialFeed({
           </div>
         ) : null}
 
-        {mode === 'updates'
-          ? updates.map((u) => (
+        {mode === 'posts'
+          ? posts.map((p) => (
               <a
-                key={u.id}
-                href={u.url}
+                key={p.id}
+                href={p.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group flex flex-col gap-1.5 border-b border-line-hairline py-[13px] no-underline last:border-b-0"
+                className="group flex flex-col gap-2 border-b border-line-hairline py-[13px] no-underline last:border-b-0"
               >
-                <span className="text-base leading-[1.35] font-semibold text-text-primary transition-colors group-hover:text-lumera-green text-pretty">
-                  {u.title}
-                </span>
-                <p className="m-0 line-clamp-2 text-base leading-[1.55] text-text-secondary text-pretty">
-                  {u.excerpt}
+                <p className="m-0 text-base leading-[1.55] whitespace-pre-line text-text-secondary transition-colors group-hover:text-text-primary text-pretty">
+                  {p.text}
                 </p>
-                <span className="font-mono text-small text-text-muted">{age(u.publishedAt)}</span>
+                <div className="flex flex-wrap items-center gap-4">
+                  <span className="font-mono text-small text-text-muted">{age(p.createdAt)}</span>
+                  <span className="text-small text-text-muted">
+                    {p.reposts.toLocaleString('en-US')} reposts
+                  </span>
+                  <span className="text-small text-text-muted">
+                    {p.likes.toLocaleString('en-US')} likes
+                  </span>
+                </div>
               </a>
             ))
           : null}
@@ -150,7 +148,7 @@ export function SocialFeed({
         {mode === 'failed' ? (
           <div className="flex flex-col items-start gap-3 py-5">
             <span className="text-base leading-[1.6] text-text-muted text-pretty">
-              Lumera&rsquo;s updates could not be loaded right now.
+              The timeline could not be loaded right now.
             </span>
             <a
               href={profileUrl}
@@ -165,7 +163,7 @@ export function SocialFeed({
         ) : null}
       </div>
 
-      {mode === 'updates' ? (
+      {mode === 'posts' ? (
         <div className="border-t border-line-hairline px-[18px] py-3">
           <a
             href={profileUrl}
