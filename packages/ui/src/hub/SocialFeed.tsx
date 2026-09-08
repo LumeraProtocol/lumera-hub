@@ -101,7 +101,7 @@ const age = (iso: string) => {
 type Mode = 'loading' | 'posts' | 'widget' | 'failed'
 
 export function SocialFeed({
-  handle = 'LumeraProtocol',
+  handle = 'lumera',
   name = 'Lumera',
   avatarSrc,
   height = 380,

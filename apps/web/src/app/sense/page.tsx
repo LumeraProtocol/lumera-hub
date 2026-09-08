@@ -20,7 +20,7 @@ export default function Page() {
         capabilities={[...COMING_SOON.sense.capabilities]}
         links={[
           { label: 'Lumera documentation', href: 'https://docs.lumera.io/' },
-          { label: 'Protocol updates on X', href: 'https://x.com/LumeraProtocol' },
+          { label: 'Protocol updates on X', href: 'https://x.com/lumera' },
         ]}
       />
     </>

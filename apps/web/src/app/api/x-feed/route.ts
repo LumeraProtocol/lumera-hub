@@ -22,7 +22,7 @@ import { NextResponse } from 'next/server';
  * minutes and served to everyone in that window.
  */
 
-const HANDLE = process.env.NEXT_PUBLIC_X_HANDLE || 'LumeraProtocol';
+const HANDLE = process.env.NEXT_PUBLIC_X_HANDLE || 'lumera';
 const CACHE_MS = 10 * 60 * 1000;
 
 export type XPost = {
