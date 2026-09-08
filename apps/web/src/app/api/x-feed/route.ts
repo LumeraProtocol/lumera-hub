@@ -24,7 +24,8 @@ import { parseSyndicatedTimeline } from '@/utils/x-syndication';
  */
 
 const HANDLE = process.env.NEXT_PUBLIC_X_HANDLE || 'lumera';
-const LIMIT = 5;
+/** The card shows the three most recent posts. */
+const LIMIT = 3;
 /*
  * Half an hour. Measured, the endpoint's budget is roughly one request per
  * window per address, and a tripped limit takes minutes to clear — so the
@@ -48,9 +49,25 @@ const FIXTURE = process.env.NODE_ENV === 'production' ? undefined : process.env.
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
+/*
+ * Rate limiting is not enough on its own. A process that has never succeeded
+ * has nothing cached to serve, so without a floor on failures it calls X on
+ * every single request — which is exactly how the limit gets tripped and then
+ * held open, since each attempt renews it. Both outcomes are therefore timed:
+ * a good response is reused for the full window, a failed one backs off for a
+ * minute before anything touches the network again.
+ */
+const FAILURE_BACKOFF_MS = 60_000;
+
 /** Survives a 429, and backs the refetch floor below. */
 let lastGood: ReturnType<typeof parseSyndicatedTimeline> | null = null;
-let lastFetchedAt = 0;
+let lastAttemptAt = 0;
+let attemptFailed = false;
+
+const holdOff = (): boolean => {
+  const since = Date.now() - lastAttemptAt;
+  return lastGood?.length ? since < REVALIDATE_S * 1000 : attemptFailed && since < FAILURE_BACKOFF_MS;
+};
 
 export async function GET() {
   if (FIXTURE) {
@@ -66,9 +83,15 @@ export async function GET() {
   }
 
   // A floor on how often this process will call X at all.
-  if (lastGood?.length && Date.now() - lastFetchedAt < REVALIDATE_S * 1000) {
-    return NextResponse.json({ posts: lastGood, handle: HANDLE, cached: true });
+  if (holdOff()) {
+    if (lastGood?.length) {
+      return NextResponse.json({ posts: lastGood, handle: HANDLE, cached: true });
+    }
+    return NextResponse.json({ error: 'backing_off', handle: HANDLE }, { status: 503 });
   }
+
+  lastAttemptAt = Date.now();
+  attemptFailed = true;
 
   try {
     const res = await fetch(
@@ -97,7 +120,7 @@ export async function GET() {
     }
 
     lastGood = posts;
-    lastFetchedAt = Date.now();
+    attemptFailed = false;
     return NextResponse.json({ posts, handle: HANDLE });
   } catch (error) {
     if (lastGood?.length) {

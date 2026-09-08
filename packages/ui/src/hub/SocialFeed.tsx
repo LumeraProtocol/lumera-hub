@@ -18,10 +18,25 @@
 
 import React, { useEffect, useState } from 'react'
 import { Card, CardHeader, Skeleton } from '../design/primitives'
-import { ExternalIcon } from '../design/icons'
+import {
+  ExternalIcon,
+  HeartIcon,
+  ReplyIcon,
+  RepostIcon,
+  VerifiedIcon,
+  XIcon,
+} from '../design/icons'
+
+export type XAuthor = {
+  name: string
+  handle: string
+  avatar?: string
+  verified: boolean
+}
 
 export type XPost = {
   id: string
+  author?: XAuthor
   text: string
   createdAt: string
   replies: number
@@ -42,16 +57,62 @@ const age = (iso: string) => {
   return days < 30 ? `${days}d` : `${Math.round(days / 30)}mo`
 }
 
+/** The author's picture, falling back to a monogram if it will not load. */
+function AuthorAvatar({ author, size }: { author?: XAuthor; size: number }) {
+  const [failed, setFailed] = React.useState(false)
+  const src = author?.avatar
+  React.useEffect(() => setFailed(false), [src])
+
+  return (
+    <span
+      className="relative flex flex-none items-center justify-center overflow-hidden rounded-full border border-line-edge bg-ink-800"
+      style={{ width: size, height: size }}
+    >
+      <span className="font-mono text-small font-semibold text-lumera-green">
+        {(author?.name ?? 'L').charAt(0).toUpperCase()}
+      </span>
+      {src && !failed ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          onError={() => setFailed(true)}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : null}
+    </span>
+  )
+}
+
+/** One engagement count. The number is what matters, so the icon stays quiet. */
+function Metric({
+  icon,
+  value,
+  label,
+}: {
+  icon: React.ReactNode
+  value: number
+  label: string
+}) {
+  return (
+    <span
+      className="flex items-center gap-1.5 text-small text-text-muted transition-colors group-hover:text-text-tertiary"
+      title={`${value.toLocaleString('en-US')} ${label}`}
+    >
+      <span className="flex-none text-text-disabled transition-colors group-hover:text-text-muted">
+        {icon}
+      </span>
+      <span className="font-mono tnum">{value.toLocaleString('en-US')}</span>
+    </span>
+  )
+}
+
 type Mode = 'loading' | 'posts' | 'failed'
 
-export function SocialFeed({
-  handle = 'lumera',
-  name = 'Lumera',
-  avatarSrc,
-}: {
+export function SocialFeed({ handle = 'lumera', name = 'Lumera' }: {
   handle?: string
   name?: string
-  avatarSrc?: string
 }) {
   const [mode, setMode] = useState<Mode>('loading')
   const [posts, setPosts] = useState<XPost[]>([])
@@ -78,24 +139,25 @@ export function SocialFeed({
     }
   }, [])
 
-  const profileUrl = `https://x.com/${handle}`
+  // Every post carries the same author; take it from the first one so the
+  // header shows the real picture and badge rather than a placeholder.
+  const author = posts[0]?.author
+  const profileUrl = `https://x.com/${author?.handle ?? handle}`
 
   return (
     <Card>
       <CardHeader
         title={
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-7 w-7 flex-none items-center justify-center overflow-hidden rounded-control border border-line-edge bg-ink-800">
-              {avatarSrc ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <span className="font-mono text-small font-semibold text-lumera-green">L</span>
-              )}
-            </div>
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="text-base leading-none font-semibold text-text-primary">{name}</span>
-              <span className="font-mono text-small leading-none text-text-muted">@{handle}</span>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <AuthorAvatar author={author} size={38} />
+            <div className="flex min-w-0 flex-col gap-[3px]">
+              <span className="flex items-center gap-1 text-base leading-none font-semibold text-text-primary">
+                <span className="truncate">{author?.name ?? name}</span>
+                {author?.verified ? <VerifiedIcon size={14} className="flex-none" /> : null}
+              </span>
+              <span className="font-mono text-small leading-none text-text-muted">
+                @{author?.handle ?? handle}
+              </span>
             </div>
           </div>
         }
@@ -104,9 +166,15 @@ export function SocialFeed({
             href={profileUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex-none rounded-inner border border-line-edge px-3 py-[7px] text-small font-medium text-text-secondary no-underline transition-colors hover:border-line-accent hover:text-lumera-green"
+            aria-label={`Follow @${author?.handle ?? handle} on X`}
+            className="flex flex-none items-center gap-1.5 rounded-full bg-text-primary px-3.5 py-[7px] no-underline transition-opacity hover:opacity-85"
           >
-            Follow
+            {/* globals.css colours every anchor green; the label carries its
+                own colour so this reads as X's white pill. */}
+            <span className="flex items-center gap-1.5 text-small font-semibold text-ink-900">
+              <XIcon size={11} />
+              Follow
+            </span>
           </a>
         }
       />
@@ -127,19 +195,35 @@ export function SocialFeed({
                 href={p.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group flex flex-col gap-2 border-b border-line-hairline py-[13px] no-underline last:border-b-0"
+                className="group -mx-[18px] flex gap-3 border-b border-line-hairline px-[18px] py-3.5 no-underline transition-colors last:border-b-0 hover:bg-ink-800/45"
               >
-                <p className="m-0 text-base leading-[1.55] whitespace-pre-line text-text-secondary transition-colors group-hover:text-text-primary text-pretty">
-                  {p.text}
-                </p>
-                <div className="flex flex-wrap items-center gap-4">
-                  <span className="font-mono text-small text-text-muted">{age(p.createdAt)}</span>
-                  <span className="text-small text-text-muted">
-                    {p.reposts.toLocaleString('en-US')} reposts
-                  </span>
-                  <span className="text-small text-text-muted">
-                    {p.likes.toLocaleString('en-US')} likes
-                  </span>
+                <AuthorAvatar author={p.author} size={36} />
+
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  {/* Name, badge, handle and age on one line, the way X sets it. */}
+                  <div className="flex min-w-0 items-center gap-1 text-small leading-none">
+                    <span className="truncate font-semibold text-text-primary">
+                      {p.author?.name ?? name}
+                    </span>
+                    {p.author?.verified ? <VerifiedIcon size={13} className="flex-none" /> : null}
+                    <span className="truncate font-mono text-text-muted">
+                      @{p.author?.handle ?? handle}
+                    </span>
+                    <span className="flex-none text-text-disabled">·</span>
+                    <span className="flex-none font-mono tnum text-text-muted">
+                      {age(p.createdAt)}
+                    </span>
+                  </div>
+
+                  <p className="m-0 line-clamp-4 text-base leading-[1.5] whitespace-pre-line text-text-secondary text-pretty">
+                    {p.text}
+                  </p>
+
+                  <div className="mt-1 flex items-center gap-6">
+                    <Metric icon={<ReplyIcon size={13} />} value={p.replies} label="replies" />
+                    <Metric icon={<RepostIcon size={13} />} value={p.reposts} label="reposts" />
+                    <Metric icon={<HeartIcon size={13} />} value={p.likes} label="likes" />
+                  </div>
                 </div>
               </a>
             ))

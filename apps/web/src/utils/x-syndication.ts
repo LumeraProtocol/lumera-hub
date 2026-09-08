@@ -13,8 +13,17 @@
  * when hit too often from one address.
  */
 
+export type XAuthor = {
+  name: string;
+  handle: string;
+  /** Full-size avatar; the feed ships a 48px one. */
+  avatar?: string;
+  verified: boolean;
+};
+
 export type XPost = {
   id: string;
+  author?: XAuthor;
   text: string;
   createdAt: string;
   replies: number;
@@ -24,6 +33,13 @@ export type XPost = {
 };
 
 type Entity = { url?: string; display_url?: string; expanded_url?: string };
+type RawUser = {
+  name?: string;
+  screen_name?: string;
+  profile_image_url_https?: string;
+  verified?: boolean;
+  is_blue_verified?: boolean;
+};
 type RawTweet = {
   id_str?: string;
   full_text?: string;
@@ -34,6 +50,7 @@ type RawTweet = {
   permalink?: string;
   in_reply_to_screen_name?: string | null;
   retweeted_status?: unknown;
+  user?: RawUser;
   entities?: { urls?: Entity[]; media?: Entity[] };
 };
 
@@ -62,7 +79,16 @@ const readable = (tweet: RawTweet): string => {
     if (m.url) text = text.split(m.url).join('');
   }
 
-  return decode(text).replace(/[ \t]+\n/g, '\n').trim();
+  /*
+   * Posts are written with blank lines between paragraphs. The card clamps to
+   * a few lines, and a blank line costs one of them while saying nothing, so
+   * runs of newlines collapse to a single break — the structure survives, the
+   * clamp is spent on words.
+   */
+  return decode(text)
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
 };
 
 /*
@@ -73,6 +99,29 @@ const readable = (tweet: RawTweet): string => {
  */
 const isBareLink = (text: string): boolean =>
   !/\s/.test(text) && /[a-z0-9-]+\.[a-z]{2,}/i.test(text);
+
+/*
+ * The feed hands out a 48px avatar via the `_normal` suffix, which is soft on
+ * a retina display. The same file is served at 400px under `_400x400`.
+ */
+const fullSizeAvatar = (url?: string): string | undefined =>
+  url?.replace(/_normal(\.[a-z]+)$/i, '_400x400$1');
+
+const authorOf = (user: RawUser | undefined, handle: string): XAuthor | undefined =>
+  user?.screen_name
+    ? {
+        name: user.name || user.screen_name,
+        handle: user.screen_name,
+        ...(fullSizeAvatar(user.profile_image_url_https)
+          ? { avatar: fullSizeAvatar(user.profile_image_url_https) }
+          : {}),
+        // X reports legacy and paid verification separately; the badge is the
+        // same mark either way.
+        verified: Boolean(user.verified || user.is_blue_verified),
+      }
+    : handle
+      ? { name: handle, handle, verified: false }
+      : undefined;
 
 /** Extracts the timeline JSON the syndication page embeds. */
 const nextData = (html: string): unknown => {
@@ -105,8 +154,10 @@ export function parseSyndicatedTimeline(html: string, handle: string, limit = 5)
     if (!text || isBareLink(text)) continue;
 
     const parsed = Date.parse(tweet.created_at ?? '');
+    const author = authorOf(tweet.user, handle);
     posts.push({
       id: tweet.id_str,
+      ...(author ? { author } : {}),
       text,
       createdAt: Number.isFinite(parsed) ? new Date(parsed).toISOString() : '',
       replies: num(tweet.reply_count),

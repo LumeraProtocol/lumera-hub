@@ -79,6 +79,14 @@ describe('parseSyndicatedTimeline', () => {
     expect(p.text).toBe('GM');
   });
 
+  it('collapses the blank lines between paragraphs', () => {
+    const [p] = parseSyndicatedTimeline(
+      page([tweet({ full_text: 'First line.\n\n\nSecond line.\n \nThird.' })]),
+      'lumera',
+    );
+    expect(p.text).toBe('First line.\nSecond line.\nThird.');
+  });
+
   it('decodes HTML entities', () => {
     const [p] = parseSyndicatedTimeline(
       page([tweet({ full_text: 'proofs &amp; storage &lt;3' })]),
