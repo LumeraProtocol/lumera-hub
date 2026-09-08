@@ -288,6 +288,7 @@ export interface IRecentActivity {
 
 export type ViewId =
   | "dashboard"
+  | "faucet"
   | "staking"
   | "governance"
   | "cascade"
@@ -363,6 +364,7 @@ export interface IActionDetail {
 
 export const VIEW_TITLES: Record<ViewId, string> = {
   foundry: "Foundry",
+  faucet: "Faucet",
   dashboard: "Dashboard",
   staking: "Staking",
   governance: "Governance",

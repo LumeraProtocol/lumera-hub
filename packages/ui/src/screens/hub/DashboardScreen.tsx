@@ -86,6 +86,75 @@ export type OpenProposal = {
   onVote: () => void
 }
 
+export type FirstRunStep = {
+  title: string
+  body: string
+  cta: string
+  onAct: () => void
+}
+
+/*
+ * What a connected but empty wallet sees instead of a portfolio.
+ *
+ * Every card on this screen reports a position, so with nothing staked and
+ * nothing held they all read as em dashes — technically accurate and no help
+ * at all. This replaces them with the three steps that lead to a position, in
+ * the order they have to happen: hold LUME, stake it, then use the network.
+ */
+function FirstRun({ steps }: { steps: FirstRunStep[] }) {
+  return (
+    <div className="animate-fade flex flex-col gap-[18px]">
+      <div className="flex flex-col gap-1.5">
+        <h1 className="m-0 text-title leading-[1.15] font-semibold tracking-[-0.02em] text-text-primary">
+          Welcome to Lumera
+        </h1>
+        <p className="m-0 text-base leading-[1.5] text-text-muted text-pretty">
+          Your wallet is connected and holds nothing yet. Three steps get you to a working
+          position.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-3">
+        {steps.map((step, i) => (
+          <Card
+            key={step.title}
+            className={cx(
+              'flex flex-col gap-3 p-[18px]',
+              // The first step is the one that unblocks the others, so it is
+              // the only one that carries the accent.
+              i === 0 && 'border-line-accent',
+            )}
+          >
+            <span
+              className={cx(
+                'flex h-[30px] w-[30px] flex-none items-center justify-center rounded-control font-mono text-base font-semibold',
+                i === 0
+                  ? 'bg-lumera-teal/[.22] text-lumera-green'
+                  : 'bg-ink-600 text-text-tertiary',
+              )}
+            >
+              {i + 1}
+            </span>
+            <span className="text-base leading-[1.3] font-semibold text-text-primary">
+              {step.title}
+            </span>
+            <p className="m-0 flex-1 text-small leading-[1.6] text-text-muted text-pretty">
+              {step.body}
+            </p>
+            <Button
+              variant={i === 0 ? 'accent' : 'outline'}
+              onClick={step.onAct}
+              className="self-start"
+            >
+              {step.cta}
+            </Button>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function DashboardScreen({
   loading,
   stats,
@@ -98,6 +167,7 @@ export function DashboardScreen({
   onClaim,
   claimLabel,
   onSeeActivity,
+  firstRun,
 }: {
   loading?: boolean
   stats: DashboardStat[]
@@ -110,8 +180,17 @@ export function DashboardScreen({
   onClaim: () => void
   claimLabel: string
   onSeeActivity: () => void
+  /** Shown in place of the portfolio when a connected wallet is empty. */
+  firstRun?: FirstRunStep[]
 }) {
   const hub = useHub()
+
+  // Only for a wallet that is actually connected: someone browsing read-only
+  // has nothing to onboard into, and watching an empty address is not the same
+  // as owning one.
+  if (hub.isConnected && !hub.hasPosition && firstRun?.length) {
+    return <FirstRun steps={firstRun} />
+  }
 
   const title = hub.isConnected
     ? 'Your portfolio'

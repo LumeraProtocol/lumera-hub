@@ -30,6 +30,7 @@ import {
 } from '@lumera-hub/ui/src/screens/hub/DashboardScreen';
 import { useHub } from '@lumera-hub/ui/src/hub/session';
 import { TxDetailDrawer } from '@/components/hub/TxDetailDrawer';
+import { IS_MAINNET } from '@/contants/network';
 
 const lume = (micro: number, digits = 2) =>
   formatNumber(micro / RATE_VALUE, { decimalsLength: digits, currency: 'en-US' });
@@ -274,6 +275,48 @@ export default function Page() {
     };
   }, [bondedTokens, chainParams.quorum, hub, proposals.proposalsInfo, router]);
 
+  /*
+   * The three steps a connected but empty wallet needs, in the order they have
+   * to happen. The design writes step two's return as a fixed figure; this uses
+   * whatever the chain is actually paying, and omits the sentence entirely
+   * rather than quoting a rate that did not load.
+   */
+  const firstRun = useMemo(() => {
+    const rate = net.aprPercent;
+    return [
+      // Step one differs by network, and the design only covers mainnet. On a
+      // testnet nobody bridges or buys — the faucet is the whole answer, and
+      // pointing at an exchange would be wrong rather than merely unhelpful.
+      IS_MAINNET
+        ? {
+            title: 'Get LUME',
+            body: 'Bridge from Osmosis or buy on a listed exchange. Everything else needs a balance first.',
+            cta: 'About LUME',
+            onAct: () => window.open('https://lumera.io/token', '_blank', 'noreferrer'),
+          }
+        : {
+            title: 'Get test LUME',
+            body: 'The faucet sends test tokens to any address on this network. They have no value and the chain resets periodically.',
+            cta: 'Open the faucet',
+            onAct: () => router.push('/faucet'),
+          },
+      {
+        title: 'Delegate to a validator',
+        body: rate
+          ? `Staking earns about ${rate.toFixed(1)}% a year. Your stake stays yours and can be moved between validators instantly.`
+          : 'Your stake stays yours and can be moved between validators instantly.',
+        cta: 'Compare validators',
+        onAct: () => router.push('/staking'),
+      },
+      {
+        title: 'Store something on Cascade',
+        body: 'Upload a file and it is chunked, encrypted and held by three supernodes. Paid from your liquid balance.',
+        cta: 'Open Cascade',
+        onAct: () => router.push('/cascade'),
+      },
+    ];
+  }, [net.aprPercent, router]);
+
   return (
     <>
       <Helmet>
@@ -282,6 +325,7 @@ export default function Page() {
       <DashboardScreen
         loading={loading && hub.hasPosition}
         stats={dashboardStats}
+        firstRun={firstRun}
         allocationTitle={hub.hasPosition ? 'Delegations' : 'Active validators'}
         allocationLink={hub.hasPosition ? 'Manage' : `See all ${activeValidators?.length || ''}`.trim()}
         allocations={allocations}

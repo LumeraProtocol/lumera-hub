@@ -133,6 +133,21 @@ export const NETWORK_LABEL = IS_MAINNET ? 'Mainnet' : ACTIVE_NETWORK.displayName
 export const FAUCET_URL = IS_TESTNET ? (process.env.NEXT_PUBLIC_FAUCET_URL || '') : '';
 
 /*
+ * The in-app faucet, which needs two things this repo cannot supply.
+ *
+ * FAUCET_API is a service holding a funded account: the hub posts an address to
+ * it and it signs and broadcasts. FAUCET_ADDRESS is that account's address,
+ * used only to read its recent sends back off the chain for the drip log — the
+ * log works on its own, so a deployment can show real history even before the
+ * sending half exists.
+ *
+ * Both are mainnet-blind on purpose. There is no free mainnet LUME, and a
+ * faucet offered there would be a scam-shaped hole.
+ */
+export const FAUCET_API = IS_TESTNET ? (process.env.NEXT_PUBLIC_FAUCET_API || '') : '';
+export const FAUCET_ADDRESS = IS_TESTNET ? (process.env.NEXT_PUBLIC_FAUCET_ADDRESS || '') : '';
+
+/*
  * Community fallback endpoints.
  *
  * The official `lcd.lumera.io` and `rpc.lumera.io` are a single point of

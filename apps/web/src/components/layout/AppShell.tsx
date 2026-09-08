@@ -73,6 +73,8 @@ type NavItem = {
   icon: React.ReactNode;
   newPage?: boolean;
   badge?: string;
+  /** The faucet's badge is amber in the design, not the default neutral. */
+  badgeTone?: 'neutral' | 'warn' | 'green';
 }
 
 const PRIMARY_NAV: NavItem[] = [
@@ -134,7 +136,7 @@ function NavButton({
       >
         <span className="flex-none">{item.icon}</span>
         <span className="flex-1">{item.label}</span>
-        {item.badge ? <Badge tone="neutral">{item.badge}</Badge> : null}
+        {item.badge ? <Badge tone={item.badgeTone ?? 'neutral'}>{item.badge}</Badge> : null}
         {item.newPage ? <ExternalIcon size={12} className="flex-none opacity-75" /> : null}
       </span>
     </AppLink>
@@ -263,17 +265,35 @@ function SidebarContent({
         <div className="mt-auto" />
         <div className="my-2 h-px flex-none bg-line-hairline" />
 
-        {FAUCET_URL ? (
-          <a
-            href={FAUCET_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="flex w-full items-center gap-[11px] rounded-control px-[11px] py-[9px] text-base font-medium text-text-muted no-underline transition-colors hover:bg-ink-600 hover:text-text-primary"
-          >
-            <FaucetIcon />
-            <span className="flex-1">Faucet</span>
-            <Badge tone="warn">TEST</Badge>
-          </a>
+        {/* The faucet lives in the hub now. An external NEXT_PUBLIC_FAUCET_URL
+            still wins, so a deployment already pointing at someone else's
+            faucet keeps working. */}
+        {IS_TESTNET ? (
+          FAUCET_URL ? (
+            <a
+              href={FAUCET_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="flex w-full items-center gap-[11px] rounded-control px-[11px] py-[9px] text-base font-medium text-text-muted no-underline transition-colors hover:bg-ink-600 hover:text-text-primary"
+            >
+              <FaucetIcon />
+              <span className="flex-1">Faucet</span>
+              <Badge tone="warn">TEST</Badge>
+            </a>
+          ) : (
+            <NavButton
+              item={{
+                id: 'faucet',
+                label: 'Faucet',
+                url: '/faucet',
+                icon: <FaucetIcon />,
+                badge: 'TEST',
+                badgeTone: 'warn',
+              }}
+              active={isActive(currentPath, '/faucet')}
+              onNavigate={onNavigate}
+            />
+          )
         ) : null}
 
         <a
