@@ -75,6 +75,8 @@ type NavItem = {
   badge?: string;
   /** The faucet's badge is amber in the design, not the default neutral. */
   badgeTone?: 'neutral' | 'warn' | 'green';
+  /** Reachable by URL, but never offered — not in nav, not in search. */
+  hidden?: boolean;
 }
 
 const PRIMARY_NAV: NavItem[] = [
@@ -83,7 +85,6 @@ const PRIMARY_NAV: NavItem[] = [
   { id: "staking", label: "Staking", url: "/staking", icon: <StakingIcon /> },
   { id: "governance", label: "Governance", url: "/governance", icon: <GovernanceIcon /> },
   { id: "cascade", label: "Cascade", url: "/cascade", icon: <CascadeIcon /> },
-  { id: "foundry", label: "Foundry", url: "/foundry", icon: <FoundryIcon /> },
 ]
 
 /*
@@ -93,6 +94,10 @@ const PRIMARY_NAV: NavItem[] = [
  */
 const PREVIEW_NAV: NavItem[] = [
   { id: "blocks", label: "Blocks", url: "/blocks", icon: <DashboardIcon /> },
+  // Foundry's quests come from SNAG and are not ready. It keeps its route so
+  // the work is not lost, but nothing points at it — not the sidebar, not
+  // search — until there is a season to send people to.
+  { id: "foundry", label: "Foundry", url: "/foundry", icon: <FoundryIcon />, hidden: true },
   { id: "sense", label: "Sense", url: "/sense", icon: <SearchIcon /> },
   { id: "inference", label: "Inference", url: "/inference", icon: <FoundryIcon /> },
   { id: "nfts", label: "NFTs", url: "/nfts", icon: <CascadeIcon /> },
@@ -377,7 +382,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             onPick: () => router.push(`/tx/${query.trim()}`),
           })
         }
-        NAV_ITEMS.filter((n) => !n.newPage && n.label.toLowerCase().includes(q)).forEach((n) => {
+        NAV_ITEMS.filter(
+          (n) => !n.newPage && !n.hidden && n.label.toLowerCase().includes(q),
+        ).forEach((n) => {
           hits.push({
             key: 'proposal',
             tag: 'PAGE',
