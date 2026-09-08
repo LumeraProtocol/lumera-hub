@@ -28,8 +28,8 @@ describe('getChains', () => {
     });
     // The configured host leads; community fallbacks follow it so a dead
     // primary does not block signing.
-    expect(chains[0].apis?.rpc?.[0].address).toBe('https://rpc-testnet.lumeraprotocol.com');
-    expect(chains[0].apis?.rest?.[0].address).toBe('https://lcd-testnet.lumeraprotocol.com');
+    expect(chains[0].apis?.rpc?.[0].address).toBe('https://lumera-testnet-rpc.polkachu.com');
+    expect(chains[0].apis?.rest?.[0].address).toBe('https://lumera-testnet-api.polkachu.com');
     expect(chains[0].apis?.rpc?.length).toBeGreaterThan(1);
     expect(chains[0].apis?.rest?.length).toBeGreaterThan(1);
     expect(assetLists[0].chainName).toBe('lumera-testnet');
@@ -47,8 +47,8 @@ describe('getChains', () => {
       chainName: 'lumera',
       chainId: 'lumera-mainnet-1',
     });
-    expect(chains[0].apis?.rpc?.[0].address).toBe('https://rpc.lumera.io');
-    expect(chains[0].apis?.rest?.[0].address).toBe('https://lcd.lumera.io');
+    expect(chains[0].apis?.rpc?.[0].address).toBe('https://lumera-rpc.polkachu.com');
+    expect(chains[0].apis?.rest?.[0].address).toBe('https://lumera-api.polkachu.com');
     expect(chains[0].apis?.rpc?.length).toBeGreaterThan(1);
     expect(chains[0].apis?.rest?.length).toBeGreaterThan(1);
     expect(assetLists[0].chainName).toBe('lumera');

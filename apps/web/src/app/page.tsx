@@ -9,7 +9,7 @@ import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import useAccountInfo from '@/hooks/useAccountInfo';
 import useProposals, { IProposal } from '@/hooks/useProposals';
 import useRecentActivity from '@/hooks/useRecentActivity';
-import useStats from '@/hooks/useStats';
+import useNetworkStats from '@/hooks/useNetworkStats';
 import useStaking from '@/hooks/useStaking';
 import useChainParams from '@/hooks/useChainParams';
 import useValidatorLogos from '@/hooks/useValidatorLogos';
@@ -67,7 +67,7 @@ export default function Page() {
   );
   const proposals = useProposals();
   const recentActivityData = useRecentActivity();
-  const { stats, latestBlock } = useStats();
+  const { stats: net } = useNetworkStats();
   const { validators, activeValidators, apr, bondedTokens } = useStaking();
   const { params: chainParams } = useChainParams();
   const logos = useValidatorLogos(activeValidators);
@@ -116,42 +116,43 @@ export default function Page() {
       ];
     }
 
-    const supply = Number(stats.supply) || 0;
-    const bonded = Number(bondedTokens) || Number(stats.bondedTokens) || 0;
-    const bondedPct = supply ? (bonded / supply) * 100 : 0;
+    // Every figure below comes from the chain, and renders an em dash when it
+    // did not load rather than a plausible-looking zero.
     return [
       {
         label: 'BONDED STAKE',
-        value: bonded ? compact(bonded / RATE_VALUE) : '—',
-        foot: bondedPct
-          ? `${bondedPct.toFixed(1)}% of ${compact(supply / RATE_VALUE)} supply`
-          : bonded
-            ? 'bonded across the active set'
-            : 'loading from the chain',
-        delta: bonded ? 'live' : '',
+        value: net.bondedMicro ? compact(net.bondedMicro / RATE_VALUE) : '—',
+        foot:
+          net.bondedPercent != null && net.totalSupplyMicro
+            ? `${net.bondedPercent.toFixed(1)}% of ${compact(net.totalSupplyMicro / RATE_VALUE)} supply`
+            : 'bonded across the active set',
+        delta: net.bondedMicro ? 'live' : '',
         deltaTone: 'flat',
       },
       {
         label: 'STAKING APR',
-        value: apr ? `${Number(apr).toFixed(1)}%` : '—',
-        // The chain reports inflation over the bonded ratio net of community
-        // tax but before each validator's commission, so this is the gross
-        // figure. Per-validator net APR is shown on the staking screen.
+        value: net.aprPercent != null ? `${net.aprPercent.toFixed(1)}%` : '—',
+        // Inflation over the bonded ratio, net of community tax but before
+        // each validator's commission.
         foot: 'gross, before validator commission',
-        delta: apr ? 'live' : '',
+        delta: net.aprPercent != null ? 'live' : '',
         deltaTone: 'flat',
       },
       {
         label: 'ACTIVE VALIDATORS',
-        value: activeValidators?.length ? String(activeValidators.length) : '—',
-        foot: latestBlock.validators ? `${latestBlock.validators} signed the last block` : 'active set',
+        value: net.activeValidators != null ? String(net.activeValidators) : '—',
+        tone: 'green',
+        foot: 'active set',
         deltaTone: 'flat',
       },
       {
-        label: 'LATEST BLOCK',
-        value: latestBlock.height ? `#${Number(latestBlock.height).toLocaleString('en-US')}` : '—',
-        foot: 'the chain head right now',
-        delta: latestBlock.height ? 'live' : '',
+        label: 'BLOCK TIME',
+        value: net.blockTimeSeconds != null ? `${net.blockTimeSeconds.toFixed(2)}s` : '—',
+        foot:
+          net.blockTimeSeconds != null
+            ? 'mean over the last 20 blocks'
+            : 'awaiting the chain',
+        delta: net.blockTimeSeconds != null ? 'live' : '',
         deltaTone: 'flat',
       },
     ];
@@ -160,15 +161,11 @@ export default function Page() {
     apr,
     bondedTokens,
     hub.hasPosition,
-    latestBlock.height,
-    latestBlock.validators,
     liquid,
     rewards,
     staked,
-    stats.bondedTokens,
-    stats.supply,
+    net,
     unbonding,
-    activeValidators?.length,
   ]);
 
   /*

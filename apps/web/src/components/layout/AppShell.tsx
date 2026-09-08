@@ -25,10 +25,19 @@ import { toast } from 'react-toastify';
 import { WalletModalComponent } from '@/components/ConnectWallet'
 import { ConnectDrawer } from '@/components/hub/ConnectDrawer'
 import AppLink from '@/components/AppLink';
-import { PORTAL_URL, CHAIN_ID, IS_TESTNET, NETWORK_LABEL, FAUCET_URL } from '@/contants/network';
+import {
+  PORTAL_URL,
+  CHAIN_ID,
+  IS_TESTNET,
+  IS_MAINNET,
+  NETWORK_LABEL,
+  FAUCET_URL,
+  SIBLING_HUB_URL,
+} from '@/contants/network';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import useChainHead from '@/hooks/useChainHead';
 import useHubNotifications from '@/hooks/useHubNotifications';
+import useLiveProposalCount from '@/hooks/useLiveProposalCount';
 import { showGlobalApiErrorToast } from '@/utils/global-api-error';
 
 import { useSelector, useDispatch } from '@/redux/hooks';
@@ -72,7 +81,7 @@ const PRIMARY_NAV: NavItem[] = [
   { id: "staking", label: "Staking", url: "/staking", icon: <StakingIcon /> },
   { id: "governance", label: "Governance", url: "/governance", icon: <GovernanceIcon /> },
   { id: "cascade", label: "Cascade", url: "/cascade", icon: <CascadeIcon /> },
-  { id: "blocks", label: "Blocks", url: "/blocks", icon: <FoundryIcon /> },
+  { id: "foundry", label: "Foundry", url: "/foundry", icon: <FoundryIcon /> },
 ]
 
 /*
@@ -81,6 +90,7 @@ const PRIMARY_NAV: NavItem[] = [
  * and a nav slot is a promise.
  */
 const PREVIEW_NAV: NavItem[] = [
+  { id: "blocks", label: "Blocks", url: "/blocks", icon: <DashboardIcon /> },
   { id: "sense", label: "Sense", url: "/sense", icon: <SearchIcon /> },
   { id: "inference", label: "Inference", url: "/inference", icon: <FoundryIcon /> },
   { id: "nfts", label: "NFTs", url: "/nfts", icon: <CascadeIcon /> },
@@ -134,6 +144,12 @@ function NavButton({
 function NetworkPanel({ height, reachable }: { height: number; reachable: boolean }) {
   return (
     <div className="flex flex-col gap-2 rounded-[9px] border border-line-hairline bg-ink-800 px-3 py-[11px]">
+      {SIBLING_HUB_URL ? (
+        <div className="mb-0.5 flex gap-[3px] rounded-inner border border-line-hairline bg-ink-900 p-[3px]">
+          <NetworkTab label="MAINNET" active={IS_MAINNET} href={IS_MAINNET ? undefined : SIBLING_HUB_URL} />
+          <NetworkTab label="TESTNET" active={IS_TESTNET} href={IS_TESTNET ? undefined : SIBLING_HUB_URL} warn />
+        </div>
+      ) : null}
       <div className="flex items-center justify-between">
         <span className="text-small text-text-tertiary">Status</span>
         <DotLabel tone={reachable ? 'cyan' : 'danger'} pulse={reachable}>
@@ -160,16 +176,51 @@ function NetworkPanel({ height, reachable }: { height: number; reachable: boolea
   )
 }
 
+/**
+ * One half of the network switch. The active side is inert; the other links to
+ * the sibling deployment, because the two hubs are separate builds.
+ */
+function NetworkTab({
+  label,
+  active,
+  href,
+  warn,
+}: {
+  label: string
+  active: boolean
+  href?: string
+  warn?: boolean
+}) {
+  const className = cx(
+    'flex-1 rounded-[5px] py-[7px] text-center font-mono text-micro font-medium tracking-[0.08em] whitespace-nowrap no-underline transition-colors',
+    active
+      ? warn
+        ? 'bg-warn/16 text-warn'
+        : 'bg-ink-600 text-text-secondary'
+      : 'bg-transparent text-text-muted hover:text-text-secondary',
+  )
+  if (active || !href) {
+    return <span className={className}>{label}</span>
+  }
+  return (
+    <a href={href} className={className}>
+      {label}
+    </a>
+  )
+}
+
 function SidebarContent({
   currentPath,
   onNavigate,
   height,
   reachable,
+  liveProposals,
 }: {
   currentPath: string
   onNavigate: () => void
   height: number
   reachable: boolean
+  liveProposals: number
 }) {
   return (
     <>
@@ -193,7 +244,13 @@ function SidebarContent({
         {PRIMARY_NAV.map((item) => (
           <NavButton
             key={item.id}
-            item={item}
+            item={
+              // The badge is the number of proposals actually open for voting,
+              // so the nav says whether governance needs the reader now.
+              item.id === 'governance' && liveProposals > 0
+                ? { ...item, badge: String(liveProposals) }
+                : item
+            }
             active={isActive(currentPath, item.url)}
             onNavigate={onNavigate}
           />
@@ -248,6 +305,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const hub = useHub();
   const { height, reachable } = useChainHead();
   const notifications = useHubNotifications(hub.address || undefined);
+  const liveProposals = useLiveProposalCount();
 
   useEffect(() => {
     dispatch(setError({ message: null, status: null }))
@@ -319,6 +377,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           onNavigate={() => undefined}
           height={height}
           reachable={reachable}
+          liveProposals={liveProposals}
         />
       </aside>
 
@@ -349,6 +408,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               onNavigate={() => setSidebarOpen(false)}
               height={height}
               reachable={reachable}
+              liveProposals={liveProposals}
             />
           </aside>
         </>

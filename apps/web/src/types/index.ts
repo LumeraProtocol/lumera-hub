@@ -300,6 +300,7 @@ export type ViewId =
   | "tracking"
   | "blocks"
   | "portal"
+  | "foundry"
   | "injhub"
 
 export interface IFullBlock {
@@ -361,6 +362,7 @@ export interface IActionDetail {
 }
 
 export const VIEW_TITLES: Record<ViewId, string> = {
+  foundry: "Foundry",
   dashboard: "Dashboard",
   staking: "Staking",
   governance: "Governance",

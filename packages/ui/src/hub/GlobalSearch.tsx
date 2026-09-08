@@ -146,7 +146,7 @@ export function GlobalSearch({
         aria-expanded={open && !!trimmed}
         aria-controls="hub-search-results"
         aria-label="Search the hub"
-        placeholder="Search address, tx, validator or proposal"
+        placeholder="Search address or tx"
         className="w-full rounded-control border border-line-hairline bg-ink-800 py-[9px] pr-[52px] pl-[34px] text-base text-text-primary outline-none transition-colors placeholder:text-text-disabled focus:border-line-accent focus:shadow-[0_0_0_3px_rgba(7,138,138,.14)]"
       />
       <span className="pointer-events-none absolute top-1/2 right-2.5 hidden -translate-y-1/2 rounded-[4px] border border-line-edge px-[5px] py-1 font-mono text-micro font-medium text-text-muted sm:block">

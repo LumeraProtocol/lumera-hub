@@ -122,7 +122,7 @@ export function DashboardScreen({
     ? 'Positions, rewards and pending actions across the Lumera protocol.'
     : hub.isWatching
       ? 'A read-only view of this address. Signing is disabled until a wallet is connected.'
-      : 'The state of the chain right now. Connect a wallet to stake, vote or transfer.'
+      : 'The state of the chain right now.'
 
   return (
     <div className="animate-fade flex flex-col gap-[18px]">

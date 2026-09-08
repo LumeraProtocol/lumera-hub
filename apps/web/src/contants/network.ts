@@ -24,8 +24,8 @@ export const NETWORK_PROFILES = {
     evmProfileName: 'lumera-testnet-evm',
     chainId: 'lumera-testnet-2',
     denom: 'ulume',
-    rpcEndpoint: 'https://rpc-testnet.lumeraprotocol.com',
-    restEndpoint: 'https://lcd-testnet.lumeraprotocol.com',
+    rpcEndpoint: 'https://lumera-testnet-rpc.polkachu.com',
+    restEndpoint: 'https://lumera-testnet-api.polkachu.com',
     evmRpcEndpoint: 'https://evm-testnet.lumeraprotocol.com',
     evmWsEndpoint: 'https://evm-ws-testnet.lumeraprotocol.com',
     evmChainId: 76857769,
@@ -41,8 +41,8 @@ export const NETWORK_PROFILES = {
     evmProfileName: null,
     chainId: 'lumera-mainnet-1',
     denom: 'ulume',
-    rpcEndpoint: 'https://rpc.lumera.io',
-    restEndpoint: 'https://lcd.lumera.io',
+    rpcEndpoint: 'https://lumera-rpc.polkachu.com',
+    restEndpoint: 'https://lumera-api.polkachu.com',
     evmRpcEndpoint: null,
     evmWsEndpoint: null,
     evmChainId: null,
@@ -154,34 +154,36 @@ const REST_FALLBACKS: Record<NetworkProfile, string[]> = {
   mainnet: [
     'https://api.lumera.nodestake.org',
     'https://lumera-api.linknode.org',
-    'https://lumera-api.polkachu.com',
     'https://lumera-rest.publicnode.com',
     'https://lumera-rest.stakerhouse.com',
     'https://lumera-mainnet-api.corenodehq.xyz',
+    // The official host trails the community pool rather than leading it: it
+    // was returning 504 for an afternoon, and everything queued behind it.
+    'https://lcd.lumera.io',
   ],
   testnet: [
-    'https://lumera-testnet-api.polkachu.com',
     'https://api-t.lumera.nodestake.org',
     'https://lumera-testnet-api.linknode.org',
     'https://lumera-testnet-rest.stakerhouse.com',
     'https://lumera-testnet-api.corenodehq.xyz',
+    'https://lcd-testnet.lumeraprotocol.com',
   ],
   devnet: [],
 };
 
 const RPC_FALLBACKS: Record<NetworkProfile, string[]> = {
   mainnet: [
-    'https://lumera-rpc.polkachu.com',
     'https://lumera-rpc.linknode.org',
     'https://lumera-rpc.publicnode.com',
     'https://lumera-rpc.stakerhouse.com',
     'https://lumera-mainnet-rpc.corenodehq.xyz',
+    'https://rpc.lumera.io',
   ],
   testnet: [
-    'https://lumera-testnet-rpc.polkachu.com',
     'https://rpc-t.lumera.nodestake.org',
     'https://lumera-testnet-rpc.linknode.org',
     'https://lumera-testnet-rpc.stakerhouse.com',
+    'https://rpc-testnet.lumeraprotocol.com',
   ],
   devnet: [],
 };
@@ -215,3 +217,14 @@ export const RPC_ENDPOINTS = dedupe([
     ? process.env.NEXT_PUBLIC_RPC_FALLBACKS.split(',').map((v) => v.trim())
     : RPC_FALLBACKS[NETWORK_PROFILE]),
 ]);
+
+/**
+ * The sibling deployment, for the sidebar's network switch.
+ *
+ * The hub ships as two builds, so switching network means going to the other
+ * one rather than swapping an endpoint in place — the chain ID, wallet chain
+ * registry and explorer all differ. Set NEXT_PUBLIC_SIBLING_HUB_URL on each
+ * deployment to point at the other; unset, the switch is not offered rather
+ * than linking somewhere that may not exist.
+ */
+export const SIBLING_HUB_URL = process.env.NEXT_PUBLIC_SIBLING_HUB_URL || '';

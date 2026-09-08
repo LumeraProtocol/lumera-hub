@@ -70,7 +70,14 @@ const customFetch = (
   body = {},
   isUpload = false,
   isExternal = false,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  /*
+   * Skip the global error toast. A caller that renders its own explanation for
+   * a failure should not also raise a red banner over the whole app — Foundry
+   * saying "the quest service is not reachable" does not need to be
+   * accompanied by "Internal server error".
+   */
+  quiet = false,
 ): Promise<any> => {
 
   if (isExternal && url.indexOf('/admin') !== -1) {
@@ -109,10 +116,12 @@ const customFetch = (
     }
 
     const { response } = err;
-    store.dispatch(setError({
-      message: response?.data?.error || response.statusText,
-      status: response.status,
-    }));
+    if (!quiet) {
+      store.dispatch(setError({
+        message: response?.data?.error || response.statusText,
+        status: response.status,
+      }));
+    }
 
     throw {
       statusCode: response.status,
@@ -155,6 +164,9 @@ const customFetch = (
 };
 
 export const getExternal = (path: string) => customFetch(path, 'GET', {}, false, true);
+/** As getExternal, but the caller handles the failure and shows no global toast. */
+export const getExternalQuiet = (path: string) =>
+  customFetch(path, 'GET', {}, false, true, undefined, true);
 export const postExternal = (path: string, body: object) => customFetch(path, 'POST', body, false, true);
 export const removeExternal = (path: string, body: object) => customFetch(path, 'DELETE', body, false, true);
 export const get = (path: string) => customFetch(path, 'GET');
