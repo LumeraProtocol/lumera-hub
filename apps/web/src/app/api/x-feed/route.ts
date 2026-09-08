@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { NextResponse } from 'next/server';
 import { parseSyndicatedTimeline } from '@/utils/x-syndication';
 
@@ -32,6 +33,17 @@ const LIMIT = 5;
  */
 const REVALIDATE_S = 1800;
 
+/*
+ * A captured response to read instead of calling X, for local work only.
+ *
+ * The endpoint's budget is roughly one request per window per address, so
+ * iterating on this card against the live feed throttles it within minutes and
+ * then blocks for several more. Pointing this at a saved response makes the
+ * card workable offline. It is ignored outside development, so a deployment
+ * cannot serve anything but live data.
+ */
+const FIXTURE = process.env.NODE_ENV === 'production' ? undefined : process.env.X_FEED_FIXTURE;
+
 /** Sent because the endpoint returns an error page to non-browser agents. */
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
@@ -41,6 +53,18 @@ let lastGood: ReturnType<typeof parseSyndicatedTimeline> | null = null;
 let lastFetchedAt = 0;
 
 export async function GET() {
+  if (FIXTURE) {
+    try {
+      const posts = parseSyndicatedTimeline(await readFile(FIXTURE, 'utf8'), HANDLE, LIMIT);
+      return NextResponse.json({ posts, handle: HANDLE, fixture: true });
+    } catch (error) {
+      return NextResponse.json(
+        { error: `fixture_unreadable: ${error instanceof Error ? error.message : 'unknown'}` },
+        { status: 500 },
+      );
+    }
+  }
+
   // A floor on how often this process will call X at all.
   if (lastGood?.length && Date.now() - lastFetchedAt < REVALIDATE_S * 1000) {
     return NextResponse.json({ posts: lastGood, handle: HANDLE, cached: true });
