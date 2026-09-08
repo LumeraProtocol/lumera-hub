@@ -11,23 +11,41 @@ import { parseSyndicatedTimeline } from '@/utils/x-syndication';
  *
  * It runs server-side because the endpoint sets no CORS headers and expects a
  * browser's User-Agent, and because one cached fetch should serve everyone.
- * The endpoint answers 429 when called too often from one address, so results
- * go through Next's Data Cache — shared across instances on Vercel, unlike a
- * module variable — and the last good response is kept to cover a throttle.
+ *
+ * The endpoint throttles per address, and a tripped limit takes minutes to
+ * clear, so upstream calls are rationed twice over. Next's Data Cache holds
+ * the response across instances and regions on Vercel; in front of it a
+ * per-process floor refuses to refetch sooner than the same interval no matter
+ * what. The second guard is not redundant — dev bypasses the Data Cache
+ * entirely, so without it every page reload would hit X directly — and neither
+ * is load-bearing on its own, since the last good response is also kept and
+ * served rather than surfacing an error for a temporary limit.
  */
 
 const HANDLE = process.env.NEXT_PUBLIC_X_HANDLE || 'lumera';
 const LIMIT = 5;
-const REVALIDATE_S = 900;
+/*
+ * Half an hour. Measured, the endpoint's budget is roughly one request per
+ * window per address, and a tripped limit takes minutes to clear — so the
+ * refresh rate is set by what X tolerates, not by what the card could use. An
+ * announcement feed loses nothing by being thirty minutes behind.
+ */
+const REVALIDATE_S = 1800;
 
 /** Sent because the endpoint returns an error page to non-browser agents. */
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
-/** Survives a 429; never used to decide when to refetch. */
+/** Survives a 429, and backs the refetch floor below. */
 let lastGood: ReturnType<typeof parseSyndicatedTimeline> | null = null;
+let lastFetchedAt = 0;
 
 export async function GET() {
+  // A floor on how often this process will call X at all.
+  if (lastGood?.length && Date.now() - lastFetchedAt < REVALIDATE_S * 1000) {
+    return NextResponse.json({ posts: lastGood, handle: HANDLE, cached: true });
+  }
+
   try {
     const res = await fetch(
       `https://syndication.twitter.com/srv/timeline-profile/screen-name/${HANDLE}`,
@@ -55,6 +73,7 @@ export async function GET() {
     }
 
     lastGood = posts;
+    lastFetchedAt = Date.now();
     return NextResponse.json({ posts, handle: HANDLE });
   } catch (error) {
     if (lastGood?.length) {

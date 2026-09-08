@@ -65,6 +65,15 @@ const readable = (tweet: RawTweet): string => {
   return decode(text).replace(/[ \t]+\n/g, '\n').trim();
 };
 
+/*
+ * Some posts are nothing but a link — a Space, a quoted article — and once the
+ * t.co is made readable, all that is left to render is a bare truncated URL.
+ * It is a real post, but it reads as noise on a card sized for prose, so it is
+ * skipped rather than shown as one. A genuinely short post ("GM") still counts.
+ */
+const isBareLink = (text: string): boolean =>
+  !/\s/.test(text) && /[a-z0-9-]+\.[a-z]{2,}/i.test(text);
+
 /** Extracts the timeline JSON the syndication page embeds. */
 const nextData = (html: string): unknown => {
   const m = /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(html);
@@ -93,7 +102,7 @@ export function parseSyndicatedTimeline(html: string, handle: string, limit = 5)
     if (tweet.retweeted_status) continue;
 
     const text = readable(tweet);
-    if (!text) continue;
+    if (!text || isBareLink(text)) continue;
 
     const parsed = Date.parse(tweet.created_at ?? '');
     posts.push({

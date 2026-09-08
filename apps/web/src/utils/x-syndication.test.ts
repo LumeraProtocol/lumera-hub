@@ -59,6 +59,26 @@ describe('parseSyndicatedTimeline', () => {
     expect(p.text).toBe('A thing worth seeing');
   });
 
+  it('skips a post that is nothing but a link once expanded', () => {
+    const out = parseSyndicatedTimeline(
+      page([
+        tweet({
+          id_str: 'link',
+          full_text: 'https://t.co/abc',
+          entities: { urls: [{ url: 'https://t.co/abc', display_url: 'x.com/i/spaces/1yJAP…' }] },
+        }),
+        tweet({ id_str: 'real' }),
+      ]),
+      'lumera',
+    );
+    expect(out.map((p) => p.id)).toEqual(['real']);
+  });
+
+  it('keeps a genuinely short post', () => {
+    const [p] = parseSyndicatedTimeline(page([tweet({ full_text: 'GM' })]), 'lumera');
+    expect(p.text).toBe('GM');
+  });
+
   it('decodes HTML entities', () => {
     const [p] = parseSyndicatedTimeline(
       page([tweet({ full_text: 'proofs &amp; storage &lt;3' })]),
