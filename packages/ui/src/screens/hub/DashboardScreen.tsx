@@ -34,6 +34,7 @@ import {
   cx,
 } from '../../design/primitives'
 import { EyeIcon } from '../../design/icons'
+import { SocialFeed } from '../../hub/SocialFeed'
 import { useHub, short } from '../../hub/session'
 
 export type DashboardStat = {
@@ -371,6 +372,8 @@ export function DashboardScreen({
               </div>
             </Card>
           ) : null}
+
+          <SocialFeed />
 
           {hub.isDisconnected ? (
             <Card>
