@@ -9,7 +9,7 @@ import { setCurrentPath, setViewTitle } from '@/redux/app.slice';
 import useAccountInfo from '@/hooks/useAccountInfo';
 import useProposals, { IProposal } from '@/hooks/useProposals';
 import useRecentActivity from '@/hooks/useRecentActivity';
-import useNetworkStats from '@/hooks/useNetworkStats';
+import useNetworkStats, { BLOCK_TIME_SAMPLE } from '@/hooks/useNetworkStats';
 import useStaking from '@/hooks/useStaking';
 import useChainParams from '@/hooks/useChainParams';
 import useValidatorLogos from '@/hooks/useValidatorLogos';
@@ -117,6 +117,37 @@ export default function Page() {
       ];
     }
 
+    /*
+     * What a delegator actually earns, which is what the design shows.
+     *
+     * The gross figure is inflation over the bonded ratio. A delegator never
+     * sees that: the community tax comes off the top, and their validator
+     * keeps its commission. Weighting commission by stake rather than
+     * averaging it flat matters — a large validator's rate applies to far more
+     * of the network than a small one's.
+     */
+    const bondedByCommission = (activeValidators ?? []).reduce(
+      (acc, v) => {
+        const stake = Number(v.tokens) || 0;
+        const rate = Number(v.commission?.commission_rates?.rate);
+        if (!stake || !Number.isFinite(rate)) return acc;
+        return { stake: acc.stake + stake, weighted: acc.weighted + stake * rate };
+      },
+      { stake: 0, weighted: 0 },
+    );
+    const avgCommission =
+      bondedByCommission.stake > 0 ? bondedByCommission.weighted / bondedByCommission.stake : null;
+    const netApr =
+      net.aprPercent != null && avgCommission != null
+        ? net.aprPercent * (1 - avgCommission)
+        : net.aprPercent;
+
+    const registered = validators?.length || null;
+    const waiting =
+      registered != null && net.activeValidators != null
+        ? Math.max(0, registered - net.activeValidators)
+        : null;
+
     // Every figure below comes from the chain, and renders an em dash when it
     // did not load rather than a plausible-looking zero.
     return [
@@ -132,26 +163,31 @@ export default function Page() {
       },
       {
         label: 'STAKING APR',
-        value: net.aprPercent != null ? `${net.aprPercent.toFixed(1)}%` : '—',
-        // Inflation over the bonded ratio, net of community tax but before
-        // each validator's commission.
-        foot: 'gross, before validator commission',
-        delta: net.aprPercent != null ? 'live' : '',
+        value: netApr != null ? `${netApr.toFixed(1)}%` : '—',
+        foot:
+          avgCommission != null && net.communityTaxPercent != null
+            ? `net of ${(avgCommission * 100).toFixed(1)}% commission and ${net.communityTaxPercent.toFixed(0)}% community tax`
+            : 'net of validator commission',
+        delta: netApr != null ? 'live' : '',
         deltaTone: 'flat',
       },
       {
         label: 'ACTIVE VALIDATORS',
         value: net.activeValidators != null ? String(net.activeValidators) : '—',
         tone: 'green',
-        foot: 'active set',
+        delta: waiting != null ? `${waiting} waiting` : '',
         deltaTone: 'flat',
+        foot:
+          registered != null
+            ? `${registered.toLocaleString('en-US')} registered validators`
+            : 'active set',
       },
       {
         label: 'BLOCK TIME',
         value: net.blockTimeSeconds != null ? `${net.blockTimeSeconds.toFixed(2)}s` : '—',
         foot:
           net.blockTimeSeconds != null
-            ? 'mean over the last 20 blocks'
+            ? `mean over the last ${BLOCK_TIME_SAMPLE.toLocaleString('en-US')} blocks`
             : 'awaiting the chain',
         delta: net.blockTimeSeconds != null ? 'live' : '',
         deltaTone: 'flat',
@@ -159,6 +195,7 @@ export default function Page() {
     ];
   }, [
     accountInfo?.delegations?.length,
+    activeValidators,
     apr,
     bondedTokens,
     hub.hasPosition,
@@ -167,6 +204,7 @@ export default function Page() {
     staked,
     net,
     unbonding,
+    validators,
   ]);
 
   /*

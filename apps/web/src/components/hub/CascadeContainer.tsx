@@ -152,6 +152,28 @@ function CascadeBody({
       .slice(0, 8)
   }, [markers])
 
+  /*
+   * The same markers as the list above, kept as coordinates for the map.
+   * Nodes in one city collapse to a single pin carrying the count, which is
+   * what makes a dot's size mean something.
+   */
+  const mapNodes = useMemo(() => {
+    const byPlace = new Map<string, { name: string; lat: number; lon: number; count: number }>()
+
+    ;(markers || []).forEach((m) => {
+      const [lat, lon] = m.latLng || []
+      if (typeof lat !== 'number' || typeof lon !== 'number') return
+      // A place seen twice keeps its first coordinates; hosts in one city
+      // resolve to slightly different points and would otherwise jitter.
+      const name = m.city?.trim() || m.name?.split(',')[0]?.trim() || m.country?.trim() || 'Unknown'
+      const seen = byPlace.get(name)
+      if (seen) seen.count += 1
+      else byPlace.set(name, { name, lat, lon, count: 1 })
+    })
+
+    return [...byPlace.values()]
+  }, [markers])
+
   return (
     <CascadeScreen
       loading={isMyFilesLoading}
@@ -195,6 +217,7 @@ function CascadeBody({
       isDownloading={isAllDownloading}
       storageBreakdown={storageBreakdown}
       regions={regions}
+      mapNodes={mapNodes}
       sdkLoading={sdkLoading}
       sdkError={sdkError}
     />

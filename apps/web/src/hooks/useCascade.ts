@@ -90,6 +90,15 @@ interface FileToDownload {
   signatures: string;
 }
 
+/** The chain's supernode record, which is shaped nothing like the metrics one. */
+type ChainSupernode = {
+  validator_address?: string;
+  supernode_account?: string;
+  p2p_port?: string;
+  states?: Array<{ state?: string }>;
+  prev_ip_addresses?: Array<{ address?: string }>;
+};
+
 interface ISupernode {
   actual_version: string;
   cpu_cores: number;
@@ -550,6 +559,57 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
   }, [fetchLocationForIP, readSupernodeFile]);
 
+  /*
+   * Every supernode the chain knows about, for the map.
+   *
+   * The metrics feed below is filtered to nodes that are active AND currently
+   * answering probes, which on a testnet is a small fraction of the network —
+   * mapping only those, while the caption counts everything registered, made
+   * the map look far emptier than the network is. The chain's own list is the
+   * honest denominator, and it carries the address, the operator and the port,
+   * which is everything a pin needs.
+   */
+  const fetchRegisteredSupernodes = async (): Promise<ISupernode[]> => {
+    try {
+      const [listRes, valRes] = await Promise.all([
+        instance.get('/LumeraProtocol/lumera/supernode/v1/list_super_nodes?pagination.limit=1000'),
+        instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=500'),
+      ]);
+
+      const monikers = new Map<string, string>();
+      for (const v of valRes?.data?.validators ?? []) {
+        if (v?.operator_address) {
+          monikers.set(v.operator_address, v?.description?.moniker || '');
+        }
+      }
+
+      return (listRes?.data?.supernodes ?? []).flatMap((sn: ChainSupernode) => {
+        // Addresses are a history; the last entry is where it lives now.
+        const address = sn.prev_ip_addresses?.at(-1)?.address?.trim();
+        const account = sn.supernode_account ?? '';
+        const validator = sn.validator_address ?? '';
+        const port = Number(sn.p2p_port) || 0;
+        // The lookup route validates what it is sent, so a record missing any
+        // of these is dropped here rather than failing the whole batch.
+        const moniker = monikers.get(validator) || validator.slice(0, 20);
+        if (!address || !account || !validator || !port || !moniker) return [];
+
+        return [
+          {
+            ip_address: address,
+            supernode_account: account,
+            validator_address: validator,
+            validator_moniker: moniker.slice(0, 50),
+            p2p_port: port,
+            current_state: sn.states?.at(-1)?.state ?? '',
+          } as unknown as ISupernode,
+        ];
+      });
+    } catch {
+      return [];
+    }
+  };
+
   const fetchSupernodes = async (cursor = '') => {
     try {
       const nextCursor = cursor ? `&cursor=${cursor}` : '';
@@ -601,7 +661,10 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         totalBytes: Number(data?.total_storage_bytes) || 0,
       });
       setFetchSummaryLoading(false);
-      await getChartMarker(snResults);
+      // Pins come from the chain's full list; snResults above stays the source
+      // for the storage figures, which are only meaningful for live nodes.
+      const registered = await fetchRegisteredSupernodes();
+      await getChartMarker(registered.length ? registered : snResults);
     } catch {
       setMarkerLoading(false);
     }

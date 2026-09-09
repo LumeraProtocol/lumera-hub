@@ -32,6 +32,8 @@ export type NetworkStats = {
   bondedPercent: number | null;
   /** Nominal staking yield before validator commission, 0-100. */
   aprPercent: number | null;
+  /** The share of block rewards diverted to the community pool, 0-100. */
+  communityTaxPercent: number | null;
   /** Size of the active set, from pagination rather than a capped page. */
   activeValidators: number | null;
   /** Mean seconds per block over the last ~20 headers. */
@@ -55,6 +57,7 @@ const EMPTY: NetworkStats = {
   totalSupplyMicro: null,
   bondedPercent: null,
   aprPercent: null,
+  communityTaxPercent: null,
   activeValidators: null,
   blockTimeSeconds: null,
   supernodes: null,
@@ -77,6 +80,10 @@ const positive = (n: number | null) => (n != null && n > 0 ? n : null);
 export const TIB = 1024 ** 4;
 
 type Meta = { header?: { height?: string; time?: string } };
+type BlockResult = { result?: { block?: { header?: { time?: string } } } };
+
+/** How far back block time is measured. The design quotes this figure. */
+export const BLOCK_TIME_SAMPLE = 1000;
 
 /** Mean seconds per block across a run of headers. */
 const meanBlockTime = (metas: Meta[]): number | null => {
@@ -144,10 +151,40 @@ const useNetworkStats = () => {
             '/LumeraProtocol/lumera/action/v1/list_actions?pagination.count_total=true&pagination.limit=1&actionType=ACTION_TYPE_CASCADE&actionState=ACTION_STATE_DONE',
           ),
         ),
+        /*
+         * Block time over a long window rather than the last handful.
+         * /blockchain returns only the most recent twenty headers, and twenty
+         * blocks is two minutes — short enough that one slow proposer visibly
+         * moves the number. Two headers a thousand apart give the same figure
+         * for two requests and hold steady.
+         */
         settle(rpcGet<{ result?: { block_metas?: Meta[] } }>('/blockchain')),
         settle(instance.getExternal(`${SNSCOPE_URL}/v1/supernodes/stats`)),
       ]);
 
+      if (cancelled) return;
+
+      /*
+       * The mean over BLOCK_TIME_SAMPLE blocks, from the two headers at either
+       * end of that window. Falls back to the short run below if either header
+       * is unavailable — early in a chain's life the older one does not exist.
+       */
+      let spanBlockTime: number | null = null;
+      const metas = headers?.result?.block_metas ?? [];
+      const tip = num(metas[0]?.header?.height);
+      if (tip != null && tip > BLOCK_TIME_SAMPLE) {
+        const older = tip - BLOCK_TIME_SAMPLE;
+        const [tipBlock, oldBlock] = await Promise.all([
+          settle(rpcGet<BlockResult>(`/block?height=${tip}`)),
+          settle(rpcGet<BlockResult>(`/block?height=${older}`)),
+        ]);
+        const t1 = Date.parse(tipBlock?.result?.block?.header?.time ?? '');
+        const t0 = Date.parse(oldBlock?.result?.block?.header?.time ?? '');
+        if (Number.isFinite(t1) && Number.isFinite(t0) && t1 > t0) {
+          const avg = (t1 - t0) / 1000 / BLOCK_TIME_SAMPLE;
+          if (avg >= 1 && avg <= 15) spanBlockTime = avg;
+        }
+      }
       if (cancelled) return;
 
       const bonded = positive(num(poolRes?.data?.pool?.bonded_tokens));
@@ -179,8 +216,9 @@ const useNetworkStats = () => {
         totalSupplyMicro: supply,
         bondedPercent: ratio != null ? ratio * 100 : null,
         aprPercent: apr != null && apr > 0 && apr < 1000 ? apr : null,
+        communityTaxPercent: tax != null ? tax * 100 : null,
         activeValidators: positive(num(validatorsRes?.data?.pagination?.total)),
-        blockTimeSeconds: meanBlockTime(headers?.result?.block_metas ?? []),
+        blockTimeSeconds: spanBlockTime ?? meanBlockTime(headers?.result?.block_metas ?? []),
         supernodes: positive(num(supernodesRes?.data?.pagination?.total)),
         storedObjects: positive(
           num(actionsRes?.data?.pagination?.total ?? actionsRes?.data?.total),

@@ -31,6 +31,7 @@ import {
 } from '../../design/primitives'
 import { FileIcon, UploadIcon, DownloadIcon } from '../../design/icons'
 import { useHub } from '../../hub/session'
+import { SupernodeMap, type MapNode } from '../../hub/SupernodeMap'
 
 export type CascadeFile = {
   key: string
@@ -66,6 +67,7 @@ export function CascadeScreen({
   isDownloading,
   storageBreakdown,
   regions,
+  mapNodes,
   sdkLoading,
   sdkError,
 }: {
@@ -91,6 +93,8 @@ export function CascadeScreen({
   isDownloading?: boolean
   storageBreakdown: Array<{ label: string; bytes: number; className: string }>
   regions: Array<{ name: string; count: number }>
+  /** Located supernodes, for the map. Empty until any host resolves. */
+  mapNodes?: MapNode[]
   /** The storage client is downloading. Only blocks upload and download. */
   sdkLoading?: boolean
   sdkError?: string | null
@@ -147,7 +151,9 @@ export function CascadeScreen({
               </span>
             }
           />
-          <div className="grid grid-cols-1 gap-x-8 gap-y-2 px-[18px] py-4 sm:grid-cols-2">
+          {mapNodes?.length ? <SupernodeMap nodes={mapNodes} height={330} /> : null}
+
+          <div className="grid grid-cols-1 gap-x-8 gap-y-2 border-t border-line-hairline px-[18px] py-4 sm:grid-cols-2">
             {regions.map((r) => (
               <div key={r.name} className="flex items-center gap-3">
                 <span className="w-32 flex-none truncate text-small text-text-secondary">
