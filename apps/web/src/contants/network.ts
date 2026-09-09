@@ -102,6 +102,40 @@ export const IS_EVM_NETWORK = EVM_RPC_ENDPOINT !== null
   && EVM_CHAIN_ID !== null
   && EVM_PROFILE_NAME !== null;
 export const SNAPI_URL = process.env.NEXT_PUBLIC_SNAPI_URL || ACTIVE_NETWORK.snapiUrl;
+
+/**
+ * Whether the supernode API can be reached from wherever this is running.
+ *
+ * Every profile defaults SNAPI to localhost:3100, which is correct on a
+ * developer's machine and meaningless anywhere else — a deployment served from
+ * a real origin asks the *visitor's* machine for it, gets connection refused
+ * once per file on the page, and surfaces a global error toast for each.
+ *
+ * So a localhost SNAPI counts as configured only when the page itself is on
+ * localhost. Callers skip the request entirely otherwise: the file sizes it
+ * supplies are supplementary, and the rest of Cascade is chain data.
+ */
+const LOOPBACK = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+
+/** The rule on its own, so it can be tested without a browser or an env. */
+export const snapiReachableFrom = (snapiUrl: string, pageHost: string | null): boolean => {
+  if (!snapiUrl) return false;
+
+  let host = '';
+  try {
+    host = new URL(snapiUrl).hostname;
+  } catch {
+    return false;
+  }
+  if (!host) return false;
+
+  if (!LOOPBACK.has(host)) return true;
+  // A loopback SNAPI is only reachable by a page already on the same machine.
+  return pageHost != null && LOOPBACK.has(pageHost);
+};
+
+export const isSnapiReachable = (): boolean =>
+  snapiReachableFrom(SNAPI_URL, typeof window === 'undefined' ? null : window.location.hostname);
 export const SDK_PRESET = process.env.NEXT_PUBLIC_SDK_PRESET || ACTIVE_NETWORK.sdkPreset;
 // Call sites append paths as `${SNSCOPE_URL}/v1/...`; a trailing slash in an
 // override would send `//v1/...`, which path-prefix proxies reject.

@@ -26,6 +26,7 @@ import {
   SDK_PRESET,
   SNSCOPE_URL,
   SNAPI_URL,
+  isSnapiReachable,
   DENOM,
 } from '@/contants/network';
 import {
@@ -394,7 +395,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
 
   const fetchLocationFromIpWho = useCallback(async (host: string) => {
     try {
-      const { data } = await instance.getExternal(`https://ipwho.is/${encodeURIComponent(host)}`);
+      // Quiet: a supernode without a pin on the map is a smaller problem
+      // than a global error banner, and free geo APIs rate-limit routinely.
+      const { data } = await instance.getExternalQuiet(`https://ipwho.is/${encodeURIComponent(host)}`);
       if (data?.success === false) {
         return null;
       }
@@ -435,7 +438,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       if (!url) {
         return null;
       }
-      const { data } = await instance.getExternal(url);
+      const { data } = await instance.getExternalQuiet(url);
       return {
         latitude: data?.location?.latitude || null,
         longitude: data?.location?.longitude || null,
@@ -641,9 +644,23 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
   };
 
+  const EMPTY_FILE_INFO = {
+    file_size_kbs: 0,
+    created_at: '',
+    action_id: '',
+    task_id: '',
+  };
+
   const getFileInfo = async (action: IAction) => {
+    // Without a reachable supernode API there is nothing to ask, and asking
+    // anyway costs one refused connection per file on the page.
+    if (!isSnapiReachable()) {
+      return EMPTY_FILE_INFO;
+    }
     try {
-      const { data } = await instance.getExternal(`${SNAPI_URL}/api/v1/actions/cascade/${action.id}/tasks`);
+      // Quiet: the size is supplementary, so a failure returns zeros rather
+      // than raising a banner over a page whose other data is fine.
+      const { data } = await instance.getExternalQuiet(`${SNAPI_URL}/api/v1/actions/cascade/${action.id}/tasks`);
       const item = data.requests[0];
       if (item) {
         return {
@@ -653,19 +670,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
           task_id: item.task_id,
         };
       }
-      return {
-        file_size_kbs: 0,
-        created_at: '',
-        action_id: '',
-        task_id: '',
-      };
-    } catch (e) {
-      return {
-        file_size_kbs: 0,
-        created_at: '',
-        action_id: '',
-        task_id: '',
-      };
+      return EMPTY_FILE_INFO;
+    } catch {
+      return EMPTY_FILE_INFO;
     }
   }
 
