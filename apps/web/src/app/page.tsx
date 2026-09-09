@@ -86,7 +86,9 @@ export default function Page() {
    */
   const dashboardStats: DashboardStat[] = useMemo(() => {
     if (hub.hasPosition) {
-      const netApr = Number(apr) || 0;
+      // The card says "net APR", so it has to be the net figure — the same one
+      // the network card and the staking screen show, not the chain's gross.
+      const yieldApr = netApr(Number(apr) || null, activeValidators) ?? 0;
       return [
         {
           label: 'AVAILABLE',
@@ -111,8 +113,8 @@ export default function Page() {
         },
         {
           label: 'EST. ANNUAL YIELD',
-          value: netApr ? lume(staked * (netApr / 100), 0) : '—',
-          foot: netApr ? `LUME · at ${netApr.toFixed(1)}% net APR` : 'awaiting the chain',
+          value: yieldApr ? lume(staked * (yieldApr / 100), 0) : '—',
+          foot: yieldApr ? `LUME · at ${yieldApr.toFixed(1)}% net APR` : 'awaiting the chain',
           deltaTone: 'flat',
         },
       ];
@@ -130,11 +132,22 @@ export default function Page() {
     const avgCommission = weightedCommission(activeValidators);
     const netAprPercent = netApr(net.aprPercent, activeValidators);
 
-    const registered = validators?.length || null;
-    const waiting =
-      registered != null && net.activeValidators != null
-        ? Math.max(0, registered - net.activeValidators)
-        : null;
+    /*
+     * useStaking splits the set in two: activeValidators is the bonded set,
+     * and `validators` is everything else — unbonding plus unbonded. So the
+     * registered total is the two added together, and the waiting count is
+     * simply the second list.
+     *
+     * This previously read `validators.length` as the registered total, which
+     * is the inactive count, and derived waiting by subtracting the active set
+     * from it — 96 registered and 57 waiting on a testnet that actually has
+     * 135 registered and 96 waiting.
+     */
+    const inactiveCount = validators?.length ?? null;
+    const activeCount = activeValidators?.length ?? null;
+    const registered =
+      inactiveCount != null && activeCount != null ? inactiveCount + activeCount : null;
+    const waiting = inactiveCount;
 
     // Every figure below comes from the chain, and renders an em dash when it
     // did not load rather than a plausible-looking zero.
@@ -203,9 +216,14 @@ export default function Page() {
     if (hub.hasPosition && accountInfo?.delegations?.length) {
       const rows = accountInfo.delegations
         .map((d) => {
-          const validator = validators?.find(
-            (v) => v.operator_address === d.delegation.validator_address,
-          );
+          // Both halves: a delegation is usually to a bonded validator, and
+          // `validators` holds only the inactive ones, so searching it alone
+          // left every active delegation showing a raw operator address.
+          const validator =
+            activeValidators?.find(
+              (v) => v.operator_address === d.delegation.validator_address,
+            ) ??
+            validators?.find((v) => v.operator_address === d.delegation.validator_address);
           const name = validator?.description?.moniker || d.delegation.validator_address;
           return {
             key: d.delegation.validator_address,
