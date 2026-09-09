@@ -31,6 +31,7 @@ import {
 import { useHub } from '@lumera-hub/ui/src/hub/session';
 import { TxDetailDrawer } from '@/components/hub/TxDetailDrawer';
 import { IS_MAINNET } from '@/contants/network';
+import { netApr, weightedCommission } from '@/utils/staking-apr';
 
 const lume = (micro: number, digits = 2) =>
   formatNumber(micro / RATE_VALUE, { decimalsLength: digits, currency: 'en-US' });
@@ -126,21 +127,8 @@ export default function Page() {
      * averaging it flat matters — a large validator's rate applies to far more
      * of the network than a small one's.
      */
-    const bondedByCommission = (activeValidators ?? []).reduce(
-      (acc, v) => {
-        const stake = Number(v.tokens) || 0;
-        const rate = Number(v.commission?.commission_rates?.rate);
-        if (!stake || !Number.isFinite(rate)) return acc;
-        return { stake: acc.stake + stake, weighted: acc.weighted + stake * rate };
-      },
-      { stake: 0, weighted: 0 },
-    );
-    const avgCommission =
-      bondedByCommission.stake > 0 ? bondedByCommission.weighted / bondedByCommission.stake : null;
-    const netApr =
-      net.aprPercent != null && avgCommission != null
-        ? net.aprPercent * (1 - avgCommission)
-        : net.aprPercent;
+    const avgCommission = weightedCommission(activeValidators);
+    const netAprPercent = netApr(net.aprPercent, activeValidators);
 
     const registered = validators?.length || null;
     const waiting =
@@ -163,12 +151,12 @@ export default function Page() {
       },
       {
         label: 'STAKING APR',
-        value: netApr != null ? `${netApr.toFixed(1)}%` : '—',
+        value: netAprPercent != null ? `${netAprPercent.toFixed(1)}%` : '—',
         foot:
           avgCommission != null && net.communityTaxPercent != null
             ? `net of ${(avgCommission * 100).toFixed(1)}% commission and ${net.communityTaxPercent.toFixed(0)}% community tax`
             : 'net of validator commission',
-        delta: netApr != null ? 'live' : '',
+        delta: netAprPercent != null ? 'live' : '',
         deltaTone: 'flat',
       },
       {

@@ -24,6 +24,7 @@ import {
 import { useHub } from '@lumera-hub/ui/src/hub/session'
 import { TxDrawer } from '@/components/hub/TxDrawer'
 import { ValidatorDrawer, type ValidatorDetail } from '@/components/hub/ValidatorDrawer'
+import { netApr } from '@/utils/staking-apr'
 
 const lume = (micro: number, digits = 2) =>
   formatNumber(micro / RATE_VALUE, { decimalsLength: digits, currency: 'en-US' })
@@ -100,7 +101,13 @@ export default function Page() {
   }, [staking.signingInfos])
 
   const totalBondedMicro = Number(staking.bondedTokens) || 0
-  const netAprValue = Number(staking.apr) || 0
+  // The chain's figure is gross. The card says net, so take commission off —
+  // through the shared helper, so this and the dashboard cannot drift apart.
+  const grossApr = Number(staking.apr) || 0
+  // Weighted over the active set, not every registered validator: only bonded
+  // validators charge commission on bonded stake, and including the rest would
+  // give a different answer here than the dashboard's for the same label.
+  const netAprValue = netApr(grossApr, staking.activeValidators) ?? 0
 
   const myStakeByValidator = useMemo(() => {
     const map = new Map<string, number>()
@@ -130,7 +137,10 @@ export default function Page() {
           logo: logos[v.operator_address],
           power,
           commission,
-          apr: netAprValue ? netAprValue * (1 - commission / 100) : null,
+          // Off the gross figure, not the net one: netAprValue already has the
+          // network's average commission removed, so using it here would
+          // discount every row twice.
+          apr: grossApr ? grossApr * (1 - commission / 100) : null,
           uptime,
           mine,
           missed: missed ?? null,
@@ -146,10 +156,10 @@ export default function Page() {
       })
       .sort((a, b) => b.power - a.power)
   }, [
+    grossApr,
     logos,
     missedByConsAddress,
     myStakeByValidator,
-    netAprValue,
     signWindow,
     staking.activeValidators,
     totalBondedMicro,
