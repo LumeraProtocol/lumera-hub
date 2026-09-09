@@ -7,7 +7,7 @@ import { Helmet } from 'react-helmet-async'
 import useGovernances from '@/hooks/useGovernances'
 import useStaking from '@/hooks/useStaking'
 import useAccountInfo from '@/hooks/useAccountInfo'
-import useStats from '@/hooks/useStats'
+import useNetworkStats from '@/hooks/useNetworkStats'
 import useChainParams from '@/hooks/useChainParams'
 import { RATE_VALUE } from '@/contants'
 import { formatNumber } from '@/utils/format'
@@ -48,7 +48,16 @@ export default function Page() {
   } = useGovernances()
   const { bondedTokens } = useStaking()
   const { accountInfo } = useAccountInfo(hub.isWatching ? { address: hub.address } : {})
-  const { stats } = useStats()
+  const { stats: net } = useNetworkStats()
+
+  /*
+   * The community pool, in micro-denom.
+   *
+   * This used to read useStats, which returns the figure already formatted
+   * ("1.7M"). Number() on that is NaN, so the card fell back to zero and
+   * rendered an em dash while the chain was holding 1.7M LUME.
+   */
+  const treasury = compact(net.communityPoolMicro ?? 0)
   const { params } = useChainParams()
 
   useEffect(() => {
@@ -121,7 +130,7 @@ export default function Page() {
         onFilterChange={setFilter}
         counts={counts}
         turnout={latestTurnout}
-        treasury={compact(Number(stats.communityPool) || 0)}
+        treasury={treasury}
         votingWeight={
           hub.hasPosition && myStake
             ? `${formatNumber(myStake / RATE_VALUE, { decimalsLength: 0, currency: 'en-US' })} LUME`
