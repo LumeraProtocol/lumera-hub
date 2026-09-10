@@ -210,15 +210,16 @@ export function DashboardScreen({
         title={title}
         subtitle={subtitle}
         actions={
+          /*
+           * No Connect wallet here. The header carries one at all times, and a
+           * second copy a few centimetres below it competed with the claim
+           * action for the same corner. Claim is still gated, so someone
+           * without a wallet is prompted to connect by pressing it.
+           */
           hub.gated ? (
-            <>
-              <Button variant="outline" locked onClick={onClaim}>
-                Claim rewards
-              </Button>
-              <Button variant="solid" onClick={hub.connect}>
-                Connect wallet
-              </Button>
-            </>
+            <Button variant="outline" locked onClick={onClaim}>
+              Claim rewards
+            </Button>
           ) : (
             <Button variant="solid" onClick={onClaim}>
               {claimLabel}

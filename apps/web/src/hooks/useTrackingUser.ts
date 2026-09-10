@@ -26,7 +26,14 @@ const useTrackingUser = () => {
     try {
       const referrer = sessionStorage.getItem('acquisitionSource');
       const referralCode = sessionStorage.getItem('referral_code');
-      await instance.postExternal(`/api/admin/trackings/save-wallet-connect`, {
+      /*
+       * Quiet: this is telemetry, and the caller below already treats a
+       * failure as best-effort. The route needs a database, so a deployment
+       * without one answers 500 on every connect — which used to put
+       * "Internal server error" in front of someone whose wallet had just
+       * connected perfectly well.
+       */
+      await instance.postExternalQuiet(`/api/admin/trackings/save-wallet-connect`, {
         address,
         acquisitionSource: referralCode ? 'referralCode' : referrer || 'Direct',
         referralCode,

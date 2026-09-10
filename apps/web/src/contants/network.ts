@@ -101,6 +101,21 @@ if (EVM_CHAIN_ID !== null && (!Number.isSafeInteger(EVM_CHAIN_ID) || EVM_CHAIN_I
 export const IS_EVM_NETWORK = EVM_RPC_ENDPOINT !== null
   && EVM_CHAIN_ID !== null
   && EVM_PROFILE_NAME !== null;
+/*
+ * Whether the quest service is wired up on this deployment.
+ *
+ * Foundry and every quest verification run through SNAG, which needs server
+ * credentials this repo does not carry. Without them each of those routes
+ * answers 500, and they fire during ordinary use — a wallet connect, a
+ * delegation, a Cascade upload — so an unconfigured deployment shows errors
+ * for work that in fact succeeded.
+ *
+ * Off unless explicitly switched on, and the API client refuses to call the
+ * quest routes at all while it is off. Turn it on with the SNAG_* server
+ * variables in place.
+ */
+export const SNAG_ENABLED = process.env.NEXT_PUBLIC_SNAG_ENABLED === 'true';
+
 export const SNAPI_URL = process.env.NEXT_PUBLIC_SNAPI_URL || ACTIVE_NETWORK.snapiUrl;
 
 /**

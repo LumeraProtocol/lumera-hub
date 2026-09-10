@@ -9,7 +9,7 @@ import useTrackingUser, {
 } from './useTrackingUser'
 
 vi.mock('@/utils/api', () => ({
-  postExternal: vi.fn(),
+  postExternalQuiet: vi.fn(),
 }))
 
 const track = async (
@@ -25,16 +25,16 @@ const track = async (
 describe('useTrackingUser', () => {
   beforeEach(() => {
     sessionStorage.clear()
-    vi.mocked(instance.postExternal).mockReset()
+    vi.mocked(instance.postExternalQuiet).mockReset()
   })
 
   it('reports successful wallet tracking to its caller', async () => {
     sessionStorage.setItem('acquisitionSource', 'campaign')
-    vi.mocked(instance.postExternal).mockResolvedValue({})
+    vi.mocked(instance.postExternalQuiet).mockResolvedValue({})
     const { result } = renderHook(() => useTrackingUser())
 
     expect(await track(result)).toBe('tracked')
-    expect(instance.postExternal).toHaveBeenCalledWith(
+    expect(instance.postExternalQuiet).toHaveBeenCalledWith(
       '/api/admin/trackings/save-wallet-connect',
       {
         address: '0x1234',
@@ -47,7 +47,7 @@ describe('useTrackingUser', () => {
 
   it('reports a server error as transient and warns without emitting a console error', async () => {
     const failure = { statusCode: 500, message: 'Internal server error' }
-    vi.mocked(instance.postExternal).mockRejectedValue(failure)
+    vi.mocked(instance.postExternalQuiet).mockRejectedValue(failure)
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const { result } = renderHook(() => useTrackingUser())
@@ -65,7 +65,7 @@ describe('useTrackingUser', () => {
   })
 
   it('reports a validation rejection as permanent so callers stop retrying the same payload', async () => {
-    vi.mocked(instance.postExternal).mockRejectedValue({
+    vi.mocked(instance.postExternalQuiet).mockRejectedValue({
       statusCode: 400,
       message: 'Validation failed',
     })
@@ -78,7 +78,7 @@ describe('useTrackingUser', () => {
   })
 
   it('reports rate limiting as transient so a later attempt can still record the connect', async () => {
-    vi.mocked(instance.postExternal).mockRejectedValue({
+    vi.mocked(instance.postExternalQuiet).mockRejectedValue({
       statusCode: 429,
       message: 'Rate limit exceeded',
     })

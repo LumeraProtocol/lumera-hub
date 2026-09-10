@@ -986,7 +986,11 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
 
   const trackingCascadeUpload = async (taskId: string) => {
     try {
-      await instance.postExternal(`/api/snag/tracking-cascade-upload`, {
+      // Quiet: telemetry for the quest service, which most deployments do not
+      // configure. The upload itself has already succeeded by this point, so a
+      // failure here must not put an error in front of someone whose file went
+      // up fine.
+      await instance.postExternalQuiet(`/api/snag/tracking-cascade-upload`, {
         taskId,
         lumeraAddress: address,
       });

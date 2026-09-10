@@ -2,7 +2,7 @@
 "use client";
 
 import axios from 'axios';
-import { REST_ENDPOINTS } from '@/contants/network';
+import { REST_ENDPOINTS , SNAG_ENABLED } from '@/contants/network';
 import store from '@/store';
 import { setError } from '@/redux/error.slice';
 
@@ -79,6 +79,23 @@ const customFetch = (
    */
   quiet = false,
 ): Promise<any> => {
+  /*
+   * The quest service is off, so do not call it.
+   *
+   * These routes need SNAG credentials, and without them every one answers
+   * 500. They are invoked from ordinary flows rather than from Foundry alone,
+   * so leaving them to fail put "Internal server error" in front of people
+   * whose wallet had just connected or whose upload had just completed.
+   * Refusing here means no request, no 500 and no toast, and callers already
+   * treat a rejection as "not verified".
+   */
+  if (!SNAG_ENABLED && url.startsWith('/api/snag/')) {
+    return Promise.reject({
+      statusCode: 501,
+      message: 'The quest service is not configured on this deployment.',
+      snagDisabled: true,
+    });
+  }
 
   if (isExternal && url.indexOf('/admin') !== -1) {
     const token = localStorage.getItem('adminUser');
@@ -168,6 +185,9 @@ export const getExternal = (path: string) => customFetch(path, 'GET', {}, false,
 export const getExternalQuiet = (path: string) =>
   customFetch(path, 'GET', {}, false, true, undefined, true);
 export const postExternal = (path: string, body: object) => customFetch(path, 'POST', body, false, true);
+/** As postExternal, but the caller handles the failure and shows no global toast. */
+export const postExternalQuiet = (path: string, body: object) =>
+  customFetch(path, 'POST', body, false, true, undefined, true);
 export const removeExternal = (path: string, body: object) => customFetch(path, 'DELETE', body, false, true);
 export const get = (path: string) => customFetch(path, 'GET');
 export const post = (path: string, body: object) => customFetch(path, 'POST', body);

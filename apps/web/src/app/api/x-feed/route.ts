@@ -1,72 +1,159 @@
 import { readFile } from 'node:fs/promises';
 import { NextResponse } from 'next/server';
-import { parseSyndicatedTimeline } from '@/utils/x-syndication';
+import { parseSyndicatedTimeline, type XPost } from '@/utils/x-syndication';
 
 /**
  * Recent posts from the protocol's X account.
  *
- * Free, and without a developer app: this reads the same syndication endpoint
- * X's own embed widget calls, which serves the timeline as JSON inside a
- * server-rendered page. The paid API bills per post returned, and the embed
- * itself no longer renders for logged-out visitors, so this is what is left.
+ * Two sources, in order of how much they can be trusted to answer:
  *
- * It runs server-side because the endpoint sets no CORS headers and expects a
- * browser's User-Agent, and because one cached fetch should serve everyone.
+ *   1. The X API, when a bearer is configured. It needs an app attached to a
+ *      Project and a tier that can read timelines, and it returns exactly what
+ *      is asked for.
+ *   2. syndication.twitter.com, the endpoint X's own embed widget calls. Free
+ *      and unauthenticated, but throttled per address hard enough that a
+ *      shared host can sit on 429 for long stretches — which is why it is the
+ *      fallback rather than the source.
  *
- * The endpoint throttles per address, and a tripped limit takes minutes to
- * clear, so upstream calls are rationed twice over. Next's Data Cache holds
- * the response across instances and regions on Vercel; in front of it a
- * per-process floor refuses to refetch sooner than the same interval no matter
- * what. The second guard is not redundant — dev bypasses the Data Cache
- * entirely, so without it every page reload would hit X directly — and neither
- * is load-bearing on its own, since the last good response is also kept and
- * served rather than surfacing an error for a temporary limit.
+ * Reads are billed per post on the API, so the two dials that set the bill are
+ * here: LIMIT posts every REVALIDATE_S. At three posts every half hour that is
+ * roughly $20 a month; widening the interval is the cheapest lever if that
+ * matters more than freshness.
+ *
+ * Both paths share the same cache, the same refetch floor and the same
+ * last-good fallback, so a bad minute on either shows the previous posts
+ * rather than an empty card.
  */
 
 const HANDLE = process.env.NEXT_PUBLIC_X_HANDLE || 'lumera';
 /** The card shows the three most recent posts. */
 const LIMIT = 3;
-/*
- * Half an hour. Measured, the endpoint's budget is roughly one request per
- * window per address, and a tripped limit takes minutes to clear — so the
- * refresh rate is set by what X tolerates, not by what the card could use. An
- * announcement feed loses nothing by being thirty minutes behind.
- */
 const REVALIDATE_S = 1800;
+const FAILURE_BACKOFF_MS = 60_000;
 
-/*
- * A captured response to read instead of calling X, for local work only.
- *
- * The endpoint's budget is roughly one request per window per address, so
- * iterating on this card against the live feed throttles it within minutes and
- * then blocks for several more. Pointing this at a saved response makes the
- * card workable offline. It is ignored outside development, so a deployment
- * cannot serve anything but live data.
- */
-const FIXTURE = process.env.NODE_ENV === 'production' ? undefined : process.env.X_FEED_FIXTURE;
-
-/** Sent because the endpoint returns an error page to non-browser agents. */
+/** Sent because syndication returns an error page to non-browser agents. */
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
-/*
- * Rate limiting is not enough on its own. A process that has never succeeded
- * has nothing cached to serve, so without a floor on failures it calls X on
- * every single request — which is exactly how the limit gets tripped and then
- * held open, since each attempt renews it. Both outcomes are therefore timed:
- * a good response is reused for the full window, a failed one backs off for a
- * minute before anything touches the network again.
- */
-const FAILURE_BACKOFF_MS = 60_000;
+const FIXTURE = process.env.NODE_ENV === 'production' ? undefined : process.env.X_FEED_FIXTURE;
 
-/** Survives a 429, and backs the refetch floor below. */
-let lastGood: ReturnType<typeof parseSyndicatedTimeline> | null = null;
+let lastGood: XPost[] | null = null;
 let lastAttemptAt = 0;
 let attemptFailed = false;
+let userIdCache: string | null = null;
+let mintedBearer: string | null = null;
 
 const holdOff = (): boolean => {
   const since = Date.now() - lastAttemptAt;
-  return lastGood?.length ? since < REVALIDATE_S * 1000 : attemptFailed && since < FAILURE_BACKOFF_MS;
+  return lastGood?.length
+    ? since < REVALIDATE_S * 1000
+    : attemptFailed && since < FAILURE_BACKOFF_MS;
+};
+
+/**
+ * An app-only bearer, given directly or minted from the app's key and secret.
+ *
+ * A bearer copied from the developer portal is URL-encoded, so it is decoded
+ * before use — sending it raw is a 401 that looks like a bad credential.
+ */
+const getBearer = async (): Promise<string | null> => {
+  const direct = process.env.X_BEARER_TOKEN;
+  if (direct) return decodeURIComponent(direct);
+
+  const key = process.env.X_API_KEY;
+  const secret = process.env.X_API_KEY_SECRET;
+  if (!key || !secret) return null;
+  if (mintedBearer) return mintedBearer;
+
+  const basic = Buffer.from(
+    `${encodeURIComponent(key)}:${encodeURIComponent(secret)}`,
+  ).toString('base64');
+  const res = await fetch('https://api.x.com/oauth2/token', {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${basic}`,
+      'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+    },
+    body: 'grant_type=client_credentials',
+    cache: 'no-store',
+  });
+  if (!res.ok) return null;
+  mintedBearer = (await res.json())?.access_token ?? null;
+  return mintedBearer;
+};
+
+const auth = (token: string) => ({ Authorization: `Bearer ${token}`, Accept: 'application/json' });
+
+/** Billed as a user read, and the id never changes, so hold it for a day. */
+const resolveUserId = async (token: string): Promise<string | null> => {
+  if (userIdCache) return userIdCache;
+  const res = await fetch(`https://api.x.com/2/users/by/username/${HANDLE}`, {
+    headers: auth(token),
+    next: { revalidate: 86400, tags: ['x-feed-user'] },
+  });
+  if (!res.ok) return null;
+  userIdCache = (await res.json())?.data?.id ?? null;
+  return userIdCache;
+};
+
+type ApiTweet = {
+  id: string;
+  text: string;
+  created_at?: string;
+  public_metrics?: Record<string, number>;
+};
+
+const fromApi = async (): Promise<XPost[] | null> => {
+  const token = await getBearer().catch(() => null);
+  if (!token) return null;
+
+  const userId = await resolveUserId(token);
+  if (!userId) return null;
+
+  const url = new URL(`https://api.x.com/2/users/${userId}/tweets`);
+  url.searchParams.set('max_results', '5');
+  url.searchParams.set('tweet.fields', 'created_at,public_metrics');
+  url.searchParams.set('exclude', 'replies,retweets');
+
+  const res = await fetch(url, {
+    headers: auth(token),
+    next: { revalidate: REVALIDATE_S, tags: ['x-feed'] },
+  });
+  if (!res.ok) return null;
+
+  const json = await res.json();
+  const author = {
+    name: 'Lumera Protocol',
+    handle: HANDLE,
+    verified: true,
+  };
+
+  return (json?.data ?? [])
+    .map((t: ApiTweet) => ({
+      id: t.id,
+      author,
+      text: (t.text ?? '').replace(/\s*https:\/\/t\.co\/\w+\s*$/, '').trim(),
+      createdAt: t.created_at ?? '',
+      replies: t.public_metrics?.reply_count ?? 0,
+      reposts: t.public_metrics?.retweet_count ?? 0,
+      likes: t.public_metrics?.like_count ?? 0,
+      url: `https://x.com/${HANDLE}/status/${t.id}`,
+    }))
+    .filter((p: XPost) => p.text)
+    .slice(0, LIMIT);
+};
+
+const fromSyndication = async (): Promise<XPost[] | null> => {
+  const res = await fetch(
+    `https://syndication.twitter.com/srv/timeline-profile/screen-name/${HANDLE}`,
+    {
+      headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml' },
+      next: { revalidate: REVALIDATE_S, tags: ['x-feed-syndication'] },
+    },
+  );
+  if (!res.ok) return null;
+  const posts = parseSyndicatedTimeline(await res.text(), HANDLE, LIMIT);
+  return posts.length ? posts : null;
 };
 
 export async function GET() {
@@ -82,7 +169,6 @@ export async function GET() {
     }
   }
 
-  // A floor on how often this process will call X at all.
   if (holdOff()) {
     if (lastGood?.length) {
       return NextResponse.json({ posts: lastGood, handle: HANDLE, cached: true });
@@ -94,25 +180,10 @@ export async function GET() {
   attemptFailed = true;
 
   try {
-    const res = await fetch(
-      `https://syndication.twitter.com/srv/timeline-profile/screen-name/${HANDLE}`,
-      {
-        headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml' },
-        next: { revalidate: REVALIDATE_S, tags: ['x-feed'] },
-      },
-    );
+    // The API first; syndication only if it is unconfigured or unavailable.
+    const posts = (await fromApi().catch(() => null)) ?? (await fromSyndication().catch(() => null));
 
-    if (!res.ok) {
-      if (lastGood?.length) {
-        return NextResponse.json({ posts: lastGood, handle: HANDLE, stale: true });
-      }
-      return NextResponse.json({ error: `upstream_${res.status}` }, { status: 502 });
-    }
-
-    const posts = parseSyndicatedTimeline(await res.text(), HANDLE, LIMIT);
-    // An empty parse means the page shape moved. Serving [] would read as
-    // "this account has posted nothing", which is a different claim.
-    if (!posts.length) {
+    if (!posts?.length) {
       if (lastGood?.length) {
         return NextResponse.json({ posts: lastGood, handle: HANDLE, stale: true });
       }
