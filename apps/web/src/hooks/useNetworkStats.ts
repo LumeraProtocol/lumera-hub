@@ -164,29 +164,6 @@ const useNetworkStats = () => {
 
       if (cancelled) return;
 
-      /*
-       * The mean over BLOCK_TIME_SAMPLE blocks, from the two headers at either
-       * end of that window. Falls back to the short run below if either header
-       * is unavailable — early in a chain's life the older one does not exist.
-       */
-      let spanBlockTime: number | null = null;
-      const metas = headers?.result?.block_metas ?? [];
-      const tip = num(metas[0]?.header?.height);
-      if (tip != null && tip > BLOCK_TIME_SAMPLE) {
-        const older = tip - BLOCK_TIME_SAMPLE;
-        const [tipBlock, oldBlock] = await Promise.all([
-          settle(rpcGet<BlockResult>(`/block?height=${tip}`)),
-          settle(rpcGet<BlockResult>(`/block?height=${older}`)),
-        ]);
-        const t1 = Date.parse(tipBlock?.result?.block?.header?.time ?? '');
-        const t0 = Date.parse(oldBlock?.result?.block?.header?.time ?? '');
-        if (Number.isFinite(t1) && Number.isFinite(t0) && t1 > t0) {
-          const avg = (t1 - t0) / 1000 / BLOCK_TIME_SAMPLE;
-          if (avg >= 1 && avg <= 15) spanBlockTime = avg;
-        }
-      }
-      if (cancelled) return;
-
       const bonded = positive(num(poolRes?.data?.pool?.bonded_tokens));
       const supply = positive(num(supplyRes?.data?.amount?.amount));
       const ratio = bonded != null && supply ? bonded / supply : null;
@@ -218,7 +195,7 @@ const useNetworkStats = () => {
         aprPercent: apr != null && apr > 0 && apr < 1000 ? apr : null,
         communityTaxPercent: tax != null ? tax * 100 : null,
         activeValidators: positive(num(validatorsRes?.data?.pagination?.total)),
-        blockTimeSeconds: spanBlockTime ?? meanBlockTime(headers?.result?.block_metas ?? []),
+        blockTimeSeconds: meanBlockTime(headers?.result?.block_metas ?? []),
         supernodes: positive(num(supernodesRes?.data?.pagination?.total)),
         storedObjects: positive(
           num(actionsRes?.data?.pagination?.total ?? actionsRes?.data?.total),
@@ -232,6 +209,37 @@ const useNetworkStats = () => {
           (storageTotal && storageUsed != null ? (storageUsed / storageTotal) * 100 : null),
       });
       setLoading(false);
+
+      /*
+       * Block time over a long window, measured after the rest is rendered.
+       *
+       * /blockchain carries only the last twenty headers, and twenty blocks is
+       * two minutes — short enough that one slow proposer visibly moves the
+       * figure. Two headers a thousand apart give a number that holds steady.
+       *
+       * It needs the tip height before it can ask for anything, so it cannot
+       * join the batch above; running it there made every other figure on the
+       * dashboard wait about half a minute for it. The short-run mean is
+       * already showing by now, and this replaces it in place.
+       */
+      const metas = headers?.result?.block_metas ?? [];
+      const tip = num(metas[0]?.header?.height);
+      if (tip == null || tip <= BLOCK_TIME_SAMPLE) return;
+
+      const [tipBlock, oldBlock] = await Promise.all([
+        settle(rpcGet<BlockResult>(`/block?height=${tip}`)),
+        settle(rpcGet<BlockResult>(`/block?height=${tip - BLOCK_TIME_SAMPLE}`)),
+      ]);
+      if (cancelled) return;
+
+      const t1 = Date.parse(tipBlock?.result?.block?.header?.time ?? '');
+      const t0 = Date.parse(oldBlock?.result?.block?.header?.time ?? '');
+      if (!Number.isFinite(t1) || !Number.isFinite(t0) || t1 <= t0) return;
+
+      const avg = (t1 - t0) / 1000 / BLOCK_TIME_SAMPLE;
+      if (avg >= 1 && avg <= 15) {
+        setStats((prev) => ({ ...prev, blockTimeSeconds: avg }));
+      }
     };
 
     void read();
