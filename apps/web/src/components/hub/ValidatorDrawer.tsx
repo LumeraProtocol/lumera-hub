@@ -16,8 +16,9 @@ import React from 'react'
 
 import useValidatorProfile from '@/hooks/useValidatorProfile'
 import { RATE_VALUE } from '@/contants'
-import { DENOM, PORTAL_URL } from '@/contants/network'
+import { DENOM } from '@/contants/network'
 import { formatNumber } from '@/utils/format'
+import { explorerValidatorUrl } from '@/utils/explorer'
 import { useHub, copyText, short } from '@lumera-hub/ui/src/hub/session'
 import { Drawer } from '@lumera-hub/ui/src/hub/Drawer'
 import {
@@ -271,7 +272,7 @@ export function ValidatorDrawer({
           {validator.operatorAddress}
         </button>
         <a
-          href={`${PORTAL_URL}validator/${validator.operatorAddress}`}
+          href={explorerValidatorUrl(validator.operatorAddress)}
           target="_blank"
           rel="noreferrer"
           className="flex items-center gap-1.5 text-small font-medium text-lumera-green"

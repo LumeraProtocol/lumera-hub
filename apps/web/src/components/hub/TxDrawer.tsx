@@ -16,9 +16,10 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
-import { PORTAL_URL, CHAIN_ID, DENOM } from '@/contants/network'
+import { CHAIN_ID, DENOM } from '@/contants/network'
 import { GAS_LIMIT, FEE_RATIO, RATE_VALUE } from '@/contants'
 import useTxReceipt from '@/hooks/useTxReceipt'
+import { explorerTxUrl } from '@/utils/explorer'
 import { useHub } from '@lumera-hub/ui/src/hub/session'
 import { Drawer, TxFlow, TxFooter, type TxOutcome, type TxStep } from '@lumera-hub/ui/src/hub/Drawer'
 
@@ -186,7 +187,7 @@ export function TxDrawer({
         }
         chargedFee={receipt.fee ?? undefined}
         errorDetail={errorDetail}
-        explorerUrl={hash ? `${PORTAL_URL}tx/${hash}` : undefined}
+        explorerUrl={hash ? explorerTxUrl(hash) : undefined}
         chainId={CHAIN_ID}
         fee={estimatedFee()}
         from={hub.address}

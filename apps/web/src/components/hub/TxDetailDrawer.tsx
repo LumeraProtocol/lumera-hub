@@ -16,8 +16,9 @@ import React from 'react'
 
 import useTxReceipt from '@/hooks/useTxReceipt'
 import { RATE_VALUE } from '@/contants'
-import { DENOM, PORTAL_URL } from '@/contants/network'
+import { DENOM } from '@/contants/network'
 import { formatNumber } from '@/utils/format'
+import { explorerTxUrl } from '@/utils/explorer'
 import { useHub, copyText, short } from '@lumera-hub/ui/src/hub/session'
 import { Drawer } from '@lumera-hub/ui/src/hub/Drawer'
 import {
@@ -141,7 +142,7 @@ export function TxDetailDrawer() {
             Close
           </Button>
           <a
-            href={`${PORTAL_URL}tx/${hash}`}
+            href={explorerTxUrl(hash)}
             target="_blank"
             rel="noreferrer"
             className="flex flex-1 items-center justify-center gap-2 rounded-control border border-line-accent bg-ink-600 px-4 py-[13px] text-base font-semibold text-lumera-green no-underline"

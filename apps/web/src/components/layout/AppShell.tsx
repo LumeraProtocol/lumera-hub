@@ -24,9 +24,9 @@ import { toast } from 'react-toastify';
 
 import { WalletModalComponent } from '@/components/ConnectWallet'
 import { ConnectDrawer } from '@/components/hub/ConnectDrawer'
+import { explorerHomeUrl } from '@/utils/explorer'
 import AppLink from '@/components/AppLink';
 import {
-  PORTAL_URL,
   CHAIN_ID,
   IS_TESTNET,
   IS_MAINNET,
@@ -106,7 +106,7 @@ const PREVIEW_NAV: NavItem[] = [
 export const NAV_ITEMS: NavItem[] = [
   ...PRIMARY_NAV,
   ...PREVIEW_NAV,
-  { id: "portal", label: "Portal", url: PORTAL_URL, icon: <ExternalIcon />, newPage: true },
+  { id: "portal", label: "Portal", url: explorerHomeUrl(), icon: <ExternalIcon />, newPage: true },
 ]
 
 function isActive(currentUrl: string, url: string) {
@@ -301,7 +301,7 @@ function SidebarContent({
         ) : null}
 
         <a
-          href={PORTAL_URL}
+          href={explorerHomeUrl()}
           target="_blank"
           rel="noreferrer"
           className="flex w-full items-center gap-[11px] rounded-control px-[11px] py-[9px] text-base font-medium text-text-muted no-underline transition-colors hover:bg-ink-600 hover:text-text-primary"
