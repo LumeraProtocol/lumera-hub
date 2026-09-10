@@ -60,6 +60,10 @@ export interface IMyFile {
   fee: string;
   taskId: string;
   isPublic: boolean | null;
+  /** Accounts of the supernodes that finalised the action, from SNScope. */
+  superNodes?: string[];
+  /** What the upload cost, in micro-denom, so a drive can be totalled. */
+  priceMicro?: number;
 }
 
 export interface IMarker {
@@ -75,6 +79,8 @@ export interface IMarker {
   country_code: string;
   subdivision: string;
   city: string;
+  /** The chain's latest state for the node, e.g. SUPERNODE_STATE_ACTIVE. */
+  state?: string;
 }
 
 export type TFileTypeKey = 'all' | 'image' | 'program' | 'video' | 'archive' | 'document' | 'other';
@@ -283,14 +289,30 @@ export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
+const useCascade = ({
+  sdkjsReact,
+  readAddress,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sdkjsReact: any;
+  /**
+   * The address whose drive is listed. Defaults to the signing wallet; the hub
+   * passes a watched address too, since a drive is public on chain and can be
+   * read without the keys that upload to it.
+   */
+  readAddress?: string;
+}) => {
   const { trackingCascadeDownload } = useTrackingCascadeDownload();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const summaryStartedRef = useRef(false);
   const getSummaryRef = useRef<() => Promise<void>>(() => Promise.resolve());
   const { address, isEvm, openConnectView } = useWalletConnect();
+  const filesAddress = readAddress || address;
   const [isUploading, setUploading] = useState(false);
+  /** 0 encoding, 1 signing, 2 registering, 3 storing — for the file in flight. */
+  const [uploadPhase, setUploadPhase] = useState(0);
+  /** Percent retrieved, keyed by action ID, while a download is running. */
+  const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
   const [error, setError] = useState('');
   const [isFetchSummaryLoading, setFetchSummaryLoading] = useState(false);
   const [networkStorage, setNetworkStorage] = useState({
@@ -544,10 +566,13 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
               validatorMoniker: item.validator_moniker,
               address,
               p2pPort: item.p2p_port.toString(),
+              state: item.current_state,
             });
           }
         } else {
-          results.push(supernode);
+          // The seed knows where a node is, not what it is doing; the state
+          // comes from the list just read.
+          results.push({ ...supernode, state: item.current_state });
         }
       }
       setMarkers(results);
@@ -674,7 +699,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   getSummaryRef.current = getSummary;
 
   const fetchMyFiles = async (nextKey = '') => {
-    if (!address) {
+    if (!filesAddress) {
       return {
         actions: null,
         nextKey: null,
@@ -682,7 +707,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
     try {
       const nextKeyParam = nextKey ? `&cursor=${nextKey}` : '';
-      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=${ITEM_PER_PAGE}${nextKeyParam}&creator=${address}`);
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=${ITEM_PER_PAGE}${nextKeyParam}&creator=${filesAddress}`);
       return {
         actions: data.items,
         nextKey: data.next_cursor,
@@ -745,13 +770,16 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         fee: '0 LUME',
         size: 0,
         register_tx_id: '',
+        super_nodes: [] as string[],
       };
     }
     const action = await fetchAction(actionId);
     let fee = '0 LUME';
     let register_tx_id = '';
     let size = 0;
+    let super_nodes: string[] = [];
     if (action) {
+      super_nodes = action.super_nodes ?? [];
       const transaction = action.transactions?.find((tx) => tx.tx_type === 'register');
       if (transaction) {
         fee = `${formatTokenDisplay({
@@ -766,6 +794,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       fee,
       size,
       register_tx_id,
+      super_nodes,
     };
   }
 
@@ -773,7 +802,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     const files: IMyFile[] = [];
     for (const item of items) {
       const fileInfo = await getFileInfo(item);
-      const { fee, size, register_tx_id } = await getAction(item.id);
+      const { fee, size, register_tx_id, super_nodes } = await getAction(item.id);
       files.push({
         name: item.decoded.file_name || '',
         size: item.size || size || fileInfo.file_size_kbs || 0,
@@ -792,6 +821,8 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         fee,
         isPublic: item.decoded.public,
         taskId: fileInfo.task_id,
+        superNodes: super_nodes,
+        priceMicro: Number(item.price?.amount) || 0,
       });
     }
     return [...new Map(files.map(item => [item.actionID, item])).values()];
@@ -837,7 +868,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   }
 
   const getMyFiles = useCallback(async () => {
-    if (!address) {
+    if (!filesAddress) {
       return;
     }
     setMyFilesLoading(true);
@@ -896,7 +927,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
     setMyFilesLoading(false);
     setMyFilesLoadMore(false);
-  }, [address]);
+  }, [filesAddress]);
 
   const fetchRecentlyUploaded = async () => {
     try {
@@ -956,10 +987,16 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   }, [address, getRecentlyUploaded]);
 
   useEffect(() => {
-    if (address) {
+    if (filesAddress) {
       getMyFiles();
+    } else {
+      // Nothing to list once the wallet or the watched address goes away, and
+      // the previous reader's files must not linger on screen.
+      setMyFilesOriginal([]);
+      setMyFiles([]);
+      setMyUsage({ size: '0 Bytes', uploaded: 0 });
     }
-  }, [address, getMyFiles]);
+  }, [filesAddress, getMyFiles]);
 
   useEffect(() => {
     if (!summaryStartedRef.current) {
@@ -1049,8 +1086,31 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       try {
         if (sdkjsReact) {
           const signer = await sdkjsReact.getKeplrSigner(CHAIN_ID);
-          const signaturePrompter = await sdkjsReact.createBatchedSignaturePrompter();
-          const txPrompter = await sdkjsReact.createDefaultTxPrompter() || undefined;
+          const batchedPrompter = await sdkjsReact.createBatchedSignaturePrompter();
+          const defaultTxPrompter = await sdkjsReact.createDefaultTxPrompter() || undefined;
+          /*
+           * The SDK runs an upload as a single call, and its two prompters are
+           * the only points where it hands control back, so they double as the
+           * progress signal. Layout and index signatures mean the file has been
+           * encoded; the transaction prompt means it is being registered; the
+           * auth signature is the last step before the bytes go to supernodes.
+           */
+          const advance = (phase: number) => setUploadPhase((p) => Math.max(p, phase));
+          const signaturePrompter = Object.assign(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            async (context: any, sign: () => Promise<any>) => {
+              advance(context?.kind === 'auth' ? 2 : 1);
+              const signed = await batchedPrompter(context, sign);
+              if (context?.kind === 'auth') advance(3);
+              return signed;
+            },
+            { reset: () => batchedPrompter.reset?.() },
+          );
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const txPrompter = async (context: any, submit: () => Promise<any>) => {
+            advance(2);
+            return defaultTxPrompter ? defaultTxPrompter(context, submit) : submit();
+          };
           const client = await sdkjsReact.createLumeraClient({
             signer,
             address,
@@ -1087,6 +1147,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
                 await delay(1000);
               } else {
                 setSelectedModal('');
+                setUploadPhase(0);
                 const fileBuffer = await file.arrayBuffer();
                 const fileBytes = new Uint8Array(fileBuffer);
                 setUploadCascadeInfo(prev => prev.map((f) => {
@@ -1253,15 +1314,18 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getDownloadedBytes = async (stream: any) => {
+  const getDownloadedBytes = async (stream: any, onBytes?: (received: number) => void) => {
     // Read the stream
     const reader = stream.getReader();
     const chunks: Uint8Array[] = [];
+    let received = 0;
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       chunks.push(value);
+      received += value.length;
+      onBytes?.(received);
     }
 
     // Combine chunks
@@ -1308,7 +1372,16 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
           },
         });
         const stream = await client.Cascade.downloader.download(file.actionID);
-        const downloadedBytes = await getDownloadedBytes(stream);
+        // The stream carries no length, but the drive already knows the
+        // file's size, which is enough to say how far along it is.
+        let shown = -1;
+        const downloadedBytes = await getDownloadedBytes(stream, (received) => {
+          if (!file.size) return;
+          const pct = Math.min(99, Math.floor((received / file.size) * 100));
+          if (pct === shown) return;
+          shown = pct;
+          setDownloadProgress((prev) => ({ ...prev, [file.actionID]: pct }));
+        });
         const blob1 = new Blob([downloadedBytes]);
         downloadFile(blob1, file.name);
         const parseFile = file.name.split('.');
@@ -1325,6 +1398,11 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       });
     }
     setSelectedFileDownload((prev) => prev.filter((val) => val !== file.actionID));
+    setDownloadProgress((prev) => {
+      const next = { ...prev };
+      delete next[file.actionID];
+      return next;
+    });
     setDownloading(false);
   }
 
@@ -1414,6 +1492,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
 
   return {
     isUploading,
+    uploadPhase,
+    downloadProgress,
+    totalBalance,
     error,
     isFetchSummaryLoading,
     address,

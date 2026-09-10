@@ -46,6 +46,7 @@ export type Drawer =
   | { kind: 'receive' }
   | { kind: 'validator'; name: string }
   | { kind: 'file'; cid: string }
+  | { kind: 'upload' }
   | { kind: 'txdetail'; hash: string }
   | { kind: 'vote'; proposalId: string }
   | { kind: 'propose' }

@@ -376,7 +376,7 @@ export function SupernodeMap({
     <div ref={host} className="relative w-full" style={{ height }}>
       <div
         ref={caption}
-        className="pointer-events-none absolute bottom-3 left-3.5 font-mono text-micro text-text-muted opacity-0 transition-opacity duration-300"
+        className="pointer-events-none absolute bottom-3 left-3.5 font-mono text-micro leading-[1.3] text-[#7a93b4] opacity-0 transition-opacity duration-300"
       />
     </div>
   )
