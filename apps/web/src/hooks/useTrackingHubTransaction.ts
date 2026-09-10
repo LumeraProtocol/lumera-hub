@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 import * as instance from '@/utils/api';
 
 interface IPayload {
@@ -9,28 +7,40 @@ interface IPayload {
   price: number;
 }
 
+/**
+ * Records a signed transaction for the hub's own analytics.
+ *
+ * Best-effort, and deliberately not awaited. Every call site sits between a
+ * broadcast and the next step of a multi-message flow — a redelegation
+ * withdraws rewards, records, then redelegates — so awaiting telemetry there
+ * makes the user's transaction wait on an analytics endpoint. It returns
+ * immediately and reports in the background; the ten `await`s at the call
+ * sites are harmless no-ops.
+ *
+ * The endpoint needs a database, so a deployment without one answers 500 on
+ * every signature. That must stay invisible: the transaction succeeded. The
+ * request is quiet, so no global toast, and the failure is warned rather than
+ * console.error'd, because Next turns console.error into its error overlay —
+ * which is how a redelegation that worked ended up showing an error dialog.
+ */
 const useTrackingHubTransaction = () => {
-  const [isLoading, setLoading] = useState(false);
-
   const trackingHubTransaction = async ({ hash, message_type, creator, price }: IPayload) => {
-    setLoading(true);
-    try {
-      await instance.postExternal(`/api/admin/trackings/save-hub-transaction`, {
+    void instance
+      .postExternalQuiet('/api/admin/trackings/save-hub-transaction', {
         hash,
         message_type,
         creator,
         price,
+      })
+      .catch((error) => {
+        console.warn('Hub transaction tracking failed:', error);
       });
-    } catch (error) {
-      console.error(error);
-    }
-    setLoading(false);
-  }
+  };
 
   return {
-    isLoading,
+    isLoading: false,
     trackingHubTransaction,
-  }
-}
+  };
+};
 
 export default useTrackingHubTransaction;

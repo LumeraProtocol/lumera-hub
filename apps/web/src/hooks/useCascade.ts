@@ -995,7 +995,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         lumeraAddress: address,
       });
     } catch (error) {
-      console.error(error);
+      // warn, not error: Next renders console.error as its error overlay, and
+      // the upload this reports on has already succeeded.
+      console.warn('Cascade upload tracking failed:', error);
     }
   }
 
