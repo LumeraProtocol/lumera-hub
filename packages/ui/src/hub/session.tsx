@@ -96,6 +96,9 @@ type HubValue = {
 
 const HubContext = createContext<HubValue | null>(null)
 
+/** Fired to ask the hub for its connect drawer. See HubProvider. */
+export const REQUEST_CONNECT_EVENT = 'lumera:request-connect'
+
 export const LUMERA_ADDRESS = /^lumera1[a-z0-9]{32,45}$/
 
 const WATCH_STORAGE_KEY = 'lumera-hub:watched'
@@ -222,6 +225,21 @@ export function HubProvider({
     }
     setDrawer({ kind: 'connect' })
   }, [onRequestConnect])
+
+  /*
+   * Anywhere in the app can ask for the connect drawer by firing this event.
+   *
+   * Hooks outside the session — an upload that needs a signature, an account
+   * page — used to call the app's own wallet picker directly, which is how a
+   * second dialog ended up on top of this one. They raise this instead, and
+   * the drawer is the only thing that opens.
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const open = () => setDrawer({ kind: 'connect' })
+    window.addEventListener(REQUEST_CONNECT_EVENT, open)
+    return () => window.removeEventListener(REQUEST_CONNECT_EVENT, open)
+  }, [])
 
   const disconnect = useCallback(() => {
     if (watchedAddress) {

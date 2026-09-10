@@ -28,6 +28,7 @@ import { useEvmWallet } from '@/app/providers/evm-wallet-provider';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import useDisconnectWallet from '@/hooks/useDisconnectWallet';
 import useTrackingUser from '@/hooks/useTrackingUser';
+import useConnectWallet from '@/hooks/useConnectWallet';
 import {
   clearTrackedConnects,
   isConnectTracked,
@@ -48,12 +49,10 @@ function WalletChoiceModal() {
   const dispatch = useDispatch();
   const { isModalOpen, preferredWalletName, walletName } = useSelector((state) => state.wallet);
   const evmWallet = useEvmWallet();
-  const keplrWallet = useChainWallet(CHAIN_NAME, KEPLR_WALLET_NAME);
-  const { getAccount, getChainWalletState } = useWalletManager();
+  const { connectWallet, connectingWallet, error: walletError, setError: setWalletError } =
+    useConnectWallet();
   const [isKeplrInstalled, setKeplrInstalled] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState('');
-  const [connectingWallet, setConnectingWallet] = useState('');
-  const [walletError, setWalletError] = useState('');
   const isMetaMaskInstalled = Boolean(evmWallet.provider);
 
   useEffect(() => {
@@ -92,57 +91,7 @@ function WalletChoiceModal() {
   const close = () => dispatch(setModalOpen({ status: false }));
 
   const connectSelectedWallet = async () => {
-    if (!selectedWallet) return;
-
-    setConnectingWallet(selectedWallet);
-    // Marks the attempt in flight for the runtime synchronizer, which must
-    // not tear down a Keplr session the user is in the middle of approving.
-    // Scoped to this attempt regardless of how the wallet was selected
-    // (clicked or auto-preselected), and never persisted.
-    dispatch(setWalletConnecting({ walletName: selectedWallet }));
-    setWalletError('');
-    try {
-      if (selectedWallet === METAMASK_WALLET_NAME) {
-        if (!isMetaMaskInstalled) throw new Error('MetaMask was not detected.');
-        await evmWallet.connect();
-      } else {
-        if (!isKeplrInstalled) throw new Error('Keplr was not detected.');
-        await keplrWallet.connect();
-        // interchain-kit catches extension rejection/account-read failures and
-        // resolves connect() after writing Disconnected/Rejected state — and
-        // its store can still hold a rehydrated account from a previous
-        // session. Judge the stored state, then require a FRESH account read
-        // from the extension before selecting Keplr.
-        const issue = getKeplrConnectionIssue(
-          getChainWalletState(KEPLR_WALLET_NAME, CHAIN_NAME),
-        );
-        const account = issue
-          ? null
-          : await getAccount(KEPLR_WALLET_NAME, CHAIN_NAME);
-        if (issue || !account?.address) {
-          // Roll back the half-connected session so a retry starts clean
-          // instead of reusing a Connected ghost.
-          try {
-            await keplrWallet.disconnect();
-          } catch {
-            // Best effort; the synchronizer reconciles any residue once the
-            // in-flight flag clears below.
-          }
-          throw new Error(issue || 'Keplr did not return a connected account.');
-        }
-      }
-      dispatch(setWalletName({ walletName: selectedWallet }));
-      close();
-    } catch (error) {
-      setWalletError(error instanceof Error ? error.message : 'Unable to connect wallet.');
-    } finally {
-      setConnectingWallet('');
-      // Released only after the selection dispatches above, so there is no
-      // render where the guard is down while the old wallet is still
-      // selected. On failure this re-enables the synchronizer, which then
-      // cleans up whatever interchain-kit left behind.
-      dispatch(setWalletConnecting({ walletName: '' }));
-    }
+    if (await connectWallet(selectedWallet)) close();
   };
 
   const walletOptions = [
@@ -293,13 +242,17 @@ export function WalletModalComponent() {
     }
   }, []);
 
-  if (IS_EVM_NETWORK) return <WalletChoiceModal />;
-
-  return (
-    <div className='relative z-50'>
-      <InterchainWalletModal />
-    </div>
-  );
+  /*
+   * No picker here any more.
+   *
+   * The hub's connect drawer is the one place a wallet is chosen, and it
+   * connects the choice directly. Rendering either of the old pickers as well
+   * put a second dialog listing the same two wallets on top of it. This
+   * component stays for its effects above — publishing the address to the
+   * store, recording the first connect, capturing a referral code — which is
+   * why it is still mounted rather than deleted.
+   */
+  return null;
 }
 
 export function ConnectWallet() {

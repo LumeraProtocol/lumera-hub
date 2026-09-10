@@ -16,13 +16,20 @@ import useDisconnectWallet from '@/hooks/useDisconnectWallet'
 import { HubProvider as BaseHubProvider } from '@lumera-hub/ui/src/hub/session'
 
 export default function HubProvider({ children }: { children: React.ReactNode }) {
-  const { address, openConnectView } = useWalletConnect()
+  const { address } = useWalletConnect()
   const disconnect = useDisconnectWallet()
 
+  /*
+   * No onRequestConnect: the session opens its own connect drawer instead.
+   *
+   * Wiring it to the app's picker meant every "Connect wallet" opened that
+   * modal, and a gated action opened the drawer, so the two could stand on top
+   * of each other — both listing Keplr and MetaMask. The drawer connects the
+   * chosen wallet directly now, so it is the whole flow.
+   */
   return (
     <BaseHubProvider
       connectedAddress={address || undefined}
-      onRequestConnect={() => openConnectView()}
       onDisconnect={() => void disconnect()}
     >
       {children}

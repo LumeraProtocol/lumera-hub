@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { REQUEST_CONNECT_EVENT } from '@lumera-hub/ui/src/hub/session';
 
 const ETH_ADDRESS = '0x0123456789abcdef0123456789abcdef01234567';
 const BECH32_ADDRESS = 'lumera1qy352euf40x77qfrg4ncn27dauqjx3t83egcev';
@@ -92,7 +93,12 @@ describe('useWalletConnect EVM profile selection', () => {
   });
 
   it('keeps Keplr on the Cosmos signer path while exposing both address forms', async () => {
-    const signer = { kind: 'offline-signer' };
+    // A real signer lists its accounts, and the resolver checks the connected
+    // address against them before handing it to CosmJS.
+    const signer = {
+      kind: 'offline-signer',
+      getAccounts: async () => [{ address: BECH32_ADDRESS }],
+    };
     const client = { kind: 'signing-client' };
     mocks.reduxWallet.walletName = KEPLR_WALLET_NAME;
     mocks.chainState.address = BECH32_ADDRESS;
@@ -117,33 +123,37 @@ describe('useWalletConnect EVM profile selection', () => {
     );
   });
 
-  it('opens the EVM wallet picker from the shared connect entry point', () => {
+  it('asks the hub for its connect drawer rather than opening a picker', () => {
+    // Both old pickers are gone: the drawer is the single place a wallet is
+    // chosen, and it connects the choice directly. The entry point raises an
+    // event the hub session listens for.
+    const heard = vi.fn();
+    window.addEventListener(REQUEST_CONNECT_EVENT, heard);
     const { result } = renderHook(() => useWalletConnect());
 
     act(() => result.current.openConnectView());
 
-    // IS_EVM_NETWORK is mocked true for this file, so the shared entry point
-    // must open the redux-driven wallet chooser, never the interchain-kit
-    // modal (which is not mounted on EVM profiles).
-    expect(mocks.dispatch).toHaveBeenCalledWith(
+    expect(heard).toHaveBeenCalled();
+    expect(mocks.openCosmosView).not.toHaveBeenCalled();
+    expect(mocks.dispatch).not.toHaveBeenCalledWith(
       expect.objectContaining({ payload: { status: true } }),
     );
-    expect(mocks.openCosmosView).not.toHaveBeenCalled();
+    window.removeEventListener(REQUEST_CONNECT_EVENT, heard);
   });
 
-  it('passes the requested switch target to the EVM wallet picker', () => {
+  it('carries the requested wallet through to the drawer', () => {
+    const heard = vi.fn();
+    window.addEventListener(REQUEST_CONNECT_EVENT, heard);
     const { result } = renderHook(() => useWalletConnect());
 
     act(() => result.current.openConnectView(KEPLR_WALLET_NAME));
 
-    expect(mocks.dispatch).toHaveBeenCalledWith(
+    expect(heard).toHaveBeenCalledWith(
       expect.objectContaining({
-        payload: {
-          status: true,
-          preferredWalletName: KEPLR_WALLET_NAME,
-        },
+        detail: { preferredWalletName: KEPLR_WALLET_NAME },
       }),
     );
+    window.removeEventListener(REQUEST_CONNECT_EVENT, heard);
   });
 
   it('ignores cached provider addresses until a wallet is explicitly selected', async () => {

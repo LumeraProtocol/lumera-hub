@@ -51,6 +51,25 @@ const ACCENT = '#47C78A'
 const FLASH = '#EAFBF2'
 
 const SPAWN_MS = 2600
+
+/**
+ * Whether a great-circle path crosses the 180th meridian.
+ *
+ * A projection cuts the world at that line, so a path across it is drawn as
+ * two pieces: one running off the left edge and another arriving at the right.
+ * It is geometrically correct and reads as a glitch, so routes that do it are
+ * simply not flown — there are always others to pick.
+ *
+ * Detected by the jump it makes: consecutive points on a smooth path are a
+ * fraction of a degree apart, so a step of more than half the globe is the
+ * seam rather than real movement.
+ */
+const crossesAntimeridian = (points: Array<[number, number]>): boolean => {
+  for (let i = 1; i < points.length; i += 1) {
+    if (Math.abs(points[i][0] - points[i - 1][0]) > 180) return true
+  }
+  return false
+}
 const FLIGHT_MS = 1400
 
 type Flight = {
@@ -210,11 +229,19 @@ export function SupernodeMap({
     if (pts.length < 2 || !arcs) return
 
     const source = pts[Math.floor(Math.random() * pts.length)]
-    const targets = pts
+    const routes = pts
       .filter((p) => p !== source)
       .sort(() => Math.random() - 0.5)
+      .map((target) => {
+        const along = geoInterpolate([source.lon, source.lat], [target.lon, target.lat])
+        const points = Array.from({ length: 49 }, (_, s) => along(s / 48) as [number, number])
+        return { target, points }
+      })
+      .filter((r) => !crossesAntimeridian(r.points))
       .slice(0, 3)
-    if (!targets.length) return
+    if (!routes.length) return
+
+    const targets = routes.map((r) => r.target)
 
     if (caption.current) {
       caption.current.textContent = `${source.name} → ${targets.map((t) => t.name).join(', ')}`
@@ -225,9 +252,7 @@ export function SupernodeMap({
       }, 2200)
     }
 
-    targets.forEach((target, i) => {
-      const along = geoInterpolate([source.lon, source.lat], [target.lon, target.lat])
-      const points = Array.from({ length: 49 }, (_, s) => along(s / 48) as [number, number])
+    routes.forEach(({ target, points }, i) => {
       const line = el('path', {
         fill: 'none',
         stroke: ACCENT,

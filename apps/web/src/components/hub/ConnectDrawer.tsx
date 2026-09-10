@@ -14,7 +14,7 @@
 
 import React, { useState } from 'react'
 
-import useWalletConnect from '@/hooks/useWalletConnect'
+import useConnectWallet from '@/hooks/useConnectWallet'
 import { useHub, LUMERA_ADDRESS } from '@lumera-hub/ui/src/hub/session'
 import { Drawer, IntentBanner } from '@lumera-hub/ui/src/hub/Drawer'
 import { Button, Field, Input, Label, cx } from '@lumera-hub/ui/src/design/primitives'
@@ -25,7 +25,7 @@ const METAMASK_WALLET_NAME = 'metamask-extension'
 
 export function ConnectDrawer() {
   const hub = useHub()
-  const { openConnectView } = useWalletConnect()
+  const { connectWallet, connectingWallet, error: connectError } = useConnectWallet()
   const [watchInput, setWatchInput] = useState('')
 
   if (hub.drawer?.kind !== 'connect') return null
@@ -75,10 +75,17 @@ export function ConnectDrawer() {
           <button
             key={w.key}
             type="button"
+            disabled={Boolean(connectingWallet)}
             onClick={() => {
-              // Hand off to the app's existing wallet-selection flow; the hub
-              // session notices the address arriving and resumes the intent.
-              openConnectView(w.key)
+              /*
+               * Connect the wallet that was just picked, rather than handing
+               * off to the app's picker — that opened a second dialog listing
+               * the same two wallets on top of this one. The hub session
+               * notices the address arriving and resumes the intent.
+               */
+              void connectWallet(w.key).then((ok) => {
+                if (ok) hub.closeDrawer()
+              })
             }}
             className="flex w-full cursor-pointer items-center gap-3 rounded-[9px] border border-line-edge bg-ink-800 px-3.5 py-[13px] text-left transition-colors hover:border-line-accent hover:bg-ink-600"
           >
@@ -89,10 +96,16 @@ export function ConnectDrawer() {
               <span className="text-base font-medium text-text-primary">{w.name}</span>
               <span className="text-small text-text-tertiary">{w.note}</span>
             </span>
-            <span className="flex-none text-lg text-text-muted">›</span>
+            <span className="flex-none text-small text-text-muted">
+              {connectingWallet === w.key ? 'Connecting…' : '›'}
+            </span>
           </button>
         ))}
       </div>
+
+      {connectError ? (
+        <span className="text-small leading-[1.5] text-danger text-pretty">{connectError}</span>
+      ) : null}
 
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-line-hairline" />
