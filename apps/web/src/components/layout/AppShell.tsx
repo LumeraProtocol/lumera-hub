@@ -50,7 +50,6 @@ import { useHub, short } from '@lumera-hub/ui/src/hub/session';
 import { GlobalSearch, type SearchHit } from '@lumera-hub/ui/src/hub/GlobalSearch';
 import { Badge, Button, cx, DotLabel } from '@lumera-hub/ui/src/design/primitives';
 import {
-  AlertIcon,
   BellIcon,
   CascadeIcon,
   CloseIcon,
@@ -619,15 +618,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           )}
         </header>
-
-        {IS_TESTNET ? (
-          <div className="flex flex-none items-center gap-2.5 border-b border-warn-edge bg-warn/9 px-4 py-[9px] sm:px-[26px]">
-            <AlertIcon size={14} className="flex-none text-warn" />
-            <span className="text-small leading-[1.4] font-medium text-warn">
-              Testnet — {CHAIN_ID}. Tokens have no value and the chain resets periodically.
-            </span>
-          </div>
-        ) : null}
 
         <main className="flex-1 px-4 pt-[26px] pb-10 sm:px-[26px]">
           <div className="mx-auto flex min-w-0 max-w-[1180px] flex-col gap-[18px]">{children}</div>
