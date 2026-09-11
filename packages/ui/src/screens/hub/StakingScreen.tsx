@@ -56,7 +56,7 @@ export type ValidatorRow = {
   note: string
 }
 
-export type StakingMode = 'delegate' | 'undelegate' | 'redelegate'
+export type StakingMode = 'delegate' | 'undelegate' | 'redelegate' | 'claim'
 
 const GRID = 'minmax(190px,1fr) 132px 74px 74px 92px 58px'
 
@@ -84,6 +84,9 @@ export function StakingScreen({
   minCommissionRate,
   lockDate,
   pairUsed,
+  rewards,
+  rewardsMicro = 0,
+  rewardValidators = 0,
 }: {
   loading?: boolean
   validators: ValidatorRow[]
@@ -111,12 +114,19 @@ export function StakingScreen({
   lockDate?: string | null
   /** Redelegations already open between the chosen pair, when it could be read. */
   pairUsed?: number | null
+  /** Total unclaimed rewards across all validators, formatted (e.g. "12.48 LUME"). */
+  rewards?: string
+  /** The same total in micro-denom, to know whether there is anything to claim. */
+  rewardsMicro?: number
+  /** How many validators have rewards waiting, for the claim summary. */
+  rewardValidators?: number
 }) {
   const hub = useHub()
   const [sort, setSort] = useState<'power' | 'apr' | 'commission'>('power')
   const [query, setQuery] = useState('')
 
   const isRedelegate = mode === 'redelegate'
+  const isClaim = mode === 'claim'
   const mine = useMemo(() => validators.filter((v) => v.mine > 0), [validators])
 
   const rows = useMemo(() => {
@@ -145,7 +155,8 @@ export function StakingScreen({
   const delta =
     source && selected ? amountNumber * (((selected.apr ?? 0) - (source.apr ?? 0)) / 100) : 0
 
-  const verb = mode === 'undelegate' ? 'Undelegate' : isRedelegate ? 'Redelegate' : 'Delegate'
+  const verb =
+    mode === 'undelegate' ? 'Undelegate' : isRedelegate ? 'Redelegate' : isClaim ? 'Claim' : 'Delegate'
 
   // Redelegation needs an existing position to move; say so rather than
   // rendering an empty picker.
@@ -344,7 +355,7 @@ export function StakingScreen({
         {/* Calculator */}
         <Card className="xl:sticky xl:top-[88px]">
           <div className="mx-3.5 mt-3 flex rounded-control border border-line-hairline bg-ink-800 p-1">
-            {(['delegate', 'undelegate', 'redelegate'] as StakingMode[]).map((m) => (
+            {(['delegate', 'undelegate', 'redelegate', 'claim'] as StakingMode[]).map((m) => (
               <button
                 key={m}
                 type="button"
@@ -363,7 +374,58 @@ export function StakingScreen({
           </div>
 
           <div className="flex flex-col gap-[13px] px-3.5 py-4">
-            {redelegateBlocked ? (
+            {isClaim ? (
+              <>
+                {/* Withdraw rewards from every validator at once — no amount or
+                    validator to pick, so the panel just shows the total and a
+                    plain-English note on what it does. */}
+                <div className="flex flex-col gap-2.5 rounded-control border border-line-hairline bg-ink-800 px-3.5 py-4">
+                  <Label>Unclaimed rewards</Label>
+                  <span className="font-mono text-stat leading-none font-semibold tnum text-lumera-green">
+                    {hub.hasPosition ? (rewards ?? '—') : '—'}
+                  </span>
+                  {hub.hasPosition && rewardValidators > 0 ? (
+                    <span className="text-small leading-none text-text-muted">
+                      Across {rewardValidators} validator{rewardValidators === 1 ? '' : 's'}
+                    </span>
+                  ) : null}
+                </div>
+
+                <Well className="flex flex-col gap-[9px]">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-small leading-none text-text-muted">Goes to</span>
+                    <span className="text-base leading-none font-medium text-text-secondary">
+                      Your liquid balance
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-small leading-none text-text-muted">Bonded stake</span>
+                    <span className="text-base leading-none font-medium text-text-secondary">
+                      Untouched — keeps earning
+                    </span>
+                  </div>
+                  <div className="h-px bg-line-hairline" />
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-small leading-none text-text-muted">Network fee</span>
+                    <span className="text-small leading-none text-text-muted">Estimated at signing</span>
+                  </div>
+                  <div className="h-px bg-line-hairline" />
+                  <span className="text-small leading-[1.5] text-text-muted text-pretty">
+                    Withdraws staking rewards from every validator you have delegated to in one
+                    transaction. Nothing is unbonded.
+                  </span>
+                </Well>
+
+                {hub.hasPosition && rewardsMicro <= 0 ? (
+                  <span className="text-small leading-[1.5] text-text-muted text-pretty">
+                    No rewards to claim yet — they accrue every block and can be withdrawn once
+                    there is a balance.
+                  </span>
+                ) : null}
+              </>
+            ) : null}
+
+            {!isClaim && redelegateBlocked ? (
               <div className="flex flex-col gap-[7px]">
                 <Label>From validator</Label>
                 <div className="flex flex-col items-center gap-[11px] rounded-control border border-dashed border-line-edge bg-ink-800 px-4 py-5 text-center">
@@ -413,6 +475,8 @@ export function StakingScreen({
               </Field>
             ) : null}
 
+            {!isClaim ? (
+              <>
             <Field label={isRedelegate ? 'To validator' : 'Validator'}>
               {selected ? (
                 <div className="flex items-center gap-2.5 rounded-control border border-line-edge bg-ink-800 px-3 py-2.5">
@@ -457,6 +521,8 @@ export function StakingScreen({
                 </div>
               ) : null}
             </Field>
+              </>
+            ) : null}
 
             {isRedelegate && source && selected ? (
               <>
@@ -576,6 +642,7 @@ export function StakingScreen({
               </>
             ) : null}
 
+            {!isClaim ? (
             <Well className="flex flex-col gap-[9px]">
               <div className="flex items-baseline justify-between">
                 <span className="text-small leading-none text-text-muted">Rewards / month</span>
@@ -604,6 +671,7 @@ export function StakingScreen({
                 </>
               ) : null}
             </Well>
+            ) : null}
 
             {overAvailable ? (
               <Notice tone="danger">
@@ -622,17 +690,21 @@ export function StakingScreen({
               size="lg"
               full
               locked={hub.gated}
-              disabled={overAvailable || !selected || redelegateBlocked}
+              disabled={isClaim ? rewardsMicro <= 0 : overAvailable || !selected || redelegateBlocked}
               onClick={onSubmit}
             >
-              {overAvailable
-                ? 'Amount too high'
-                : hub.isConnected
-                  ? `${verb}${amountNumber > 0 ? ` ${amountNumber.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${denom}` : ''}`
-                  : `Connect to ${verb.toLowerCase()}`}
+              {isClaim
+                ? hub.isConnected
+                  ? `Claim${rewardsMicro > 0 && rewards ? ` ${rewards}` : ' rewards'}`
+                  : 'Connect to claim'
+                : overAvailable
+                  ? 'Amount too high'
+                  : hub.isConnected
+                    ? `${verb}${amountNumber > 0 ? ` ${amountNumber.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${denom}` : ''}`
+                    : `Connect to ${verb.toLowerCase()}`}
             </Button>
 
-            {hub.gated ? (
+            {hub.gated && !isClaim ? (
               <p className="m-0 text-center text-small leading-[1.5] text-text-tertiary text-pretty">
                 The calculator is live without a wallet. Your amount and validator carry over when
                 you connect.

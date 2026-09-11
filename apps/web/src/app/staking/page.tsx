@@ -15,7 +15,7 @@ import { RATE_VALUE } from '@/contants'
 import { DENOM } from '@/contants/network'
 import { formatNumber } from '@/utils/format'
 import { getQuiet } from '@/utils/api'
-import { getAvailableBalances, getDelegations } from '@/utils/portfolio'
+import { getAvailableBalances, getDelegations, getRewards } from '@/utils/portfolio'
 import { consensusAddressFromPubkey } from '@/utils/consensus-address'
 import {
   StakingScreen,
@@ -44,9 +44,13 @@ export default function Page() {
   const staking = useStaking(address, isEvm)
   const { params: chainParams } = useChainParams()
   const logos = useValidatorLogos(staking.activeValidators)
-  const { accountInfo, fetchData } = useAccountInfo(
-    hub.isWatching ? { address: hub.address } : {},
-  )
+  const {
+    accountInfo,
+    fetchData,
+    handleClaimButtonClick,
+    transactionHash: claimHash,
+    errorClaim,
+  } = useAccountInfo(hub.isWatching ? { address: hub.address } : {})
 
   const [mode, setMode] = useState<StakingMode>('delegate')
   const [selectedKey, setSelectedKey] = useState<string>('')
@@ -55,6 +59,15 @@ export default function Page() {
 
   const availableMicro = getAvailableBalances(accountInfo)
   const stakedMicro = getDelegations(accountInfo)
+  const rewardsMicro = getRewards(accountInfo)
+  // Validators with a non-empty reward balance — the claim summary's "across N".
+  const rewardValidators = useMemo(
+    () =>
+      (accountInfo?.rewards || []).filter((r) =>
+        (r.reward || []).some((c) => Number(c.amount) > 0),
+      ).length,
+    [accountInfo?.rewards],
+  )
 
   const delegate = useDelegate({
     availableAmount: `${availableMicro / RATE_VALUE}`,
@@ -168,7 +181,14 @@ export default function Page() {
   const available =
     mode === 'undelegate' ? stakedMicro : mode === 'redelegate' ? (source?.mine ?? 0) : availableMicro
 
-  const verb = mode === 'undelegate' ? 'Undelegate' : mode === 'redelegate' ? 'Redelegate' : 'Delegate'
+  const verb =
+    mode === 'undelegate'
+      ? 'Undelegate'
+      : mode === 'redelegate'
+        ? 'Redelegate'
+        : mode === 'claim'
+          ? 'Claim'
+          : 'Delegate'
   const amountNumber = parseFloat(amount.replace(/,/g, '')) || 0
 
   // Prefer the params useStaking already fetched; fall back to the shared
@@ -239,6 +259,20 @@ export default function Page() {
    * once in TxDrawer rather than three times here.
    */
   const submit = () => {
+    // Claim needs no validator or amount — it withdraws from every delegation
+    // at once, so it gates and opens the tx drawer on its own.
+    if (mode === 'claim') {
+      if (rewardsMicro <= 0) return
+      const intent = {
+        title: `Claim ${lume(rewardsMicro)} LUME`,
+        lineLabel: 'Rewards from',
+        line: rewardValidators
+          ? `${rewardValidators} validator${rewardValidators === 1 ? '' : 's'}`
+          : 'your validators',
+      }
+      hub.gate(intent, () => hub.openDrawer({ kind: 'tx', intent }))
+      return
+    }
     if (!selected) return
     const intent = {
       title: `${verb} ${amountNumber.toLocaleString('en-US', { maximumFractionDigits: 2 })} LUME`,
@@ -304,20 +338,30 @@ export default function Page() {
   }, [profileKey, signWindow, staking.activeValidators, validators])
 
   const broadcast =
-    mode === 'delegate'
-      ? delegate.handleSendClick
-      : mode === 'undelegate'
-        ? unbond.handleSendClick
-        : redelegate.handleSendClick
+    mode === 'claim'
+      ? handleClaimButtonClick
+      : mode === 'delegate'
+        ? delegate.handleSendClick
+        : mode === 'undelegate'
+          ? unbond.handleSendClick
+          : redelegate.handleSendClick
 
   const txError =
-    mode === 'delegate' ? delegate.error : mode === 'undelegate' ? unbond.error : redelegate.error
+    mode === 'claim'
+      ? errorClaim || undefined
+      : mode === 'delegate'
+        ? delegate.error
+        : mode === 'undelegate'
+          ? unbond.error
+          : redelegate.error
   const txHash =
-    mode === 'delegate'
-      ? delegate.transactionHash
-      : mode === 'undelegate'
-        ? unbond.transactionHash
-        : redelegate.transactionHash
+    mode === 'claim'
+      ? claimHash
+      : mode === 'delegate'
+        ? delegate.transactionHash
+        : mode === 'undelegate'
+          ? unbond.transactionHash
+          : redelegate.transactionHash
 
   return (
     <>
@@ -340,6 +384,9 @@ export default function Page() {
         lockDate={lockDate}
         pairUsed={pairUsed}
         myStake={stakedMicro ? `${lume(stakedMicro, 0)} LUME` : '—'}
+        rewards={`${lume(rewardsMicro)} LUME`}
+        rewardsMicro={rewardsMicro}
+        rewardValidators={rewardValidators}
         available={available}
         mode={mode}
         onModeChange={(m) => {
