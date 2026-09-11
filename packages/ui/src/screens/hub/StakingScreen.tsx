@@ -180,7 +180,11 @@ export function StakingScreen({
         ]}
       />
 
-      <div className="grid grid-cols-1 items-start gap-3.5 xl:grid-cols-2">
+      {/* Two columns from lg, matching the design's ~1000px split, so the
+          delegate calculator sits beside the validator table on laptops
+          rather than dropping below it. The table scrolls internally
+          (overflow-x-auto below) when its column is tight. */}
+      <div className="grid grid-cols-1 items-start gap-3.5 lg:grid-cols-2">
         {/* Active set */}
         <Card>
           <div className="flex flex-wrap items-center gap-3 border-b border-line-hairline px-[18px] py-[13px]">

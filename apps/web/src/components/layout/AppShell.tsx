@@ -217,7 +217,11 @@ function NetworkTab({
       ? warn
         ? 'bg-warn/16 text-warn'
         : 'bg-ink-600 text-text-secondary'
-      : 'cursor-pointer bg-transparent text-text-muted hover:text-text-secondary',
+      : warn
+        ? // Testnet stays amber even when mainnet is the active side, so the
+          // network's "test" character reads at a glance either way.
+          'cursor-pointer bg-transparent text-warn hover:bg-warn/10'
+        : 'cursor-pointer bg-transparent text-text-muted hover:text-text-secondary',
   )
   if (active) {
     return <span className={className}>{label}</span>
