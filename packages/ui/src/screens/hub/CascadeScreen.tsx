@@ -70,7 +70,6 @@ export function CascadeScreen({
   mapNodes,
   regions,
   liveSites,
-  located,
   onUpload,
   onDropFiles,
   isPreparing,
@@ -100,8 +99,6 @@ export function CascadeScreen({
   regions: Array<{ name: string; count: number }>
   /** Places with at least one active supernode; null until nodes are located. */
   liveSites: number | null
-  /** Supernodes that could be put on the map. */
-  located: number
   onUpload: () => void
   onDropFiles: (files: File[]) => void
   /** Fees are being worked out for picked files. */
@@ -187,25 +184,20 @@ export function CascadeScreen({
         <div className="h-[340px] bg-[#021a34]">
           <SupernodeMap nodes={mapNodes ?? []} height={340} />
         </div>
-        <div className="flex flex-wrap items-center gap-x-[22px] gap-y-2.5 border-t border-line-hairline px-[18px] py-[13px]">
-          {regions.length ? (
-            regions.map((r) => (
+        {/* Region counts only — no status line about how many hosts
+            resolved, found or not. */}
+        {regions.length ? (
+          <div className="flex flex-wrap items-center gap-x-[22px] gap-y-2.5 border-t border-line-hairline px-[18px] py-[13px]">
+            {regions.map((r) => (
               <div key={r.name} className="flex items-baseline gap-2">
                 <span className="text-small leading-none text-text-tertiary">{r.name}</span>
                 <span className="font-mono text-small leading-none font-semibold text-text-primary tnum">
                   {r.count}
                 </span>
               </div>
-            ))
-          ) : (
-            <span className="text-small leading-none text-text-muted">Locating supernodes…</span>
-          )}
-          {located > 0 && known ? (
-            <span className="ml-auto text-small leading-none text-text-muted">
-              {located} of {supernodes} supernodes located
-            </span>
-          ) : null}
-        </div>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {sdkError ? (

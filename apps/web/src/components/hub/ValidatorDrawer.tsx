@@ -20,17 +20,15 @@ import { DENOM } from '@/contants/network'
 import { formatNumber } from '@/utils/format'
 import { explorerValidatorUrl } from '@/utils/explorer'
 import { useHub, copyText, short } from '@lumera-hub/ui/src/hub/session'
-import { Drawer } from '@lumera-hub/ui/src/hub/Drawer'
+import { Drawer, drawerButton } from '@lumera-hub/ui/src/hub/Drawer'
 import {
   Avatar,
   Badge,
   Bar,
-  Button,
-  DataRow,
   Label,
   Notice,
   Skeleton,
-  Well,
+  cx,
 } from '@lumera-hub/ui/src/design/primitives'
 import { ExternalIcon } from '@lumera-hub/ui/src/design/icons'
 
@@ -99,30 +97,29 @@ export function ValidatorDrawer({
       onClose={hub.closeDrawer}
       footer={
         <>
-          <Button variant="outline" size="lg" className="flex-none px-5" onClick={hub.closeDrawer}>
+          <button type="button" onClick={hub.closeDrawer} className={drawerButton.secondary}>
             Close
-          </Button>
-          <Button
-            variant="solid"
-            size="lg"
-            full
+          </button>
+          <button
+            type="button"
             onClick={() => onDelegate(validator.operatorAddress)}
+            className={drawerButton.primary}
           >
             Delegate here
-          </Button>
+          </button>
         </>
       }
     >
-      <div className="flex items-start gap-3.5">
+      <div className="flex items-center gap-[13px]">
         <Avatar
           initials={validator.initials}
           src={profile.logo ?? undefined}
           size={44}
-          rounded={10}
+          rounded={11}
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-lg leading-tight font-semibold text-text-primary">
+            <span className="text-[17px] leading-[1.2] font-semibold text-text-primary">
               {validator.name}
             </span>
             {validator.jailed ? <Badge tone="danger">JAILED</Badge> : null}
@@ -136,17 +133,21 @@ export function ValidatorDrawer({
               }
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 text-small text-lumera-green"
+              className="flex items-center gap-1.5 font-mono text-small leading-none text-lumera-green"
             >
               {validator.website.replace(/^https?:\/\//, '')}
               <ExternalIcon size={11} />
             </a>
-          ) : null}
+          ) : (
+            <span className="font-mono text-small leading-none text-text-muted">
+              {short(validator.operatorAddress, 16, 6)}
+            </span>
+          )}
         </div>
       </div>
 
       {validator.details ? (
-        <p className="m-0 text-base leading-[1.6] text-text-secondary text-pretty">
+        <p className="m-0 text-base leading-[1.65] text-text-secondary text-pretty">
           {validator.details}
         </p>
       ) : null}
@@ -158,50 +159,57 @@ export function ValidatorDrawer({
         </Notice>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3">
-        <Well className="flex flex-col gap-1.5">
-          <Label>Voting power</Label>
-          <span className="font-mono text-stat font-semibold tnum text-text-primary">
-            {validator.power.toFixed(2)}%
-          </span>
-          <span className="font-mono text-small tnum text-text-muted">
-            {lume(validator.tokensMicro)}
-          </span>
-        </Well>
-        <Well className="flex flex-col gap-1.5">
-          <Label>Net APR</Label>
-          <span className="font-mono text-stat font-semibold tnum text-lumera-green">
-            {validator.apr != null ? `${validator.apr.toFixed(1)}%` : '—'}
-          </span>
-          <span className="font-mono text-small tnum text-text-muted">
-            after {validator.commission}% commission
-          </span>
-        </Well>
+      {/* Four figures in one bordered grid; the 1px gaps are the rules. */}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[9px] border border-line-hairline bg-line-hairline sm:grid-cols-4">
+        {[
+          { k: 'POWER', v: `${validator.power.toFixed(2)}%`, tone: 'text-text-primary' },
+          { k: 'FEE', v: `${validator.commission}%`, tone: 'text-text-primary' },
+          {
+            k: 'APR',
+            v: validator.apr != null ? `${validator.apr.toFixed(1)}%` : '—',
+            tone: 'text-lumera-green',
+          },
+          {
+            k: 'YOURS',
+            v: validator.mineMicro > 0 ? lume(validator.mineMicro).replace(` ${TOKEN}`, '') : '—',
+            tone: 'text-text-secondary',
+          },
+        ].map((c) => (
+          <div key={c.k} className="flex flex-col gap-1.5 bg-ink-800 px-3 py-[11px]">
+            <span className="font-mono text-micro leading-none font-medium tracking-[0.08em] text-text-muted">
+              {c.k}
+            </span>
+            <span className={cx('font-mono text-lg leading-none font-semibold tnum', c.tone)}>{c.v}</span>
+          </div>
+        ))}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between">
+      <div className="rounded-[9px] border border-line-hairline bg-ink-800 p-3.5">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
           <Label>Signing record</Label>
           <span
-            className={`font-mono text-small font-medium tnum ${
+            className={cx(
+              'font-mono text-small leading-none font-medium tnum',
               uptimeTone === 'green'
                 ? 'text-lumera-green'
                 : uptimeTone === 'warn'
                   ? 'text-warn'
                   : uptimeTone === 'danger'
                     ? 'text-danger'
-                    : 'text-text-muted'
-            }`}
+                    : 'text-text-muted',
+            )}
           >
             {validator.uptime != null ? `${validator.uptime.toFixed(2)}%` : '—'}
           </span>
         </div>
         {validator.uptime != null ? (
-          <Bar
-            pct={validator.uptime}
-            tone={uptimeTone === 'green' ? 'gradient' : uptimeTone === 'warn' ? 'warn' : 'danger'}
-            height={7}
-          />
+          <div className="mb-[11px]">
+            <Bar
+              pct={validator.uptime}
+              tone={uptimeTone === 'green' ? 'gradient' : uptimeTone === 'warn' ? 'warn' : 'danger'}
+              height={7}
+            />
+          </div>
         ) : null}
         <span className="text-small leading-[1.5] text-text-muted text-pretty">
           {validator.missed != null && validator.signingWindow
@@ -210,53 +218,62 @@ export function ValidatorDrawer({
         </span>
       </div>
 
-      <div className="overflow-hidden rounded-control border border-line-hairline bg-ink-800 px-[13px]">
-        <DataRow
-          label="Self-bonded"
-          value={
-            profile.isLoading ? (
-              <Skeleton className="inline-block h-3 w-20 align-middle" />
+      <div className="overflow-hidden rounded-[9px] border border-line-hairline bg-ink-800">
+        {[
+          { k: 'Bonded to it', v: lume(validator.tokensMicro) },
+          {
+            k: 'Self-bonded',
+            v: profile.isLoading ? null : lume(profile.selfBondedMicro),
+            wide: 'w-20',
+          },
+          {
+            k: 'Delegators',
+            v: profile.isLoading
+              ? null
+              : profile.delegators != null
+                ? profile.delegators.toLocaleString('en-US')
+                : '—',
+            wide: 'w-12',
+          },
+          { k: 'Min self-delegation', v: lume(validator.minSelfDelegationMicro) },
+          {
+            k: 'Max commission',
+            v: validator.maxCommission != null ? `${validator.maxCommission.toFixed(0)}%` : '—',
+          },
+          {
+            k: 'Max daily change',
+            v: validator.maxChangeRate != null ? `${validator.maxChangeRate.toFixed(0)}%` : '—',
+          },
+          {
+            k: 'Commission changed',
+            v:
+              validator.commissionUpdated && !validator.commissionUpdated.startsWith('0001')
+                ? new Date(validator.commissionUpdated).toLocaleDateString()
+                : '—',
+          },
+          ...(validator.mineMicro > 0
+            ? [{ k: 'Your delegation', v: lume(validator.mineMicro, 2), green: true }]
+            : []),
+        ].map((r) => (
+          <div
+            key={r.k}
+            className="flex items-baseline justify-between gap-[18px] border-b border-ink-500 px-3.5 py-[11px] last:border-b-0"
+          >
+            <span className="flex-none text-base leading-[1.4] text-text-tertiary">{r.k}</span>
+            {r.v == null ? (
+              <Skeleton className={cx('inline-block h-3 align-middle', r.wide)} />
             ) : (
-              lume(profile.selfBondedMicro)
-            )
-          }
-        />
-        <DataRow
-          label="Delegators"
-          value={
-            profile.isLoading ? (
-              <Skeleton className="inline-block h-3 w-12 align-middle" />
-            ) : profile.delegators != null ? (
-              profile.delegators.toLocaleString('en-US')
-            ) : (
-              '—'
-            )
-          }
-        />
-        <DataRow
-          label="Min self-delegation"
-          value={lume(validator.minSelfDelegationMicro)}
-        />
-        <DataRow
-          label="Max commission"
-          value={validator.maxCommission != null ? `${validator.maxCommission.toFixed(0)}%` : '—'}
-        />
-        <DataRow
-          label="Max daily change"
-          value={validator.maxChangeRate != null ? `${validator.maxChangeRate.toFixed(0)}%` : '—'}
-        />
-        <DataRow
-          label="Commission changed"
-          value={
-            validator.commissionUpdated &&
-            !validator.commissionUpdated.startsWith('0001')
-              ? new Date(validator.commissionUpdated).toLocaleDateString()
-              : '—'
-          }
-        />
-        {validator.mineMicro > 0 ? (
-          <DataRow label="Your delegation" value={lume(validator.mineMicro, 2)} tone="green" />
-        ) : null}
+              <span
+                className={cx(
+                  'text-right font-mono text-base leading-[1.45] font-medium tnum [overflow-wrap:anywhere]',
+                  'green' in r && r.green ? 'text-lumera-green' : 'text-text-primary',
+                )}
+              >
+                {r.v}
+              </span>
+            )}
+          </div>
+        ))}
       </div>
 
       <div className="flex flex-col gap-2">

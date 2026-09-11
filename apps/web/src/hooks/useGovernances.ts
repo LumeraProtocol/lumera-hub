@@ -302,7 +302,7 @@ const useGovernances = () => {
       if (!proposal.description) {
         setMsg({
           type: 'description',
-          message: 'Please enter title.',
+          message: 'Please enter a summary.',
         });
         return;
       }

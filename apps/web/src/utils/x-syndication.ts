@@ -104,7 +104,7 @@ const isBareLink = (text: string): boolean =>
  * The feed hands out a 48px avatar via the `_normal` suffix, which is soft on
  * a retina display. The same file is served at 400px under `_400x400`.
  */
-const fullSizeAvatar = (url?: string): string | undefined =>
+export const fullSizeAvatar = (url?: string): string | undefined =>
   url?.replace(/_normal(\.[a-z]+)$/i, '_400x400$1');
 
 const authorOf = (user: RawUser | undefined, handle: string): XAuthor | undefined =>

@@ -2,7 +2,7 @@
 "use client";
 
 import axios from 'axios';
-import { REST_ENDPOINTS , SNAG_ENABLED } from '@/contants/network';
+import { REST_ENDPOINTS , SNAG_ENABLED, subscribeNetworkChange } from '@/contants/network';
 import store from '@/store';
 import { setError } from '@/redux/error.slice';
 
@@ -21,6 +21,13 @@ import { setError } from '@/redux/error.slice';
  * against every node in turn.
  */
 let activeHostIndex = 0;
+
+// A network switch replaces REST_ENDPOINTS with the other chain's hosts; the
+// pinned cursor points into the old array, so reset it to try the new primary
+// first.
+subscribeNetworkChange(() => {
+  activeHostIndex = 0;
+});
 
 /*
  * A host that has just failed is demoted immediately, before its concurrent
@@ -190,6 +197,8 @@ export const postExternalQuiet = (path: string, body: object) =>
   customFetch(path, 'POST', body, false, true, undefined, true);
 export const removeExternal = (path: string, body: object) => customFetch(path, 'DELETE', body, false, true);
 export const get = (path: string) => customFetch(path, 'GET');
+/** A chain read whose failure the caller explains itself, so no global error toast. */
+export const getQuiet = (path: string) => customFetch(path, 'GET', {}, false, false, undefined, true);
 export const post = (path: string, body: object) => customFetch(path, 'POST', body);
 export const put = (path: string, body: object) => customFetch(path, 'PUT', body);
 export const remove = (path: string, body: object) => customFetch(path, 'DELETE', body);

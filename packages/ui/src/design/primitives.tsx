@@ -30,7 +30,7 @@ export function Label({
   return (
     <span
       className={cx(
-        'block font-mono text-micro font-medium tracking-[0.1em] text-text-tertiary',
+        'block font-mono text-micro leading-none font-medium tracking-[0.1em] text-text-tertiary uppercase',
         className,
       )}
     >
@@ -82,19 +82,24 @@ export function PageTitle({
   title,
   subtitle,
   actions,
+  subtitleClassName,
 }: {
   title: React.ReactNode
   subtitle?: React.ReactNode
   actions?: React.ReactNode
+  /** The design caps some screens' subtitle width (the dashboard's at 600px) and not others. */
+  subtitleClassName?: string
 }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
       <div className="min-w-0">
-        <h1 className="m-0 mb-1.5 text-title font-semibold tracking-[-0.02em] text-text-primary">
+        <h1 className="m-0 mb-[5px] text-title font-semibold tracking-[-0.02em] text-text-primary">
           {title}
         </h1>
         {subtitle ? (
-          <p className="m-0 max-w-[600px] text-base text-text-muted text-pretty">{subtitle}</p>
+          <p className={cx('m-0 text-base text-text-muted text-pretty', subtitleClassName)}>
+            {subtitle}
+          </p>
         ) : null}
       </div>
       {actions ? <div className="flex flex-none flex-wrap gap-2">{actions}</div> : null}
@@ -143,7 +148,7 @@ export function CardHeader({
       )}
     >
       {typeof title === 'string' ? (
-        <h3 className="m-0 text-base font-semibold text-text-primary">{title}</h3>
+        <h3 className="m-0 text-base leading-none font-semibold text-text-primary">{title}</h3>
       ) : (
         title
       )}
@@ -163,7 +168,7 @@ export function CardAction({
   href?: string
 }) {
   const className =
-    'cursor-pointer border-none bg-transparent p-0 text-small font-medium text-lumera-green hover:text-lumera-green-bright'
+    'cursor-pointer border-none bg-transparent p-0 text-small leading-none font-medium text-lumera-green hover:text-lumera-green-bright'
   if (href) {
     return (
       <a href={href} className={className}>
@@ -210,14 +215,14 @@ export function StatCard({
         <Stat tone={tone === 'green' ? 'green' : 'primary'}>{value}</Stat>
         <span
           className={cx(
-            'font-mono text-small font-medium tnum',
+            'font-mono text-small leading-none font-medium tnum',
             deltaTones[deltaTone],
           )}
         >
           {delta}
         </span>
       </div>
-      <span className="block min-h-[33px] text-small text-text-muted">{foot}</span>
+      <span className="block min-h-[33px] text-small leading-[1.3] text-text-muted">{foot}</span>
     </div>
   )
 }
@@ -285,17 +290,19 @@ export function Button({
   locked?: boolean
   full?: boolean
 }) {
+  // The design sets every button's label at line-height 1, and its small
+  // buttons (Move, Follow, Copy) at medium weight rather than semibold.
   const sizes = {
-    sm: 'px-[9px] py-1.5 text-small rounded-chip',
-    md: 'px-[15px] py-2.5 text-base rounded-control',
-    lg: 'px-4 py-[13px] text-base rounded-control',
+    sm: 'px-[9px] py-1.5 text-small font-medium rounded-chip',
+    md: 'px-[15px] py-2.5 text-base font-semibold rounded-control',
+    lg: 'px-4 py-[13px] text-base font-semibold rounded-control',
   }
   return (
     <button
       type="button"
       disabled={disabled}
       className={cx(
-        'inline-flex cursor-pointer items-center justify-center gap-[7px] font-semibold whitespace-nowrap transition-colors',
+        'inline-flex cursor-pointer items-center justify-center gap-[7px] leading-none whitespace-nowrap transition-colors',
         sizes[size],
         buttonVariants[variant],
         full && 'w-full',
@@ -363,8 +370,8 @@ export function Segmented<T extends string>({
             aria-selected={on}
             onClick={() => onChange(o.key)}
             className={cx(
-              'cursor-pointer rounded-[5px] border-none font-medium whitespace-nowrap transition-colors',
-              size === 'sm' ? 'px-2.5 py-1.5 text-small' : 'px-2.5 py-[7px] text-small',
+              'cursor-pointer rounded-[5px] border-none text-small leading-none font-medium whitespace-nowrap transition-colors',
+              size === 'sm' ? 'px-[9px] py-[5px]' : 'px-2.5 py-1.5',
               on ? 'bg-ink-600 text-text-primary' : 'bg-transparent text-text-muted hover:text-text-secondary',
             )}
           >
@@ -400,7 +407,7 @@ export function Badge({
   return (
     <span
       className={cx(
-        'inline-flex flex-none items-center rounded-[4px] border px-[5px] py-[3px] font-mono text-micro font-medium tracking-[0.08em] whitespace-nowrap',
+        'inline-flex flex-none items-center rounded-[4px] border px-[5px] py-[3px] font-mono text-micro leading-none font-medium tracking-[0.08em] whitespace-nowrap',
         badgeTones[tone],
         className,
       )}
@@ -429,7 +436,7 @@ export function DotLabel({
   }
   const [dot, text] = tones[tone].split(' ')
   return (
-    <span className={cx('flex items-center gap-1.5 text-small font-medium', text)}>
+    <span className={cx('flex items-center gap-1.5 text-small leading-none font-medium', text)}>
       <span
         className={cx('h-[5px] w-[5px] flex-none rounded-full', dot, pulse && 'animate-blink')}
       />
@@ -692,9 +699,11 @@ export function Input({
   return (
     <input
       className={cx(
-        'w-full min-w-0 rounded-control border bg-ink-800 px-3 py-2.5 text-base text-text-primary outline-none transition-colors',
-        'placeholder:text-text-disabled focus:border-line-accent',
-        mono && 'font-mono text-small',
+        // One size class, never two: text-base and text-small together left
+        // the winner to stylesheet order.
+        'w-full min-w-0 rounded-control border bg-ink-800 px-[13px] py-3 leading-[normal] text-text-primary outline-none transition-colors',
+        'placeholder:text-text-muted focus:border-line-accent',
+        mono ? 'font-mono text-small' : 'text-base',
         invalid ? 'border-danger-edge' : 'border-line-edge',
         className,
       )}
@@ -710,17 +719,26 @@ export function AmountInput({
   denom = 'LUME',
   invalid,
   placeholder = '0.00',
+  size = 'lg',
 }: {
   value: string
   onChange: (v: string) => void
   denom?: string
   invalid?: boolean
   placeholder?: string
+  /** lg is the transfer and staking figure; the proposal wizard's run a step down. */
+  size?: 'sm' | 'md' | 'lg'
 }) {
+  const figure = {
+    sm: 'py-3 text-[16px] leading-[normal] font-medium',
+    md: 'py-[13px] text-[17px] leading-[normal] font-semibold',
+    lg: 'py-[13px] text-[18px] leading-none font-semibold',
+  }[size]
   return (
     <div
       className={cx(
-        'flex items-center rounded-control border bg-ink-800 px-3',
+        'flex items-center rounded-control border bg-ink-800',
+        size === 'lg' ? 'px-3' : 'px-[13px]',
         invalid ? 'border-danger-edge' : 'border-line-edge focus-within:border-line-accent',
       )}
     >
@@ -729,21 +747,31 @@ export function AmountInput({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value.replace(/[^0-9.]/g, ''))}
-        className="min-w-0 flex-1 border-none bg-transparent py-[13px] font-mono text-[18px] leading-none font-semibold text-text-primary outline-none placeholder:text-text-disabled"
+        className={cx(
+          'min-w-0 flex-1 border-none bg-transparent font-mono text-text-primary outline-none placeholder:text-text-disabled',
+          figure,
+        )}
       />
-      <span className="font-mono text-small font-medium text-text-tertiary">{denom}</span>
+      <span className="font-mono text-small leading-none font-medium text-text-tertiary">{denom}</span>
     </div>
   )
 }
 
-/** 25 / 50 / 75 / MAX. Only shown when there is a balance to take a share of. */
-export function PercentRow({ onPick }: { onPick: (fraction: number) => void }) {
-  const steps: Array<[string, number]> = [
-    ['25%', 0.25],
-    ['50%', 0.5],
-    ['75%', 0.75],
-    ['MAX', 1],
-  ]
+const DEFAULT_STEPS: Array<[string, number]> = [
+  ['25%', 0.25],
+  ['50%', 0.5],
+  ['75%', 0.75],
+  ['MAX', 1],
+]
+
+/** 25 / 50 / 75 / MAX by default. Only shown when there is a balance to take a share of. */
+export function PercentRow({
+  onPick,
+  steps = DEFAULT_STEPS,
+}: {
+  onPick: (fraction: number) => void
+  steps?: Array<[string, number]>
+}) {
   return (
     <div className="flex gap-1.5">
       {steps.map(([label, f]) => (
@@ -751,7 +779,7 @@ export function PercentRow({ onPick }: { onPick: (fraction: number) => void }) {
           key={label}
           type="button"
           onClick={() => onPick(f)}
-          className="flex-1 cursor-pointer rounded-chip border border-line-edge bg-ink-800 py-[7px] font-mono text-small font-medium text-text-muted transition-colors hover:border-line-accent hover:text-lumera-green"
+          className="flex-1 cursor-pointer rounded-chip border border-line-edge bg-ink-800 py-[7px] font-mono text-small leading-none font-medium text-text-muted transition-colors hover:border-line-accent hover:text-lumera-green"
         >
           {label}
         </button>

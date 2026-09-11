@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { NextResponse } from 'next/server';
-import { parseSyndicatedTimeline, type XPost } from '@/utils/x-syndication';
+import { fullSizeAvatar, parseSyndicatedTimeline, type XPost } from '@/utils/x-syndication';
 
 /**
  * Recent posts from the protocol's X account.
@@ -41,6 +41,7 @@ let lastGood: XPost[] | null = null;
 let lastAttemptAt = 0;
 let attemptFailed = false;
 let userIdCache: string | null = null;
+let avatarCache: string | undefined;
 let mintedBearer: string | null = null;
 
 const holdOff = (): boolean => {
@@ -84,15 +85,24 @@ const getBearer = async (): Promise<string | null> => {
 
 const auth = (token: string) => ({ Authorization: `Bearer ${token}`, Accept: 'application/json' });
 
-/** Billed as a user read, and the id never changes, so hold it for a day. */
+/**
+ * Billed as a user read, and neither the id nor the picture changes often, so
+ * both are held for a day. The picture rides on the same call; without it the
+ * card fell back to a monogram whenever the API was the source.
+ */
 const resolveUserId = async (token: string): Promise<string | null> => {
   if (userIdCache) return userIdCache;
-  const res = await fetch(`https://api.x.com/2/users/by/username/${HANDLE}`, {
-    headers: auth(token),
-    next: { revalidate: 86400, tags: ['x-feed-user'] },
-  });
+  const res = await fetch(
+    `https://api.x.com/2/users/by/username/${HANDLE}?user.fields=profile_image_url`,
+    {
+      headers: auth(token),
+      next: { revalidate: 86400, tags: ['x-feed-user'] },
+    },
+  );
   if (!res.ok) return null;
-  userIdCache = (await res.json())?.data?.id ?? null;
+  const user = (await res.json())?.data;
+  userIdCache = user?.id ?? null;
+  avatarCache = fullSizeAvatar(user?.profile_image_url);
   return userIdCache;
 };
 
@@ -125,6 +135,7 @@ const fromApi = async (): Promise<XPost[] | null> => {
   const author = {
     name: 'Lumera Protocol',
     handle: HANDLE,
+    ...(avatarCache ? { avatar: avatarCache } : {}),
     verified: true,
   };
 

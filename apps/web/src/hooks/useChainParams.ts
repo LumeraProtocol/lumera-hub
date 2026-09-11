@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import * as instance from '@/utils/api';
-import { DENOM } from '@/contants/network';
+import { DENOM, subscribeNetworkChange } from '@/contants/network';
 
 /**
  * The chain's own governance, staking and distribution parameters.
@@ -38,6 +38,12 @@ export type ChainParams = {
   minCommissionRate: number | null;
   /** Share of rewards diverted to the community pool, 0-100. */
   communityTax: number | null;
+  /** Whether a vetoed proposal's deposits are burned rather than refunded. */
+  burnVoteVeto: boolean | null;
+  /** Whether a proposal that misses quorum has its deposits burned. */
+  burnVoteQuorum: boolean | null;
+  /** Whether deposits burn when the deposit period closes short of the minimum. */
+  burnDepositPrevote: boolean | null;
 };
 
 const EMPTY: ChainParams = {
@@ -52,6 +58,9 @@ const EMPTY: ChainParams = {
   maxValidators: null,
   minCommissionRate: null,
   communityTax: null,
+  burnVoteVeto: null,
+  burnVoteQuorum: null,
+  burnDepositPrevote: null,
 };
 
 /*
@@ -83,6 +92,14 @@ const intOf = (value: unknown) => positiveOrNull(Number(value));
 let cached: ChainParams | null = null;
 let inFlight: Promise<ChainParams> | null = null;
 
+// The two networks have different quorum, deposit and unbonding parameters, so
+// the shared cache is dropped on a switch rather than shown against the wrong
+// chain.
+subscribeNetworkChange(() => {
+  cached = null;
+  inFlight = null;
+});
+
 const load = async (): Promise<ChainParams> => {
   const [govRes, stakingRes, distRes] = await Promise.allSettled([
     instance.get('/cosmos/gov/v1/params/tallying'),
@@ -109,6 +126,11 @@ const load = async (): Promise<ChainParams> => {
       p.max_deposit_period ?? data.deposit_params?.max_deposit_period,
     );
     next.votingPeriodSeconds = secondsOf(p.voting_period);
+    // Booleans only: an older node without the switch leaves it unknown.
+    const flag = (value: unknown) => (typeof value === 'boolean' ? value : null);
+    next.burnVoteVeto = flag(p.burn_vote_veto);
+    next.burnVoteQuorum = flag(p.burn_vote_quorum);
+    next.burnDepositPrevote = flag(p.burn_proposal_deposit_prevote);
   }
 
   if (stakingRes.status === 'fulfilled') {

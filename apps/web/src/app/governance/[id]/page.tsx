@@ -11,9 +11,13 @@ import useStaking from '@/hooks/useStaking';
 import { RATE_VALUE } from '@/contants';
 import useChainParams, { formatDuration } from '@/hooks/useChainParams';
 import useValidatorLogos from '@/hooks/useValidatorLogos';
+import useAccountInfo from '@/hooks/useAccountInfo';
 import { accountAddressFromValoper } from '@/utils/consensus-address';
 import { dominantVoteTone, formatGovernanceVote } from '@/utils/governance-votes';
+import { getDelegations } from '@/utils/portfolio';
+import { formatNumber } from '@/utils/format';
 import {
+  depositProgress,
   proposalKind,
   readableStatus,
   relativeClock,
@@ -30,13 +34,14 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-const compact = (micro: number) => {
+/** "1.2M LUME". The tally rows pass no unit, as the design prints them. */
+const compact = (micro: number, unit = ' LUME') => {
   const n = micro / RATE_VALUE;
   if (!Number.isFinite(n) || n === 0) return '—';
-  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B LUME`;
-  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M LUME`;
-  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K LUME`;
-  return `${n.toFixed(0)} LUME`;
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B${unit}`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M${unit}`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K${unit}`;
+  return `${n.toFixed(0)}${unit}`;
 };
 
 /** The gov module's numeric vote codes, keyed by the choice the reader picked. */
@@ -64,6 +69,9 @@ export default function Page({ params }: Props) {
   const { bondedTokens, validators } = useStaking();
   const logos = useValidatorLogos(validators);
   const { params: chainParams } = useChainParams();
+  // Voting weight is bonded stake, read for whichever address the hub is on.
+  const { accountInfo } = useAccountInfo(hub.isWatching ? { address: hub.address } : {});
+  const myStake = getDelegations(accountInfo);
 
   const proposals = useProposals({
     customMemo: governance?.title ? `Vote for the ${governance.title}` : '',
@@ -158,33 +166,47 @@ export default function Page({ params }: Props) {
       totalVoted: compact(votedMicro),
       timeline: timelineOf(governance, status),
       voters,
+      // The detail's deposit card had no data to draw from; the chain's own
+      // minimum is the denominator, as on the list.
+      ...(status === 'Deposit' && chainParams.minDepositMicro
+        ? { depositProgress: depositProgress(governance, chainParams.minDepositMicro) }
+        : {}),
       tally: [
         {
           label: 'Yes',
           pct: shares.yes,
-          amount: compact(shares.counts.yes),
+          amount: compact(shares.counts.yes, ''),
           className:
             'bg-[linear-gradient(90deg,var(--color-lumera-teal),var(--color-lumera-green))]',
         },
-        { label: 'No', pct: shares.no, amount: compact(shares.counts.no), className: 'bg-danger' },
+        { label: 'No', pct: shares.no, amount: compact(shares.counts.no, ''), className: 'bg-danger' },
         {
           label: 'Abstain',
           pct: shares.abstain,
-          amount: compact(shares.counts.abstain),
+          amount: compact(shares.counts.abstain, ''),
           className: 'bg-neutral-bar',
         },
         {
           label: 'No with veto',
           pct: shares.veto,
-          amount: compact(shares.counts.veto),
-          className: 'bg-danger-deep',
+          amount: compact(shares.counts.veto, ''),
+          // Amber on the detail, as the design has it, so veto reads apart
+          // from a plain No.
+          className: 'bg-warn',
         },
       ],
       onOpen: () => undefined,
     };
-  }, [bonded, chainParams, governance]);
+    // `voters` resolves after the proposal does; without it here the Voters
+    // card kept whatever the first render had, which was nothing.
+  }, [bonded, chainParams, governance, voters]);
 
   const isDepositPeriod = detail?.status === 'Deposit';
+
+  const votingWeight =
+    hub.hasPosition && myStake
+      ? `${formatNumber(myStake / RATE_VALUE, { decimalsLength: 0, currency: 'en-US' })} LUME`
+      : 'None yet';
 
   return (
     <>
@@ -195,6 +217,7 @@ export default function Page({ params }: Props) {
       <GovernanceDetailScreen
         loading={isLoading}
         proposal={detail}
+        votingWeight={votingWeight}
         onBack={() => router.push('/governance')}
         onVote={() => {
           if (!detail) return;
@@ -223,6 +246,7 @@ export default function Page({ params }: Props) {
         <VoteDrawer
           proposalTitle={detail.title}
           tally={{ yes: detail.yes, no: detail.no, abstain: detail.abstain, veto: detail.veto }}
+          weight={votingWeight}
           onConfirm={(choice) => {
             proposals.handleOptionChange(VOTE_CODE[choice]);
             hub.openDrawer({

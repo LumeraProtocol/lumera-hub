@@ -26,6 +26,13 @@ import { readableStatus } from '@/utils/governance-view';
 const TX_HASH = /^[0-9A-Fa-f]{40,64}$/;
 const BLOCK_HEIGHT = /^#?\d[\d,]{3,}$/;
 
+/** One line of a summary or bio under a result, as the design shows it. */
+const clip = (text: string, max = 180): string | undefined => {
+  const flat = text.replace(/\s+/g, ' ').trim();
+  if (!flat) return undefined;
+  return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}…` : flat;
+};
+
 function SearchPage() {
   const router = useRouter();
   const params = useSearchParams();
@@ -96,9 +103,10 @@ function SearchPage() {
       found.push({
         key: 'validator',
         tag: 'VALIDATOR',
-        tagClass: 'text-text-secondary',
+        tagClass: 'text-text-tertiary',
         title: moniker,
         sub: v.operator_address,
+        body: clip((v.description as { details?: string } | undefined)?.details ?? ''),
         onPick: () => router.push(`/staking/${v.operator_address}`),
       });
     }
@@ -110,9 +118,10 @@ function SearchPage() {
       found.push({
         key: 'proposal',
         tag: 'PROPOSAL',
-        tagClass: 'text-text-secondary',
+        tagClass: 'text-warn',
         title,
         sub: `#${p.id} · ${readableStatus(p.status)}`,
+        body: clip(summary),
         onPick: () => router.push(`/governance/${p.id}`),
       });
     }

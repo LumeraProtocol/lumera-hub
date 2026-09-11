@@ -82,7 +82,44 @@ export const depositProgress = (proposal: IProposal, requiredMicro: number) => {
     have: fmt(have),
     need: fmt(requiredMicro),
     pct: requiredMicro ? Math.min(100, (have / requiredMicro) * 100) : 0,
+    short: have >= requiredMicro ? 'Minimum reached' : `${fmt(requiredMicro - have)} still needed`,
   };
+};
+
+/**
+ * What happens to a proposal's deposits, in the chain's own terms.
+ *
+ * The gov module refunds deposits once voting ends and burns them only where
+ * its params say to: on a veto, on a missed quorum, or when the deposit period
+ * closes short. Those switches differ from chain to chain, so the sentences are
+ * built from them. A switch that did not load leaves its sentence out rather
+ * than guessing.
+ */
+export const depositRules = (
+  params: {
+    burnVoteVeto: boolean | null;
+    burnVoteQuorum: boolean | null;
+    burnDepositPrevote: boolean | null;
+  },
+  minimum: string,
+) => {
+  const burnsWhen = [
+    params.burnVoteVeto ? 'is vetoed' : null,
+    params.burnVoteQuorum ? 'misses quorum' : null,
+  ].filter(Boolean);
+  const refund =
+    params.burnVoteVeto == null || params.burnVoteQuorum == null
+      ? null
+      : burnsWhen.length
+        ? `Deposits are returned when voting ends, unless the proposal ${burnsWhen.join(' or ')}, which burns them.`
+        : 'Deposits are returned when voting ends, whatever the outcome.';
+  const short =
+    params.burnDepositPrevote == null
+      ? null
+      : params.burnDepositPrevote
+        ? `If the deposit period ends short of ${minimum}, every deposit on the proposal is burned.`
+        : `If the deposit period ends short of ${minimum}, the proposal is dropped and every deposit is refunded.`;
+  return { refund, short };
 };
 
 export const toSummary = (

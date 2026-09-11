@@ -55,6 +55,7 @@ export const NETWORK_PROFILES = {
 } as const;
 
 export type NetworkProfile = keyof typeof NETWORK_PROFILES;
+type ProfileConfig = (typeof NETWORK_PROFILES)[NetworkProfile];
 
 const isNetworkProfile = (value: string): value is NetworkProfile => value in NETWORK_PROFILES;
 
@@ -72,129 +73,90 @@ if (!isNetworkProfile(requestedProfile)) {
   );
 }
 
-export const NETWORK_PROFILE: NetworkProfile = requestedProfile;
-
-export const ACTIVE_NETWORK = NETWORK_PROFILES[NETWORK_PROFILE];
-
-// Individual overrides are useful for local nodes and private deployments.
-export const CHAIN_NAME = process.env.NEXT_PUBLIC_CHAIN_NAME || ACTIVE_NETWORK.chainName;
-export const DENOM = process.env.NEXT_PUBLIC_DENOM || ACTIVE_NETWORK.denom;
-export const CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN_ID || ACTIVE_NETWORK.chainId;
-export const RPC_ENDPOINT = process.env.NEXT_PUBLIC_RPC_ENDPOINT || ACTIVE_NETWORK.rpcEndpoint;
-export const REST_AI_URL = process.env.NEXT_PUBLIC_REST_AI_URL || ACTIVE_NETWORK.restEndpoint;
-export const EVM_RPC_ENDPOINT = process.env.NEXT_PUBLIC_EVM_RPC_ENDPOINT || ACTIVE_NETWORK.evmRpcEndpoint;
-export const EVM_WS_ENDPOINT = process.env.NEXT_PUBLIC_EVM_WS_ENDPOINT || ACTIVE_NETWORK.evmWsEndpoint;
-export const EVM_PROFILE_NAME = process.env.NEXT_PUBLIC_EVM_PROFILE_NAME || ACTIVE_NETWORK.evmProfileName;
-export const EVM_CHAIN_ID = process.env.NEXT_PUBLIC_EVM_CHAIN_ID
-  ? Number(process.env.NEXT_PUBLIC_EVM_CHAIN_ID)
-  : ACTIVE_NETWORK.evmChainId;
-export const EVM_NATIVE_DECIMALS = 18;
-export const COSMOS_EIP712_ENABLED = parseBooleanEnvironmentValue(
-  process.env.NEXT_PUBLIC_COSMOS_EIP712_ENABLED,
-  'NEXT_PUBLIC_COSMOS_EIP712_ENABLED'
-);
-
-if (EVM_CHAIN_ID !== null && (!Number.isSafeInteger(EVM_CHAIN_ID) || EVM_CHAIN_ID <= 0)) {
-  throw new Error('NEXT_PUBLIC_EVM_CHAIN_ID must be a positive integer.');
-}
-
-export const IS_EVM_NETWORK = EVM_RPC_ENDPOINT !== null
-  && EVM_CHAIN_ID !== null
-  && EVM_PROFILE_NAME !== null;
-/*
- * Whether the quest service is wired up on this deployment.
- *
- * Foundry and every quest verification run through SNAG, which needs server
- * credentials this repo does not carry. Without them each of those routes
- * answers 500, and they fire during ordinary use — a wallet connect, a
- * delegation, a Cascade upload — so an unconfigured deployment shows errors
- * for work that in fact succeeded.
- *
- * Off unless explicitly switched on, and the API client refuses to call the
- * quest routes at all while it is off. Turn it on with the SNAG_* server
- * variables in place.
- */
-export const SNAG_ENABLED = process.env.NEXT_PUBLIC_SNAG_ENABLED === 'true';
-
-export const SNAPI_URL = process.env.NEXT_PUBLIC_SNAPI_URL || ACTIVE_NETWORK.snapiUrl;
-
 /**
- * Whether the supernode API can be reached from wherever this is running.
- *
- * Every profile defaults SNAPI to localhost:3100, which is correct on a
- * developer's machine and meaningless anywhere else — a deployment served from
- * a real origin asks the *visitor's* machine for it, gets connection refused
- * once per file on the page, and surfaces a global error toast for each.
- *
- * So a localhost SNAPI counts as configured only when the page itself is on
- * localhost. Callers skip the request entirely otherwise: the file sizes it
- * supplies are supplementary, and the rest of Cascade is chain data.
+ * The profile a deployment was built for. It is the default the runtime starts
+ * on, and — when the build is locked to one network (see below) — the only one.
  */
-const LOOPBACK = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+export const DEFAULT_NETWORK_PROFILE: NetworkProfile = requestedProfile;
 
-/** The rule on its own, so it can be tested without a browser or an env. */
-export const snapiReachableFrom = (snapiUrl: string, pageHost: string | null): boolean => {
-  if (!snapiUrl) return false;
+/*
+ * The hub used to ship as two builds — hub.lumera.io and hub.testnet.lumera.io —
+ * each frozen to one network at build time, with the sidebar toggle linking
+ * across to the other. It now serves both from one deployment: the network is a
+ * runtime value the toggle flips in place, and everything that differs between
+ * the two reads the live bindings below.
+ *
+ * A private or local deployment can still pin a single network by setting any
+ * network-specific override (a custom node, chain id, endpoints…). Those
+ * overrides cannot describe two networks at once, so their presence LOCKS the
+ * build to DEFAULT_NETWORK_PROFILE and hides the switch. The public combined
+ * site sets none of them, so switching is on.
+ */
+const ENV = {
+  chainName: process.env.NEXT_PUBLIC_CHAIN_NAME,
+  denom: process.env.NEXT_PUBLIC_DENOM,
+  chainId: process.env.NEXT_PUBLIC_CHAIN_ID,
+  rpcEndpoint: process.env.NEXT_PUBLIC_RPC_ENDPOINT,
+  restEndpoint: process.env.NEXT_PUBLIC_REST_AI_URL,
+  evmRpcEndpoint: process.env.NEXT_PUBLIC_EVM_RPC_ENDPOINT,
+  evmWsEndpoint: process.env.NEXT_PUBLIC_EVM_WS_ENDPOINT,
+  evmProfileName: process.env.NEXT_PUBLIC_EVM_PROFILE_NAME,
+  evmChainId: process.env.NEXT_PUBLIC_EVM_CHAIN_ID,
+  snscopeUrl: process.env.NEXT_PUBLIC_SNSCOPE_URL,
+  portalUrl: process.env.NEXT_PUBLIC_PORTAL_URL,
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+  sdkPreset: process.env.NEXT_PUBLIC_SDK_PRESET,
+  restFallbacks: process.env.NEXT_PUBLIC_REST_FALLBACKS,
+  rpcFallbacks: process.env.NEXT_PUBLIC_RPC_FALLBACKS,
+} as const;
 
-  let host = '';
+/*
+ * True when no network-*identity* override pins this build to one network.
+ *
+ * Only the hard overrides count — the chain, its endpoints, the EVM profile,
+ * the canonical/portal host. `sdkPreset` and `snscopeUrl` are deliberately not
+ * in this set: a dev commonly points them at a testnet node for convenience,
+ * and that should not disable the switch. When switching is on, both follow the
+ * active profile (their env values are read only in a locked build).
+ */
+const LOCK_OVERRIDES = [
+  ENV.chainName,
+  ENV.denom,
+  ENV.chainId,
+  ENV.rpcEndpoint,
+  ENV.restEndpoint,
+  ENV.evmRpcEndpoint,
+  ENV.evmWsEndpoint,
+  ENV.evmProfileName,
+  ENV.evmChainId,
+  ENV.portalUrl,
+  ENV.siteUrl,
+  ENV.restFallbacks,
+  ENV.rpcFallbacks,
+];
+export const NETWORK_SWITCH_ENABLED = !LOCK_OVERRIDES.some(Boolean);
+
+/** The networks the in-app switch offers. Devnet stays env-only. */
+export const AVAILABLE_NETWORKS: NetworkProfile[] = ['mainnet', 'testnet'];
+
+const STORAGE_KEY = 'lumera-hub:network';
+
+const readStoredProfile = (): NetworkProfile | null => {
+  if (!NETWORK_SWITCH_ENABLED || typeof window === 'undefined') return null;
   try {
-    host = new URL(snapiUrl).hostname;
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw && isNetworkProfile(raw) ? raw : null;
   } catch {
-    return false;
+    return null;
   }
-  if (!host) return false;
-
-  if (!LOOPBACK.has(host)) return true;
-  // A loopback SNAPI is only reachable by a page already on the same machine.
-  return pageHost != null && LOOPBACK.has(pageHost);
 };
 
-export const isSnapiReachable = (): boolean =>
-  snapiReachableFrom(SNAPI_URL, typeof window === 'undefined' ? null : window.location.hostname);
-export const SDK_PRESET = process.env.NEXT_PUBLIC_SDK_PRESET || ACTIVE_NETWORK.sdkPreset;
-// Call sites append paths as `${SNSCOPE_URL}/v1/...`; a trailing slash in an
-// override would send `//v1/...`, which path-prefix proxies reject.
-export const SNSCOPE_URL = (process.env.NEXT_PUBLIC_SNSCOPE_URL || ACTIVE_NETWORK.snscopeUrl)
-  .replace(/\/+$/, '');
-// Keyed by network profile (with an env override), not by SDK_PRESET: a
-// private deployment overriding the SDK preset must not have its header
-// Portal link silently repointed.
-export const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || ACTIVE_NETWORK.portalUrl;
-
-// The hub ships as two deployments off one codebase — hub.lumera.io and
-// hub.testnet.lumera.io — distinguished only by NEXT_PUBLIC_NETWORK_PROFILE.
-// Anything that differs between them reads these rather than hardcoding a
-// host, so the mainnet build never advertises testnet URLs and vice versa.
-export const IS_MAINNET = NETWORK_PROFILE === 'mainnet';
-export const IS_TESTNET = !IS_MAINNET;
-
-/** Canonical origin for this deployment. Used for og/canonical metadata. */
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || ACTIVE_NETWORK.siteUrl)
-  .replace(/\/+$/, '');
-
-/** Short label for the network chip and the browser tab. */
-export const NETWORK_LABEL = IS_MAINNET ? 'Mainnet' : ACTIVE_NETWORK.displayName.replace('Lumera ', '');
-
-/**
- * Optional faucet for non-mainnet deployments. Unset means no faucet exists
- * yet, and the nav simply does not offer one — better than a link that 404s.
- */
-export const FAUCET_URL = IS_TESTNET ? (process.env.NEXT_PUBLIC_FAUCET_URL || '') : '';
-
-/*
- * The in-app faucet, which needs two things this repo cannot supply.
- *
- * FAUCET_API is a service holding a funded account: the hub posts an address to
- * it and it signs and broadcasts. FAUCET_ADDRESS is that account's address,
- * used only to read its recent sends back off the chain for the drip log — the
- * log works on its own, so a deployment can show real history even before the
- * sending half exists.
- *
- * Both are mainnet-blind on purpose. There is no free mainnet LUME, and a
- * faucet offered there would be a scam-shaped hole.
- */
-export const FAUCET_API = IS_TESTNET ? (process.env.NEXT_PUBLIC_FAUCET_API || '') : '';
-export const FAUCET_ADDRESS = IS_TESTNET ? (process.env.NEXT_PUBLIC_FAUCET_ADDRESS || '') : '';
+const dedupe = (values: string[]) => {
+  const seen = new Set<string>();
+  return values
+    .map((v) => v.replace(/\/+$/, ''))
+    .filter((v) => v && !seen.has(v) && (seen.add(v), true));
+};
 
 /*
  * Community fallback endpoints.
@@ -205,10 +167,6 @@ export const FAUCET_ADDRESS = IS_TESTNET ? (process.env.NEXT_PUBLIC_FAUCET_ADDRE
  * resources page publishes independently operated nodes; these are the ones
  * that answered with a permissive CORS header, which is the binding constraint
  * because the hub calls them straight from the browser.
- *
- * Order is by measured latency at the time of writing. `api.ts` walks the list
- * and remembers whichever host answers, so a dead primary costs one failed
- * request per session rather than breaking the page.
  *
  * Endpoints without `access-control-allow-origin: *` are deliberately absent
  * even when healthy — Encapsulate and Decentrio on mainnet, Decentrio on
@@ -221,8 +179,6 @@ const REST_FALLBACKS: Record<NetworkProfile, string[]> = {
     'https://lumera-rest.publicnode.com',
     'https://lumera-rest.stakerhouse.com',
     'https://lumera-mainnet-api.corenodehq.xyz',
-    // The official host trails the community pool rather than leading it: it
-    // was returning 504 for an afternoon, and everything queued behind it.
     'https://lcd.lumera.io',
   ],
   testnet: [
@@ -252,43 +208,183 @@ const RPC_FALLBACKS: Record<NetworkProfile, string[]> = {
   devnet: [],
 };
 
-const dedupe = (values: string[]) => {
-  const seen = new Set<string>();
-  return values
-    .map((v) => v.replace(/\/+$/, ''))
-    .filter((v) => v && !seen.has(v) && (seen.add(v), true));
+/*
+ * Network-varying values, exported as live bindings.
+ *
+ * Every consumer imports these by name and reads them at call time, so
+ * reassigning them in `applyProfile` propagates to the whole app (ES module
+ * live bindings). Anything that snapshots one at module load — `api.ts`'s host
+ * cursor, the chain-params cache — resets on switch via `subscribeNetworkChange`
+ * instead. Nothing here is `const`, on purpose.
+ */
+export let NETWORK_PROFILE: NetworkProfile = DEFAULT_NETWORK_PROFILE;
+export let ACTIVE_NETWORK: ProfileConfig = NETWORK_PROFILES[DEFAULT_NETWORK_PROFILE];
+export let CHAIN_NAME: string = ACTIVE_NETWORK.chainName;
+export let DENOM: string = ACTIVE_NETWORK.denom;
+export let CHAIN_ID: string = ACTIVE_NETWORK.chainId;
+export let RPC_ENDPOINT: string = ACTIVE_NETWORK.rpcEndpoint;
+export let REST_AI_URL: string = ACTIVE_NETWORK.restEndpoint;
+export let EVM_RPC_ENDPOINT: string | null = ACTIVE_NETWORK.evmRpcEndpoint;
+export let EVM_WS_ENDPOINT: string | null = ACTIVE_NETWORK.evmWsEndpoint;
+export let EVM_PROFILE_NAME: string | null = ACTIVE_NETWORK.evmProfileName;
+export let EVM_CHAIN_ID: number | null = ACTIVE_NETWORK.evmChainId;
+export let IS_EVM_NETWORK = false;
+export let SNSCOPE_URL: string = ACTIVE_NETWORK.snscopeUrl;
+export let PORTAL_URL: string = ACTIVE_NETWORK.portalUrl;
+export let SDK_PRESET: string = ACTIVE_NETWORK.sdkPreset;
+export let SITE_URL: string = ACTIVE_NETWORK.siteUrl;
+export let IS_MAINNET = DEFAULT_NETWORK_PROFILE === 'mainnet';
+export let IS_TESTNET = !IS_MAINNET;
+export let NETWORK_LABEL = 'Mainnet';
+export let FAUCET_URL = '';
+export let FAUCET_API = '';
+export let FAUCET_ADDRESS = '';
+export let REST_ENDPOINTS: string[] = [];
+export let RPC_ENDPOINTS: string[] = [];
+
+const clampEvmChainId = (value: number | null): number | null => {
+  if (value == null) return null;
+  return Number.isSafeInteger(value) && value > 0 ? value : null;
 };
 
-/**
- * Every REST host the hub may read from, primary first.
- *
- * An explicit NEXT_PUBLIC_REST_AI_URL override always leads: a private
- * deployment pointing at its own node must not silently fall through to a
- * public one. Set NEXT_PUBLIC_REST_FALLBACKS to a comma-separated list to
- * replace the community set entirely.
- */
-export const REST_ENDPOINTS = dedupe([
-  REST_AI_URL,
-  ...(process.env.NEXT_PUBLIC_REST_FALLBACKS
-    ? process.env.NEXT_PUBLIC_REST_FALLBACKS.split(',').map((v) => v.trim())
-    : REST_FALLBACKS[NETWORK_PROFILE]),
-]);
+/** Recompute every network-varying binding for `profile`. */
+const applyProfile = (profile: NetworkProfile) => {
+  const locked = !NETWORK_SWITCH_ENABLED;
+  const p = NETWORK_PROFILES[profile];
 
-/** Every RPC host, primary first. Same override rules as REST_ENDPOINTS. */
-export const RPC_ENDPOINTS = dedupe([
-  RPC_ENDPOINT,
-  ...(process.env.NEXT_PUBLIC_RPC_FALLBACKS
-    ? process.env.NEXT_PUBLIC_RPC_FALLBACKS.split(',').map((v) => v.trim())
-    : RPC_FALLBACKS[NETWORK_PROFILE]),
-]);
+  NETWORK_PROFILE = profile;
+  ACTIVE_NETWORK = p;
+  CHAIN_NAME = (locked && ENV.chainName) || p.chainName;
+  DENOM = (locked && ENV.denom) || p.denom;
+  CHAIN_ID = (locked && ENV.chainId) || p.chainId;
+  RPC_ENDPOINT = (locked && ENV.rpcEndpoint) || p.rpcEndpoint;
+  REST_AI_URL = (locked && ENV.restEndpoint) || p.restEndpoint;
+  EVM_RPC_ENDPOINT = (locked && ENV.evmRpcEndpoint) || p.evmRpcEndpoint;
+  EVM_WS_ENDPOINT = (locked && ENV.evmWsEndpoint) || p.evmWsEndpoint;
+  EVM_PROFILE_NAME = (locked && ENV.evmProfileName) || p.evmProfileName;
+  EVM_CHAIN_ID = clampEvmChainId(
+    locked && ENV.evmChainId ? Number(ENV.evmChainId) : p.evmChainId,
+  );
+  IS_EVM_NETWORK =
+    EVM_RPC_ENDPOINT !== null && EVM_CHAIN_ID !== null && EVM_PROFILE_NAME !== null;
+  SNSCOPE_URL = ((locked && ENV.snscopeUrl) || p.snscopeUrl).replace(/\/+$/, '');
+  PORTAL_URL = (locked && ENV.portalUrl) || p.portalUrl;
+  SDK_PRESET = (locked && ENV.sdkPreset) || p.sdkPreset;
+  SITE_URL = ((locked && ENV.siteUrl) || p.siteUrl).replace(/\/+$/, '');
+
+  IS_MAINNET = profile === 'mainnet';
+  IS_TESTNET = !IS_MAINNET;
+  NETWORK_LABEL = IS_MAINNET ? 'Mainnet' : p.displayName.replace('Lumera ', '');
+
+  // Mainnet-blind: there is no free mainnet LUME, so a faucet there would be a
+  // scam-shaped hole.
+  FAUCET_URL = IS_TESTNET ? (process.env.NEXT_PUBLIC_FAUCET_URL || '') : '';
+  FAUCET_API = IS_TESTNET ? (process.env.NEXT_PUBLIC_FAUCET_API || '/api/faucet') : '';
+  FAUCET_ADDRESS = IS_TESTNET ? (process.env.NEXT_PUBLIC_FAUCET_ADDRESS || '') : '';
+
+  const restFallbacks =
+    locked && ENV.restFallbacks
+      ? ENV.restFallbacks.split(',').map((v) => v.trim())
+      : REST_FALLBACKS[profile];
+  const rpcFallbacks =
+    locked && ENV.rpcFallbacks
+      ? ENV.rpcFallbacks.split(',').map((v) => v.trim())
+      : RPC_FALLBACKS[profile];
+  REST_ENDPOINTS = dedupe([REST_AI_URL, ...restFallbacks]);
+  RPC_ENDPOINTS = dedupe([RPC_ENDPOINT, ...rpcFallbacks]);
+};
+
+// Start on the stored choice when switching is on, else the built profile.
+applyProfile(readStoredProfile() ?? DEFAULT_NETWORK_PROFILE);
+
+/* ---------------------------------------------------------- runtime switch */
+
+type NetworkListener = () => void;
+const listeners = new Set<NetworkListener>();
 
 /**
- * The sibling deployment, for the sidebar's network switch.
- *
- * The hub ships as two builds, so switching network means going to the other
- * one rather than swapping an endpoint in place — the chain ID, wallet chain
- * registry and explorer all differ. Set NEXT_PUBLIC_SIBLING_HUB_URL on each
- * deployment to point at the other; unset, the switch is not offered rather
- * than linking somewhere that may not exist.
+ * Register a callback for every network switch. Modules that snapshot a
+ * network-varying value at load (host failover cursor, param caches) use this
+ * to clear that state so the next read reflects the new network. Returns an
+ * unsubscribe.
  */
-export const SIBLING_HUB_URL = process.env.NEXT_PUBLIC_SIBLING_HUB_URL || '';
+export const subscribeNetworkChange = (cb: NetworkListener): (() => void) => {
+  listeners.add(cb);
+  return () => {
+    listeners.delete(cb);
+  };
+};
+
+export const getNetworkProfile = (): NetworkProfile => NETWORK_PROFILE;
+
+/**
+ * Switch the active network in place. Persists the choice, recomputes every
+ * live binding, and notifies subscribers. Returns false (a no-op) when the
+ * build is locked to one network, the profile is unknown, or it is already
+ * active — the caller can skip the wallet teardown and remount in that case.
+ */
+export const setNetworkProfile = (profile: string): boolean => {
+  if (!NETWORK_SWITCH_ENABLED) return false;
+  if (!isNetworkProfile(profile) || profile === NETWORK_PROFILE) return false;
+
+  applyProfile(profile);
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, profile);
+    } catch {
+      // A viewer with storage blocked still switches for this session; the
+      // choice just will not survive a reload.
+    }
+  }
+  listeners.forEach((cb) => cb());
+  return true;
+};
+
+/* ------------------------------------------------------- global (invariant) */
+
+export const EVM_NATIVE_DECIMALS = 18;
+export const COSMOS_EIP712_ENABLED = parseBooleanEnvironmentValue(
+  process.env.NEXT_PUBLIC_COSMOS_EIP712_ENABLED,
+  'NEXT_PUBLIC_COSMOS_EIP712_ENABLED'
+);
+
+/*
+ * Whether the quest service is wired up on this deployment.
+ *
+ * Foundry and every quest verification run through SNAG, which needs server
+ * credentials this repo does not carry. Off unless explicitly switched on, and
+ * the API client refuses to call the quest routes while it is off.
+ */
+export const SNAG_ENABLED = process.env.NEXT_PUBLIC_SNAG_ENABLED === 'true';
+
+export const SNAPI_URL = process.env.NEXT_PUBLIC_SNAPI_URL || 'http://localhost:3100';
+
+/**
+ * Whether the supernode API can be reached from wherever this is running.
+ *
+ * SNAPI defaults to localhost:3100, which is correct on a developer's machine
+ * and meaningless anywhere else — a deployment served from a real origin asks
+ * the *visitor's* machine for it, gets connection refused once per file, and
+ * surfaces a global error toast for each. So a localhost SNAPI counts as
+ * configured only when the page itself is on localhost.
+ */
+const LOOPBACK = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+
+/** The rule on its own, so it can be tested without a browser or an env. */
+export const snapiReachableFrom = (snapiUrl: string, pageHost: string | null): boolean => {
+  if (!snapiUrl) return false;
+
+  let host = '';
+  try {
+    host = new URL(snapiUrl).hostname;
+  } catch {
+    return false;
+  }
+  if (!host) return false;
+
+  if (!LOOPBACK.has(host)) return true;
+  return pageHost != null && LOOPBACK.has(pageHost);
+};
+
+export const isSnapiReachable = (): boolean =>
+  snapiReachableFrom(SNAPI_URL, typeof window === 'undefined' ? null : window.location.hostname);

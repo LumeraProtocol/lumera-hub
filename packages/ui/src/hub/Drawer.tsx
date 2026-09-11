@@ -11,9 +11,23 @@
  */
 
 import React, { useEffect, useRef } from 'react'
-import { Button, cx, Label } from '../design/primitives'
+import { cx, Label } from '../design/primitives'
 import { CloseIcon } from '../design/icons'
 import { useHub, type Intent } from './session'
+
+/**
+ * The design's drawer footer buttons. The secondary keeps its width and the
+ * primary takes the rest; both set their label at line-height 1, which the
+ * shared Button sizes do not.
+ */
+export const drawerButton = {
+  secondary:
+    'flex-none cursor-pointer rounded-control border border-line-edge bg-transparent px-5 py-[13px] text-base leading-none font-medium text-text-secondary transition-colors hover:border-line-accent',
+  secondaryWide:
+    'flex-1 cursor-pointer rounded-control border border-line-edge bg-transparent py-[13px] text-base leading-none font-medium text-text-secondary transition-colors hover:border-line-accent',
+  primary:
+    'flex-1 cursor-pointer rounded-control border-none bg-lumera-green py-[13px] text-base leading-none font-semibold text-ink-800 transition-colors hover:bg-lumera-green-bright disabled:cursor-not-allowed disabled:bg-ink-500 disabled:text-text-disabled',
+}
 
 export function Drawer({
   title,
@@ -223,8 +237,8 @@ export function TxFlow({
             key={i}
             className="flex items-baseline justify-between gap-4 border-b border-ink-500 px-3.5 py-3 last:border-b-0"
           >
-            <span className="flex-none text-base text-text-muted">{r.k}</span>
-            <span className={cx('text-right font-mono text-base font-medium tnum', r.tone)}>
+            <span className="flex-none text-base leading-none text-text-muted">{r.k}</span>
+            <span className={cx('text-right font-mono text-base leading-none font-medium tnum', r.tone)}>
               {r.v}
             </span>
           </div>
@@ -235,7 +249,7 @@ export function TxFlow({
         <button
           type="button"
           onClick={() => setAdvanced((a) => !a)}
-          className="cursor-pointer self-start border-none bg-transparent p-0 text-small font-medium text-text-muted hover:text-lumera-green"
+          className="cursor-pointer self-start border-none bg-transparent p-0 text-small leading-none font-medium text-text-muted hover:text-lumera-green"
         >
           {advanced ? '− Advanced' : '+ Advanced · fee, gas, memo'}
         </button>
@@ -287,7 +301,7 @@ export function TxFlow({
 
       {step === 'done' && outcome === 'success' ? (
         <div className="flex flex-col gap-[11px] rounded-[9px] border border-line-accent bg-lumera-teal/10 p-[15px]">
-          <span className="text-base font-semibold text-lumera-green">
+          <span className="text-base leading-none font-semibold text-lumera-green">
             {blockHeight ? `Confirmed in block ${blockHeight}` : 'Broadcast to the network'}
           </span>
           {!blockHeight ? (
@@ -322,7 +336,7 @@ export function TxFlow({
               href={explorerUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-base font-medium text-lumera-green"
+              className="text-base leading-none font-medium text-lumera-green"
             >
               View in explorer →
             </a>
@@ -332,7 +346,24 @@ export function TxFlow({
 
       {step === 'done' && outcome === 'rejected' ? (
         <div className="flex flex-col gap-[11px] rounded-[9px] border border-warn-edge bg-warn/8 p-[15px]">
-          <span className="text-base font-semibold text-warn">You declined the signature</span>
+          <div className="flex items-center gap-[9px]">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--color-warn)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="flex-none"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v5" />
+              <path d="M12 16.5v.01" />
+            </svg>
+            <span className="text-base leading-none font-semibold text-warn">You declined the signature</span>
+          </div>
           <p className="m-0 text-base leading-[1.6] text-text-secondary text-pretty">
             Nothing was broadcast and nothing was spent — not even the network fee. Your balances
             are unchanged.
@@ -346,7 +377,24 @@ export function TxFlow({
 
       {step === 'done' && outcome === 'failed' ? (
         <div className="flex flex-col gap-[11px] rounded-[9px] border border-danger-edge bg-danger/8 p-[15px]">
-          <span className="text-base font-semibold text-danger">Rejected by the chain</span>
+          <div className="flex items-center gap-[9px]">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--color-danger)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="flex-none"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="m15 9-6 6" />
+              <path d="m9 9 6 6" />
+            </svg>
+            <span className="text-base leading-none font-semibold text-danger">Rejected by the chain</span>
+          </div>
           <p className="m-0 text-base leading-[1.6] text-text-secondary text-pretty">
             {blockHeight
               ? `The transaction reached block ${blockHeight} but did not complete. The fee was still charged.`
@@ -370,7 +418,7 @@ export function TxFlow({
               href={explorerUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-base font-medium text-lumera-green"
+              className="text-base leading-none font-medium text-lumera-green"
             >
               View failed transaction →
             </a>
@@ -410,19 +458,18 @@ export function TxFooter({
   return (
     <>
       {showCancel ? (
-        <Button variant="outline" size="lg" onClick={onCancel} className="flex-none px-5">
+        <button type="button" onClick={onCancel} className={drawerButton.secondary}>
           Cancel
-        </Button>
+        </button>
       ) : null}
-      <Button
-        variant="solid"
-        size="lg"
-        full
+      <button
+        type="button"
         onClick={onAdvance}
         disabled={disabled || step === 'signing'}
+        className={drawerButton.primary}
       >
         {label}
-      </Button>
+      </button>
     </>
   )
 }
@@ -458,7 +505,7 @@ export function ToastStack() {
               t.tone === 'error' ? 'bg-danger' : t.tone === 'warn' ? 'bg-warn' : 'bg-lumera-green',
             )}
           />
-          <span className="text-base font-medium text-text-primary">{t.message}</span>
+          <span className="text-base leading-none font-medium text-text-primary">{t.message}</span>
         </button>
       ))}
     </div>

@@ -449,7 +449,6 @@ function CascadeBody({
         mapNodes={mapNodes}
         regions={regions}
         liveSites={liveSites}
-        located={markers?.length || 0}
         onUpload={() => hub.gate(UPLOAD_INTENT, () => picker.current?.click())}
         onDropFiles={(dropped) => hub.gate(UPLOAD_INTENT, () => takeFiles(dropped))}
         isPreparing={(isUploading && !started) || !!pendingFiles}

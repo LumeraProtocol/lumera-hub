@@ -58,7 +58,7 @@ export type ValidatorRow = {
 
 export type StakingMode = 'delegate' | 'undelegate' | 'redelegate'
 
-const GRID = 'minmax(180px,1fr) 132px 68px 74px 84px 58px'
+const GRID = 'minmax(190px,1fr) 132px 74px 74px 92px 58px'
 
 export function StakingScreen({
   loading,
@@ -82,6 +82,8 @@ export function StakingScreen({
   onOpenProfile,
   maxRedelegationEntries,
   minCommissionRate,
+  lockDate,
+  pairUsed,
 }: {
   loading?: boolean
   validators: ValidatorRow[]
@@ -105,6 +107,10 @@ export function StakingScreen({
   maxRedelegationEntries?: number | null
   /** staking params min_commission_rate, 0–100. */
   minCommissionRate?: number | null
+  /** When redelegated stake could next move, i.e. now plus the unbonding period. */
+  lockDate?: string | null
+  /** Redelegations already open between the chosen pair, when it could be read. */
+  pairUsed?: number | null
 }) {
   const hub = useHub()
   const [sort, setSort] = useState<'power' | 'apr' | 'commission'>('power')
@@ -129,15 +135,34 @@ export function StakingScreen({
   const amountNumber = parseFloat(amount.replace(/,/g, '')) || 0
   const availableDisplay = available / 1e6
   const overAvailable = hub.hasPosition && amountNumber > availableDisplay
+  const availableLabel = availableDisplay.toLocaleString('en-US', { maximumFractionDigits: 2 })
 
   const apr = selected?.apr ?? 0
   const yearly = amountNumber * (apr / 100)
+
+  // What moving the stake does to its yield: the same amount at the two
+  // validators' net rates.
+  const delta =
+    source && selected ? amountNumber * (((selected.apr ?? 0) - (source.apr ?? 0)) / 100) : 0
 
   const verb = mode === 'undelegate' ? 'Undelegate' : isRedelegate ? 'Redelegate' : 'Delegate'
 
   // Redelegation needs an existing position to move; say so rather than
   // rendering an empty picker.
   const redelegateBlocked = isRedelegate && !mine.length
+
+  const max = maxRedelegationEntries ?? null
+  const used = pairUsed ?? null
+  const slotsLabel =
+    max != null && used != null ? `${Math.max(0, max - used)} of ${max} free` : max != null ? `${max} per pair` : '—'
+  const slotsTone =
+    max != null && used != null
+      ? used >= max - 1
+        ? 'text-danger'
+        : used > 0
+          ? 'text-warn'
+          : 'text-lumera-green'
+      : 'text-text-secondary'
 
   return (
     <div className="animate-fade flex flex-col gap-[18px]">
@@ -155,17 +180,18 @@ export function StakingScreen({
         ]}
       />
 
-      <div className="grid grid-cols-1 items-start gap-3.5 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,1fr)]">
+      <div className="grid grid-cols-1 items-start gap-3.5 xl:grid-cols-2">
         {/* Active set */}
         <Card>
           <div className="flex flex-wrap items-center gap-3 border-b border-line-hairline px-[18px] py-[13px]">
-            <h3 className="m-0 flex-1 text-base font-semibold whitespace-nowrap text-text-primary">
+            <h3 className="m-0 flex-1 text-base leading-none font-semibold whitespace-nowrap text-text-primary">
               Active set{' '}
               <span className="font-normal text-text-muted">{validators.length || ''}</span>
             </h3>
-            <div className="relative min-w-[150px] flex-1 sm:max-w-[210px]">
+            <div className="relative min-w-[150px] flex-1 sm:max-w-[190px]">
               <SearchIcon
                 size={14}
+                strokeWidth={2}
                 className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-text-muted"
               />
               <input
@@ -173,7 +199,7 @@ export function StakingScreen({
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Filter validators"
                 aria-label="Filter validators"
-                className="w-full rounded-inner border border-line-hairline bg-ink-800 py-[7px] pr-2.5 pl-[30px] text-small text-text-primary outline-none placeholder:text-text-disabled focus:border-line-accent"
+                className="w-full rounded-inner border border-line-hairline bg-ink-800 py-1.5 pr-2.5 pl-[30px] text-small leading-[normal] text-text-primary outline-none placeholder:text-text-muted focus:border-line-accent"
               />
             </div>
             <Segmented
@@ -186,8 +212,8 @@ export function StakingScreen({
               ]}
             />
             {minCommissionRate != null ? (
-              <span className="w-full text-small text-text-muted lg:w-auto">
-                Floor {minCommissionRate.toFixed(0)}%
+              <span className="w-full text-small leading-none text-text-muted">
+                Commission floor {minCommissionRate.toFixed(0)}%
               </span>
             ) : null}
           </div>
@@ -196,7 +222,7 @@ export function StakingScreen({
             <div className="min-w-full lg:min-w-[660px]">
               {/* Column heads only make sense once the grid is a table. */}
               <div
-                className="hidden gap-3 border-b border-line-hairline px-[18px] py-[9px] font-mono text-micro font-medium tracking-[0.08em] text-text-muted lg:grid"
+                className="hidden gap-3 border-b border-line-hairline px-[18px] py-[9px] font-mono text-micro leading-none font-medium tracking-[0.08em] text-text-muted lg:grid"
                 style={{ gridTemplateColumns: GRID }}
               >
                 <span>VALIDATOR</span>
@@ -243,30 +269,32 @@ export function StakingScreen({
                       <div className="col-span-2 flex min-w-0 items-center gap-[11px] lg:col-span-1">
                         <Avatar initials={v.initials} src={v.logo} size={28} />
                         <div className="flex min-w-0 flex-col gap-[3px]">
-                          <span className="truncate text-base font-medium text-text-primary">
+                          <span className="truncate text-base leading-none font-medium text-text-primary">
                             {v.name}
                           </span>
-                          <span className="truncate text-small text-text-tertiary">{v.note}</span>
+                          <span className="truncate text-small leading-none text-text-tertiary">
+                            {v.note}
+                          </span>
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-1.5">
-                        <span className="font-mono text-small font-medium tnum text-text-secondary">
+                      <div className="flex flex-col gap-[5px]">
+                        <span className="font-mono text-small leading-none font-medium tnum text-text-secondary">
                           <span className="text-text-muted lg:hidden">Power </span>
                           {v.power.toFixed(2)}%
                         </span>
                         <Bar pct={`${((v.power / leaderPower) * 100).toFixed(0)}%`} height={7} />
                       </div>
 
-                      <span className="text-right font-mono text-base tnum text-text-muted">
+                      <span className="text-right font-mono text-base leading-none tnum text-text-muted">
                         <span className="lg:hidden">Fee </span>
                         {v.commission}%
                       </span>
-                      <span className="text-right font-mono text-base tnum text-text-muted">
+                      <span className="text-right font-mono text-base leading-none tnum text-text-muted">
                         <span className="lg:hidden">Uptime </span>
                         {v.uptime != null ? `${v.uptime.toFixed(2)}%` : '—'}
                       </span>
-                      <span className="text-right font-mono text-base font-medium tnum text-lumera-green">
+                      <span className="text-right font-mono text-base leading-none font-medium tnum text-lumera-green">
                         <span className="text-text-muted lg:hidden">APR </span>
                         {v.apr != null ? `${v.apr.toFixed(1)}%` : '—'}
                       </span>
@@ -278,7 +306,7 @@ export function StakingScreen({
                             onOpenProfile(v.key)
                           }}
                           aria-label={`About ${v.name}`}
-                          className="col-span-2 cursor-pointer justify-self-start rounded-chip border border-line-edge bg-transparent px-[9px] py-1.5 text-small font-medium text-text-tertiary transition-colors hover:border-line-accent hover:text-lumera-green lg:col-span-1 lg:justify-self-end"
+                          className="col-span-2 cursor-pointer justify-self-start rounded-chip border border-line-edge bg-transparent px-[9px] py-1.5 text-small leading-none font-medium text-text-tertiary transition-colors hover:border-line-accent hover:text-lumera-green lg:col-span-1 lg:justify-self-end"
                         >
                           Info
                         </button>
@@ -319,7 +347,7 @@ export function StakingScreen({
                 onClick={() => onModeChange(m)}
                 aria-pressed={mode === m}
                 className={cx(
-                  'flex-1 cursor-pointer rounded-chip border-none py-2 text-small font-semibold capitalize transition-colors',
+                  'flex-1 cursor-pointer rounded-chip border-none py-2 text-small leading-none font-semibold capitalize transition-colors',
                   mode === m
                     ? 'bg-ink-600 text-text-primary'
                     : 'bg-transparent text-text-muted hover:text-text-secondary',
@@ -332,32 +360,31 @@ export function StakingScreen({
 
           <div className="flex flex-col gap-[13px] px-3.5 py-4">
             {redelegateBlocked ? (
-              <Field label="From validator">
-                <EmptyState
-                  title="No delegations to move"
-                  body={
-                    hub.hasPosition
+              <div className="flex flex-col gap-[7px]">
+                <Label>From validator</Label>
+                <div className="flex flex-col items-center gap-[11px] rounded-control border border-dashed border-line-edge bg-ink-800 px-4 py-5 text-center">
+                  <span className="text-base leading-[1.4] font-medium text-text-primary">
+                    No delegations to move
+                  </span>
+                  <span className="text-small leading-[1.55] text-text-muted text-pretty">
+                    {hub.hasPosition
                       ? 'Redelegation moves stake you already hold. Delegate first, then it can be moved without unbonding.'
-                      : 'Redelegation moves stake you already hold. Connect a wallet to see your delegations.'
-                  }
-                  action={
-                    hub.gated ? (
-                      <Button variant="outline" size="sm" onClick={hub.connect}>
-                        Connect wallet
-                      </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" onClick={() => onModeChange('delegate')}>
-                        Delegate instead
-                      </Button>
-                    )
-                  }
-                />
-              </Field>
+                      : 'Redelegation moves stake you already hold. Connect a wallet to see your delegations.'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={hub.gated ? hub.connect : () => onModeChange('delegate')}
+                    className="cursor-pointer rounded-inner border border-line-edge bg-transparent px-3.5 py-2 text-small leading-none font-medium text-text-secondary transition-colors hover:border-line-accent hover:text-lumera-green"
+                  >
+                    {hub.gated ? 'Connect wallet' : 'Delegate instead'}
+                  </button>
+                </div>
+              </div>
             ) : null}
 
             {isRedelegate && mine.length ? (
               <Field label="From validator">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-[5px]">
                   {mine.map((v) => (
                     <button
                       key={v.key}
@@ -365,17 +392,15 @@ export function StakingScreen({
                       onClick={() => onSourceChange(v.key)}
                       aria-pressed={source?.key === v.key}
                       className={cx(
-                        'flex cursor-pointer items-center gap-2.5 rounded-control border px-[11px] py-[9px] text-left transition-colors',
-                        source?.key === v.key
-                          ? 'border-line-accent bg-lumera-teal/14'
-                          : 'border-line-edge bg-transparent hover:border-line-accent',
+                        'flex cursor-pointer items-center gap-2.5 rounded-control border border-line-edge px-[11px] py-[9px] text-left transition-colors hover:border-line-accent',
+                        source?.key === v.key ? 'bg-lumera-teal/14' : 'bg-transparent',
                       )}
                     >
                       <Avatar initials={v.initials} src={v.logo} size={22} rounded={6} />
-                      <span className="flex-1 truncate text-base font-medium text-text-primary">
+                      <span className="flex-1 truncate text-base leading-none font-medium text-text-primary">
                         {v.name}
                       </span>
-                      <span className="font-mono text-small tnum text-text-tertiary">
+                      <span className="font-mono text-small leading-none tnum text-text-tertiary">
                         {(v.mine / 1e6).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                       </span>
                     </button>
@@ -388,10 +413,10 @@ export function StakingScreen({
               {selected ? (
                 <div className="flex items-center gap-2.5 rounded-control border border-line-edge bg-ink-800 px-3 py-2.5">
                   <Avatar initials={selected.initials} src={selected.logo} size={24} rounded={6} />
-                  <span className="flex-1 truncate text-base font-medium text-text-primary">
+                  <span className="flex-1 truncate text-base leading-none font-medium text-text-primary">
                     {selected.name}
                   </span>
-                  <span className="font-mono text-small tnum text-text-tertiary">
+                  <span className="font-mono text-small leading-none tnum text-text-tertiary">
                     {selected.apr != null ? `${selected.apr.toFixed(1)}% APR` : '—'}
                   </span>
                 </div>
@@ -406,7 +431,9 @@ export function StakingScreen({
               label="Amount"
               right={
                 hub.hasPosition
-                  ? `Available ${availableDisplay.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+                  ? isRedelegate && source
+                    ? `At ${source.name} ${availableLabel}`
+                    : `Available ${availableLabel}`
                   : 'Enter any amount to model it'
               }
             >
@@ -428,79 +455,140 @@ export function StakingScreen({
             </Field>
 
             {isRedelegate && source && selected ? (
-              <Well className="p-0">
-                <div className="grid grid-cols-[1fr_62px_62px] gap-2.5 border-b border-line-hairline px-[13px] py-[9px] font-mono text-micro font-medium tracking-[0.08em] text-text-muted">
-                  <span />
-                  <span className="truncate text-right">{source.initials}</span>
-                  <span className="truncate text-right">{selected.initials}</span>
-                </div>
-                {[
-                  {
-                    k: 'Commission',
-                    from: `${source.commission}%`,
-                    to: `${selected.commission}%`,
-                    better: selected.commission < source.commission,
-                    worse: selected.commission > source.commission,
-                  },
-                  {
-                    k: 'Net APR',
-                    from: source.apr != null ? `${source.apr.toFixed(1)}%` : '—',
-                    to: selected.apr != null ? `${selected.apr.toFixed(1)}%` : '—',
-                    better: (selected.apr ?? 0) > (source.apr ?? 0),
-                    worse: (selected.apr ?? 0) < (source.apr ?? 0),
-                  },
-                  {
-                    k: 'Uptime',
-                    from: source.uptime != null ? `${source.uptime.toFixed(2)}%` : '—',
-                    to: selected.uptime != null ? `${selected.uptime.toFixed(2)}%` : '—',
-                    better:
-                      source.uptime != null &&
-                      selected.uptime != null &&
-                      selected.uptime >= source.uptime,
-                    worse:
-                      source.uptime != null &&
-                      selected.uptime != null &&
-                      selected.uptime < source.uptime,
-                  },
-                ].map((r) => (
-                  <div
-                    key={r.k}
-                    className="grid grid-cols-[1fr_62px_62px] gap-2.5 border-b border-ink-500 px-[13px] py-[9px] last:border-b-0"
-                  >
-                    <span className="text-small text-text-muted">{r.k}</span>
-                    <span className="text-right font-mono text-small tnum text-text-tertiary">
-                      {r.from}
+              <>
+                <div className="overflow-hidden rounded-control border border-line-hairline bg-ink-800">
+                  <div className="grid grid-cols-[1fr_62px_62px] gap-2.5 border-b border-line-hairline px-[13px] py-[9px] font-mono text-micro leading-none font-medium tracking-[0.08em] text-text-muted">
+                    <span />
+                    <span className="truncate text-right" title={source.name}>
+                      {source.name}
                     </span>
-                    <span
-                      className={cx(
-                        'text-right font-mono text-small font-semibold tnum',
-                        r.better ? 'text-lumera-green' : r.worse ? 'text-danger' : 'text-text-secondary',
-                      )}
-                    >
-                      {r.to}
+                    <span className="truncate text-right" title={selected.name}>
+                      {selected.name}
                     </span>
                   </div>
-                ))}
-              </Well>
+                  {[
+                    {
+                      k: 'Commission',
+                      from: `${source.commission}%`,
+                      to: `${selected.commission}%`,
+                      better: selected.commission < source.commission,
+                      worse: selected.commission > source.commission,
+                    },
+                    {
+                      k: 'Net APR',
+                      from: source.apr != null ? `${source.apr.toFixed(1)}%` : '—',
+                      to: selected.apr != null ? `${selected.apr.toFixed(1)}%` : '—',
+                      better: (selected.apr ?? 0) > (source.apr ?? 0),
+                      worse: (selected.apr ?? 0) < (source.apr ?? 0),
+                    },
+                    {
+                      k: 'Uptime',
+                      from: source.uptime != null ? `${source.uptime.toFixed(2)}%` : '—',
+                      to: selected.uptime != null ? `${selected.uptime.toFixed(2)}%` : '—',
+                      better:
+                        source.uptime != null &&
+                        selected.uptime != null &&
+                        selected.uptime >= source.uptime,
+                      worse:
+                        source.uptime != null &&
+                        selected.uptime != null &&
+                        selected.uptime < source.uptime,
+                    },
+                  ].map((r) => (
+                    <div
+                      key={r.k}
+                      className="grid grid-cols-[1fr_62px_62px] gap-2.5 border-b border-ink-500 px-[13px] py-[9px]"
+                    >
+                      <span className="text-small leading-none text-text-muted">{r.k}</span>
+                      <span className="text-right font-mono text-small leading-none tnum text-text-tertiary">
+                        {r.from}
+                      </span>
+                      <span
+                        className={cx(
+                          'text-right font-mono text-small leading-none font-semibold tnum',
+                          r.better ? 'text-lumera-green' : r.worse ? 'text-danger' : 'text-text-secondary',
+                        )}
+                      >
+                        {r.to}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex flex-col gap-1.5 px-[13px] py-[11px]">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-small leading-none text-text-muted">Change in yield</span>
+                      <span
+                        className={cx(
+                          'font-mono text-base leading-none font-semibold tnum',
+                          delta > 0 ? 'text-lumera-green' : delta < 0 ? 'text-danger' : 'text-text-secondary',
+                        )}
+                      >
+                        {delta >= 0 ? '+' : ''}
+                        {delta.toFixed(2)} {denom} / yr
+                      </span>
+                    </div>
+                    <span className="text-small leading-[1.5] text-text-muted text-pretty">
+                      {amountNumber > 0
+                        ? delta > 0
+                          ? 'Moving this stake earns more at the same risk.'
+                          : delta < 0
+                            ? 'This move costs yield. Worth it only for uptime or decentralisation.'
+                            : 'Same net yield at both validators.'
+                        : 'Enter an amount to see the difference.'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-[9px] rounded-control border border-line-hairline bg-ink-800 px-[13px] py-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-small leading-none text-text-muted">Unbonding</span>
+                    <span className="text-base leading-none font-semibold text-lumera-green">
+                      None — instant
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-small leading-none text-text-muted">
+                      Moved amount locked until
+                    </span>
+                    <span className="font-mono text-base leading-none font-medium text-warn">
+                      {lockDate ?? '—'}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-small leading-none text-text-muted">Slots for this pair</span>
+                    <span className={cx('font-mono text-base leading-none font-medium', slotsTone)}>
+                      {slotsLabel}
+                    </span>
+                  </div>
+                  <div className="h-px bg-line-hairline" />
+                  <span className="text-small leading-[1.5] text-text-muted text-pretty">
+                    Rewards keep accruing throughout.{' '}
+                    {max != null
+                      ? used
+                        ? `${used === 1 ? 'One move is' : `${used} moves are`} already open between these two. Each pair allows ${max} at a time.`
+                        : `Each validator pair allows ${max} concurrent redelegations.`
+                      : ''}
+                  </span>
+                </div>
+              </>
             ) : null}
 
             <Well className="flex flex-col gap-[9px]">
               <div className="flex items-baseline justify-between">
-                <span className="text-small text-text-muted">Rewards / month</span>
-                <span className="font-mono text-base font-semibold tnum text-lumera-green">
+                <span className="text-small leading-none text-text-muted">Rewards / month</span>
+                <span className="font-mono text-base leading-none font-semibold tnum text-lumera-green">
                   {(yearly / 12).toFixed(2)} {denom}
                 </span>
               </div>
               <div className="flex items-baseline justify-between">
-                <span className="text-small text-text-muted">Rewards / year</span>
-                <span className="font-mono text-base font-medium tnum text-text-secondary">
+                <span className="text-small leading-none text-text-muted">Rewards / year</span>
+                <span className="font-mono text-base leading-none font-medium tnum text-text-secondary">
                   {yearly.toFixed(2)} {denom}
                 </span>
               </div>
               <div className="h-px bg-line-hairline" />
               <div className="flex items-baseline justify-between">
-                <span className="text-small text-text-muted">Network fee</span>
-                <span className="text-small text-text-muted">Estimated at signing</span>
+                <span className="text-small leading-none text-text-muted">Network fee</span>
+                <span className="text-small leading-none text-text-muted">Estimated at signing</span>
               </div>
               {mode === 'undelegate' ? (
                 <>
@@ -508,18 +596,6 @@ export function StakingScreen({
                   <span className="text-small leading-[1.5] text-text-muted text-pretty">
                     Unbonding stops earning immediately and the stake stays locked for{' '}
                     {unbondingDays} before it returns to your liquid balance.
-                  </span>
-                </>
-              ) : isRedelegate ? (
-                <>
-                  <div className="h-px bg-line-hairline" />
-                  <span className="text-small leading-[1.5] text-text-muted text-pretty">
-                    Redelegation is instant and skips unbonding, so rewards keep accruing. The same
-                    stake cannot be moved again until the unbonding period elapses
-                    {maxRedelegationEntries
-                      ? `, and each validator pair allows ${maxRedelegationEntries} at a time`
-                      : ''}
-                    .
                   </span>
                 </>
               ) : null}
@@ -533,7 +609,7 @@ export function StakingScreen({
                   : isRedelegate
                     ? `your stake at ${source?.name ?? 'that validator'}`
                     : 'your liquid balance'}{' '}
-                of {availableDisplay.toLocaleString('en-US', { maximumFractionDigits: 2 })} {denom}.
+                of {availableLabel} {denom}.
               </Notice>
             ) : null}
 

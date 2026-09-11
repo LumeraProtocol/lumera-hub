@@ -17,7 +17,7 @@ import React, { useState } from 'react'
 import useConnectWallet from '@/hooks/useConnectWallet'
 import { useHub, LUMERA_ADDRESS } from '@lumera-hub/ui/src/hub/session'
 import { Drawer, IntentBanner } from '@lumera-hub/ui/src/hub/Drawer'
-import { Button, Field, Input, Label, cx } from '@lumera-hub/ui/src/design/primitives'
+import { Button, Field, Input, cx } from '@lumera-hub/ui/src/design/primitives'
 import { EyeIcon } from '@lumera-hub/ui/src/design/icons'
 
 const KEPLR_WALLET_NAME = 'keplr-extension'
@@ -87,16 +87,21 @@ export function ConnectDrawer() {
                 if (ok) hub.closeDrawer()
               })
             }}
-            className="flex w-full cursor-pointer items-center gap-3 rounded-[9px] border border-line-edge bg-ink-800 px-3.5 py-[13px] text-left transition-colors hover:border-line-accent hover:bg-ink-600"
+            className="flex w-full cursor-pointer items-center gap-[13px] rounded-[9px] border border-line-edge bg-ink-800 px-3.5 py-[13px] text-left transition-colors hover:border-line-accent hover:bg-ink-600"
           >
-            <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-control border border-line-edge bg-ink-600 font-mono text-small font-semibold text-lumera-green">
+            <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-control border border-line-edge bg-ink-600 font-mono text-small leading-none font-semibold text-lumera-green">
               {w.initials}
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
-              <span className="text-base font-medium text-text-primary">{w.name}</span>
-              <span className="text-small text-text-tertiary">{w.note}</span>
+              <span className="text-base leading-none font-medium text-text-primary">{w.name}</span>
+              <span className="text-small leading-none text-text-tertiary">{w.note}</span>
             </span>
-            <span className="flex-none text-small text-text-muted">
+            <span
+              className={cx(
+                'flex-none leading-none text-text-muted',
+                connectingWallet === w.key ? 'text-small' : 'text-lg',
+              )}
+            >
               {connectingWallet === w.key ? 'Connecting…' : '›'}
             </span>
           </button>
@@ -107,9 +112,9 @@ export function ConnectDrawer() {
         <span className="text-small leading-[1.5] text-danger text-pretty">{connectError}</span>
       ) : null}
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 py-0.5">
         <span className="h-px flex-1 bg-line-hairline" />
-        <Label>or look without signing</Label>
+        <span className="text-small leading-none text-text-muted">or keep browsing</span>
         <span className="h-px flex-1 bg-line-hairline" />
       </div>
 

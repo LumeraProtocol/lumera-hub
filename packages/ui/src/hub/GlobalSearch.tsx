@@ -21,6 +21,8 @@ export type SearchHit = {
   tagClass: string
   title: string
   sub: string
+  /** A line of description under the title, where the source has one. */
+  body?: string
   when?: string
   onPick: () => void
 }
@@ -130,6 +132,7 @@ export function GlobalSearch({
     <div ref={boxRef} className="relative min-w-0 flex-1 sm:max-w-[430px]">
       <SearchIcon
         size={15}
+        strokeWidth={2}
         className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-text-muted"
       />
       <input
@@ -147,9 +150,9 @@ export function GlobalSearch({
         aria-controls="hub-search-results"
         aria-label="Search the hub"
         placeholder="Search address or tx"
-        className="w-full rounded-control border border-line-hairline bg-ink-800 py-[9px] pr-[52px] pl-[34px] text-base text-text-primary outline-none transition-colors placeholder:text-text-disabled focus:border-line-accent focus:shadow-[0_0_0_3px_rgba(7,138,138,.14)]"
+        className="w-full rounded-control border border-line-hairline bg-ink-800 py-[9px] pr-[52px] pl-[34px] text-base leading-[normal] text-text-primary outline-none transition-colors placeholder:text-text-disabled focus:border-line-accent focus:shadow-[0_0_0_3px_rgba(7,138,138,.14)]"
       />
-      <span className="pointer-events-none absolute top-1/2 right-2.5 hidden -translate-y-1/2 rounded-[4px] border border-line-edge px-[5px] py-1 font-mono text-micro font-medium text-text-muted sm:block">
+      <span className="pointer-events-none absolute top-1/2 right-2.5 hidden -translate-y-1/2 rounded-[4px] border border-line-edge px-[5px] py-1 font-mono text-micro leading-none font-medium text-text-muted sm:block">
         ⌘K
       </span>
 
@@ -176,7 +179,7 @@ export function GlobalSearch({
             >
               <span
                 className={cx(
-                  'w-[66px] flex-none rounded-[4px] border border-line-edge py-[5px] text-center font-mono text-micro font-medium tracking-[0.08em]',
+                  'w-[66px] flex-none rounded-[4px] border border-line-edge py-[5px] text-center font-mono text-micro leading-none font-medium tracking-[0.08em]',
                   hit.tagClass,
                 )}
               >
@@ -191,13 +194,13 @@ export function GlobalSearch({
                 </span>
               </div>
               {hit.when ? (
-                <span className="flex-none text-small text-text-tertiary">{hit.when}</span>
+                <span className="flex-none text-small leading-none text-text-tertiary">{hit.when}</span>
               ) : null}
             </div>
           ))}
 
           {!shown.length ? (
-            <div className="flex flex-col gap-1.5 px-3.5 py-[22px] text-center">
+            <div className="flex flex-col gap-[5px] px-3.5 py-[22px] text-center">
               <span className="text-base leading-[1.3] font-medium text-text-primary">
                 No match for “{trimmed}”
               </span>

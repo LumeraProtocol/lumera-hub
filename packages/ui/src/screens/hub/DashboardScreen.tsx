@@ -35,7 +35,7 @@ import {
 } from '../../design/primitives'
 import { EyeIcon } from '../../design/icons'
 import { SocialFeed } from '../../hub/SocialFeed'
-import { useHub, short } from '../../hub/session'
+import { LUMERA_ADDRESS, useHub, short } from '../../hub/session'
 
 export type DashboardStat = {
   label: string
@@ -93,6 +93,16 @@ export type FirstRunStep = {
   onAct: () => void
 }
 
+/** The first-run view's right-hand column: the empty balance and what to read meanwhile. */
+export type FirstRunAside = {
+  balance: string
+  address: string
+  links: Array<{ label: string; onClick: () => void }>
+}
+
+/** What a watched address holds, read from the chain. */
+export type WatchedTotal = { total: string; sub: string }
+
 /*
  * What a connected but empty wallet sees instead of a portfolio.
  *
@@ -101,55 +111,100 @@ export type FirstRunStep = {
  * at all. This replaces them with the three steps that lead to a position, in
  * the order they have to happen: hold LUME, stake it, then use the network.
  */
-function FirstRun({ steps }: { steps: FirstRunStep[] }) {
+function FirstRun({ steps, aside }: { steps: FirstRunStep[]; aside?: FirstRunAside }) {
   return (
     <div className="animate-fade flex flex-col gap-[18px]">
-      <div className="flex flex-col gap-1.5">
-        <h1 className="m-0 text-title leading-[1.15] font-semibold tracking-[-0.02em] text-text-primary">
-          Welcome to Lumera
-        </h1>
-        <p className="m-0 text-base leading-[1.5] text-text-muted text-pretty">
-          Your wallet is connected and holds nothing yet. Three steps get you to a working
-          position.
-        </p>
-      </div>
+      <PageTitle
+        title="Welcome to Lumera"
+        subtitle="Your wallet is connected and holds nothing yet. Three steps get you to a working position."
+      />
 
-      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-3">
-        {steps.map((step, i) => (
-          <Card
-            key={step.title}
-            className={cx(
-              'flex flex-col gap-3 p-[18px]',
-              // The first step is the one that unblocks the others, so it is
-              // the only one that carries the accent.
-              i === 0 && 'border-line-accent',
-            )}
-          >
-            <span
+      <div className="grid grid-cols-1 items-start gap-3.5 lg:grid-cols-2">
+        <div className="flex flex-col gap-3.5">
+          {steps.map((step, i) => (
+            <div
+              key={step.title}
               className={cx(
-                'flex h-[30px] w-[30px] flex-none items-center justify-center rounded-control font-mono text-base font-semibold',
-                i === 0
-                  ? 'bg-lumera-teal/[.22] text-lumera-green'
-                  : 'bg-ink-600 text-text-tertiary',
+                'flex flex-col gap-4 rounded-card border bg-ink-700 px-[22px] py-5 sm:flex-row',
+                // The first step is the one that unblocks the others, so it is
+                // the only one that carries the accent.
+                i === 0 ? 'border-line-accent' : 'border-line-edge',
               )}
             >
-              {i + 1}
-            </span>
-            <span className="text-base leading-[1.3] font-semibold text-text-primary">
-              {step.title}
-            </span>
-            <p className="m-0 flex-1 text-small leading-[1.6] text-text-muted text-pretty">
-              {step.body}
-            </p>
-            <Button
-              variant={i === 0 ? 'accent' : 'outline'}
-              onClick={step.onAct}
-              className="self-start"
-            >
-              {step.cta}
-            </Button>
-          </Card>
-        ))}
+              <span
+                className={cx(
+                  'flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[9px] font-mono text-base leading-none font-semibold',
+                  i === 0 ? 'bg-lumera-teal/[.22] text-lumera-green' : 'bg-ink-600 text-text-tertiary',
+                )}
+              >
+                {i + 1}
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col gap-[7px]">
+                <span className="text-lg leading-[1.3] font-semibold text-text-primary">
+                  {step.title}
+                </span>
+                <span className="text-base leading-[1.6] text-text-tertiary text-pretty">
+                  {step.body}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={step.onAct}
+                className={cx(
+                  'flex-none cursor-pointer self-start rounded-control px-4 py-[11px] text-base leading-none font-semibold whitespace-nowrap transition-colors sm:self-center',
+                  i === 0
+                    ? 'border-none bg-[linear-gradient(90deg,var(--color-lumera-teal),var(--color-lumera-green))] text-ink-800 hover:brightness-110'
+                    : 'border border-line-edge bg-transparent text-text-secondary hover:border-line-accent',
+                )}
+              >
+                {step.cta}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {aside ? (
+          <div className="flex flex-col gap-3.5">
+            <div className="rounded-card border border-line-edge bg-ink-700 p-5">
+              <span className="mb-3 block font-mono text-micro leading-none font-medium tracking-[0.1em] text-text-tertiary">
+                YOUR BALANCE
+              </span>
+              <div className="mb-1.5 flex items-baseline gap-[9px]">
+                <span className="font-mono text-[28px] leading-none font-semibold text-text-primary tnum">
+                  {aside.balance}
+                </span>
+                <span className="font-mono text-lg leading-none font-medium text-text-tertiary">
+                  LUME
+                </span>
+              </div>
+              <span className="text-small leading-[1.5] text-text-muted">
+                {short(aside.address)} · nothing staked yet
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-card border border-line-edge bg-ink-700 p-5">
+              <span className="text-base leading-none font-semibold text-text-primary">
+                While you wait
+              </span>
+              <p className="m-0 text-base leading-[1.6] text-text-tertiary text-pretty">
+                Validators, proposals and network statistics are public. You can read all of it now
+                and act once you hold LUME.
+              </p>
+              <div className="flex flex-col gap-[7px]">
+                {aside.links.map((link) => (
+                  <button
+                    key={link.label}
+                    type="button"
+                    onClick={link.onClick}
+                    className="cursor-pointer rounded-control border border-line-edge bg-transparent px-[13px] py-2.5 text-left text-base leading-none font-medium text-text-secondary transition-colors hover:border-line-accent hover:text-lumera-green"
+                  >
+                    {link.label} →
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )
@@ -168,6 +223,8 @@ export function DashboardScreen({
   claimLabel,
   onSeeActivity,
   firstRun,
+  firstRunAside,
+  watchedTotals,
 }: {
   loading?: boolean
   stats: DashboardStat[]
@@ -180,16 +237,19 @@ export function DashboardScreen({
   onClaim: () => void
   claimLabel: string
   onSeeActivity: () => void
-  /** Shown in place of the portfolio when a connected wallet is empty. */
+  /**
+   * Shown in place of the portfolio when a connected wallet is empty. The page
+   * passes it only once the account has been read and holds nothing.
+   */
   firstRun?: FirstRunStep[]
+  firstRunAside?: FirstRunAside
+  /** Totals for the watched addresses, keyed by address. */
+  watchedTotals?: Record<string, WatchedTotal | undefined>
 }) {
   const hub = useHub()
 
-  // Only for a wallet that is actually connected: someone browsing read-only
-  // has nothing to onboard into, and watching an empty address is not the same
-  // as owning one.
-  if (hub.isConnected && !hub.hasPosition && firstRun?.length) {
-    return <FirstRun steps={firstRun} />
+  if (hub.isConnected && firstRun?.length) {
+    return <FirstRun steps={firstRun} aside={firstRunAside} />
   }
 
   const title = hub.isConnected
@@ -209,6 +269,7 @@ export function DashboardScreen({
       <PageTitle
         title={title}
         subtitle={subtitle}
+        subtitleClassName="max-w-[600px]"
         actions={
           /*
            * No Connect wallet here. The header carries one at all times, and a
@@ -227,20 +288,6 @@ export function DashboardScreen({
           )
         }
       />
-
-      {hub.isWatching ? (
-        <div className="flex items-center gap-3 rounded-panel border border-dashed border-line-edge bg-ink-700 px-4 py-3">
-          <EyeIcon size={16} className="flex-none text-text-muted" />
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-base font-medium text-text-primary">
-              Watching {short(hub.address)}
-            </span>
-            <span className="text-small text-text-muted text-pretty">
-              Live balances and rewards for this address. Connect the wallet that owns it to act.
-            </span>
-          </div>
-        </div>
-      ) : null}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {loading
@@ -289,21 +336,21 @@ export function DashboardScreen({
                 allocations.map((row) => (
                   <div
                     key={row.key}
-                    className="flex items-center gap-3.5 border-b border-line-hairline py-[11px] last:border-b-0"
+                    className="flex items-center gap-3.5 border-b border-line-hairline py-[11px]"
                   >
                     <Avatar initials={row.initials} src={row.logo} size={26} rounded={6} />
                     <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                       <div className="flex items-baseline justify-between gap-3">
-                        <span className="truncate text-base font-medium text-text-primary">
+                        <span className="truncate text-base leading-none font-medium text-text-primary">
                           {row.name}
                         </span>
-                        <span className="flex-none font-mono text-small font-medium tnum text-text-secondary">
+                        <span className="flex-none font-mono text-small leading-none font-medium tnum text-text-secondary">
                           {row.amount}
                         </span>
                       </div>
                       <Bar pct={row.pct} />
                     </div>
-                    <span className="w-[46px] flex-none text-right font-mono text-small tnum text-text-tertiary">
+                    <span className="w-[46px] flex-none text-right font-mono text-small leading-none whitespace-nowrap tnum text-text-tertiary">
                       {row.side}
                     </span>
                     {row.onMove ? (
@@ -336,7 +383,7 @@ export function DashboardScreen({
               <div className="px-[18px] pt-1 pb-3">
                 {loading ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 py-[11px]">
+                    <div key={i} className="flex items-center gap-[13px] py-[11px]">
                       <Skeleton className="h-[26px] w-[26px]" />
                       <Skeleton className="h-3 flex-1" />
                     </div>
@@ -347,26 +394,30 @@ export function DashboardScreen({
                       key={a.key}
                       onClick={a.onOpen}
                       className={cx(
-                        'flex items-center gap-3 border-b border-line-hairline py-[11px] last:border-b-0',
+                        'flex items-center gap-[13px] border-b border-line-hairline py-[11px]',
                         a.onOpen && 'cursor-pointer',
                       )}
                     >
                       <div
                         className={cx(
-                          'flex h-[26px] w-[26px] flex-none items-center justify-center rounded-chip border border-line-edge bg-ink-600 text-small font-semibold',
+                          'flex h-[26px] w-[26px] flex-none items-center justify-center rounded-chip border border-line-edge bg-ink-600 text-small leading-none font-semibold',
                           a.direction === 'in' ? 'text-lumera-green' : 'text-text-muted',
                         )}
                       >
                         {a.direction === 'in' ? '↓' : a.direction === 'out' ? '↑' : '•'}
                       </div>
                       <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-                        <span className="text-base font-medium text-text-primary">{a.kind}</span>
-                        <span className="truncate text-small text-text-muted">{a.detail}</span>
+                        <span className="text-base leading-none font-medium text-text-primary">
+                          {a.kind}
+                        </span>
+                        <span className="truncate text-small leading-none text-text-muted">
+                          {a.detail}
+                        </span>
                       </div>
-                      <span className="flex-none font-mono text-small font-medium tnum text-text-secondary">
+                      <span className="flex-none font-mono text-small leading-none font-medium tnum text-text-secondary">
                         {a.amount}
                       </span>
-                      <span className="w-[52px] flex-none text-right text-small text-text-muted">
+                      <span className="w-[52px] flex-none text-right text-small leading-none text-text-muted">
                         {a.when}
                       </span>
                     </div>
@@ -393,7 +444,7 @@ export function DashboardScreen({
                 <div>
                   <div className="mb-[7px] flex items-center gap-2">
                     <Badge>{proposal.id}</Badge>
-                    <span className="text-small text-text-tertiary">{proposal.kind}</span>
+                    <span className="text-small leading-none text-text-tertiary">{proposal.kind}</span>
                   </div>
                   <p
                     onClick={proposal.onOpen}
@@ -425,7 +476,7 @@ export function DashboardScreen({
                       },
                     ]}
                   />
-                  <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-small text-text-muted">
+                  <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-small leading-none text-text-muted">
                     <span className="text-lumera-green">Yes {proposal.yes.toFixed(1)}%</span>
                     <span className="text-danger">No {proposal.no.toFixed(1)}%</span>
                     <span>Abstain {proposal.abstain.toFixed(1)}%</span>
@@ -435,8 +486,8 @@ export function DashboardScreen({
 
                 <div className="flex items-center justify-between gap-3 border-t border-line-hairline pt-[13px]">
                   <div className="flex flex-col gap-[3px]">
-                    <span className="text-small text-text-tertiary">Quorum</span>
-                    <span className="font-mono text-base font-medium tnum text-text-secondary">
+                    <span className="text-small leading-none text-text-tertiary">Quorum</span>
+                    <span className="font-mono text-base leading-none font-medium tnum text-text-secondary">
                       {proposal.quorum.toFixed(1)}%{' '}
                       {proposal.quorumNeeded != null ? (
                         <span className="text-text-muted">
@@ -455,106 +506,126 @@ export function DashboardScreen({
 
           <SocialFeed />
 
-          {hub.isDisconnected ? (
-            <Card>
-              <CardHeader title="Browse without connecting" />
-              <div className="flex flex-col gap-3 px-[18px] py-4">
-                <p className="m-0 text-base leading-[1.6] text-text-muted text-pretty">
-                  Everything on this page is public chain data. Paste any Lumera address to see its
-                  balances, delegations and history read-only — no wallet, no signature.
-                </p>
-                <WatchAddressForm />
-              </div>
-            </Card>
-          ) : null}
-
-          {hub.watched.length ? <WatchedList /> : null}
+          {hub.watched.length ? <WatchedList totals={watchedTotals ?? {}} /> : null}
         </div>
       </div>
     </div>
   )
 }
 
-/** Address entry that switches the hub into read-only mode. */
-export function WatchAddressForm() {
+/**
+ * Saved addresses, each with what it holds. Opening one switches the hub into
+ * read-only mode on it; the row at the foot adds another to the list.
+ */
+function WatchedList({ totals }: { totals: Record<string, WatchedTotal | undefined> }) {
   const hub = useHub()
   const [value, setValue] = React.useState('')
-  const trimmed = value.trim()
-  const valid = /^lumera1[a-z0-9]{32,45}$/.test(trimmed)
-  const invalid = trimmed.length > 0 && !valid
+  const input = value.trim()
+  const valid = LUMERA_ADDRESS.test(input)
+  const dupe = valid && hub.watched.some((w) => w.address === input)
+  const ok = valid && !dupe
+  const problem = !input ? '' : !valid ? 'Not a valid Lumera address.' : dupe ? 'Already on your list.' : ''
 
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2.5">
-        <input
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && valid) hub.watch(trimmed)
-          }}
-          placeholder="lumera1…"
-          aria-label="Address to watch"
-          className={cx(
-            'min-w-0 flex-1 rounded-inner border bg-ink-800 px-3 py-2.5 font-mono text-small text-text-primary outline-none placeholder:text-text-disabled',
-            invalid ? 'border-danger-edge' : 'border-line-edge focus:border-line-accent',
-          )}
-        />
-        <Button
-          variant={valid ? 'solid' : 'outline'}
-          disabled={!valid}
-          onClick={() => hub.watch(trimmed)}
-        >
-          Watch
-        </Button>
-      </div>
-      {invalid ? (
-        <span className="text-small text-danger">
-          Not a valid Lumera address. It should start with lumera1.
-        </span>
-      ) : null}
-    </div>
-  )
-}
+  const add = () => {
+    if (!ok) return
+    hub.addWatched(input)
+    setValue('')
+  }
 
-function WatchedList() {
-  const hub = useHub()
   return (
     <Card>
       <CardHeader
         title="Watched addresses"
         action={
-          <span className="font-mono text-small text-text-muted">
+          <span className="font-mono text-small leading-none text-text-muted">
             {hub.watched.length} {hub.watched.length === 1 ? 'address' : 'addresses'}
           </span>
         }
       />
-      {hub.watched.map((w) => (
-        <div
-          key={w.address}
-          className="flex items-center gap-3.5 border-b border-line-hairline px-[18px] py-3 last:border-b-0"
-        >
-          <div className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-chip border border-dashed border-line-edge bg-ink-600">
-            <EyeIcon size={13} className="text-text-muted" />
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-[13px] font-medium text-text-primary">
-              {w.label || 'Unlabelled'}
-            </span>
-            <span className="truncate font-mono text-xs text-text-muted">{short(w.address, 12)}</span>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => hub.watch(w.address)}>
-            Open
-          </Button>
-          <button
-            type="button"
-            onClick={() => hub.removeWatched(w.address)}
-            aria-label={`Stop watching ${w.address}`}
-            className="cursor-pointer border-none bg-transparent p-0 text-small text-text-muted hover:text-danger"
+      {hub.watched.map((w) => {
+        const total = totals[w.address]
+        return (
+          <div
+            key={w.address}
+            role="button"
+            tabIndex={0}
+            onClick={() => hub.watch(w.address)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                hub.watch(w.address)
+              }
+            }}
+            className="flex cursor-pointer items-center gap-3.5 border-b border-line-hairline px-[18px] py-3 transition-colors hover:bg-ink-600"
           >
-            ×
-          </button>
+            <div className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-chip border border-dashed border-line-edge bg-ink-600">
+              <EyeIcon size={13} className="text-text-muted" />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <span
+                className={cx(
+                  'text-[13px] leading-none font-medium',
+                  w.label ? 'text-text-primary' : 'text-text-muted',
+                )}
+              >
+                {w.label || 'Unlabelled'}
+              </span>
+              <span className="truncate font-mono text-xs leading-none text-text-muted">
+                {w.address.slice(0, 12)}…{w.address.slice(-4)}
+              </span>
+            </div>
+            <div className="flex flex-none flex-col gap-1 text-right">
+              <span className="font-mono text-[13px] leading-none font-medium text-text-primary tnum">
+                {total?.total ?? '—'}
+              </span>
+              <span className="text-[11.5px] leading-none text-text-muted">{total?.sub ?? ''}</span>
+            </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                hub.removeWatched(w.address)
+              }}
+              aria-label={`Stop watching ${w.address}`}
+              className="flex-none cursor-pointer border-none bg-transparent p-0 text-base leading-none text-text-disabled transition-colors hover:text-danger"
+            >
+              ×
+            </button>
+            <span className="flex-none text-base leading-none text-text-muted">›</span>
+          </div>
+        )
+      })}
+      <div className="flex items-center gap-[9px] px-[18px] py-[13px]">
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') add()
+          }}
+          placeholder="Add an address to watch…"
+          aria-label="Add an address to watch"
+          spellCheck={false}
+          className="min-w-0 flex-1 rounded-inner border border-line-edge bg-ink-800 px-3 py-2.5 font-mono text-small leading-[normal] text-text-primary outline-none transition-colors placeholder:text-text-muted focus:border-line-accent"
+        />
+        <button
+          type="button"
+          onClick={add}
+          disabled={!ok}
+          className={cx(
+            'flex-none rounded-inner border-none px-[15px] py-2.5 text-small leading-none font-semibold transition-colors',
+            ok
+              ? 'cursor-pointer bg-lumera-green text-ink-800 hover:bg-lumera-green-bright'
+              : 'cursor-not-allowed bg-ink-500 text-text-disabled',
+          )}
+        >
+          Watch
+        </button>
+      </div>
+      {problem ? (
+        <div className="px-[18px] pb-[13px]">
+          <span className="text-small leading-[1.4] text-danger">{problem}</span>
         </div>
-      ))}
+      ) : null}
     </Card>
   )
 }

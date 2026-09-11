@@ -14,6 +14,7 @@ import useValidatorLogos from '@/hooks/useValidatorLogos'
 import { RATE_VALUE } from '@/contants'
 import { DENOM } from '@/contants/network'
 import { formatNumber } from '@/utils/format'
+import { getQuiet } from '@/utils/api'
 import { getAvailableBalances, getDelegations } from '@/utils/portfolio'
 import { consensusAddressFromPubkey } from '@/utils/consensus-address'
 import {
@@ -29,13 +30,7 @@ import { netApr } from '@/utils/staking-apr'
 const lume = (micro: number, digits = 2) =>
   formatNumber(micro / RATE_VALUE, { decimalsLength: digits, currency: 'en-US' })
 
-const compact = (n: number) => {
-  if (!Number.isFinite(n) || n === 0) return '—'
-  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`
-  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`
-  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`
-  return n.toFixed(0)
-}
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 const initialsOf = (name: string) => {
   const words = String(name).replace(/[^A-Za-z0-9. ]/g, '').trim().split(/[\s.]+/).filter(Boolean)
@@ -189,6 +184,55 @@ export default function Page() {
     chainParams.unbondingSeconds
   const unbondingLabel = formatDuration(unbondingSeconds)
 
+  // Redelegated stake can move again once the entry matures, one unbonding
+  // period from now.
+  const lockDate = unbondingSeconds
+    ? (() => {
+        const d = new Date(Date.now() + unbondingSeconds * 1000)
+        return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`
+      })()
+    : null
+
+  /*
+   * Redelegations already open between the chosen pair, which is what the
+   * design's "slots free" counts down from — each pair allows max_entries at a
+   * time. The chain answers "not found", not an empty list, when there are none.
+   */
+  const [pairUsed, setPairUsed] = useState<number | null>(null)
+  const sourceKeyForPair = source?.key
+  const selectedKeyForPair = selected?.key
+  useEffect(() => {
+    const delegator = hub.address
+    if (
+      mode !== 'redelegate' ||
+      !delegator ||
+      !sourceKeyForPair ||
+      !selectedKeyForPair ||
+      sourceKeyForPair === selectedKeyForPair
+    ) {
+      setPairUsed(null)
+      return
+    }
+    let cancelled = false
+    getQuiet(
+      `/cosmos/staking/v1beta1/delegators/${delegator}/redelegations?src_validator_addr=${sourceKeyForPair}&dst_validator_addr=${selectedKeyForPair}`,
+    )
+      .then((res) => {
+        if (cancelled) return
+        const responses: Array<{ entries?: unknown[] }> = res?.data?.redelegation_responses ?? []
+        setPairUsed(responses.reduce((n, r) => n + (r.entries?.length ?? 0), 0))
+      })
+      .catch((err) => {
+        if (cancelled) return
+        const status = err?.response?.status ?? err?.statusCode
+        const text = String(err?.response?.data?.message ?? err?.message ?? '')
+        setPairUsed(status === 404 || /not found/i.test(text) ? 0 : null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [hub.address, mode, selectedKeyForPair, sourceKeyForPair])
+
   /*
    * All three actions land in the same drawer. Only the intent text and the
    * broadcast call differ, so the review → sign → receipt sequence is written
@@ -283,13 +327,18 @@ export default function Page() {
       <StakingScreen
         loading={staking.isLoading}
         validators={validators}
+        // The whole figure, as the design prints it; the strip has the room.
         totalBonded={
-          totalBondedMicro ? `${compact(totalBondedMicro / RATE_VALUE)} LUME` : '—'
+          totalBondedMicro
+            ? `${Math.round(totalBondedMicro / RATE_VALUE).toLocaleString('en-US')} LUME`
+            : '—'
         }
         netApr={netAprValue ? `${netAprValue.toFixed(1)}%` : '—'}
         unbondingDays={unbondingLabel ?? '—'}
         maxRedelegationEntries={chainParams.maxRedelegationEntries}
         minCommissionRate={chainParams.minCommissionRate}
+        lockDate={lockDate}
+        pairUsed={pairUsed}
         myStake={stakedMicro ? `${lume(stakedMicro, 0)} LUME` : '—'}
         available={available}
         mode={mode}

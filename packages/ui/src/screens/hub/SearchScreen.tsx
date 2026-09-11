@@ -14,7 +14,7 @@
  */
 
 import React from 'react'
-import { Card, EmptyState, Input, PageTitle, Segmented, Skeleton, cx } from '../../design/primitives'
+import { PageTitle, Skeleton, cx } from '../../design/primitives'
 import { SearchIcon } from '../../design/icons'
 import type { SearchHit } from '../../hub/GlobalSearch'
 
@@ -56,10 +56,10 @@ export function SearchScreen({
       <PageTitle
         title={
           trimmed ? (
-            <span className="flex flex-wrap items-baseline gap-2">
-              {hits.length} {hits.length === 1 ? 'result' : 'results'} for
-              <span className="font-mono text-text-secondary">{trimmed}</span>
-            </span>
+            <>
+              {shown.length} {shown.length === 1 ? 'result for' : 'results for'}{' '}
+              <span className="text-lumera-green">{trimmed}</span>
+            </>
           ) : (
             'Search the hub'
           )
@@ -67,36 +67,52 @@ export function SearchScreen({
         subtitle="Across transactions, validators, proposals and files."
       />
 
-      <div className="relative max-w-[520px]">
-        <SearchIcon
-          size={15}
-          className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-text-muted"
-        />
-        <Input
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search address, tx, validator, proposal or file"
-          aria-label="Search the hub"
-          autoFocus
-          className="pl-[34px]"
-        />
+      <div className="flex items-center gap-3">
+        <div className="relative max-w-[460px] flex-1">
+          <SearchIcon
+            size={15}
+            strokeWidth={2}
+            className="pointer-events-none absolute top-1/2 left-[13px] -translate-y-1/2 text-text-muted"
+          />
+          <input
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            placeholder="Refine your search…"
+            aria-label="Search the hub"
+            autoFocus
+            className="w-full rounded-control border border-line-edge bg-ink-800 py-3 pr-3.5 pl-9 text-base leading-[normal] text-text-primary outline-none placeholder:text-text-muted focus:border-line-accent"
+          />
+        </div>
       </div>
 
       {/* Counts sit in the labels so the spread is readable before any row is. */}
-      <Segmented
-        value={kind}
-        onChange={(k) => setKind(k as Kind)}
-        options={KINDS.map((k) => ({
-          key: k.key,
-          label: `${k.label} ${counts[k.key] ?? 0}`,
-        }))}
-      />
+      <div className="flex flex-wrap items-center gap-[7px]">
+        {KINDS.map((k) => {
+          const on = k.key === kind
+          return (
+            <button
+              key={k.key}
+              type="button"
+              aria-pressed={on}
+              onClick={() => setKind(k.key)}
+              className={cx(
+                'cursor-pointer rounded-inner border border-line-edge px-3 py-[7px] text-small leading-none font-medium transition-colors',
+                on
+                  ? 'bg-ink-600 text-text-primary'
+                  : 'bg-transparent text-text-muted hover:text-text-secondary',
+              )}
+            >
+              {k.label} {counts[k.key] ?? 0}
+            </button>
+          )
+        })}
+      </div>
 
-      <Card>
+      <div className="overflow-hidden rounded-card border border-line-edge bg-ink-700">
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 border-b border-line-hairline px-3.5 py-[13px] last:border-b-0">
-              <Skeleton className="h-[26px] w-[66px]" />
+            <div key={i} className="flex items-center gap-3.5 border-b border-line-hairline px-[18px] py-[15px]">
+              <Skeleton className="h-[22px] w-[74px]" />
               <Skeleton className="h-3 flex-1" />
             </div>
           ))
@@ -113,38 +129,50 @@ export function SearchScreen({
                   hit.onPick()
                 }
               }}
-              className="flex cursor-pointer items-center gap-3 border-b border-line-hairline px-3.5 py-[11px] last:border-b-0 hover:bg-ink-600"
+              className="flex cursor-pointer gap-3.5 border-b border-line-hairline px-[18px] py-[15px] transition-colors hover:bg-ink-600"
             >
               <span
                 className={cx(
-                  'w-[66px] flex-none rounded-[4px] border border-line-edge py-[5px] text-center font-mono text-micro font-medium tracking-[0.08em]',
+                  'flex h-[22px] w-[74px] flex-none items-center justify-center rounded-[4px] border border-line-edge font-mono text-micro leading-none font-medium tracking-[0.08em]',
                   hit.tagClass,
                 )}
               >
                 {hit.tag}
               </span>
-              <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-                <span className="truncate text-base leading-[1.3] font-medium text-text-primary">
+              <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
+                <span className="text-base leading-[1.35] font-medium text-text-primary text-pretty">
                   {hit.title}
                 </span>
-                <span className="truncate font-mono text-small leading-[1.3] text-text-muted">
+                <span className="font-mono text-small leading-[1.3] text-text-muted [overflow-wrap:anywhere]">
                   {hit.sub}
                 </span>
+                {hit.body ? (
+                  <span className="text-small leading-[1.55] text-text-tertiary text-pretty">
+                    {hit.body}
+                  </span>
+                ) : null}
               </div>
               {hit.when ? (
-                <span className="flex-none text-small text-text-tertiary">{hit.when}</span>
+                <span className="flex-none text-small leading-none text-text-tertiary">
+                  {hit.when}
+                </span>
               ) : null}
             </div>
           ))
         ) : (
-          <div className="p-[18px]">
-            <EmptyState
-              title={trimmed ? 'Nothing matches' : 'Start typing to search'}
-              body="Search covers transaction hashes, validator names, proposal titles and summaries, and file names and content IDs."
-            />
+          <div className="flex flex-col items-center gap-[9px] px-5 py-14 text-center">
+            <span className="text-lg leading-[1.3] font-medium text-text-primary">
+              {trimmed ? 'Nothing matches' : 'Start typing to search'}
+            </span>
+            {/* Only what the page actually searches: files are not indexed
+                here, and transactions are found by hash, not description. */}
+            <span className="max-w-[380px] text-base leading-[1.55] text-text-muted text-pretty">
+              Search covers transaction hashes, addresses and block heights, validator names, and
+              proposal titles and summaries.
+            </span>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   )
 }

@@ -115,13 +115,17 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-a {
-  color: var(--color-lumera-green);
-  text-decoration: none;
-}
+/* In the base layer, not unlayered: an unlayered rule outranks every Tailwind
+   utility, so a link given `text-text-muted` was still painting green. */
+@layer base {
+  a {
+    color: var(--color-lumera-green);
+    text-decoration: none;
+  }
 
-a:hover {
-  color: var(--color-lumera-green-bright);
+  a:hover {
+    color: var(--color-lumera-green-bright);
+  }
 }
 
 button:focus-visible,

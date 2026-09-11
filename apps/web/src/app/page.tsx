@@ -1,6 +1,6 @@
 // apps/web/src/app/page.tsx
 'use client'
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Helmet } from 'react-helmet-async';
 
@@ -30,8 +30,12 @@ import {
 } from '@lumera-hub/ui/src/screens/hub/DashboardScreen';
 import { useHub } from '@lumera-hub/ui/src/hub/session';
 import { TxDetailDrawer } from '@/components/hub/TxDetailDrawer';
+import useWatchedTotals from '@/hooks/useWatchedTotals';
+import useLoadSettled from '@/hooks/useLoadSettled';
 import { IS_MAINNET } from '@/contants/network';
 import { netApr, weightedCommission } from '@/utils/staking-apr';
+import { getQuiet } from '@/utils/api';
+import { proposalKind, relativeClock } from '@/utils/governance-view';
 
 const lume = (micro: number, digits = 2) =>
   formatNumber(micro / RATE_VALUE, { decimalsLength: digits, currency: 'en-US' });
@@ -48,6 +52,19 @@ const initialsOf = (name: string) => {
   const words = String(name).replace(/[^A-Za-z0-9. ]/g, '').trim().split(/[\s.]+/).filter(Boolean);
   if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
   return String(name).replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase() || '··';
+};
+
+/** "2h", "3d" — how the design dates a row whose time column is narrow. */
+const ago = (iso: string) => {
+  const then = Date.parse(iso);
+  if (!Number.isFinite(then)) return '';
+  const mins = Math.max(0, Math.round((Date.now() - then) / 60000));
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.round(hours / 24);
+  return days < 30 ? `${days}d` : `${Math.round(days / 30)}mo`;
 };
 
 /** Cosmos gov v1 statuses are shouty enum strings; these are the readable ones. */
@@ -73,11 +90,18 @@ export default function Page() {
   const { validators, activeValidators, apr, bondedTokens } = useStaking();
   const { params: chainParams } = useChainParams();
   const logos = useValidatorLogos(activeValidators);
+  const watchedTotals = useWatchedTotals(hub.watched.map((w) => w.address));
+  const accountSettled = useLoadSettled(loading, hub.address);
 
   const liquid = getAvailableBalances(accountInfo);
   const staked = getDelegations(accountInfo);
   const rewards = getRewards(accountInfo);
   const unbonding = getUnbonding(accountInfo);
+
+  // The account reads as empty before it has been fetched at all, so only a
+  // finished read can say this wallet actually holds nothing.
+  const emptyWallet =
+    hub.isConnected && accountSettled && !liquid && !staked && !rewards && !unbonding;
 
   /*
    * Four figures that mean different things depending on who is looking. With
@@ -198,7 +222,6 @@ export default function Page() {
     accountInfo?.delegations?.length,
     activeValidators,
     apr,
-    bondedTokens,
     hub.hasPosition,
     liquid,
     rewards,
@@ -273,7 +296,7 @@ export default function Page() {
           kind: kind.replace(/([a-z])([A-Z])/g, '$1 $2'),
           detail: `${tx.txhash.slice(0, 10)}…`,
           amount: `#${Number(tx.height).toLocaleString('en-US')}`,
-          when: tx.timestamp ? new Date(tx.timestamp).toLocaleDateString() : '',
+          when: tx.timestamp ? ago(tx.timestamp) : '',
           direction: /Receive|WithdrawDelegatorReward/.test(kind) ? 'in' : 'out',
           onOpen: () => hub.openDrawer({ kind: 'txdetail', hash: tx.txhash }),
         } as ActivityRow;
@@ -281,12 +304,32 @@ export default function Page() {
     [hub, recentActivityData.recentActivity],
   );
 
+  const live: IProposal | undefined = useMemo(
+    () => (proposals.proposalsInfo || []).find((p) => isVotingOpen(p.status)),
+    [proposals.proposalsInfo],
+  );
+
+  // `final_tally_result` sits at zero until voting closes. The running count
+  // lives at /tally, which is what the governance screens read, so the card
+  // showed 0% Yes on a proposal the list had at 100%.
+  const [liveTally, setLiveTally] = useState<IProposal['final_tally_result'] | null>(null);
+  useEffect(() => {
+    setLiveTally(null);
+    if (!live?.id) return;
+    let cancelled = false;
+    getQuiet(`/cosmos/gov/v1/proposals/${live.id}/tally`)
+      .then((res) => {
+        if (!cancelled && res?.data?.tally) setLiveTally(res.data.tally);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [live?.id]);
+
   const proposal: OpenProposal | null = useMemo(() => {
-    const live: IProposal | undefined = (proposals.proposalsInfo || []).find((p) =>
-      isVotingOpen(p.status),
-    );
     if (!live) return null;
-    const tally = live.final_tally_result;
+    const tally = liveTally ?? live.final_tally_result;
     const counts = [
       Number(tally?.yes_count) || 0,
       Number(tally?.no_count) || 0,
@@ -295,15 +338,12 @@ export default function Page() {
     ];
     const total = counts.reduce((a, b) => a + b, 0) || 1;
     const pct = (n: number) => (n / total) * 100;
-    const closes = live.voting_end_time ? new Date(live.voting_end_time) : null;
-    const daysLeft = closes
-      ? Math.max(0, Math.ceil((closes.getTime() - Date.now()) / 86400000))
-      : null;
     return {
       id: `#${live.id}`,
-      kind: (live.messages?.[0]?.['@type'] || 'Proposal').split('.').pop() || 'Proposal',
+      // The same readable kind and clock the governance list prints.
+      kind: proposalKind(live),
       title: live.title,
-      clock: daysLeft !== null ? `Ends in ${daysLeft}d` : 'Voting open',
+      clock: relativeClock(live, 'Voting') || 'Voting open',
       yes: pct(counts[0]),
       no: pct(counts[1]),
       abstain: pct(counts[2]),
@@ -317,7 +357,7 @@ export default function Page() {
           () => router.push(`/governance/${live.id}`),
         ),
     };
-  }, [bondedTokens, chainParams.quorum, hub, proposals.proposalsInfo, router]);
+  }, [bondedTokens, chainParams.quorum, hub, live, liveTally, router]);
 
   /*
    * The three steps a connected but empty wallet needs, in the order they have
@@ -354,12 +394,47 @@ export default function Page() {
       },
       {
         title: 'Store something on Cascade',
-        body: 'Upload a file and it is chunked, encrypted and held by three supernodes. Paid from your liquid balance.',
+        body: 'Upload a file and it is encoded in your browser and stored across supernodes. Paid once, from your liquid balance.',
         cta: 'Open Cascade',
         onAct: () => router.push('/cascade'),
       },
     ];
   }, [net.aprPercent, router]);
+
+  const openProposals = useMemo(
+    () => (proposals.proposalsInfo || []).filter((p) => isVotingOpen(p.status)).length,
+    [proposals.proposalsInfo],
+  );
+
+  /*
+   * The first-run view's second column. The design links to Foundry too; that
+   * is out of the navigation until it has a season, so only the two public
+   * reads are offered, each with its real count.
+   */
+  const firstRunAside = useMemo(
+    () => ({
+      balance: lume(liquid),
+      address: hub.address,
+      links: [
+        {
+          label: activeValidators?.length
+            ? `Compare ${activeValidators.length} validators`
+            : 'Compare validators',
+          onClick: () => router.push('/staking'),
+        },
+        {
+          label:
+            openProposals === 1
+              ? 'Read the open proposal'
+              : openProposals > 1
+                ? `Read the ${openProposals} open proposals`
+                : 'Read past proposals',
+          onClick: () => router.push('/governance'),
+        },
+      ],
+    }),
+    [activeValidators?.length, hub.address, liquid, openProposals, router],
+  );
 
   return (
     <>
@@ -369,7 +444,9 @@ export default function Page() {
       <DashboardScreen
         loading={loading && hub.hasPosition}
         stats={dashboardStats}
-        firstRun={firstRun}
+        firstRun={emptyWallet ? firstRun : undefined}
+        firstRunAside={firstRunAside}
+        watchedTotals={watchedTotals}
         allocationTitle={hub.hasPosition ? 'Delegations' : 'Active validators'}
         allocationLink={hub.hasPosition ? 'Manage' : `See all ${activeValidators?.length || ''}`.trim()}
         allocations={allocations}

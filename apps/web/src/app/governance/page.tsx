@@ -15,7 +15,7 @@ import { getDelegations } from '@/utils/portfolio'
 import { toSummary, turnoutPct, tallyShares } from '@/utils/governance-view'
 import { GovernanceListScreen } from '@lumera-hub/ui/src/screens/hub/GovernanceScreen'
 import { useHub } from '@lumera-hub/ui/src/hub/session'
-import { ProposeDrawer } from '@/components/hub/ProposeDrawer'
+import { ProposeDrawer, proposalTypeLabel } from '@/components/hub/ProposeDrawer'
 import { TxDrawer } from '@/components/hub/TxDrawer'
 
 const compact = (micro: number) => {
@@ -152,8 +152,10 @@ export default function Page() {
       <ProposeDrawer
         step={step}
         proposal={proposal}
-        requiredDeposit={String(requiredDeposit)}
+        // The chain's minimum once it loads; the hook's fallback until then.
+        requiredDeposit={String(requiredDepositLume || requiredDeposit)}
         message={msg}
+        communityPool={treasury}
         onInputChange={handleInputChange}
         onNext={handleNextSteps}
         onBack={handleBackClick}
@@ -161,12 +163,12 @@ export default function Page() {
           hub.openDrawer({
             kind: 'tx',
             intent: {
-              title: 'Submit proposal',
+              title: `Submit ${proposalTypeLabel(proposal.type).toLowerCase()} proposal`,
               lineLabel: 'Proposal',
-              line: proposal.title || 'Untitled proposal',
+              line: proposal.title.trim() || 'Untitled proposal',
               extra: {
                 k: 'Initial deposit',
-                v: `${proposal.initialDeposit || '0'} LUME`,
+                v: `${formatNumber(Number(proposal.initialDeposit) || 0, { decimalsLength: 2, currency: 'en-US' })} LUME`,
                 tone:
                   Number(proposal.initialDeposit) >= requiredDepositLume
                     ? ('green' as const)
