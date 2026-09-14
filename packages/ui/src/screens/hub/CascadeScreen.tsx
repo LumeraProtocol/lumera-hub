@@ -63,6 +63,7 @@ export type StorageSummary = {
 
 export function CascadeScreen({
   loading,
+  statsLoading,
   networkStored,
   networkCapacity,
   supernodes,
@@ -88,6 +89,8 @@ export function CascadeScreen({
   uploadError,
 }: {
   loading?: boolean
+  /** The network figures are still being fetched — shimmer the stat strip. */
+  statsLoading?: boolean
   networkStored: string
   networkCapacity: string
   supernodes: string
@@ -155,6 +158,7 @@ export function CascadeScreen({
       </div>
 
       <StatStrip
+        loading={statsLoading}
         items={[
           { label: 'NETWORK STORED', value: networkStored },
           { label: 'NETWORK CAPACITY', value: networkCapacity, tone: 'green' },

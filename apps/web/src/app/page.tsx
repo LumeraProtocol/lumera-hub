@@ -31,8 +31,6 @@ import {
 import { useHub } from '@lumera-hub/ui/src/hub/session';
 import { TxDetailDrawer } from '@/components/hub/TxDetailDrawer';
 import useWatchedTotals from '@/hooks/useWatchedTotals';
-import useLoadSettled from '@/hooks/useLoadSettled';
-import { IS_MAINNET } from '@/contants/network';
 import { netApr, weightedCommission } from '@/utils/staking-apr';
 import { getQuiet } from '@/utils/api';
 import { proposalKind, relativeClock } from '@/utils/governance-view';
@@ -91,17 +89,11 @@ export default function Page() {
   const { params: chainParams } = useChainParams();
   const logos = useValidatorLogos(activeValidators);
   const watchedTotals = useWatchedTotals(hub.watched.map((w) => w.address));
-  const accountSettled = useLoadSettled(loading, hub.address);
 
   const liquid = getAvailableBalances(accountInfo);
   const staked = getDelegations(accountInfo);
   const rewards = getRewards(accountInfo);
   const unbonding = getUnbonding(accountInfo);
-
-  // The account reads as empty before it has been fetched at all, so only a
-  // finished read can say this wallet actually holds nothing.
-  const emptyWallet =
-    hub.isConnected && accountSettled && !liquid && !staked && !rewards && !unbonding;
 
   /*
    * Four figures that mean different things depending on who is looking. With
@@ -359,83 +351,6 @@ export default function Page() {
     };
   }, [bondedTokens, chainParams.quorum, hub, live, liveTally, router]);
 
-  /*
-   * The three steps a connected but empty wallet needs, in the order they have
-   * to happen. The design writes step two's return as a fixed figure; this uses
-   * whatever the chain is actually paying, and omits the sentence entirely
-   * rather than quoting a rate that did not load.
-   */
-  const firstRun = useMemo(() => {
-    const rate = net.aprPercent;
-    return [
-      // Step one differs by network, and the design only covers mainnet. On a
-      // testnet nobody bridges or buys — the faucet is the whole answer, and
-      // pointing at an exchange would be wrong rather than merely unhelpful.
-      IS_MAINNET
-        ? {
-            title: 'Get LUME',
-            body: 'Bridge from Osmosis or buy on a listed exchange. Everything else needs a balance first.',
-            cta: 'About LUME',
-            onAct: () => window.open('https://lumera.io/token', '_blank', 'noreferrer'),
-          }
-        : {
-            title: 'Get test LUME',
-            body: 'The faucet sends test tokens to any address on this network. They have no value and the chain resets periodically.',
-            cta: 'Open the faucet',
-            onAct: () => router.push('/faucet'),
-          },
-      {
-        title: 'Delegate to a validator',
-        body: rate
-          ? `Staking earns about ${rate.toFixed(1)}% a year. Your stake stays yours and can be moved between validators instantly.`
-          : 'Your stake stays yours and can be moved between validators instantly.',
-        cta: 'Compare validators',
-        onAct: () => router.push('/staking'),
-      },
-      {
-        title: 'Store something on Cascade',
-        body: 'Upload a file and it is encoded in your browser and stored across supernodes. Paid once, from your liquid balance.',
-        cta: 'Open Cascade',
-        onAct: () => router.push('/cascade'),
-      },
-    ];
-  }, [net.aprPercent, router]);
-
-  const openProposals = useMemo(
-    () => (proposals.proposalsInfo || []).filter((p) => isVotingOpen(p.status)).length,
-    [proposals.proposalsInfo],
-  );
-
-  /*
-   * The first-run view's second column. The design links to Foundry too; that
-   * is out of the navigation until it has a season, so only the two public
-   * reads are offered, each with its real count.
-   */
-  const firstRunAside = useMemo(
-    () => ({
-      balance: lume(liquid),
-      address: hub.address,
-      links: [
-        {
-          label: activeValidators?.length
-            ? `Compare ${activeValidators.length} validators`
-            : 'Compare validators',
-          onClick: () => router.push('/staking'),
-        },
-        {
-          label:
-            openProposals === 1
-              ? 'Read the open proposal'
-              : openProposals > 1
-                ? `Read the ${openProposals} open proposals`
-                : 'Read past proposals',
-          onClick: () => router.push('/governance'),
-        },
-      ],
-    }),
-    [activeValidators?.length, hub.address, liquid, openProposals, router],
-  );
-
   return (
     <>
       <Helmet>
@@ -444,8 +359,6 @@ export default function Page() {
       <DashboardScreen
         loading={loading && hub.hasPosition}
         stats={dashboardStats}
-        firstRun={emptyWallet ? firstRun : undefined}
-        firstRunAside={firstRunAside}
         watchedTotals={watchedTotals}
         allocationTitle={hub.hasPosition ? 'Delegations' : 'Active validators'}
         allocationLink={hub.hasPosition ? 'Manage' : `See all ${activeValidators?.length || ''}`.trim()}

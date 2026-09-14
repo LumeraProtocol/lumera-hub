@@ -157,7 +157,7 @@ function CascadeBody({
   const cascade = useCascade({ sdkjsReact: memoizedClient, readAddress: hub.address || undefined })
   // The chain knows how many SuperNodes are registered and how many Cascade
   // actions completed; the metrics indexer only knows the nodes that answered.
-  const { stats: net } = useNetworkStats()
+  const { stats: net, isLoading: netLoading } = useNetworkStats()
 
   const {
     markers,
@@ -436,6 +436,7 @@ function CascadeBody({
     <>
       <CascadeScreen
         loading={isMyFilesLoading}
+        statsLoading={netLoading}
         networkStored={
           net.storageUsedBytes != null && net.storageUsedBytes > 0
             ? `${(net.storageUsedBytes / TIB).toFixed(1)} TB`

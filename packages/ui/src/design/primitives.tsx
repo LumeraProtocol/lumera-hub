@@ -230,8 +230,11 @@ export function StatCard({
 /** Four figures sharing one bar, divided by hairlines. Used above tables. */
 export function StatStrip({
   items,
+  loading,
 }: {
   items: Array<{ label: React.ReactNode; value: React.ReactNode; tone?: 'primary' | 'green' | 'warn' | 'muted' }>
+  /** While true each figure shows a shimmer, not the em-dash placeholder. */
+  loading?: boolean
 }) {
   return (
     <div className="grid grid-cols-2 overflow-hidden rounded-panel border border-line-edge bg-ink-700 md:grid-cols-4">
@@ -246,9 +249,15 @@ export function StatStrip({
           )}
         >
           <Label className="min-h-6">{item.label}</Label>
-          <Stat size="md" tone={item.tone ?? 'primary'}>
-            {item.value}
-          </Stat>
+          {loading ? (
+            // A shimmer the height of the 20px figure, so a fetching strip
+            // reads as "loading" rather than as an empty em-dash.
+            <Skeleton className="h-5 w-[68px]" />
+          ) : (
+            <Stat size="md" tone={item.tone ?? 'primary'}>
+              {item.value}
+            </Stat>
+          )}
         </div>
       ))}
     </div>

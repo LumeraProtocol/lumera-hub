@@ -86,129 +86,8 @@ export type OpenProposal = {
   onVote: () => void
 }
 
-export type FirstRunStep = {
-  title: string
-  body: string
-  cta: string
-  onAct: () => void
-}
-
-/** The first-run view's right-hand column: the empty balance and what to read meanwhile. */
-export type FirstRunAside = {
-  balance: string
-  address: string
-  links: Array<{ label: string; onClick: () => void }>
-}
-
 /** What a watched address holds, read from the chain. */
 export type WatchedTotal = { total: string; sub: string }
-
-/*
- * What a connected but empty wallet sees instead of a portfolio.
- *
- * Every card on this screen reports a position, so with nothing staked and
- * nothing held they all read as em dashes — technically accurate and no help
- * at all. This replaces them with the three steps that lead to a position, in
- * the order they have to happen: hold LUME, stake it, then use the network.
- */
-function FirstRun({ steps, aside }: { steps: FirstRunStep[]; aside?: FirstRunAside }) {
-  return (
-    <div className="animate-fade flex flex-col gap-[18px]">
-      <PageTitle
-        title="Welcome to Lumera"
-        subtitle="Your wallet is connected and holds nothing yet. Three steps get you to a working position."
-      />
-
-      <div className="grid grid-cols-1 items-start gap-3.5 lg:grid-cols-2">
-        <div className="flex flex-col gap-3.5">
-          {steps.map((step, i) => (
-            <div
-              key={step.title}
-              className={cx(
-                'flex flex-col gap-4 rounded-card border bg-ink-700 px-[22px] py-5 sm:flex-row',
-                // The first step is the one that unblocks the others, so it is
-                // the only one that carries the accent.
-                i === 0 ? 'border-line-accent' : 'border-line-edge',
-              )}
-            >
-              <span
-                className={cx(
-                  'flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[9px] font-mono text-base leading-none font-semibold',
-                  i === 0 ? 'bg-lumera-teal/[.22] text-lumera-green' : 'bg-ink-600 text-text-tertiary',
-                )}
-              >
-                {i + 1}
-              </span>
-              <div className="flex min-w-0 flex-1 flex-col gap-[7px]">
-                <span className="text-lg leading-[1.3] font-semibold text-text-primary">
-                  {step.title}
-                </span>
-                <span className="text-base leading-[1.6] text-text-tertiary text-pretty">
-                  {step.body}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={step.onAct}
-                className={cx(
-                  'flex-none cursor-pointer self-start rounded-control px-4 py-[11px] text-base leading-none font-semibold whitespace-nowrap transition-colors sm:self-center',
-                  i === 0
-                    ? 'border-none bg-[linear-gradient(90deg,var(--color-lumera-teal),var(--color-lumera-green))] text-ink-800 hover:brightness-110'
-                    : 'border border-line-edge bg-transparent text-text-secondary hover:border-line-accent',
-                )}
-              >
-                {step.cta}
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {aside ? (
-          <div className="flex flex-col gap-3.5">
-            <div className="rounded-card border border-line-edge bg-ink-700 p-5">
-              <span className="mb-3 block font-mono text-micro leading-none font-medium tracking-[0.1em] text-text-tertiary">
-                YOUR BALANCE
-              </span>
-              <div className="mb-1.5 flex items-baseline gap-[9px]">
-                <span className="font-mono text-[28px] leading-none font-semibold text-text-primary tnum">
-                  {aside.balance}
-                </span>
-                <span className="font-mono text-lg leading-none font-medium text-text-tertiary">
-                  LUME
-                </span>
-              </div>
-              <span className="text-small leading-[1.5] text-text-muted">
-                {short(aside.address)} · nothing staked yet
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-3 rounded-card border border-line-edge bg-ink-700 p-5">
-              <span className="text-base leading-none font-semibold text-text-primary">
-                While you wait
-              </span>
-              <p className="m-0 text-base leading-[1.6] text-text-tertiary text-pretty">
-                Validators, proposals and network statistics are public. You can read all of it now
-                and act once you hold LUME.
-              </p>
-              <div className="flex flex-col gap-[7px]">
-                {aside.links.map((link) => (
-                  <button
-                    key={link.label}
-                    type="button"
-                    onClick={link.onClick}
-                    className="cursor-pointer rounded-control border border-line-edge bg-transparent px-[13px] py-2.5 text-left text-base leading-none font-medium text-text-secondary transition-colors hover:border-line-accent hover:text-lumera-green"
-                  >
-                    {link.label} →
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </div>
-    </div>
-  )
-}
 
 export function DashboardScreen({
   loading,
@@ -222,8 +101,6 @@ export function DashboardScreen({
   onClaim,
   claimLabel,
   onSeeActivity,
-  firstRun,
-  firstRunAside,
   watchedTotals,
 }: {
   loading?: boolean
@@ -237,20 +114,10 @@ export function DashboardScreen({
   onClaim: () => void
   claimLabel: string
   onSeeActivity: () => void
-  /**
-   * Shown in place of the portfolio when a connected wallet is empty. The page
-   * passes it only once the account has been read and holds nothing.
-   */
-  firstRun?: FirstRunStep[]
-  firstRunAside?: FirstRunAside
   /** Totals for the watched addresses, keyed by address. */
   watchedTotals?: Record<string, WatchedTotal | undefined>
 }) {
   const hub = useHub()
-
-  if (hub.isConnected && firstRun?.length) {
-    return <FirstRun steps={firstRun} aside={firstRunAside} />
-  }
 
   const title = hub.isConnected
     ? 'Your portfolio'

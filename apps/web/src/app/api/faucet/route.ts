@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { SigningStargateClient } from '@cosmjs/stargate';
 
-import { CHAIN_ID, DENOM, IS_MAINNET, RPC_ENDPOINTS } from '@/contants/network';
+import { NETWORK_PROFILES, rpcEndpointsFor } from '@/contants/network';
 import { getClientIP } from '@/lib/rate-limit';
 
 /*
@@ -14,11 +14,13 @@ import { getClientIP } from '@/lib/rate-limit';
  * secret (FAUCET_MNEMONIC) — never a NEXT_PUBLIC value — so the key never
  * reaches the browser and the send happens entirely server-side.
  *
- * Two things make it safe to expose: the faucet only exists on a testnet build
- * (mainnet refuses outright, since free mainnet LUME would be a scam-shaped
- * hole), and one address may draw once per COOLDOWN. The limit is best-effort,
- * in memory: it resets when the function cold-starts, which for a testnet
- * faucet is an acceptable ceiling rather than a guarantee.
+ * The faucet always sends on testnet — there is no such thing as free mainnet
+ * LUME — so it targets the testnet chain explicitly rather than the runtime's
+ * active network. On the combined deployment the active network is switched
+ * client-side and defaults to mainnet, so keying this route off that default
+ * would wrongly refuse; the presence of FAUCET_MNEMONIC is what makes it live.
+ * One address may draw once per COOLDOWN — best-effort and in memory, resetting
+ * on cold start, which for a testnet faucet is an acceptable ceiling.
  */
 
 // Node APIs (the signer needs crypto); never the edge runtime.
@@ -26,7 +28,13 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const MNEMONIC = process.env.FAUCET_MNEMONIC?.trim() || '';
-const CONFIGURED = !IS_MAINNET && !!MNEMONIC;
+const CONFIGURED = !!MNEMONIC;
+
+// The faucet is a testnet facility; it sends on the testnet chain whatever the
+// deployment's default network happens to be.
+const TESTNET = NETWORK_PROFILES.testnet;
+const CHAIN_ID = TESTNET.chainId;
+const DENOM = TESTNET.denom;
 
 /** Bech32 prefix for a Lumera account. */
 const PREFIX = 'lumera';
@@ -78,7 +86,7 @@ const getSigner = () => {
 
 /** Connect a signing client to the first RPC host that answers. */
 const connect = async (wallet: DirectSecp256k1HdWallet): Promise<SigningStargateClient> => {
-  const hosts = process.env.FAUCET_RPC ? [process.env.FAUCET_RPC] : RPC_ENDPOINTS;
+  const hosts = process.env.FAUCET_RPC ? [process.env.FAUCET_RPC] : rpcEndpointsFor('testnet');
   let lastError: unknown;
   for (const host of hosts) {
     try {
@@ -114,9 +122,6 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  if (IS_MAINNET) {
-    return NextResponse.json({ error: 'There is no faucet on mainnet.' }, { status: 404 });
-  }
   if (!CONFIGURED) {
     return NextResponse.json(
       { error: 'The faucet is not configured on this deployment yet.' },

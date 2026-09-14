@@ -122,6 +122,7 @@ export function GovernanceListScreen({
       />
 
       <StatStrip
+        loading={loading}
         items={[
           { label: 'OPEN FOR VOTING', value: String(counts.voting ?? 0) },
           { label: 'TURNOUT · LATEST', value: turnout },

@@ -183,6 +183,7 @@ export function StakingScreen({
       />
 
       <StatStrip
+        loading={loading}
         items={[
           { label: 'TOTAL BONDED', value: totalBonded },
           { label: 'NET APR', value: netApr, tone: 'green' },

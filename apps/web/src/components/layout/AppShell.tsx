@@ -50,7 +50,7 @@ import { ViewId } from '@/types';
 
 import { useHub, short } from '@lumera-hub/ui/src/hub/session';
 import { GlobalSearch, type SearchHit } from '@lumera-hub/ui/src/hub/GlobalSearch';
-import { Badge, Button, cx, DotLabel } from '@lumera-hub/ui/src/design/primitives';
+import { Badge, Button, cx } from '@lumera-hub/ui/src/design/primitives';
 import {
   BellIcon,
   CascadeIcon,
@@ -168,9 +168,14 @@ function NetworkPanel({ height, reachable }: { height: number; reachable: boolea
       ) : null}
       <div className="flex items-center justify-between">
         <span className="text-small leading-none text-text-tertiary">Status</span>
-        <DotLabel tone={reachable ? 'cyan' : 'danger'} pulse={reachable}>
+        <span
+          className={cx(
+            'text-small leading-none font-medium',
+            reachable ? 'text-lumera-green' : 'text-danger',
+          )}
+        >
           {reachable ? 'Online' : 'Unreachable'}
-        </DotLabel>
+        </span>
       </div>
       <div className="flex items-baseline justify-between">
         <span className="text-small leading-none text-text-tertiary">Block</span>

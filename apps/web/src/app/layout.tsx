@@ -91,6 +91,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ClientRoot>
           <LayoutWrapper>{children}</LayoutWrapper>
         </ClientRoot>
+        {/* First-load splash: in the initial HTML so it covers the blank while
+            the app's JS downloads and hydrates. ClientRoot fades and removes it
+            on mount. Styled in globals.css (#lm-splash). */}
+        <div id="lm-splash" aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="lm-splash-mark" src="/lumera-mark.svg" alt="" width={46} height={46} />
+          <span className="lm-splash-bar" />
+        </div>
       </body>
     </html>
   )

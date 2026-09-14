@@ -230,3 +230,84 @@ textarea:focus-visible,
     animation: none;
   }
 }
+
+/*
+ * First-load splash. Rendered in the initial HTML (see layout.tsx) so it fills
+ * the screen while the app's JavaScript downloads and hydrates — the window in
+ * which the page would otherwise sit blank. ClientRoot adds `app-ready` to the
+ * body once React has mounted, fading it out over the now-live app, then
+ * removes the node.
+ */
+#lm-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: var(--color-ink-800);
+  transition: opacity 0.45s ease;
+}
+
+#lm-splash .lm-splash-mark {
+  width: 46px;
+  height: auto;
+  animation: lmPulse 1.4s ease-in-out infinite;
+}
+
+#lm-splash .lm-splash-bar {
+  position: relative;
+  width: 120px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-line-hairline);
+}
+
+#lm-splash .lm-splash-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 42%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-lumera-teal), var(--color-lumera-green));
+  animation: lmSlide 1.1s ease-in-out infinite;
+}
+
+body.app-ready #lm-splash {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes lmPulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes lmSlide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #lm-splash {
+    transition: none;
+  }
+  #lm-splash .lm-splash-mark,
+  #lm-splash .lm-splash-bar::after {
+    animation: none;
+  }
+}

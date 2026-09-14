@@ -208,6 +208,14 @@ const RPC_FALLBACKS: Record<NetworkProfile, string[]> = {
   devnet: [],
 };
 
+/**
+ * The RPC hosts for one specific profile, primary first. Server code that must
+ * target a fixed network regardless of the runtime's active profile uses this —
+ * the faucet, for instance, always sends on testnet.
+ */
+export const rpcEndpointsFor = (profile: NetworkProfile): string[] =>
+  dedupe([NETWORK_PROFILES[profile].rpcEndpoint, ...RPC_FALLBACKS[profile]]);
+
 /*
  * Network-varying values, exported as live bindings.
  *
