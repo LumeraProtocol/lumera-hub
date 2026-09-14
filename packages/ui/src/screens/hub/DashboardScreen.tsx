@@ -102,8 +102,11 @@ export function DashboardScreen({
   claimLabel,
   onSeeActivity,
   watchedTotals,
+  statsLoading,
 }: {
   loading?: boolean
+  /** The network figures are still being fetched — shimmer the four stat cards. */
+  statsLoading?: boolean
   stats: DashboardStat[]
   allocationTitle: string
   allocationLink: string
@@ -157,7 +160,7 @@ export function DashboardScreen({
       />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {loading
+        {statsLoading
           ? Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}

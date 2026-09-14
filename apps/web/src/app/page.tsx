@@ -84,8 +84,8 @@ export default function Page() {
   );
   const proposals = useProposals();
   const recentActivityData = useRecentActivity();
-  const { stats: net } = useNetworkStats();
-  const { validators, activeValidators, apr, bondedTokens } = useStaking();
+  const { stats: net, isLoading: netLoading } = useNetworkStats();
+  const { validators, activeValidators, apr, bondedTokens, isLoading: validatorsLoading } = useStaking();
   const { params: chainParams } = useChainParams();
   const logos = useValidatorLogos(activeValidators);
   const watchedTotals = useWatchedTotals(hub.watched.map((w) => w.address));
@@ -357,7 +357,8 @@ export default function Page() {
         <title>Dashboard - Lumera Hub</title>
       </Helmet>
       <DashboardScreen
-        loading={loading && hub.hasPosition}
+        loading={hub.hasPosition ? loading : validatorsLoading}
+        statsLoading={netLoading}
         stats={dashboardStats}
         watchedTotals={watchedTotals}
         allocationTitle={hub.hasPosition ? 'Delegations' : 'Active validators'}

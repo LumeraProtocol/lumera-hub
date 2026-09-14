@@ -50,7 +50,7 @@ import { ViewId } from '@/types';
 
 import { useHub, short } from '@lumera-hub/ui/src/hub/session';
 import { GlobalSearch, type SearchHit } from '@lumera-hub/ui/src/hub/GlobalSearch';
-import { Badge, Button, cx } from '@lumera-hub/ui/src/design/primitives';
+import { Badge, Button, cx, Skeleton } from '@lumera-hub/ui/src/design/primitives';
 import {
   BellIcon,
   CascadeIcon,
@@ -179,9 +179,15 @@ function NetworkPanel({ height, reachable }: { height: number; reachable: boolea
       </div>
       <div className="flex items-baseline justify-between">
         <span className="text-small leading-none text-text-tertiary">Block</span>
-        <span className="font-mono text-small leading-none font-medium tnum text-text-secondary">
-          {height ? `#${height.toLocaleString('en-US')}` : '—'}
-        </span>
+        {/* Shimmer while the first head is still being read (reachable, no
+            height yet) rather than flashing an em-dash. */}
+        {reachable && !height ? (
+          <Skeleton className="h-3 w-16" />
+        ) : (
+          <span className="font-mono text-small leading-none font-medium tnum text-text-secondary">
+            {height ? `#${height.toLocaleString('en-US')}` : '—'}
+          </span>
+        )}
       </div>
       <div className="flex items-baseline justify-between gap-2">
         <span className="flex-none text-small leading-none text-text-tertiary">Chain</span>

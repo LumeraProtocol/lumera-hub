@@ -45,6 +45,7 @@ export function FaucetScreen({
   lastTxUrl,
   rules,
   helpUrl,
+  statsLoading,
 }: {
   /** False when this deployment has no faucet service behind it. */
   available: boolean
@@ -57,6 +58,8 @@ export function FaucetScreen({
   cooldown?: string
   /** The strip under the title. Figures with no source read "—". */
   stats: Array<{ label: string; value: string }>
+  /** The strip's figures are still being read — shimmer them. */
+  statsLoading?: boolean
   /** Set while the caller is in cooldown, e.g. "You can request again in 24h". */
   cooldownLabel?: string | null
   error?: string | null
@@ -109,9 +112,13 @@ export function FaucetScreen({
             <span className="font-mono text-micro leading-none font-medium tracking-[0.1em] text-text-tertiary">
               {s.label}
             </span>
-            <span className="truncate font-mono text-lg leading-none font-semibold text-text-primary tnum">
-              {s.value}
-            </span>
+            {statsLoading ? (
+              <Skeleton className="h-4 w-16" />
+            ) : (
+              <span className="truncate font-mono text-lg leading-none font-semibold text-text-primary tnum">
+                {s.value}
+              </span>
+            )}
           </div>
         ))}
       </div>

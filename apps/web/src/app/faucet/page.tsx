@@ -234,6 +234,7 @@ export default function FaucetPage() {
       error={error}
       drips={drips}
       dripsLoading={dripsLoading}
+      statsLoading={dripsLoading}
       dripsToday={dripsToday}
       onRequest={onRequest}
       onReset={() => {
