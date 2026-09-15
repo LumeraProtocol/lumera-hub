@@ -15,7 +15,12 @@
 import React from 'react'
 import QRCode from 'react-qr-code'
 
-import { CASCADE_API_URL, NETWORK_PROFILES } from '@/contants/network'
+import {
+  CASCADE_API_URL,
+  CASCADE_EXPLORER_URL,
+  cascadeExplorerBlockUrl,
+  NETWORK_PROFILES,
+} from '@/contants/network'
 import { Card, CardHeader, Notice, cx } from '@lumera-hub/ui/src/design/primitives'
 import { copyText, useHub } from '@lumera-hub/ui/src/hub/session'
 
@@ -45,10 +50,6 @@ const short = (s: string, head = 10, tail = 6) =>
   !s || s.length <= head + tail + 1 ? s : `${s.slice(0, head)}…${s.slice(-tail)}`
 
 const testnet = NETWORK_PROFILES.testnet
-const explorerBlockUrl = (chainId: string, block: number) => {
-  const profile = Object.values(NETWORK_PROFILES).find((p) => p.chainId === chainId) || testnet
-  return `${profile.portalUrl.replace(/\/+$/, '')}/${chainId}/block/${block}`
-}
 
 /** One labelled QR that doubles as a click-through on desktop. */
 function QrPanel({ href, label, hint }: { href: string; label: string; hint: string }) {
@@ -59,8 +60,16 @@ function QrPanel({ href, label, hint }: { href: string; label: string; hint: str
       rel="noreferrer"
       className="flex flex-none flex-col items-center gap-2.5 no-underline"
     >
-      <span className="rounded-[9px] bg-text-primary p-3 transition-[filter] hover:brightness-95">
-        <QRCode value={href} size={128} bgColor="#f5f5fa" fgColor="#000c22" level="M" />
+      <span className="relative rounded-[10px] bg-text-primary p-3.5 transition-[filter] hover:brightness-95">
+        {/* Level H (30% error correction) leaves room to punch the Lumera mark
+            into the centre and still scan cleanly. */}
+        <QRCode value={href} size={160} bgColor="#f5f5fa" fgColor="#000c22" level="H" />
+        <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <span className="flex items-center justify-center rounded-[7px] bg-[#f5f5fa] p-1.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/lumera-mark.svg" alt="" className="h-9 w-9" />
+          </span>
+        </span>
       </span>
       <span className="flex flex-col items-center gap-0.5 text-center">
         <span className="text-base leading-none font-semibold text-text-primary">{label}</span>
@@ -100,10 +109,7 @@ export function QrShare() {
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/d/${result.action_id}`
     : ''
   const block = receipt?.block_height ?? result?.block_height
-  const chainId = receipt?.chain_id ?? testnet.chainId
-  const explorerUrl = block
-    ? explorerBlockUrl(chainId, block)
-    : `${testnet.portalUrl.replace(/\/+$/, '')}/${testnet.chainId}`
+  const explorerUrl = block ? cascadeExplorerBlockUrl(block) : CASCADE_EXPLORER_URL
 
   /*
    * Once an object exists, read its receipt for the supernode set and digest
@@ -222,7 +228,7 @@ export function QrShare() {
                 setWrittenAt(null)
                 setError(null)
               }}
-              className="cursor-pointer border-none bg-transparent p-0 text-small leading-none font-medium text-lumera-green hover:text-lumera-green-bright"
+              className="inline-flex flex-none cursor-pointer items-center justify-center gap-[7px] rounded-control border border-line-edge bg-ink-800 px-[17px] py-[11px] text-base leading-none font-semibold whitespace-nowrap text-text-secondary transition-colors hover:border-line-accent hover:text-lumera-green"
             >
               Share another
             </button>
@@ -297,19 +303,25 @@ export function QrShare() {
             ) : null}
           </>
         ) : (
-          <>
-            <div className="mb-5 flex min-w-0 flex-col gap-1">
-              <span className="truncate text-lg leading-[1.3] font-semibold text-text-primary">
-                {result.filename || `Object #${result.action_id}`} is live
-              </span>
-              <span className="text-base leading-[1.55] text-text-muted text-pretty">
-                No wallet, no account, no install. Scan to pull it and watch it resolve in the
-                browser, or check the same object on the public explorer.
-              </span>
+          <div className="mx-auto flex w-full max-w-[820px] flex-col">
+            <div className="mb-5 flex min-w-0 items-start gap-2.5">
+              <span
+                className="mt-[7px] h-2 w-2 flex-none rounded-full bg-lumera-green"
+                aria-hidden
+              />
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="truncate text-lg leading-[1.3] font-semibold text-text-primary">
+                  Your file is live
+                </span>
+                <span className="text-base leading-[1.55] text-text-muted text-pretty">
+                  No wallet, no account, no install. Scan to pull it and watch it resolve in the
+                  browser, or check the same object on the public explorer.
+                </span>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex flex-wrap gap-6">
+            <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:gap-6">
+              <div className="flex w-full flex-none flex-wrap items-center justify-center gap-x-12 gap-y-7 rounded-panel border border-line-edge bg-ink-800 px-7 py-6 lg:w-auto">
                 <QrPanel href={shareUrl} label="Retrieve the object" hint="resolves in the browser" />
                 <QrPanel
                   href={explorerUrl}
@@ -318,7 +330,7 @@ export function QrShare() {
                 />
               </div>
 
-              <div className="w-full max-w-[360px] rounded-panel border border-line-accent bg-ink-800 p-[18px]">
+              <div className="w-full flex-1 rounded-panel border border-line-accent bg-ink-800 p-[18px]">
                 <span className="mb-3 block font-mono text-micro leading-none font-medium tracking-[0.1em] text-lumera-green uppercase">
                   What you see when it resolves
                 </span>
@@ -340,8 +352,8 @@ export function QrShare() {
               </div>
             </div>
 
-            <div className="mt-5 flex items-center gap-2.5 rounded-control border border-line-edge bg-ink-800 px-[13px] py-[9px]">
-              <span className="min-w-0 flex-1 truncate font-mono text-small text-text-secondary">
+            <div className="mt-4 inline-flex max-w-full items-center gap-2.5 self-start rounded-control border border-line-edge bg-ink-800 px-[13px] py-[9px]">
+              <span className="min-w-0 truncate font-mono text-small text-text-secondary">
                 {shareUrl}
               </span>
               <button
@@ -355,7 +367,7 @@ export function QrShare() {
                 Copy link
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
     </Card>

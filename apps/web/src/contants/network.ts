@@ -363,6 +363,19 @@ export const CASCADE_API_URL = (
   process.env.NEXT_PUBLIC_CASCADE_API_URL || 'https://api.lumera.help'
 ).replace(/\/+$/, '');
 
+/*
+ * The public Cascade block explorer (explorer.lumera.help). It follows the
+ * testnet chain and uses a hash route per block, so a link to a block's height
+ * is `${CASCADE_EXPLORER_URL}/#/block/<height>` — no chain segment, no commas.
+ */
+export const CASCADE_EXPLORER_URL = (
+  process.env.NEXT_PUBLIC_CASCADE_EXPLORER_URL || 'https://explorer.lumera.help'
+).replace(/\/+$/, '');
+
+/** Link to a block on the Cascade explorer by its height. */
+export const cascadeExplorerBlockUrl = (block: number) =>
+  `${CASCADE_EXPLORER_URL}/#/block/${block}`;
+
 export const EVM_NATIVE_DECIMALS = 18;
 export const COSMOS_EIP712_ENABLED = parseBooleanEnvironmentValue(
   process.env.NEXT_PUBLIC_COSMOS_EIP712_ENABLED,

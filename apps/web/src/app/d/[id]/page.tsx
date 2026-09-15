@@ -13,7 +13,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 
-import { CASCADE_API_URL, NETWORK_PROFILES } from '@/contants/network'
+import { CASCADE_API_URL, cascadeExplorerBlockUrl } from '@/contants/network'
 
 type Receipt = {
   action_id: string
@@ -34,14 +34,6 @@ const sizeLabel = (kbs?: number) => {
   if (!kbs || kbs <= 0) return '—'
   if (kbs < 1024) return `${kbs} KB`
   return `${(kbs / 1024).toFixed(kbs < 10240 ? 1 : 0)} MB`
-}
-
-/** Testnet portal for the object's chain, so the explorer link is right even
- *  when the hub itself is on mainnet. */
-const explorerBlockUrl = (chainId: string, block: number) => {
-  const profile =
-    Object.values(NETWORK_PROFILES).find((p) => p.chainId === chainId) || NETWORK_PROFILES.testnet
-  return `${profile.portalUrl.replace(/\/+$/, '')}/${chainId}/block/${block}`
 }
 
 export default function ObjectPage() {
@@ -187,7 +179,7 @@ export default function ObjectPage() {
 
             {receipt?.block_height ? (
               <a
-                href={explorerBlockUrl(receipt.chain_id, receipt.block_height)}
+                href={cascadeExplorerBlockUrl(receipt.block_height)}
                 target="_blank"
                 rel="noreferrer"
                 className="mt-4 inline-flex text-small font-medium text-lumera-green"
