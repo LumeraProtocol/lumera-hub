@@ -52,7 +52,7 @@ const short = (s: string, head = 10, tail = 6) =>
 const testnet = NETWORK_PROFILES.testnet
 
 /** One labelled QR that doubles as a click-through on desktop. */
-function QrPanel({ href, label, hint }: { href: string; label: string; hint: string }) {
+function QrPanel({ href, label, hint }: { href: string; label: string; hint?: string }) {
   return (
     <a
       href={href}
@@ -60,20 +60,20 @@ function QrPanel({ href, label, hint }: { href: string; label: string; hint: str
       rel="noreferrer"
       className="flex flex-none flex-col items-center gap-2.5 no-underline"
     >
-      <span className="relative rounded-[10px] bg-text-primary p-3.5 transition-[filter] hover:brightness-95">
+      <span className="relative mb-[5px] rounded-[10px] bg-text-primary p-3.5 transition-[filter] hover:brightness-95">
         {/* Level H (30% error correction) leaves room to punch the Lumera mark
             into the centre and still scan cleanly. */}
-        <QRCode value={href} size={160} bgColor="#f5f5fa" fgColor="#000c22" level="H" />
+        <QRCode value={href} size={230} bgColor="#f5f5fa" fgColor="#000c22" level="H" />
         <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <span className="flex items-center justify-center rounded-[7px] bg-[#f5f5fa] p-1.5">
+          <span className="flex items-center justify-center rounded-[8px] bg-[#f5f5fa] p-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/lumera-mark.svg" alt="" className="h-9 w-9" />
+            <img src="/lumera-mark.svg" alt="" className="h-12 w-12" />
           </span>
         </span>
       </span>
       <span className="flex flex-col items-center gap-0.5 text-center">
         <span className="text-base leading-none font-semibold text-text-primary">{label}</span>
-        <span className="text-small leading-none text-text-muted">{hint}</span>
+        {hint ? <span className="text-small leading-none text-text-muted">{hint}</span> : null}
       </span>
     </a>
   )
@@ -320,52 +320,60 @@ export function QrShare() {
               </div>
             </div>
 
-            <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:justify-between lg:gap-8">
-              <div className="flex w-full flex-none flex-wrap items-center justify-center gap-x-12 gap-y-7 rounded-panel border border-line-edge bg-ink-800 px-7 py-4 lg:w-auto">
-                <QrPanel href={shareUrl} label="Retrieve the object" hint="resolves in the browser" />
-                <QrPanel
-                  href={explorerUrl}
-                  label="View on the explorer"
-                  hint="the same object, on chain"
-                />
-              </div>
+            <div className="flex flex-col px-20">
+              <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:justify-between lg:gap-8">
+                <div className="flex w-full flex-none flex-col items-center justify-center py-2 lg:w-auto">
+                  <QrPanel href={shareUrl} label="Scan to download" hint="resolves in the browser" />
+                </div>
 
-              <div className="w-full flex-none rounded-panel border border-line-accent bg-ink-800 p-[18px] lg:w-[430px]">
-                <span className="mb-3 block font-mono text-micro leading-none font-medium tracking-[0.1em] text-lumera-green uppercase">
-                  What you see when it resolves
-                </span>
-                <div className="flex flex-col">
-                  {rows.map((r) => (
-                    <div
-                      key={r.k}
-                      className="flex items-baseline justify-between gap-4 border-b border-ink-500 py-2.5 last:border-b-0"
-                    >
-                      <span className="flex-none text-base leading-none text-text-tertiary">
-                        {r.k}
-                      </span>
-                      <span className="text-right font-mono text-base leading-[1.4] font-medium text-warn [overflow-wrap:anywhere]">
-                        {r.v}
-                      </span>
-                    </div>
-                  ))}
+                <div className="flex w-full flex-none flex-col rounded-panel border border-line-accent bg-ink-800 p-[18px] lg:w-[430px]">
+                  <span className="mb-3 block font-mono text-micro leading-none font-medium tracking-[0.1em] text-lumera-green uppercase">
+                    What you see when it resolves
+                  </span>
+                  <div className="flex flex-col">
+                    {rows.map((r) => (
+                      <div
+                        key={r.k}
+                        className="flex items-baseline justify-between gap-4 border-b border-ink-500 py-2.5 last:border-b-0"
+                      >
+                        <span className="flex-none text-base leading-none text-text-tertiary">
+                          {r.k}
+                        </span>
+                        <span className="text-right font-mono text-base leading-[1.4] font-medium text-warn [overflow-wrap:anywhere]">
+                          {r.v}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {/* The explorer is a verify path — a click, not a scan — so it
+                      lives here as a link at the foot of the on-chain panel. */}
+                  <a
+                    href={explorerUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-auto flex items-center gap-1.5 self-start pt-4 text-base font-semibold text-lumera-green transition-colors hover:text-lumera-green-bright"
+                  >
+                    View on the explorer
+                    <span aria-hidden>↗</span>
+                  </a>
                 </div>
               </div>
-            </div>
 
-            <div className="mt-4 inline-flex max-w-full items-center gap-2.5 self-start rounded-control border border-line-edge bg-ink-800 px-[13px] py-[9px]">
-              <span className="min-w-0 truncate font-mono text-small text-text-secondary">
-                {shareUrl}
-              </span>
-              <button
-                type="button"
-                onClick={async () => {
-                  const ok = await copyText(shareUrl)
-                  hub.flash(ok ? 'Link copied' : 'Press ⌘C to copy', ok ? 'ok' : 'warn')
-                }}
-                className="flex-none cursor-pointer rounded-chip border border-line-edge bg-transparent px-[9px] py-[5px] text-small leading-none font-medium text-text-tertiary transition-colors hover:border-line-accent hover:text-lumera-green"
-              >
-                Copy link
-              </button>
+              <div className="mt-4 inline-flex max-w-full items-center gap-2.5 self-start rounded-control border border-line-edge bg-ink-800 px-[13px] py-[9px]">
+                <span className="min-w-0 truncate font-mono text-small text-text-secondary">
+                  {shareUrl}
+                </span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const ok = await copyText(shareUrl)
+                    hub.flash(ok ? 'Link copied' : 'Press ⌘C to copy', ok ? 'ok' : 'warn')
+                  }}
+                  className="flex-none cursor-pointer rounded-chip border border-line-edge bg-transparent px-[9px] py-[5px] text-small leading-none font-medium text-text-tertiary transition-colors hover:border-line-accent hover:text-lumera-green"
+                >
+                  Copy link
+                </button>
+              </div>
             </div>
           </div>
         )}
