@@ -64,6 +64,7 @@ export type StorageSummary = {
 export function CascadeScreen({
   loading,
   statsLoading,
+  shareSlot,
   networkStored,
   networkCapacity,
   supernodes,
@@ -91,6 +92,8 @@ export function CascadeScreen({
   loading?: boolean
   /** The network figures are still being fetched — shimmer the stat strip. */
   statsLoading?: boolean
+  /** The "share a file" card, injected by the container (needs app-side deps). */
+  shareSlot?: React.ReactNode
   networkStored: string
   networkCapacity: string
   supernodes: string
@@ -166,6 +169,8 @@ export function CascadeScreen({
           { label: 'OBJECTS STORED', value: storedObjects },
         ]}
       />
+
+      {shareSlot}
 
       <div className="overflow-hidden rounded-card border border-line-edge bg-ink-700">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-hairline px-[18px] py-3.5">

@@ -41,7 +41,9 @@ import {
   type UploadProgress,
 } from '@lumera-hub/ui/src/screens/hub/CascadeScreen'
 import { copyText, short, useHub } from '@lumera-hub/ui/src/hub/session'
+import { useNetwork } from '@/app/providers/network-provider'
 import { FileDrawer, UploadDrawer, type FileDetail } from './CascadeDrawers'
+import { QrShare } from './QrShare'
 
 /*
  * The design sorts a drive into models, media, documents and archives. The
@@ -158,6 +160,9 @@ function CascadeBody({
   // The chain knows how many SuperNodes are registered and how many Cascade
   // actions completed; the metrics indexer only knows the nodes that answered.
   const { stats: net, isLoading: netLoading } = useNetworkStats()
+  // The gateway inscribes on testnet, so QR file-sharing is offered on testnet
+  // only for now — it stays hidden on mainnet.
+  const { isTestnet } = useNetwork()
 
   const {
     markers,
@@ -437,6 +442,7 @@ function CascadeBody({
       <CascadeScreen
         loading={isMyFilesLoading}
         statsLoading={netLoading}
+        shareSlot={isTestnet ? <QrShare /> : null}
         networkStored={
           net.storageUsedBytes != null && net.storageUsedBytes > 0
             ? `${(net.storageUsedBytes / TIB).toFixed(1)} TB`
