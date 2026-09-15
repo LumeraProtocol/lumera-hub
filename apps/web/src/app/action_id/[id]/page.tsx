@@ -12,6 +12,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import QRCode from 'react-qr-code'
 
 import { CASCADE_API_URL, cascadeExplorerBlockUrl } from '@/contants/network'
 
@@ -44,9 +45,13 @@ export default function ObjectPage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'pending' | 'missing' | 'error'>(
     'loading',
   )
+  // This page's own link — the value the share QR encodes, so a viewer can hand
+  // the object to another device. Set on the client to avoid an SSR mismatch.
+  const [shareUrl, setShareUrl] = useState('')
 
   useEffect(() => {
     document.title = `Object ${id} · Lumera Cascade`
+    if (typeof window !== 'undefined') setShareUrl(`${window.location.origin}/action_id/${id}`)
   }, [id])
 
   useEffect(() => {
@@ -186,6 +191,25 @@ export default function ObjectPage() {
               >
                 View the transaction on the explorer →
               </a>
+            ) : null}
+
+            {shareUrl ? (
+              <div className="mt-8 flex flex-col items-center gap-2.5">
+                <span className="relative mb-[5px] rounded-[10px] bg-text-primary p-3.5">
+                  {/* Same QR as the hub's Cascade share card: level H leaves room
+                      to punch the Lumera mark into the centre and still scan. */}
+                  <QRCode value={shareUrl} size={230} bgColor="#f5f5fa" fgColor="#000c22" level="H" />
+                  <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <span className="flex items-center justify-center rounded-[8px] bg-[#f5f5fa] p-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/lumera-mark.svg" alt="" className="h-12 w-12" />
+                    </span>
+                  </span>
+                </span>
+                <span className="text-[18px] leading-none font-semibold text-text-primary">
+                  Share the page
+                </span>
+              </div>
             ) : null}
           </>
         )}

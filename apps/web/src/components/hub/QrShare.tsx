@@ -6,7 +6,7 @@
  * Pick a file, it uploads to Cascade through /api/cascade/upload (which holds
  * the operator key), and back comes a permanent action id. The result then
  * mirrors the "try it yourself" proof: two QR codes for the object — scan the
- * first to pull the bytes (they resolve in the browser via the public /d/<id>
+ * first to pull the bytes (they resolve in the browser via the public /action_id/<id>
  * page), scan the second to see it on the chain explorer — beside a panel of
  * what the object's on-chain receipt actually says. Storage is handled by the
  * gateway, so this works whether or not a wallet is connected here.
@@ -106,7 +106,7 @@ export function QrShare() {
   }, [])
 
   const shareUrl = result
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/d/${result.action_id}`
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/action_id/${result.action_id}`
     : ''
   const block = receipt?.block_height ?? result?.block_height
   const explorerUrl = block ? cascadeExplorerBlockUrl(block) : CASCADE_EXPLORER_URL
