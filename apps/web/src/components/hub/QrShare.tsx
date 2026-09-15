@@ -1,15 +1,18 @@
 'use client'
 
 /*
- * Share a file as a QR.
+ * The share result for a stored Cascade object.
  *
- * Pick a file, it uploads to Cascade through /api/cascade/upload (which holds
- * the operator key), and back comes a permanent action id. The result then
- * mirrors the "try it yourself" proof: two QR codes for the object — scan the
- * first to pull the bytes (they resolve in the browser via the public /action_id/<id>
- * page), scan the second to see it on the chain explorer — beside a panel of
- * what the object's on-chain receipt actually says. Storage is handled by the
- * gateway, so this works whether or not a wallet is connected here.
+ * Given an on-chain action id, this renders the "your file is live" card: a QR
+ * that a phone scans to pull the bytes (they resolve in the browser via the
+ * public /action_id/<id> page), beside a panel of what the object's on-chain
+ * receipt actually says, plus a link to the same object on the explorer and a
+ * copy-able share link.
+ *
+ * It is driven by a completed wallet upload — the uploader picks the action id
+ * once the object finalizes on chain and hands it here. Only public objects can
+ * be shared this way (the gateway serves their bytes key-lessly); a private one
+ * shows its receipt but no scan-to-download, since no one else can fetch it.
  */
 
 import React from 'react'
@@ -21,15 +24,9 @@ import {
   cascadeExplorerBlockUrl,
   NETWORK_PROFILES,
 } from '@/contants/network'
-import { Card, CardHeader, Notice, cx } from '@lumera-hub/ui/src/design/primitives'
+import { Card, CardHeader } from '@lumera-hub/ui/src/design/primitives'
 import { copyText, useHub } from '@lumera-hub/ui/src/hub/session'
 
-type UploadResult = {
-  action_id: string
-  filename?: string
-  size_bytes?: number
-  block_height?: number
-}
 type Receipt = {
   state?: string
   block_height?: number
@@ -79,45 +76,34 @@ function QrPanel({ href, label, hint }: { href: string; label: string; hint?: st
   )
 }
 
-export function QrShare() {
+export function ShareResult({
+  actionId,
+  filename,
+  isPublic = true,
+  onDone,
+}: {
+  /** The object's on-chain action id — what the share page resolves. Absent
+   *  while the just-uploaded object is still settling on chain. */
+  actionId?: string
+  filename?: string
+  /** Public objects get the scan-to-download QR; private ones can't be shared. */
+  isPublic?: boolean
+  /** Rendered as a "Done" affordance in the header when given. */
+  onDone?: () => void
+}) {
   const hub = useHub()
-  const inputRef = React.useRef<HTMLInputElement>(null)
-  const [configured, setConfigured] = React.useState<boolean | null>(null)
-  const [dragging, setDragging] = React.useState(false)
-  const [busy, setBusy] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
-  const [result, setResult] = React.useState<UploadResult | null>(null)
   const [receipt, setReceipt] = React.useState<Receipt | null>(null)
   const [writtenAt, setWrittenAt] = React.useState<string | null>(null)
 
-  React.useEffect(() => {
-    let cancelled = false
-    fetch('/api/cascade/upload')
-      .then((r) => r.json())
-      .then((j) => {
-        if (!cancelled) setConfigured(Boolean(j?.configured))
-      })
-      .catch(() => {
-        if (!cancelled) setConfigured(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const shareUrl = result
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/action_id/${result.action_id}`
-    : ''
-  const block = receipt?.block_height ?? result?.block_height
-  const explorerUrl = block ? cascadeExplorerBlockUrl(block) : CASCADE_EXPLORER_URL
-
   /*
-   * Once an object exists, read its receipt for the supernode set and digest
-   * (a fresh upload is briefly PENDING, so retry a couple of times), and read
-   * the block's timestamp for "Written". Both are best-effort — a row simply
-   * stays out rather than showing a guess.
+   * Read the object's receipt for the supernode set and digest (a fresh object
+   * is briefly PENDING, so retry a few times). Best-effort — a row stays out
+   * rather than showing a guess.
    */
-  const enrich = React.useCallback((actionId: string, blockHeight?: number) => {
+  React.useEffect(() => {
+    setReceipt(null)
+    setWrittenAt(null)
+    if (!actionId) return
     let cancelled = false
     let tries = 0
     const pull = async () => {
@@ -127,236 +113,157 @@ export function QrShare() {
           const data = (await r.json()) as Receipt
           if (cancelled) return
           setReceipt(data)
-          if (data.state !== 'DONE' && tries < 5) {
+          if (data.state !== 'DONE' && tries < 8) {
             tries += 1
             setTimeout(pull, 3000)
           }
         }
       } catch {
-        /* leave the panel with what the upload already gave */
+        /* leave the panel with whatever it already has */
       }
     }
     void pull()
-
-    const h = blockHeight
-    if (h) {
-      fetch(`${testnet.restEndpoint}/cosmos/base/tendermint/v1beta1/blocks/${h}`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((b) => {
-          const t = b?.block?.header?.time
-          if (!cancelled && t) {
-            setWrittenAt(
-              new Date(t).toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              }),
-            )
-          }
-        })
-        .catch(() => undefined)
-    }
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [actionId])
 
-  const upload = React.useCallback(
-    async (file: File) => {
-      setBusy(true)
-      setError(null)
-      setResult(null)
-      setReceipt(null)
-      setWrittenAt(null)
-      try {
-        const body = new FormData()
-        body.append('file', file, file.name)
-        const res = await fetch('/api/cascade/upload', { method: 'POST', body })
-        const json = await res.json().catch(() => null)
-        if (!res.ok) throw new Error(json?.error || `Upload failed (${res.status}).`)
-        const r = json as UploadResult
-        setResult(r)
-        enrich(r.action_id, r.block_height)
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'The upload could not be completed.')
-      } finally {
-        setBusy(false)
-      }
-    },
-    [enrich],
+  const block = receipt?.block_height
+
+  // The block's timestamp gives "Written".
+  React.useEffect(() => {
+    if (!block) return
+    let cancelled = false
+    fetch(`${testnet.restEndpoint}/cosmos/base/tendermint/v1beta1/blocks/${block}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((b) => {
+        const t = b?.block?.header?.time
+        if (!cancelled && t) {
+          setWrittenAt(
+            new Date(t).toLocaleDateString(undefined, {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            }),
+          )
+        }
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [block])
+
+  const pending = !actionId
+  const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/action_id/${actionId}`
+  const explorerUrl = block ? cascadeExplorerBlockUrl(block) : CASCADE_EXPLORER_URL
+
+  const rows: Array<{ k: string; v: string }> = [
+    { k: 'Object', v: `#${actionId}` },
+    ...(writtenAt ? [{ k: 'Written', v: writtenAt }] : []),
+    { k: 'Anchored in', v: block ? `block ${block.toLocaleString('en-US')}` : '—' },
+    ...(receipt?.supernodes?.length
+      ? [
+          {
+            k: 'Held by',
+            v: `${receipt.supernodes.length} supernode${receipt.supernodes.length === 1 ? '' : 's'}`,
+          },
+        ]
+      : []),
+    ...(receipt?.artifact?.content_hash
+      ? [{ k: 'Digest', v: short(receipt.artifact.content_hash, 10, 6) }]
+      : []),
+    ...(receipt?.file_size_kbs ? [{ k: 'Size', v: sizeLabel(receipt.file_size_kbs * 1024) }] : []),
+  ]
+
+  const infoPanel = (
+    <div className="flex w-full flex-none flex-col rounded-panel border border-line-accent bg-ink-800 p-[18px] lg:w-[430px]">
+      <span className="mb-3 block font-mono text-micro leading-none font-medium tracking-[0.1em] text-lumera-green uppercase">
+        What you see when it resolves
+      </span>
+      <div className="flex flex-col">
+        {rows.map((r) => (
+          <div
+            key={r.k}
+            className="flex items-baseline justify-between gap-4 border-b border-ink-500 py-2.5 last:border-b-0"
+          >
+            <span className="flex-none text-base leading-none text-text-tertiary">{r.k}</span>
+            <span className="text-right font-mono text-base leading-[1.4] font-medium text-warn [overflow-wrap:anywhere]">
+              {r.v}
+            </span>
+          </div>
+        ))}
+      </div>
+      <a
+        href={explorerUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-auto flex items-center gap-1.5 self-start pt-4 text-base font-semibold text-lumera-green transition-colors hover:text-lumera-green-bright"
+      >
+        View on the explorer
+        <span aria-hidden>↗</span>
+      </a>
+    </div>
   )
-
-  const onPick = (files: FileList | null) => {
-    const file = files?.[0]
-    if (file) void upload(file)
-  }
-
-  // Nothing to offer if the gateway key is not configured on this deployment.
-  if (configured === false) return null
-
-  const rows: Array<{ k: string; v: string }> = result
-    ? [
-        { k: 'Object', v: `#${result.action_id}` },
-        ...(writtenAt ? [{ k: 'Written', v: writtenAt }] : []),
-        { k: 'Anchored in', v: block ? `block ${block.toLocaleString('en-US')}` : '—' },
-        ...(receipt?.supernodes?.length
-          ? [
-              {
-                k: 'Held by',
-                v: `${receipt.supernodes.length} supernode${receipt.supernodes.length === 1 ? '' : 's'}`,
-              },
-            ]
-          : []),
-        ...(receipt?.artifact?.content_hash
-          ? [{ k: 'Digest', v: short(receipt.artifact.content_hash, 10, 6) }]
-          : []),
-        { k: 'Size', v: sizeLabel(result.size_bytes ?? (receipt?.file_size_kbs ?? 0) * 1024) },
-      ]
-    : []
 
   return (
     <Card>
       <CardHeader
         title="Share a file"
         action={
-          result ? (
+          onDone ? (
             <button
               type="button"
-              onClick={() => {
-                setResult(null)
-                setReceipt(null)
-                setWrittenAt(null)
-                setError(null)
-              }}
+              onClick={onDone}
               className="inline-flex flex-none cursor-pointer items-center justify-center gap-[7px] rounded-control border border-line-edge bg-ink-800 px-[17px] py-[11px] text-base leading-none font-semibold whitespace-nowrap text-text-secondary transition-colors hover:border-line-accent hover:text-lumera-green"
             >
-              Share another
+              Upload another
             </button>
           ) : null
         }
       />
 
       <div className="px-[18px] pt-1.5 pb-5">
-        {!result ? (
-          <>
-            <p className="m-0 mb-3.5 text-base leading-[1.6] text-text-muted text-pretty">
-              Upload a file and get a QR anyone can scan to download it. It
-              is stored permanently across the Cascade network.
-            </p>
-
-            <input
-              ref={inputRef}
-              type="file"
-              className="hidden"
-              onChange={(e) => onPick(e.target.files)}
+        <div className="flex w-full flex-col">
+          <div className="mb-5 flex min-w-0 items-start gap-2.5">
+            <span
+              className="mt-[7px] h-2 w-2 flex-none rounded-full bg-lumera-green"
+              aria-hidden
             />
-            <button
-              type="button"
-              disabled={busy || configured === null}
-              onClick={() => inputRef.current?.click()}
-              onDragOver={(e) => {
-                e.preventDefault()
-                setDragging(true)
-              }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(e) => {
-                e.preventDefault()
-                setDragging(false)
-                onPick(e.dataTransfer.files)
-              }}
-              className={cx(
-                'flex w-full flex-col items-center gap-2 rounded-card border border-dashed px-6 py-8 text-center transition-colors',
-                busy
-                  ? 'cursor-wait border-line-edge bg-ink-800'
-                  : dragging
-                    ? 'cursor-copy border-line-accent bg-lumera-teal/10'
-                    : 'cursor-pointer border-line-edge bg-ink-800 hover:border-line-accent',
-              )}
-            >
-              {busy ? (
-                <>
-                  <span
-                    className="h-2 w-2 rounded-full bg-lumera-green"
-                    style={{ animation: 'lmBlink 1s infinite' }}
-                  />
-                  <span className="text-base leading-none font-medium text-text-secondary">
-                    Uploading...
-                  </span>
-                  <span className="text-small leading-none text-text-muted">
-                    This lands on chain in a few seconds
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="text-base leading-none font-semibold text-text-primary">
-                    Drop a file, or click to choose
-                  </span>
-                  <span className="text-small leading-none text-text-muted">Up to 100 MB</span>
-                </>
-              )}
-            </button>
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="truncate text-lg leading-[1.3] font-semibold text-text-primary">
+                {filename ? `${filename} is live` : 'Your file is live'}
+              </span>
+              <span className="text-base leading-[1.55] text-text-muted text-pretty">
+                {isPublic
+                  ? 'Scan to pull it and watch it resolve in the browser, or check the same object on the public explorer.'
+                  : 'Stored privately — only your address can retrieve it, so there is no public link. Here is what the network recorded.'}
+              </span>
+            </div>
+          </div>
 
-            {error ? (
-              <div className="mt-3.5">
-                <Notice tone="danger">{error}</Notice>
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <div className="flex w-full flex-col">
-            <div className="mb-5 flex min-w-0 items-start gap-2.5">
-              <span
-                className="mt-[7px] h-2 w-2 flex-none rounded-full bg-lumera-green"
-                aria-hidden
-              />
-              <div className="flex min-w-0 flex-col gap-1">
-                <span className="truncate text-lg leading-[1.3] font-semibold text-text-primary">
-                  Your file is live
-                </span>
-                <span className="text-base leading-[1.55] text-text-muted text-pretty">
-                  No wallet, no account, no install. Scan to pull it and watch it resolve in the
-                  browser, or check the same object on the public explorer.
+          {pending ? (
+            <div className="px-16">
+              <div className="flex items-center gap-3 rounded-panel border border-line-edge bg-ink-800 px-[18px] py-[22px]">
+                <span
+                  className="h-2 w-2 flex-none rounded-full bg-warn"
+                  style={{ animation: 'lmBlink 1s infinite' }}
+                  aria-hidden
+                />
+                <span className="text-base leading-[1.5] text-warn text-pretty">
+                  {isPublic
+                    ? 'Finalizing on chain — your scan-to-download QR and share link appear here as soon as the object settles.'
+                    : 'Finalizing on chain — the on-chain record appears here as soon as the object settles.'}
                 </span>
               </div>
             </div>
-
-            <div className="flex flex-col px-20">
+          ) : isPublic ? (
+            <div className="flex flex-col px-16">
               <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:justify-between lg:gap-8">
                 <div className="flex w-full flex-none flex-col items-center justify-center py-2 lg:w-auto">
                   <QrPanel href={shareUrl} label="Scan to download" hint="resolves in the browser" />
                 </div>
-
-                <div className="flex w-full flex-none flex-col rounded-panel border border-line-accent bg-ink-800 p-[18px] lg:w-[430px]">
-                  <span className="mb-3 block font-mono text-micro leading-none font-medium tracking-[0.1em] text-lumera-green uppercase">
-                    What you see when it resolves
-                  </span>
-                  <div className="flex flex-col">
-                    {rows.map((r) => (
-                      <div
-                        key={r.k}
-                        className="flex items-baseline justify-between gap-4 border-b border-ink-500 py-2.5 last:border-b-0"
-                      >
-                        <span className="flex-none text-base leading-none text-text-tertiary">
-                          {r.k}
-                        </span>
-                        <span className="text-right font-mono text-base leading-[1.4] font-medium text-warn [overflow-wrap:anywhere]">
-                          {r.v}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  {/* The explorer is a verify path — a click, not a scan — so it
-                      lives here as a link at the foot of the on-chain panel. */}
-                  <a
-                    href={explorerUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-auto flex items-center gap-1.5 self-start pt-4 text-base font-semibold text-lumera-green transition-colors hover:text-lumera-green-bright"
-                  >
-                    View on the explorer
-                    <span aria-hidden>↗</span>
-                  </a>
-                </div>
+                {infoPanel}
               </div>
 
               <div className="mt-4 inline-flex max-w-full items-center gap-2.5 self-start rounded-control border border-line-edge bg-ink-800 px-[13px] py-[9px]">
@@ -375,8 +282,10 @@ export function QrShare() {
                 </button>
               </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="px-16">{infoPanel}</div>
+          )}
+        </div>
       </div>
     </Card>
   )

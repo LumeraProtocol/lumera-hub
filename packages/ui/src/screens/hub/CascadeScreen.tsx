@@ -29,6 +29,9 @@ export type CascadeFile = {
   /** "Archive", or "Archive · Processing" while the network is still storing it. */
   kind: string
   isPublic: boolean | null
+  /** Public objects can be handed out: the /action_id/<id> page. Null when the
+   *  file is private (only its owner can retrieve it) or has no id yet. */
+  shareUrl?: string | null
   onOpen: () => void
 }
 
@@ -65,6 +68,7 @@ export function CascadeScreen({
   loading,
   statsLoading,
   shareSlot,
+  uploadResultSlot,
   networkStored,
   networkCapacity,
   supernodes,
@@ -94,6 +98,9 @@ export function CascadeScreen({
   statsLoading?: boolean
   /** The "share a file" card, injected by the container (needs app-side deps). */
   shareSlot?: React.ReactNode
+  /** When set, replaces the upload drop zone with the completed upload's share
+   *  result (rendered in place of the drop zone, not the shareSlot). */
+  uploadResultSlot?: React.ReactNode
   networkStored: string
   networkCapacity: string
   supernodes: string
@@ -128,6 +135,13 @@ export function CascadeScreen({
   const hub = useHub()
   const [dragging, setDragging] = React.useState(false)
   const known = supernodes !== '—'
+  // The header's Upload button lives far above the drop zone / share card, so
+  // clicking it scrolls that section into view before opening the picker.
+  const dropRef = React.useRef<HTMLDivElement>(null)
+  const handleHeaderUpload = React.useCallback(() => {
+    dropRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    onUpload()
+  }, [onUpload])
 
   return (
     <div className="animate-fade flex flex-col gap-[18px]">
@@ -146,7 +160,7 @@ export function CascadeScreen({
             it is drawn here rather than fought through Button's padding. */}
         <button
           type="button"
-          onClick={onUpload}
+          onClick={handleHeaderUpload}
           disabled={!!sdkError || !!upload}
           className={cx(
             'inline-flex flex-none items-center justify-center gap-[7px] self-start rounded-control border-none px-[17px] py-[11px] text-base leading-none font-semibold whitespace-nowrap transition-colors sm:self-auto',
@@ -248,62 +262,67 @@ export function CascadeScreen({
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-3.5">
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label="Upload files to Cascade"
-            onClick={onUpload}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
+        <div ref={dropRef} className="flex flex-col gap-3.5 scroll-mt-4">
+          {uploadResultSlot ? (
+            uploadResultSlot
+          ) : (
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Upload files to Cascade"
+              onClick={onUpload}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onUpload()
+                }
+              }}
+              onDragOver={(e) => {
                 e.preventDefault()
-                onUpload()
-              }
-            }}
-            onDragOver={(e) => {
-              e.preventDefault()
-              if (!dragging) setDragging(true)
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(e) => {
-              e.preventDefault()
-              setDragging(false)
-              const dropped = Array.from(e.dataTransfer.files || [])
-              if (dropped.length) onDropFiles(dropped)
-            }}
-            className={cx(
-              'flex cursor-pointer flex-wrap items-center gap-x-3.5 gap-y-2 rounded-card border border-dashed px-5 py-[15px] transition-colors sm:flex-nowrap',
-              dragging
-                ? 'border-line-accent bg-ink-700'
-                : 'border-line-edge bg-ink-800 hover:border-line-accent hover:bg-ink-700',
-            )}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--color-lumera-green)"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="flex-none"
-              aria-hidden="true"
+                if (!dragging) setDragging(true)
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setDragging(false)
+                const dropped = Array.from(e.dataTransfer.files || [])
+                if (dropped.length) onDropFiles(dropped)
+              }}
+              className={cx(
+                'flex cursor-pointer flex-col items-center gap-2 rounded-card border border-dashed px-6 py-10 text-center transition-colors',
+                dragging
+                  ? 'border-line-accent bg-ink-700'
+                  : 'border-line-edge bg-ink-800 hover:border-line-accent hover:bg-ink-700',
+              )}
             >
-              <path d="M18 16.5a4 4 0 0 0-1.2-7.8A6 6 0 0 0 5.2 10 3.75 3.75 0 0 0 6 17.5" />
-              <path d="M12 19v-8" />
-              <path d="m9 14 3-3 3 3" />
-            </svg>
-            <span className="flex-none text-base leading-none font-semibold text-text-primary">
-              {dragging ? 'Release to store' : 'Drop files to store'}
-            </span>
-            <span className="order-last w-full text-small leading-[1.4] text-text-muted sm:order-none sm:w-auto">
-              Encoded in your browser, registered on chain, then handed to the supernodes.
-            </span>
-            <span className="ml-auto flex-none text-small leading-none font-medium text-lumera-green">
-              {isPreparing ? 'Pricing…' : 'Browse'}
-            </span>
-          </div>
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--color-lumera-green)"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mb-1 flex-none"
+                aria-hidden="true"
+              >
+                <path d="M18 16.5a4 4 0 0 0-1.2-7.8A6 6 0 0 0 5.2 10 3.75 3.75 0 0 0 6 17.5" />
+                <path d="M12 19v-8" />
+                <path d="m9 14 3-3 3 3" />
+              </svg>
+              <span className="text-base leading-none font-semibold text-text-primary">
+                {dragging ? 'Release to store' : 'Drop files to store'}
+              </span>
+              <span className="max-w-[460px] text-small leading-[1.5] text-text-muted text-pretty">
+                Encoded in your browser, registered on chain, then handed to the supernodes. You
+                will get a QR where you scan to download it
+              </span>
+              <span className="flex-none text-small leading-none font-medium text-lumera-green">
+                {isPreparing ? 'Pricing…' : 'Browse'}
+              </span>
+            </div>
+          )}
 
           {uploadError ? <Notice tone="danger">{uploadError}</Notice> : null}
 
@@ -446,11 +465,12 @@ export function CascadeScreen({
               </div>
             </div>
 
-            <div className="hidden grid-cols-[1fr_88px_92px_108px_16px] gap-3 border-b border-line-hairline px-[18px] py-[9px] font-mono text-micro leading-none font-medium tracking-[0.08em] text-text-muted sm:grid">
+            <div className="hidden grid-cols-[1fr_88px_92px_100px_84px_16px] gap-3 border-b border-line-hairline px-[18px] py-[9px] font-mono text-micro leading-none font-medium tracking-[0.08em] text-text-muted sm:grid">
               <span>FILE</span>
               <span className="text-right">SIZE</span>
               <span className="text-right">FORMAT</span>
               <span className="text-right">VISIBILITY</span>
+              <span className="text-right">SHARE</span>
               <span />
             </div>
 
@@ -467,11 +487,18 @@ export function CascadeScreen({
               ))
             ) : files.length ? (
               files.map((f) => (
-                <button
+                <div
                   key={f.key}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   onClick={f.onOpen}
-                  className="grid w-full cursor-pointer grid-cols-[1fr_auto] items-center gap-3 border-0 border-b border-solid border-line-hairline bg-transparent px-[18px] py-3 text-left transition-colors hover:bg-ink-600 sm:grid-cols-[1fr_88px_92px_108px_16px]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      f.onOpen()
+                    }
+                  }}
+                  className="grid w-full cursor-pointer grid-cols-[1fr_auto] items-center gap-3 border-0 border-b border-solid border-line-hairline bg-transparent px-[18px] py-3 text-left transition-colors hover:bg-ink-600 sm:grid-cols-[1fr_88px_92px_100px_84px_16px]"
                 >
                   <div className="flex min-w-0 items-center gap-[11px]">
                     <div className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-chip border border-line-edge bg-ink-600">
@@ -514,10 +541,26 @@ export function CascadeScreen({
                   >
                     {f.isPublic ? 'Public' : 'Private'}
                   </span>
+                  <div className="hidden justify-end sm:flex">
+                    {f.isPublic && f.shareUrl ? (
+                      <a
+                        href={f.shareUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-0.5 text-small leading-none font-medium text-lumera-green no-underline transition-colors hover:text-lumera-green-bright"
+                      >
+                        Link
+                        <span aria-hidden>↗</span>
+                      </a>
+                    ) : (
+                      <span className="text-small leading-none text-text-disabled">—</span>
+                    )}
+                  </div>
                   <span className="hidden text-right text-lg leading-none text-text-muted sm:block">
                     ›
                   </span>
-                </button>
+                </div>
               ))
             ) : driveEmpty ? (
               <div className="flex flex-col items-center gap-2.5 px-5 py-[52px] text-center">

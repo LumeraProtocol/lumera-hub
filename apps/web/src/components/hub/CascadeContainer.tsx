@@ -43,7 +43,7 @@ import {
 import { copyText, short, useHub } from '@lumera-hub/ui/src/hub/session'
 import { useNetwork } from '@/app/providers/network-provider'
 import { FileDrawer, UploadDrawer, type FileDetail } from './CascadeDrawers'
-import { QrShare } from './QrShare'
+import { ShareResult } from './QrShare'
 
 /*
  * The design sorts a drive into models, media, documents and archives. The
@@ -182,6 +182,7 @@ function CascadeBody({
     handleRemoveUploadFile,
     handleCloseUploadCascadeSuccessModal,
     handleDownloadFile,
+    resolveActionId,
   } = cascade
 
   const [group, setGroup] = useState<DriveGroup>('all')
@@ -190,6 +191,11 @@ function CascadeBody({
   // Work parked until the SDK has arrived.
   const [pendingFiles, setPendingFiles] = useState<File[] | null>(null)
   const [pendingDownload, setPendingDownload] = useState<string | null>(null)
+  // A completed wallet upload, kept by task id so its share result survives the
+  // success modal being cleared — until the reader dismisses it.
+  const [uploaded, setUploaded] = useState<
+    Array<{ name: string; taskId: string; isPublic: boolean }> | null
+  >(null)
 
   /* ------------------------------------------------------------- network */
 
@@ -277,6 +283,9 @@ function CascadeBody({
           extension: extOf(f.name) ? `.${extOf(f.name)}` : '—',
           kind: note ? `${kind} · ${note[0].toUpperCase()}${note.slice(1)}` : kind,
           isPublic: f.isPublic,
+          // Only public objects can be handed out — the public /action_id page
+          // can fetch them without the owner's wallet.
+          shareUrl: f.isPublic && f.actionID ? `/action_id/${f.actionID}` : null,
           onOpen: () => hub.openDrawer({ kind: 'file', cid: f.actionID }),
         }
       }),
@@ -362,6 +371,12 @@ function CascadeBody({
     const stored = uploadCascadeInfo.filter((f) => f.status === 'done')
     const failed = uploadCascadeInfo.filter((f) => f.status === 'error')
     if (stored.length) {
+      // Keep the stored objects so their share result can appear once the chain
+      // indexes them (the success info is cleared by the close handler below).
+      setShareTarget(null)
+      setUploaded(
+        stored.map((f) => ({ name: f.fileName, taskId: f.taskId || '', isPublic: !!f.isPublic })),
+      )
       hub.flash(
         stored.length === 1
           ? `${stored[0].fileName} handed to the supernodes`
@@ -380,6 +395,43 @@ function CascadeBody({
   }, [handleCloseUploadCascadeSuccessModal, hub, selectedModal, uploadCascadeInfo])
 
   const feeOf = (s: string) => parseFloat((s || '').replace(/,/g, '')) || 0
+
+  /*
+   * A just-uploaded object becomes shareable once the chain has indexed it into
+   * a real action id — until then the share card shows a "finalizing" state.
+   * The id is looked up cheaply (creator's newest actions, matched by name) and
+   * polled while the upload settles, then held so the card can reveal the QR.
+   */
+  const [shareTarget, setShareTarget] = useState<{
+    actionId: string
+    filename: string
+    isPublic: boolean
+  } | null>(null)
+
+  useEffect(() => {
+    if (!uploaded?.length || shareTarget) return
+    let cancelled = false
+    let tries = 0
+    const attempt = async () => {
+      for (const u of uploaded) {
+        const r = await resolveActionId(u.name)
+        if (cancelled) return
+        if (r?.actionID) {
+          setShareTarget({ actionId: r.actionID, filename: u.name, isPublic: u.isPublic })
+          return
+        }
+      }
+      tries += 1
+      // The indexer can lag the chain by minutes, so keep trying for a while.
+      if (!cancelled && tries < 90) setTimeout(attempt, 4000)
+    }
+    void attempt()
+    return () => {
+      cancelled = true
+    }
+    // resolveActionId is a stable useCallback; depending on `cascade` (a fresh
+    // object each render) would cancel every in-flight lookup before it lands.
+  }, [resolveActionId, shareTarget, uploaded])
 
   /* ------------------------------------------------------------ download */
 
@@ -437,12 +489,29 @@ function CascadeBody({
     !!openFile &&
     (selectedFileDownload.includes(openFile.actionID) || pendingDownload === openFile.actionID)
 
+  // Starting a new upload also clears any showing result — so the header
+  // "Upload file" behaves like "Upload another" when a result is on screen.
+  const startUpload = useCallback(() => {
+    setUploaded(null)
+    setShareTarget(null)
+    hub.gate(UPLOAD_INTENT, () => picker.current?.click())
+  }, [hub])
+
   return (
     <>
       <CascadeScreen
         loading={isMyFilesLoading}
         statsLoading={netLoading}
-        shareSlot={isTestnet ? <QrShare /> : null}
+        uploadResultSlot={
+          isTestnet && uploaded?.length ? (
+            <ShareResult
+              actionId={shareTarget?.actionId}
+              filename={shareTarget?.filename ?? uploaded[0].name}
+              isPublic={shareTarget ? shareTarget.isPublic : uploaded[0].isPublic}
+              onDone={startUpload}
+            />
+          ) : null
+        }
         networkStored={
           net.storageUsedBytes != null && net.storageUsedBytes > 0
             ? `${(net.storageUsedBytes / TIB).toFixed(1)} TB`
@@ -456,7 +525,7 @@ function CascadeBody({
         mapNodes={mapNodes}
         regions={regions}
         liveSites={liveSites}
-        onUpload={() => hub.gate(UPLOAD_INTENT, () => picker.current?.click())}
+        onUpload={startUpload}
         onDropFiles={(dropped) => hub.gate(UPLOAD_INTENT, () => takeFiles(dropped))}
         isPreparing={(isUploading && !started) || !!pendingFiles}
         upload={upload}

@@ -28,6 +28,8 @@ import {
   SNAPI_URL,
   isSnapiReachable,
   DENOM,
+  REST_AI_URL,
+  CASCADE_API_URL,
 } from '@/contants/network';
 import {
   UPLOAD_MAX_FILES,
@@ -212,6 +214,9 @@ export type TUploadCascadeInfo = {
   status?: string;
   message?: string;
   isPublic?: boolean;
+  /** The Cascade task id returned by a successful upload. The on-chain action
+   *  id (what a share link needs) resolves from it as the object finalizes. */
+  taskId?: string;
 }
 
 export const FILES_TYPE: FileTypeOption[] = [
@@ -720,6 +725,55 @@ const useCascade = ({
     }
   };
 
+  /*
+   * Resolve a just-uploaded object's on-chain action id.
+   *
+   * The indexer (snscope) lags the chain by minutes, so it is useless right
+   * after an upload. The chain itself is current: its tx search returns this
+   * creator's newest finalized Cascade actions, and the gateway (also current)
+   * gives each one's file name, so the freshly-stored file is matched by name.
+   * Only finalized actions surface here — which is exactly when a share link
+   * becomes retrievable.
+   */
+  const resolveActionId = useCallback(
+    async (fileName: string): Promise<{ actionID: string } | null> => {
+      if (!filesAddress || !fileName) return null;
+      try {
+        const q = encodeURIComponent(`action_finalized.creator='${filesAddress}'`);
+        const res = await fetch(
+          `${REST_AI_URL}/cosmos/tx/v1beta1/txs?query=${q}&order_by=ORDER_BY_DESC&limit=10`,
+        );
+        if (!res.ok) return null;
+        const data = await res.json();
+        const ids: string[] = [];
+        for (const tr of data?.tx_responses || []) {
+          for (const ev of tr?.events || []) {
+            if (ev?.type !== 'action_finalized') continue;
+            const idAttr = (ev.attributes || []).find(
+              (a: { key?: string }) => a?.key === 'action_id',
+            );
+            if (idAttr?.value) ids.push(String(idAttr.value));
+          }
+        }
+        // Newest first; match the file by the gateway receipt's artifact name.
+        for (const id of ids) {
+          try {
+            const rc = await fetch(`${CASCADE_API_URL}/receipt/${id}`);
+            if (!rc.ok) continue;
+            const receipt = await rc.json();
+            if (receipt?.artifact?.name === fileName) return { actionID: id };
+          } catch {
+            /* try the next candidate */
+          }
+        }
+      } catch {
+        /* transient — the caller polls again */
+      }
+      return null;
+    },
+    [filesAddress],
+  );
+
   const fetchAction = async (actionId = ''): Promise<IActionDetail | null> => {
     if (!actionId) {
       return null;
@@ -1173,12 +1227,15 @@ const useCascade = ({
                   updateCascadeStogre(result.task_id, file.name, isPublic);
                   setUploadCascadeInfo(prev => prev.map((f) => {
                     let status = f.status;
+                    let taskId = f.taskId;
                     if (f.fileName === file.name) {
                       status = 'done'
+                      taskId = result.task_id
                     }
                     return {
                       ...f,
                       status,
+                      taskId,
                     }
                   }));
                 }
@@ -1535,6 +1592,8 @@ const useCascade = ({
     handleUploadCascade,
     handleRemoveUploadFile,
     handleDropRejected,
+    getMyFiles,
+    resolveActionId,
   }
 }
 

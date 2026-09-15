@@ -207,7 +207,7 @@ export default function ObjectPage() {
                   </span>
                 </span>
                 <span className="text-[18px] leading-none font-semibold text-text-primary">
-                  Share the page
+                  Share this file
                 </span>
               </div>
             ) : null}
