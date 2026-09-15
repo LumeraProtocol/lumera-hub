@@ -240,7 +240,7 @@ export function QrShare() {
         {!result ? (
           <>
             <p className="m-0 mb-3.5 text-base leading-[1.6] text-text-muted text-pretty">
-              Upload a file and get a QR anyone can scan to download it — no wallet, no account. It
+              Upload a file and get a QR anyone can scan to download it. It
               is stored permanently across the Cascade network.
             </p>
 
