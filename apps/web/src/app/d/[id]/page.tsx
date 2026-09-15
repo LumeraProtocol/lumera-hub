@@ -192,14 +192,14 @@ export default function ObjectPage() {
                 rel="noreferrer"
                 className="mt-4 inline-flex text-small font-medium text-lumera-green"
               >
-                View the inscription on the explorer →
+                View the transaction on the explorer →
               </a>
             ) : null}
           </>
         )}
 
         <p className="mt-10 text-small leading-[1.6] text-text-disabled text-pretty">
-          Powered by Lumera Cascade — content-addressed, permanent storage.
+          Powered by Lumera Cascade.
         </p>
       </div>
     </div>

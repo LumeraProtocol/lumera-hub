@@ -14,7 +14,7 @@ import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
  * straight to the gateway from the client; only this write is proxied.
  *
  * The key is operator-issued and ulume-capped, and it is the account that pays
- * for every inscription, so this route rate-limits per IP to keep the form
+ * for every transaction, so this route rate-limits per IP to keep the form
  * from draining the budget.
  */
 
