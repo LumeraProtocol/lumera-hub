@@ -303,7 +303,7 @@ export function QrShare() {
             ) : null}
           </>
         ) : (
-          <div className="mx-auto flex w-full max-w-[820px] flex-col">
+          <div className="flex w-full flex-col">
             <div className="mb-5 flex min-w-0 items-start gap-2.5">
               <span
                 className="mt-[7px] h-2 w-2 flex-none rounded-full bg-lumera-green"
@@ -320,8 +320,8 @@ export function QrShare() {
               </div>
             </div>
 
-            <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:gap-6">
-              <div className="flex w-full flex-none flex-wrap items-center justify-center gap-x-12 gap-y-7 rounded-panel border border-line-edge bg-ink-800 px-7 py-6 lg:w-auto">
+            <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:justify-between lg:gap-8">
+              <div className="flex w-full flex-none flex-wrap items-center justify-center gap-x-12 gap-y-7 rounded-panel border border-line-edge bg-ink-800 px-7 py-4 lg:w-auto">
                 <QrPanel href={shareUrl} label="Retrieve the object" hint="resolves in the browser" />
                 <QrPanel
                   href={explorerUrl}
@@ -330,7 +330,7 @@ export function QrShare() {
                 />
               </div>
 
-              <div className="w-full flex-1 rounded-panel border border-line-accent bg-ink-800 p-[18px]">
+              <div className="w-full flex-none rounded-panel border border-line-accent bg-ink-800 p-[18px] lg:w-[430px]">
                 <span className="mb-3 block font-mono text-micro leading-none font-medium tracking-[0.1em] text-lumera-green uppercase">
                   What you see when it resolves
                 </span>
