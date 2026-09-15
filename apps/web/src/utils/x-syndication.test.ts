@@ -107,7 +107,7 @@ describe('parseSyndicatedTimeline', () => {
     expect(out.map((p) => p.id)).toEqual(['c']);
   });
 
-  it('orders newest first regardless of feed order', () => {
+  it('shows the most recent posts oldest-first, so a thread reads in order', () => {
     const out = parseSyndicatedTimeline(
       page([
         tweet({ id_str: 'old', created_at: 'Thu Aug 20 18:13:01 +0000 2026' }),
@@ -116,7 +116,21 @@ describe('parseSyndicatedTimeline', () => {
       ]),
       'lumera',
     );
-    expect(out.map((p) => p.id)).toEqual(['new', 'mid', 'old']);
+    expect(out.map((p) => p.id)).toEqual(['old', 'mid', 'new']);
+  });
+
+  it('keeps the most recent when there are more than the limit, oldest-first', () => {
+    const out = parseSyndicatedTimeline(
+      page([
+        tweet({ id_str: 'oldest', created_at: 'Thu Aug 20 18:13:01 +0000 2026' }),
+        tweet({ id_str: 'newest', created_at: 'Fri Sep 05 10:00:00 +0000 2026' }),
+        tweet({ id_str: 'middle', created_at: 'Wed Sep 03 13:57:07 +0000 2026' }),
+      ]),
+      'lumera',
+      2,
+    );
+    // The two most recent (newest, middle), shown oldest-first.
+    expect(out.map((p) => p.id)).toEqual(['middle', 'newest']);
   });
 
   it('honours the limit', () => {

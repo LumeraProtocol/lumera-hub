@@ -169,7 +169,9 @@ export function parseSyndicatedTimeline(html: string, handle: string, limit = 5)
     });
   }
 
-  // The feed does not arrive in order, so impose one.
+  // Rank newest-first to pick the most recent `limit`, then hand them back
+  // oldest-first so a thread reads in the order it was written (2/ before 3/)
+  // rather than inverted by the sort.
   posts.sort((a, b) => Date.parse(b.createdAt || '0') - Date.parse(a.createdAt || '0'));
-  return posts.slice(0, limit);
+  return posts.slice(0, limit).reverse();
 }
