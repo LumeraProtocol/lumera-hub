@@ -151,10 +151,9 @@ const fromApi = async (): Promise<XPost[] | null> => {
       url: `https://x.com/${HANDLE}/status/${t.id}`,
     }))
     .filter((p: XPost) => p.text)
-    // The API returns newest-first; take the most recent LIMIT, then show them
-    // oldest-first so a thread reads in order (matches the syndication path).
-    .slice(0, LIMIT)
-    .reverse();
+    // The API returns newest-first; keep it that way so the most recent post
+    // leads the card (matches the syndication path).
+    .slice(0, LIMIT);
 };
 
 const fromSyndication = async (): Promise<XPost[] | null> => {

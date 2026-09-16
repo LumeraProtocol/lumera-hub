@@ -169,9 +169,9 @@ export function parseSyndicatedTimeline(html: string, handle: string, limit = 5)
     });
   }
 
-  // Rank newest-first to pick the most recent `limit`, then hand them back
-  // oldest-first so a thread reads in the order it was written (2/ before 3/)
-  // rather than inverted by the sort.
+  // Newest-first: the most recent post leads the card, so a timely post (a
+  // live event, an announcement) sits at the top rather than being buried
+  // below older ones.
   posts.sort((a, b) => Date.parse(b.createdAt || '0') - Date.parse(a.createdAt || '0'));
-  return posts.slice(0, limit).reverse();
+  return posts.slice(0, limit);
 }
