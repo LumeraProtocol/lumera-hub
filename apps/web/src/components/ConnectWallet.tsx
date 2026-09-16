@@ -101,12 +101,18 @@ function WalletChoiceModal() {
       logo: '/keplr.svg',
       installed: isKeplrInstalled,
     },
-    {
-      name: 'MetaMask',
-      walletName: METAMASK_WALLET_NAME,
-      logo: '/metamask.png',
-      installed: isMetaMaskInstalled,
-    },
+    // MetaMask is EVM-only; hide it where there is no Lumera EVM chain
+    // (mainnet has none yet).
+    ...(IS_EVM_NETWORK
+      ? [
+          {
+            name: 'MetaMask',
+            walletName: METAMASK_WALLET_NAME,
+            logo: '/metamask.png',
+            installed: isMetaMaskInstalled,
+          },
+        ]
+      : []),
   ];
   return createPortal(
     <div

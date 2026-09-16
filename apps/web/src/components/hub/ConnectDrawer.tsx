@@ -13,10 +13,11 @@
  */
 
 import React, { useEffect, useState } from 'react'
+import Image from 'next/image'
 
 import useConnectWallet from '@/hooks/useConnectWallet'
 import { addLumeraToMetaMask, resolveMetaMaskProvider } from '@/utils/evm'
-import { EVM_CHAIN_ID, NETWORK_LABEL } from '@/contants/network'
+import { EVM_CHAIN_ID, IS_EVM_NETWORK, NETWORK_LABEL } from '@/contants/network'
 // Canonical wallet keys — the drawer must pass the same values useConnectWallet
 // branches on, or "MetaMask" falls through to the Keplr path.
 import { KEPLR_WALLET_NAME, METAMASK_WALLET_NAME } from '@/utils/wallet-selection'
@@ -69,19 +70,25 @@ export function ConnectDrawer() {
   const wallets = [
     {
       key: KEPLR_WALLET_NAME,
-      initials: 'KP',
+      logo: '/keplr.svg',
       name: 'Keplr',
       note:
         typeof window !== 'undefined' && window.keplr
           ? 'Browser extension · detected'
           : 'Browser extension',
     },
-    {
-      key: METAMASK_WALLET_NAME,
-      initials: 'MM',
-      name: 'MetaMask',
-      note: 'Browser extension · EVM balances and transfers',
-    },
+    // MetaMask is EVM-only. Offer it solely on networks that have a Lumera EVM
+    // chain (testnet/devnet); mainnet has no EVM yet, so it must not appear.
+    ...(IS_EVM_NETWORK
+      ? [
+          {
+            key: METAMASK_WALLET_NAME,
+            initials: 'MM',
+            name: 'MetaMask',
+            note: 'Browser extension · EVM balances and transfers',
+          },
+        ]
+      : []),
   ]
 
   return (
