@@ -7,7 +7,7 @@ import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 import { DENOM } from '@/contants/network';
 import { sumMicroLumeAmounts } from '@/utils/helpers';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
-import { evmBalanceToMicroLume, getEvmBalance } from '@/utils/evm';
+import { evmAddressToCosmosAddress, evmBalanceToMicroLume, getEvmBalance, isEvmAddress } from '@/utils/evm';
 
 export interface Coin {
   denom: string;
@@ -286,7 +286,13 @@ const useAccountInfo = ({ address: addressOverride }: UseAccountInfoOptions = {}
         return;
       }
 
-      const _accountInfo = await fetchAccountInfo(address);
+      // Cosmos REST is always keyed by Bech32. When this reads an override that
+      // is an EVM address — e.g. the connected MetaMask account handed to the
+      // notifications hook — convert it to its lumera1 form first, or every
+      // /cosmos/... query 500s with "decoding bech32 failed" and cascades
+      // through the whole fallback endpoint list.
+      const queryAddress = isEvmAddress(address) ? evmAddressToCosmosAddress(address) : address;
+      const _accountInfo = await fetchAccountInfo(queryAddress);
       if (!fetchRequest.isCurrent(requestId)) return;
       setAccountInfo(_accountInfo);
       setClaimInfo((current) => ({

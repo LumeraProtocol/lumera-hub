@@ -12,23 +12,55 @@
  * chain explorer want to look at an address, not sign with one.
  */
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import useConnectWallet from '@/hooks/useConnectWallet'
+import { addLumeraToMetaMask, resolveMetaMaskProvider } from '@/utils/evm'
+import { EVM_CHAIN_ID, NETWORK_LABEL } from '@/contants/network'
+// Canonical wallet keys — the drawer must pass the same values useConnectWallet
+// branches on, or "MetaMask" falls through to the Keplr path.
+import { KEPLR_WALLET_NAME, METAMASK_WALLET_NAME } from '@/utils/wallet-selection'
 import { useHub, LUMERA_ADDRESS } from '@lumera-hub/ui/src/hub/session'
 import { Drawer, IntentBanner } from '@lumera-hub/ui/src/hub/Drawer'
 import { Button, Field, Input, cx } from '@lumera-hub/ui/src/design/primitives'
 import { EyeIcon } from '@lumera-hub/ui/src/design/icons'
 
-const KEPLR_WALLET_NAME = 'keplr-extension'
-const METAMASK_WALLET_NAME = 'metamask-extension'
-
 export function ConnectDrawer() {
   const hub = useHub()
   const { connectWallet, connectingWallet, error: connectError } = useConnectWallet()
   const [watchInput, setWatchInput] = useState('')
+  const [addingChain, setAddingChain] = useState(false)
+  // Detect the real MetaMask (EIP-6963), not any wallet claiming isMetaMask, so
+  // the add-chain button shows only when there is genuinely a MetaMask to add to.
+  const [hasMetaMask, setHasMetaMask] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void resolveMetaMaskProvider().then((p) => {
+      if (!cancelled) setHasMetaMask(Boolean(p))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   if (hub.drawer?.kind !== 'connect') return null
+
+  // Offer the one-click chain add only where there is an EVM chain to add (the
+  // testnet/devnet profiles) and a real MetaMask present to receive it.
+  const canAddChain = Boolean(EVM_CHAIN_ID) && hasMetaMask
+
+  const handleAddChain = async () => {
+    setAddingChain(true)
+    try {
+      const ok = await addLumeraToMetaMask()
+      hub.flash(ok ? `Lumera ${NETWORK_LABEL} added to MetaMask` : 'This network has no EVM chain to add', ok ? 'ok' : 'warn')
+    } catch (e) {
+      hub.flash(e instanceof Error ? e.message : 'Could not add the chain to MetaMask', 'error')
+    } finally {
+      setAddingChain(false)
+    }
+  }
 
   const trimmed = watchInput.trim()
   const validWatch = LUMERA_ADDRESS.test(trimmed)
@@ -107,6 +139,17 @@ export function ConnectDrawer() {
           </button>
         ))}
       </div>
+
+      {canAddChain ? (
+        <button
+          type="button"
+          onClick={handleAddChain}
+          disabled={addingChain}
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[9px] border border-line-edge bg-transparent px-3.5 py-[11px] text-small leading-none font-medium text-text-secondary transition-colors hover:border-line-accent hover:text-lumera-green disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {addingChain ? 'Opening MetaMask…' : `Add Lumera ${NETWORK_LABEL} to MetaMask`}
+        </button>
+      ) : null}
 
       {connectError ? (
         <span className="text-small leading-[1.5] text-danger text-pretty">{connectError}</span>

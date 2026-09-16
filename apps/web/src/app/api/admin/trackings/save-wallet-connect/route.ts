@@ -5,10 +5,12 @@ import dayjs from 'dayjs';
 
 import { getDataSource } from '@/lib/data-source';
 import { hubUserSchema } from '@/schemas/hubUserSchema';
-import { SnagRefer } from '@/entities/SnagRefer';
-import { SnagUser } from '@/entities/SnagUser';
-import { SnagLoyalty } from '@/entities/SnagLoyalty';
-import client from '@/lib/snag';
+// SNAG is not wired up yet (next sprint). The referral-enrichment path below is
+// commented out until then; restore these imports with it.
+// import { SnagRefer } from '@/entities/SnagRefer';
+// import { SnagUser } from '@/entities/SnagUser';
+// import { SnagLoyalty } from '@/entities/SnagLoyalty';
+// import client from '@/lib/snag';
 import { persistWalletConnection } from '@/lib/wallet-connection-tracking';
 
 export async function POST(req: NextRequest) {
@@ -49,7 +51,10 @@ export async function POST(req: NextRequest) {
       secChUaPlatformVersion: req.headers.get('sec-ch-ua-platform-version'),
     });
 
-    const { isNewHub } = await persistWalletConnection(dataSource, {
+    // `isNewHub` was only read by the SNAG referral path below, which is
+    // disabled until SNAG lands next sprint. Drop the binding so it does not
+    // read as unused; restore it (`const { isNewHub } = ...`) with that path.
+    await persistWalletConnection(dataSource, {
       address: data.address,
       acquisitionSource,
       browser: ua?.browser?.name || null,
@@ -58,78 +63,82 @@ export async function POST(req: NextRequest) {
       timestamp: nowIso,
     });
 
-    if (isNewHub && data.referralCode) {
-      // save SnagRefer
-      try {
-        const snagReferRepo = dataSource.getRepository(SnagRefer);
-        const snagUserRepo = dataSource.getRepository(SnagUser);
-        const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
-
-        const refer = await snagReferRepo
-          .createQueryBuilder()
-          .select('lumeraAddress')
-          .addSelect('claim')
-          .where('lumeraAddress = :lumeraAddress', { lumeraAddress: data.address })
-          .getRawOne();
-
-        const referAddress = data.referralCode;
-        if (referAddress !== data.address) {
-          if (!refer) {
-            await snagReferRepo.save({
-              lumeraAddress: data.address,
-              referAddress,
-            });
-          }
-
-          if (!refer?.claim || Number(refer?.claim) <= 0) {
-            const totalClaimRefer = await snagReferRepo
-              .createQueryBuilder()
-              .select('lumeraAddress')
-              .where('referAddress = :referAddress', { referAddress })
-              .andWhere("claim = '1'")
-              .getCount();
-
-            if (totalClaimRefer < 10) {
-              const user = await snagUserRepo.createQueryBuilder()
-                .select('snagAddress, lumeraAddress, userId')
-                .where('lumeraAddress = :lumeraAddress', { lumeraAddress: referAddress })
-                .getRawOne();
-              const loyaltyRule = await snagLoyaltyRepo
-                .createQueryBuilder()
-                .select('id')
-                .addSelect('config')
-                .addSelect('startTime')
-                .addSelect('endTime')
-                .where("config LIKE '%referralLink%'")
-                .andWhere("name LIKE '%connects wallet%'")
-                .andWhere("name LIKE '%Invite%'")
-                .getRawOne();
-
-              if (user && loyaltyRule) {
-                try {
-                  await client.post(`/api/loyalty/rules/${loyaltyRule.id}/complete`, {
-                    body: {
-                      userId: user.userId,
-                    },
-                  });
-                  await snagReferRepo.save({
-                    lumeraAddress: data.address,
-                    claim: 1,
-                  });
-                } catch (error) {
-                  console.error(new Date(), `Wallet connect(rules complete) error. referAddress: ${referAddress}, loyaltyRuleID: ${loyaltyRule?.id}, userId: ${user.userId}. Error details: `, JSON.stringify(error));
-                }
-              }
-            }
-          }
-        }
-      } catch (error) {
-        // The core wallet connection record is already committed. Referral
-        // enrichment is best-effort and must not turn successful tracking into
-        // a retrying 500 response.
-        console.error('Wallet referral tracking error:', error);
-      }
-    }
+    // SNAG referral enrichment — disabled until SNAG is wired up (next sprint).
+    // The core wallet-connection record above is already committed; this block
+    // only awards referral credit through SNAG, so it is safe to leave off for
+    // now. Restore it (and the SNAG imports + `isNewHub` binding) with SNAG.
+    // if (isNewHub && data.referralCode) {
+    //   // save SnagRefer
+    //   try {
+    //     const snagReferRepo = dataSource.getRepository(SnagRefer);
+    //     const snagUserRepo = dataSource.getRepository(SnagUser);
+    //     const snagLoyaltyRepo = dataSource.getRepository(SnagLoyalty);
+    //
+    //     const refer = await snagReferRepo
+    //       .createQueryBuilder()
+    //       .select('lumeraAddress')
+    //       .addSelect('claim')
+    //       .where('lumeraAddress = :lumeraAddress', { lumeraAddress: data.address })
+    //       .getRawOne();
+    //
+    //     const referAddress = data.referralCode;
+    //     if (referAddress !== data.address) {
+    //       if (!refer) {
+    //         await snagReferRepo.save({
+    //           lumeraAddress: data.address,
+    //           referAddress,
+    //         });
+    //       }
+    //
+    //       if (!refer?.claim || Number(refer?.claim) <= 0) {
+    //         const totalClaimRefer = await snagReferRepo
+    //           .createQueryBuilder()
+    //           .select('lumeraAddress')
+    //           .where('referAddress = :referAddress', { referAddress })
+    //           .andWhere("claim = '1'")
+    //           .getCount();
+    //
+    //         if (totalClaimRefer < 10) {
+    //           const user = await snagUserRepo.createQueryBuilder()
+    //             .select('snagAddress, lumeraAddress, userId')
+    //             .where('lumeraAddress = :lumeraAddress', { lumeraAddress: referAddress })
+    //             .getRawOne();
+    //           const loyaltyRule = await snagLoyaltyRepo
+    //             .createQueryBuilder()
+    //             .select('id')
+    //             .addSelect('config')
+    //             .addSelect('startTime')
+    //             .addSelect('endTime')
+    //             .where("config LIKE '%referralLink%'")
+    //             .andWhere("name LIKE '%connects wallet%'")
+    //             .andWhere("name LIKE '%Invite%'")
+    //             .getRawOne();
+    //
+    //           if (user && loyaltyRule) {
+    //             try {
+    //               await client.post(`/api/loyalty/rules/${loyaltyRule.id}/complete`, {
+    //                 body: {
+    //                   userId: user.userId,
+    //                 },
+    //               });
+    //               await snagReferRepo.save({
+    //                 lumeraAddress: data.address,
+    //                 claim: 1,
+    //               });
+    //             } catch (error) {
+    //               console.error(new Date(), `Wallet connect(rules complete) error. referAddress: ${referAddress}, loyaltyRuleID: ${loyaltyRule?.id}, userId: ${user.userId}. Error details: `, JSON.stringify(error));
+    //             }
+    //           }
+    //         }
+    //       }
+    //     }
+    //   } catch (error) {
+    //     // The core wallet connection record is already committed. Referral
+    //     // enrichment is best-effort and must not turn successful tracking into
+    //     // a retrying 500 response.
+    //     console.error('Wallet referral tracking error:', error);
+    //   }
+    // }
 
     return NextResponse.json(
       { success: true, message: 'Tracking user successfully' },

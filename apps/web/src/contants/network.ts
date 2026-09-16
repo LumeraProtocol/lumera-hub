@@ -24,10 +24,12 @@ export const NETWORK_PROFILES = {
     evmProfileName: 'lumera-testnet-evm',
     chainId: 'lumera-testnet-2',
     denom: 'ulume',
-    rpcEndpoint: 'https://lumera-testnet-rpc.polkachu.com',
-    restEndpoint: 'https://lumera-testnet-api.polkachu.com',
+    // Official Lumera testnet endpoints (CTO-recommended). CORS-open and healthy;
+    // the community nodes below stay as fallbacks.
+    rpcEndpoint: 'https://rpc-testnet.lumeraprotocol.com',
+    restEndpoint: 'https://lcd-testnet.lumeraprotocol.com',
     evmRpcEndpoint: 'https://evm-testnet.lumeraprotocol.com',
-    evmWsEndpoint: 'https://evm-ws-testnet.lumeraprotocol.com',
+    evmWsEndpoint: 'wss://evm-ws-testnet.lumeraprotocol.com',
     evmChainId: 76857769,
     snapiUrl: 'http://localhost:3100',
     sdkPreset: 'testnet',
@@ -182,11 +184,12 @@ const REST_FALLBACKS: Record<NetworkProfile, string[]> = {
     'https://lcd.lumera.io',
   ],
   testnet: [
+    'https://lumera-testnet-api.polkachu.com',
     'https://api-t.lumera.nodestake.org',
     'https://lumera-testnet-api.linknode.org',
     'https://lumera-testnet-rest.stakerhouse.com',
-    'https://lumera-testnet-api.corenodehq.xyz',
-    'https://lcd-testnet.lumeraprotocol.com',
+    // corenodehq omitted: it answers without `access-control-allow-origin`, so
+    // the browser blocks every response (CORS) — unusable as a fallback.
   ],
   devnet: [],
 };
@@ -200,10 +203,10 @@ const RPC_FALLBACKS: Record<NetworkProfile, string[]> = {
     'https://rpc.lumera.io',
   ],
   testnet: [
+    'https://lumera-testnet-rpc.polkachu.com',
     'https://rpc-t.lumera.nodestake.org',
     'https://lumera-testnet-rpc.linknode.org',
     'https://lumera-testnet-rpc.stakerhouse.com',
-    'https://rpc-testnet.lumeraprotocol.com',
   ],
   devnet: [],
 };
