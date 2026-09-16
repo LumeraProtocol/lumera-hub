@@ -204,6 +204,9 @@ type TCascadeStogre = {
   taskId: string;
   isPublic?: boolean;
   time: number;
+  /** Real on-chain action id (from registerAction), so the local pending row
+   *  carries the correct id/link instead of a synthetic timestamp. */
+  actionId?: string;
 }
 
 export type TUploadCascadeInfo = {
@@ -214,9 +217,11 @@ export type TUploadCascadeInfo = {
   status?: string;
   message?: string;
   isPublic?: boolean;
-  /** The Cascade task id returned by a successful upload. The on-chain action
-   *  id (what a share link needs) resolves from it as the object finalizes. */
+  /** The Cascade task id returned by a successful upload. */
   taskId?: string;
+  /** The on-chain action id, known as soon as the action is registered — this
+   *  is what a share link/QR needs, available without waiting on the indexer. */
+  actionId?: string;
 }
 
 export const FILES_TYPE: FileTypeOption[] = [
@@ -905,10 +910,10 @@ const useCascade = ({
         size: 0,
         txId: '',
         type: getFileType(r.fileName),
-        actionID: `${new Date().getTime()}`,
+        actionID: r.actionId || `${new Date().getTime()}`,
         signatures: '',
         lastModified: '',
-        state: 'In progress',
+        state: r.actionId ? 'DONE' : 'In progress',
         datahash: '',
         height: '',
         price: '0',
@@ -1092,7 +1097,7 @@ const useCascade = ({
     }
   }
 
-  const updateCascadeStogre = (taskId: string, fileName: string, isPublic: boolean) => {
+  const updateCascadeStogre = (taskId: string, fileName: string, isPublic: boolean, actionId?: string) => {
     try {
       trackingCascadeUpload(taskId);
       const currentUploadFiles = localStorage.getItem(storeName);
@@ -1105,6 +1110,7 @@ const useCascade = ({
         fileName,
         isPublic,
         time: dayjs().valueOf(),
+        actionId,
       });
       localStorage.setItem(storeName, JSON.stringify(files));
       const newFiles = myFilesOriginal;
@@ -1113,10 +1119,13 @@ const useCascade = ({
         size: 0,
         txId: '',
         type: getFileType(fileName),
-        actionID: `${new Date().getTime()}`,
+        // The real action id is known from registration — use it (not a
+        // synthetic timestamp) so the row's share link points at the right
+        // object; a registered action is stored, so it is no longer "pending".
+        actionID: actionId || `${new Date().getTime()}`,
         signatures: '',
         lastModified: `${new Date()}`,
-        state: 'In progress',
+        state: actionId ? 'DONE' : 'In progress',
         datahash: '',
         height: '',
         price: '0',
@@ -1216,27 +1225,38 @@ const useCascade = ({
                 }));
                 const currentFile = uploadCascadeInfo?.find((f) => f.fileName === file.name);
                 const isPublic = currentFile?.isPublic || false;
-                const result = await client.Cascade.uploader.uploadFile(fileBytes, {
+                /*
+                 * Run the upload as its explicit steps rather than uploadFile()
+                 * so the on-chain action id is captured the moment the action is
+                 * registered. sendFileToSupernodes monitors the sn-api task until
+                 * it completes, so awaiting it is the "upload finished" signal —
+                 * no indexer polling needed to reveal the share result.
+                 */
+                const uploader = client.Cascade.uploader;
+                const prepared = await uploader.prepareFile(fileBytes);
+                const registered = await uploader.registerAction(prepared, {
                   fileName: file.name,
-                  expirationTime,
                   isPublic,
+                  expirationTime,
                   signaturePrompter,
                   txPrompter,
                 });
-                if (result?.task_id) {
-                  updateCascadeStogre(result.task_id, file.name, isPublic);
+                const task = await uploader.sendFileToSupernodes(
+                  registered.actionId,
+                  registered.authSignature,
+                  fileBytes,
+                );
+                const taskId =
+                  (task as { task_id?: string; taskId?: string })?.task_id ||
+                  (task as { task_id?: string; taskId?: string })?.taskId ||
+                  '';
+                if (registered?.actionId) {
+                  updateCascadeStogre(taskId, file.name, isPublic, registered.actionId);
                   setUploadCascadeInfo(prev => prev.map((f) => {
-                    let status = f.status;
-                    let taskId = f.taskId;
                     if (f.fileName === file.name) {
-                      status = 'done'
-                      taskId = result.task_id
+                      return { ...f, status: 'done', taskId, actionId: registered.actionId }
                     }
-                    return {
-                      ...f,
-                      status,
-                      taskId,
-                    }
+                    return f
                   }));
                 }
                 if (counter < selectedUploadCascadeFiles.length) {

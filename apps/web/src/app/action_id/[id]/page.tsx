@@ -80,23 +80,58 @@ export default function ObjectPage() {
 
   const downloadUrl = `${CASCADE_API_URL}/download/${encodeURIComponent(id)}`
   const name = receipt?.artifact?.name || `Object ${id}`
+  // The object exists (retrievable now, or settling) — only then is there
+  // something to scan, so the share QR rides alongside the content.
+  const hasObject = status === 'ready' || status === 'pending'
 
-  return (
-    <div className="flex min-h-screen flex-col items-center bg-ink-800 px-4 py-10 sm:py-16">
-      <div className="w-full max-w-[560px]">
-        <div className="mb-8 flex items-center gap-[9px]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/lumera-mark.svg" alt="Lumera" className="h-[26px] w-auto" />
-          <span className="font-mono text-micro leading-none font-semibold tracking-[0.14em] text-text-tertiary uppercase">
-            Cascade
+  const qrAside =
+    hasObject && shareUrl ? (
+      <aside className="lg:sticky lg:top-16">
+        <div className="flex flex-col items-center gap-4 rounded-card border border-line-edge bg-ink-700 p-6 text-center">
+          <span className="font-mono text-micro leading-none font-medium tracking-[0.1em] text-lumera-green uppercase">
+            Share this file
+          </span>
+          <span className="relative rounded-[10px] bg-text-primary p-3.5">
+            {/* Level H (30% error correction) leaves room to punch the Lumera
+                mark into the centre and still scan cleanly. */}
+            <QRCode value={shareUrl} size={200} bgColor="#f5f5fa" fgColor="#000c22" level="H" />
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <span className="flex items-center justify-center rounded-[8px] bg-[#f5f5fa] p-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/lumera-mark.svg" alt="" className="h-11 w-11" />
+              </span>
+            </span>
+          </span>
+          <span className="text-small leading-[1.5] text-text-muted text-pretty">
+            Scan to open this file on another device — no wallet or account needed.
           </span>
         </div>
+      </aside>
+    ) : null
 
-        <span className="mb-2 block font-mono text-micro leading-none font-medium tracking-[0.1em] text-lumera-green uppercase">
-          Retrieve from Cascade
-        </span>
+  return (
+    <div className="min-h-screen bg-ink-800 px-4 py-10 sm:py-16">
+      <div
+        className={
+          hasObject
+            ? 'mx-auto grid w-full max-w-[860px] gap-10 lg:grid-cols-[minmax(0,1fr)_296px] lg:items-start'
+            : 'mx-auto w-full max-w-[560px]'
+        }
+      >
+        <div className="min-w-0">
+          <div className="mb-8 flex items-center gap-[9px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/lumera-mark.svg" alt="Lumera" className="h-[26px] w-auto" />
+            <span className="font-mono text-micro leading-none font-semibold tracking-[0.14em] text-text-tertiary uppercase">
+              Cascade
+            </span>
+          </div>
 
-        {status === 'loading' ? (
+          <span className="mb-2 block font-mono text-micro leading-none font-medium tracking-[0.1em] text-lumera-green uppercase">
+            Retrieve from Cascade
+          </span>
+
+          {status === 'loading' ? (
           <>
             <div className="mb-3 h-8 w-2/3 animate-pulse rounded-chip bg-ink-600" />
             <div className="h-40 w-full animate-pulse rounded-card bg-ink-700" />
@@ -192,31 +227,15 @@ export default function ObjectPage() {
                 View the transaction on the explorer →
               </a>
             ) : null}
-
-            {shareUrl ? (
-              <div className="mt-8 flex flex-col items-center gap-2.5">
-                <span className="relative mb-[5px] rounded-[10px] bg-text-primary p-3.5">
-                  {/* Same QR as the hub's Cascade share card: level H leaves room
-                      to punch the Lumera mark into the centre and still scan. */}
-                  <QRCode value={shareUrl} size={230} bgColor="#f5f5fa" fgColor="#000c22" level="H" />
-                  <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <span className="flex items-center justify-center rounded-[8px] bg-[#f5f5fa] p-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/lumera-mark.svg" alt="" className="h-12 w-12" />
-                    </span>
-                  </span>
-                </span>
-                <span className="text-[18px] leading-none font-semibold text-text-primary">
-                  Share this file
-                </span>
-              </div>
-            ) : null}
           </>
         )}
 
-        <p className="mt-10 text-small leading-[1.6] text-text-disabled text-pretty">
-          Powered by Lumera Cascade.
-        </p>
+          <p className="mt-10 text-small leading-[1.6] text-text-disabled text-pretty">
+            Powered by Lumera Cascade.
+          </p>
+        </div>
+
+        {qrAside}
       </div>
     </div>
   )
