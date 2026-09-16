@@ -83,7 +83,7 @@ export function ConnectDrawer() {
       ? [
           {
             key: METAMASK_WALLET_NAME,
-            initials: 'MM',
+            logo: '/metamask.png',
             name: 'MetaMask',
             note: 'Browser extension · EVM balances and transfers',
           },
@@ -128,8 +128,8 @@ export function ConnectDrawer() {
             }}
             className="flex w-full cursor-pointer items-center gap-[13px] rounded-[9px] border border-line-edge bg-ink-800 px-3.5 py-[13px] text-left transition-colors hover:border-line-accent hover:bg-ink-600"
           >
-            <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-control border border-line-edge bg-ink-600 font-mono text-small leading-none font-semibold text-lumera-green">
-              {w.initials}
+            <span className="flex h-[30px] w-[30px] flex-none items-center justify-center overflow-hidden rounded-control border border-line-edge bg-ink-600">
+              <Image src={w.logo} alt="" width={18} height={18} className="object-contain" />
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
               <span className="text-base leading-none font-medium text-text-primary">{w.name}</span>
