@@ -29,7 +29,8 @@ import {
   isSnapiReachable,
   DENOM,
   REST_AI_URL,
-  CASCADE_API_URL,
+  NETWORK_PROFILE,
+  cascadeReadBase,
 } from '@/contants/network';
 import {
   UPLOAD_MAX_FILES,
@@ -271,7 +272,14 @@ export const getFileType = (filename: string) => {
 
 export const ITEM_PER_PAGE = 10;
 const GAS_PRICE = '0.025ulume';
-const storeName = 'lumera-cascade-files';
+/*
+ * The pending-upload cache is per network. An action_id is unique only within a
+ * chain — testnet 88109 and mainnet 88109 are unrelated files — so a single
+ * shared store leaked one network's just-uploaded rows onto the other's drive
+ * (and could surface the same id twice, which crashes the list on a dup key).
+ */
+const STORE_PREFIX = 'lumera-cascade-files';
+const cascadeStoreKey = () => `${STORE_PREFIX}:${NETWORK_PROFILE}`;
 
 let ipLocateClient: IPLocate | undefined;
 
@@ -763,7 +771,7 @@ const useCascade = ({
         // Newest first; match the file by the gateway receipt's artifact name.
         for (const id of ids) {
           try {
-            const rc = await fetch(`${CASCADE_API_URL}/receipt/${id}`);
+            const rc = await fetch(`${cascadeReadBase()}/receipt/${id}`);
             if (!rc.ok) continue;
             const receipt = await rc.json();
             if (receipt?.artifact?.name === fileName) return { actionID: id };
@@ -888,6 +896,7 @@ const useCascade = ({
   }
 
   const updateFilesStogre = (files: IMyFile[]) => {
+    const storeName = cascadeStoreKey();
     let results: TCascadeStogre[] = [];
     const currentUploadFiles = localStorage.getItem(storeName);
     if (currentUploadFiles) {
@@ -1098,6 +1107,7 @@ const useCascade = ({
   }
 
   const updateCascadeStogre = (taskId: string, fileName: string, isPublic: boolean, actionId?: string) => {
+    const storeName = cascadeStoreKey();
     try {
       trackingCascadeUpload(taskId);
       const currentUploadFiles = localStorage.getItem(storeName);

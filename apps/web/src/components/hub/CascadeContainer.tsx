@@ -162,7 +162,7 @@ function CascadeBody({
   const { stats: net, isLoading: netLoading } = useNetworkStats()
   // The gateway inscribes on testnet, so QR file-sharing is offered on testnet
   // only for now — it stays hidden on mainnet.
-  const { isTestnet } = useNetwork()
+  const { profile } = useNetwork()
 
   const {
     markers,
@@ -271,9 +271,12 @@ function CascadeBody({
   const totalBytes = useMemo(() => all.reduce((s, f) => s + (f.size || 0), 0), [all])
   const filtering = !!query.trim() || group !== 'all'
 
-  const files: CascadeFile[] = useMemo(
-    () =>
-      hits.map((f) => {
+  const files: CascadeFile[] = useMemo(() => {
+    // The pending-upload store and the indexer can briefly surface the same
+    // action_id twice; a duplicate React key throws, so render each key once.
+    const seen = new Set<string>()
+    return hits
+      .map((f) => {
         const { kind } = classify(f.name)
         const note = stateNote(f.state)
         return {
@@ -284,13 +287,14 @@ function CascadeBody({
           kind: note ? `${kind} · ${note[0].toUpperCase()}${note.slice(1)}` : kind,
           isPublic: f.isPublic,
           // Only public objects can be handed out — the public /action_id page
-          // can fetch them without the owner's wallet.
-          shareUrl: f.isPublic && f.actionID ? `/action_id/${f.actionID}` : null,
+          // can fetch them without the owner's wallet. The link carries the
+          // active network, since an action_id is unique only within a chain.
+          shareUrl: f.isPublic && f.actionID ? `/action_id/${f.actionID}?net=${profile}` : null,
           onOpen: () => hub.openDrawer({ kind: 'file', cid: f.actionID }),
         }
-      }),
-    [hits, hub],
-  )
+      })
+      .filter((row) => (seen.has(row.key) ? false : (seen.add(row.key), true)))
+  }, [hits, hub, profile])
 
   const storage: StorageSummary | null = useMemo(() => {
     if (!totalBytes) return null
@@ -464,7 +468,10 @@ function CascadeBody({
         loading={isMyFilesLoading}
         statsLoading={netLoading}
         uploadResultSlot={
-          isTestnet && uploaded?.length ? (
+          // The share result (QR + receipt) is network-aware now — it reads the
+          // active network's gateway and links with ?net= — so it shows the same
+          // on mainnet as on testnet, not testnet-only.
+          uploaded?.length ? (
             <ShareResult
               actionId={uploaded[0].actionId}
               filename={uploaded[0].name}

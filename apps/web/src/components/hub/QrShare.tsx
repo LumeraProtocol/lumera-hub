@@ -19,10 +19,11 @@ import React from 'react'
 import QRCode from 'react-qr-code'
 
 import {
-  CASCADE_API_URL,
-  CASCADE_EXPLORER_URL,
+  REST_AI_URL,
+  NETWORK_PROFILE,
+  cascadeReadBase,
+  cascadeExplorerBaseFor,
   cascadeExplorerBlockUrl,
-  NETWORK_PROFILES,
 } from '@/contants/network'
 import { Card, CardHeader } from '@lumera-hub/ui/src/design/primitives'
 import { copyText, useHub } from '@lumera-hub/ui/src/hub/session'
@@ -45,8 +46,6 @@ const sizeLabel = (bytes?: number) => {
 }
 const short = (s: string, head = 10, tail = 6) =>
   !s || s.length <= head + tail + 1 ? s : `${s.slice(0, head)}…${s.slice(-tail)}`
-
-const testnet = NETWORK_PROFILES.testnet
 
 /** One labelled QR that doubles as a click-through on desktop. */
 function QrPanel({ href, label, hint }: { href: string; label: string; hint?: string }) {
@@ -108,7 +107,7 @@ export function ShareResult({
     let tries = 0
     const pull = async () => {
       try {
-        const r = await fetch(`${CASCADE_API_URL}/receipt/${actionId}`)
+        const r = await fetch(`${cascadeReadBase()}/receipt/${actionId}`)
         if (r.ok) {
           const data = (await r.json()) as Receipt
           if (cancelled) return
@@ -134,7 +133,7 @@ export function ShareResult({
   React.useEffect(() => {
     if (!block) return
     let cancelled = false
-    fetch(`${testnet.restEndpoint}/cosmos/base/tendermint/v1beta1/blocks/${block}`)
+    fetch(`${REST_AI_URL}/cosmos/base/tendermint/v1beta1/blocks/${block}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((b) => {
         const t = b?.block?.header?.time
@@ -155,8 +154,10 @@ export function ShareResult({
   }, [block])
 
   const pending = !actionId
-  const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/action_id/${actionId}`
-  const explorerUrl = block ? cascadeExplorerBlockUrl(block) : CASCADE_EXPLORER_URL
+  // The share link carries the network: an action_id alone is ambiguous across
+  // chains, so the public page needs `?net=` to know which gateway to read.
+  const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/action_id/${actionId}?net=${NETWORK_PROFILE}`
+  const explorerUrl = block ? cascadeExplorerBlockUrl(block) : cascadeExplorerBaseFor()
 
   const rows: Array<{ k: string; v: string }> = [
     { k: 'Object', v: `#${actionId}` },

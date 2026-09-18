@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import QRCode from 'react-qr-code'
 
-import { CASCADE_API_URL, cascadeExplorerBlockUrl } from '@/contants/network'
+import { cascadeApiBaseFor, cascadeExplorerBlockUrl } from '@/contants/network'
 
 type Receipt = {
   action_id: string
@@ -48,18 +48,30 @@ export default function ObjectPage() {
   // This page's own link — the value the share QR encodes, so a viewer can hand
   // the object to another device. Set on the client to avoid an SSR mismatch.
   const [shareUrl, setShareUrl] = useState('')
+  // Which chain this object is on, from `?net=`. A bare action_id is ambiguous
+  // across chains, so the link says which gateway to read. Legacy links without
+  // it default to testnet (the root gateway), where every object lived before.
+  const [net, setNet] = useState('')
 
   useEffect(() => {
     document.title = `Object ${id} · Lumera Cascade`
-    if (typeof window !== 'undefined') setShareUrl(`${window.location.origin}/action_id/${id}`)
+    if (typeof window === 'undefined') return
+    const q = new URLSearchParams(window.location.search).get('net') || ''
+    setNet(q)
+    setShareUrl(`${window.location.origin}/action_id/${id}${q ? `?net=${q}` : ''}`)
   }, [id])
 
   useEffect(() => {
     if (!id) return
+    // Read net here too, so the very first fetch targets the right gateway
+    // rather than a testnet default that 404s for a mainnet id then corrects.
+    const q =
+      typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('net') || '' : ''
+    const base = cascadeApiBaseFor(q)
     let cancelled = false
     const load = async () => {
       try {
-        const res = await fetch(`${CASCADE_API_URL}/receipt/${encodeURIComponent(id)}`)
+        const res = await fetch(`${base}/receipt/${encodeURIComponent(id)}`)
         if (cancelled) return
         if (res.status === 404) return setStatus('missing')
         if (!res.ok) return setStatus('error')
@@ -78,7 +90,7 @@ export default function ObjectPage() {
     }
   }, [id])
 
-  const downloadUrl = `${CASCADE_API_URL}/download/${encodeURIComponent(id)}`
+  const downloadUrl = `${cascadeApiBaseFor(net)}/download/${encodeURIComponent(id)}`
   const name = receipt?.artifact?.name || `Object ${id}`
   // The object exists (retrievable now, or settling) — only then is there
   // something to scan, so the share QR rides alongside the content.
@@ -219,7 +231,7 @@ export default function ObjectPage() {
 
             {receipt?.block_height ? (
               <a
-                href={cascadeExplorerBlockUrl(receipt.block_height)}
+                href={cascadeExplorerBlockUrl(receipt.block_height, net)}
                 target="_blank"
                 rel="noreferrer"
                 className="mt-4 inline-flex text-small font-medium text-lumera-green"

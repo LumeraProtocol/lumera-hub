@@ -367,17 +367,40 @@ export const CASCADE_API_URL = (
 ).replace(/\/+$/, '');
 
 /*
- * The public Cascade block explorer (explorer.lumera.help). It follows the
- * testnet chain and uses a hash route per block, so a link to a block's height
- * is `${CASCADE_EXPLORER_URL}/#/block/<height>` — no chain segment, no commas.
+ * Cascade objects are per-chain, and an action_id is unique only within a chain
+ * (testnet 20000 and mainnet 20000 are unrelated files). The gateway serves
+ * mainnet objects under /mainnet and testnet objects at the root, so a read must
+ * target the object's OWN network — not whatever the hub happens to be switched
+ * to — and a share link carries `?net=` to say which chain it belongs to.
  */
-export const CASCADE_EXPLORER_URL = (
-  process.env.NEXT_PUBLIC_CASCADE_EXPLORER_URL || 'https://explorer.lumera.help'
-).replace(/\/+$/, '');
+export type CascadeNetwork = 'mainnet' | 'testnet';
 
-/** Link to a block on the Cascade explorer by its height. */
-export const cascadeExplorerBlockUrl = (block: number) =>
-  `${CASCADE_EXPLORER_URL}/#/block/${block}`;
+/** Collapse any profile (incl. devnet) to the two networks Cascade serves. */
+export const cascadeNetworkOf = (profile: string = NETWORK_PROFILE): CascadeNetwork =>
+  profile === 'mainnet' ? 'mainnet' : 'testnet';
+
+/** Gateway base for a network's Cascade reads — receipt, download, list. */
+export const cascadeApiBaseFor = (profile: string = NETWORK_PROFILE): string =>
+  cascadeNetworkOf(profile) === 'mainnet' ? `${CASCADE_API_URL}/mainnet` : CASCADE_API_URL;
+
+/** Gateway base for the hub's currently active network. */
+export const cascadeReadBase = (): string => cascadeApiBaseFor(NETWORK_PROFILE);
+
+/*
+ * The chain explorer (portal), per network. A Cascade share/result link opens
+ * the block the action was anchored in: `${base}/blocks/<height>`.
+ */
+const CASCADE_EXPLORER_BASE: Record<CascadeNetwork, string> = {
+  mainnet: 'https://portal.lumera.io/lumera-mainnet-1',
+  testnet: 'https://portal.testnet.lumera.io/lumera-testnet-2',
+};
+
+export const cascadeExplorerBaseFor = (profile: string = NETWORK_PROFILE): string =>
+  CASCADE_EXPLORER_BASE[cascadeNetworkOf(profile)];
+
+/** Link to a block on the network's explorer by its height. */
+export const cascadeExplorerBlockUrl = (block: number, profile: string = NETWORK_PROFILE): string =>
+  `${cascadeExplorerBaseFor(profile)}/blocks/${block}`;
 
 export const EVM_NATIVE_DECIMALS = 18;
 export const COSMOS_EIP712_ENABLED = parseBooleanEnvironmentValue(
