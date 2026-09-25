@@ -388,7 +388,7 @@ export const cascadeReadBase = (): string => cascadeApiBaseFor(NETWORK_PROFILE);
 
 /*
  * The chain explorer (portal), per network. A Cascade share/result link opens
- * the block the action was anchored in: `${base}/blocks/<height>`.
+ * the block the action was anchored in: `${base}/block/<height>` (singular).
  */
 const CASCADE_EXPLORER_BASE: Record<CascadeNetwork, string> = {
   mainnet: 'https://portal.lumera.io/lumera-mainnet-1',
@@ -400,7 +400,7 @@ export const cascadeExplorerBaseFor = (profile: string = NETWORK_PROFILE): strin
 
 /** Link to a block on the network's explorer by its height. */
 export const cascadeExplorerBlockUrl = (block: number, profile: string = NETWORK_PROFILE): string =>
-  `${cascadeExplorerBaseFor(profile)}/blocks/${block}`;
+  `${cascadeExplorerBaseFor(profile)}/block/${block}`;
 
 export const EVM_NATIVE_DECIMALS = 18;
 export const COSMOS_EIP712_ENABLED = parseBooleanEnvironmentValue(
