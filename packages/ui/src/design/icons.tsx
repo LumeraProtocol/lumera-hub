@@ -90,6 +90,13 @@ export const FoundryIcon = (p: IconProps) => (
   </Svg>
 )
 
+// The Chat lab glyph from the v2 design — a single message-bubble path.
+export const ChatIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M20 15a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2Z" />
+  </Svg>
+)
+
 export const FaucetIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M4 8h7a3 3 0 0 1 3 3v2" />

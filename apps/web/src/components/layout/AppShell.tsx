@@ -54,6 +54,7 @@ import { Badge, Button, cx, Skeleton } from '@lumera-hub/ui/src/design/primitive
 import {
   BellIcon,
   CascadeIcon,
+  ChatIcon,
   CloseIcon,
   DashboardIcon,
   ExternalIcon,
@@ -86,6 +87,7 @@ const PRIMARY_NAV: NavItem[] = [
   { id: "staking", label: "Staking", url: "/staking", icon: <StakingIcon /> },
   { id: "governance", label: "Governance", url: "/governance", icon: <GovernanceIcon /> },
   { id: "cascade", label: "Cascade", url: "/cascade", icon: <CascadeIcon /> },
+  { id: "chat", label: "Chat lab", url: "/chat", icon: <ChatIcon /> },
 ]
 
 /*
@@ -95,9 +97,8 @@ const PRIMARY_NAV: NavItem[] = [
  */
 const PREVIEW_NAV: NavItem[] = [
   { id: "blocks", label: "Blocks", url: "/blocks", icon: <DashboardIcon /> },
-  // Foundry's quests come from SNAG and are not ready. It keeps its route so
-  // the work is not lost, but nothing points at it — not the sidebar, not
-  // search — until there is a season to send people to.
+  // Foundry keeps its route (reachable by URL) but is not offered in the
+  // sidebar — its quests come from SNAG and are not ready to surface.
   { id: "foundry", label: "Foundry", url: "/foundry", icon: <FoundryIcon />, hidden: true },
   { id: "sense", label: "Sense", url: "/sense", icon: <SearchIcon /> },
   { id: "inference", label: "Inference", url: "/inference", icon: <FoundryIcon /> },
