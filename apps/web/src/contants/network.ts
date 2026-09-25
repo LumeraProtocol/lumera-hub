@@ -358,9 +358,10 @@ export const setNetworkProfile = (profile: string): boolean => {
  *
  * Public reads — a file's bytes and its on-chain receipt — are fetched straight
  * from here by the browser (the gateway sends `access-control-allow-origin: *`
- * and needs no key for them). Uploads carry an operator key and so go through
- * /api/cascade/upload instead, which holds the key server-side. The gateway
- * inscribes on testnet whatever network the hub itself is switched to.
+ * and needs no key for them). Uploads are signed by the viewer's own wallet
+ * through the SDK (see useCascade / useWalletCascade), so nothing here holds an
+ * operator key. The gateway inscribes on testnet whatever network the hub is
+ * switched to.
  */
 export const CASCADE_API_URL = (
   process.env.NEXT_PUBLIC_CASCADE_API_URL || 'https://api.lumera.help'

@@ -67,7 +67,7 @@ export const GOVERNANCE_STATS = {
 
 const EXPEDITED_DEPOSIT_REQUIRED = GOVERNANCE_STATS.expeditedDepositRequired;
 
-const useGovernances = () => {
+const useGovernances = ({ enabled = true }: { enabled?: boolean } = {}) => {
   const { trackingHubTransaction } = useTrackingHubTransaction();
   const { address, canSignCosmosTransactions, getClient } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
@@ -219,9 +219,13 @@ const useGovernances = () => {
   }
 
   useEffect(() => {
+    // AppShell's notification badge mounts this on every route; skip the whole
+    // proposal + summary + per-proposal-tally fetch until it is actually needed
+    // (a connected viewer) rather than firing it on every visit.
+    if (!enabled) return;
     setGovernances([]);
     fetchData();
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
     setRequiredDeposit(proposal.isExpedited ? EXPEDITED_DEPOSIT_REQUIRED : GOVERNANCE_STATS.depositRequired);

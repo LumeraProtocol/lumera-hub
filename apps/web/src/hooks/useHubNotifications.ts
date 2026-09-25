@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 
 import useAccountInfo from '@/hooks/useAccountInfo';
 import useGovernances from '@/hooks/useGovernances';
-import useChainParams from '@/hooks/useChainParams';
 import { RATE_VALUE } from '@/contants';
 import { DENOM } from '@/contants/network';
 import { formatNumber } from '@/utils/format';
@@ -30,9 +29,14 @@ export type HubNotification = {
  * there is nothing to go stale.
  */
 const useHubNotifications = (address?: string) => {
+  // Both reads only matter for a connected viewer (see the early return below),
+  // and this hook is mounted on every route by the shell's notification badge.
+  // useAccountInfo already no-ops without an address; gate useGovernances the
+  // same way so its ~8 requests (plus a tally per open proposal) do not fire on
+  // every visit. useChainParams used to be read here too but its result was
+  // never used, so it is gone.
   const { accountInfo } = useAccountInfo(address ? { address } : {});
-  const { governances } = useGovernances();
-  const { params } = useChainParams();
+  const { governances } = useGovernances({ enabled: !!address });
 
   return useMemo(() => {
     const items: HubNotification[] = [];
@@ -104,7 +108,7 @@ const useHubNotifications = (address?: string) => {
     });
 
     return items;
-  }, [accountInfo, address, governances, params]);
+  }, [accountInfo, address, governances]);
 };
 
 export default useHubNotifications;

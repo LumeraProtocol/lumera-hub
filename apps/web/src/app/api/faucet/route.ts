@@ -58,6 +58,9 @@ const onCooldown = (key: string): number => {
   return left > 0 ? left : 0;
 };
 const commit = (key: string) => lastDraw.set(key, Date.now() + COOLDOWN_MS);
+// Roll back a reservation when the draw it was made for never lands, so a
+// failed send does not cost the caller their daily allowance.
+const release = (key: string) => lastDraw.delete(key);
 
 const humanLeft = (ms: number): string => {
   const hours = Math.ceil(ms / (60 * 60 * 1000));
@@ -98,6 +101,22 @@ const connect = async (wallet: DirectSecp256k1HdWallet): Promise<SigningStargate
   throw new Error(
     `No RPC host answered (${lastError instanceof Error ? lastError.message : 'unknown'})`,
   );
+};
+
+/*
+ * The faucet account carries a single sequence number, so two broadcasts in
+ * flight at once collide with "account sequence mismatch" and all but one fail.
+ * Chain the sends so only one is ever in flight; a failure does not break the
+ * chain for the next caller.
+ */
+let sendQueue: Promise<unknown> = Promise.resolve();
+const runExclusive = <T>(fn: () => Promise<T>): Promise<T> => {
+  const run = sendQueue.then(fn, fn);
+  sendQueue = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
 };
 
 /** GET reports whether the faucet can send, and from which account. */
@@ -145,8 +164,16 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = getClientIP(request);
-  const addrLeft = onCooldown(`addr:${recipient}`);
-  const ipLeft = onCooldown(`ip:${ip}`);
+  const addrKey = `addr:${recipient}`;
+  const ipKey = `ip:${ip}`;
+
+  // Check AND reserve the cooldown in one synchronous step. Node runs this to
+  // completion without yielding, so two parallel draws for the same address or
+  // IP cannot both pass the check before either commits — the previous
+  // check-then-commit-after-broadcast left a multi-second window where they
+  // could. The reservation is rolled back below if the send never lands.
+  const addrLeft = onCooldown(addrKey);
+  const ipLeft = onCooldown(ipKey);
   const left = Math.max(addrLeft, ipLeft);
   if (left > 0) {
     return NextResponse.json(
@@ -154,39 +181,47 @@ export async function POST(request: NextRequest) {
       { status: 429 },
     );
   }
+  commit(addrKey);
+  commit(ipKey);
 
   try {
     const { wallet, address: from } = await getSigner();
-    const client = await connect(wallet);
-    try {
-      const fee = {
-        amount: [{ denom: DENOM, amount: '5000' }],
-        gas: '120000',
-      };
-      const result = await client.sendTokens(
-        from,
-        recipient,
-        [{ denom: DENOM, amount: String(DRIP_MICRO) }],
-        fee,
-        'Lumera Hub faucet',
-      );
-      // assertIsDeliverTxSuccess would throw; check the code so a failed
-      // delivery does not read as a success and burn the cooldown.
-      if (result.code !== 0) {
-        return NextResponse.json(
-          { error: result.rawLog || `The send failed on chain (code ${result.code}).` },
-          { status: 502 },
+    // Serialize the broadcast: the faucet account has one sequence number, so
+    // concurrent sends would fail with "account sequence mismatch".
+    const result = await runExclusive(async () => {
+      const client = await connect(wallet);
+      try {
+        const fee = {
+          amount: [{ denom: DENOM, amount: '5000' }],
+          gas: '120000',
+        };
+        return await client.sendTokens(
+          from,
+          recipient,
+          [{ denom: DENOM, amount: String(DRIP_MICRO) }],
+          fee,
+          'Lumera Hub faucet',
         );
+      } finally {
+        client.disconnect();
       }
-      commit(`addr:${recipient}`);
-      commit(`ip:${ip}`);
-      return NextResponse.json({ txhash: result.transactionHash, amountMicro: DRIP_MICRO });
-    } finally {
-      client.disconnect();
+    });
+    // assertIsDeliverTxSuccess would throw; check the code so a failed
+    // delivery does not read as a success and keep the cooldown.
+    if (result.code !== 0) {
+      release(addrKey);
+      release(ipKey);
+      return NextResponse.json(
+        { error: result.rawLog || `The send failed on chain (code ${result.code}).` },
+        { status: 502 },
+      );
     }
+    return NextResponse.json({ txhash: result.transactionHash, amountMicro: DRIP_MICRO });
   } catch (error) {
+    // The caller got nothing, so free the reservation for a genuine retry.
+    release(addrKey);
+    release(ipKey);
     const message = error instanceof Error ? error.message : 'The faucet could not broadcast.';
-    // Do not record a cooldown on failure — the caller got nothing.
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

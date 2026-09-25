@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import * as instance from '@/utils/api';
-import { accountAddressFromOperator } from '@/utils/consensus-address';
+import { accountAddressFromValoper } from '@/utils/consensus-address';
 
 export type ValidatorProfile = {
   /** Operator's own delegation, in micro-denom. */
@@ -61,7 +61,7 @@ const useValidatorProfile = (operatorAddress?: string, identity?: string) => {
     setProfile({ ...EMPTY, isLoading: true });
 
     const run = async () => {
-      const selfAccount = accountAddressFromOperator(operatorAddress);
+      const selfAccount = accountAddressFromValoper(operatorAddress);
 
       const [selfRes, delegatorsRes, logo] = await Promise.all([
         selfAccount

@@ -91,11 +91,17 @@ const intOf = (value: unknown) => positiveOrNull(Number(value));
 // often as a governance proposal passes, so refetching per screen is waste.
 let cached: ChainParams | null = null;
 let inFlight: Promise<ChainParams> | null = null;
+// Bumped on every network switch. A load carries the generation it began under;
+// when it resolves we drop its result if the number has since moved, so a load
+// that was already in flight when the user switched can never be cached against
+// (or clobber the request of) the new chain.
+let generation = 0;
 
 // The two networks have different quorum, deposit and unbonding parameters, so
 // the shared cache is dropped on a switch rather than shown against the wrong
 // chain.
 subscribeNetworkChange(() => {
+  generation += 1;
   cached = null;
   inFlight = null;
 });
@@ -158,25 +164,56 @@ const useChainParams = () => {
   const [isLoading, setLoading] = useState(!cached);
 
   useEffect(() => {
-    if (cached) return;
     let cancelled = false;
-    inFlight ??= load();
-    inFlight
-      .then((next) => {
-        // Only remember a read that produced something. Caching an all-null
-        // result would make a transient LCD outage permanent for the session.
-        if (hasAnyValue(next)) cached = next;
-        if (!cancelled) setParams(next);
-      })
-      .catch(() => {
-        // Leave every field null; callers render em dashes.
-      })
-      .finally(() => {
-        inFlight = null;
-        if (!cancelled) setLoading(false);
-      });
+
+    const run = () => {
+      if (cached) {
+        setParams(cached);
+        setLoading(false);
+        return;
+      }
+      const gen = generation;
+      setLoading(true);
+      inFlight ??= load();
+      inFlight
+        .then((next) => {
+          // A network switch since this load began bumped the generation, so
+          // its result belongs to the previous chain — discard it rather than
+          // caching or showing it against the new one.
+          if (gen !== generation) return;
+          // Only remember a read that produced something. Caching an all-null
+          // result would make a transient LCD outage permanent for the session.
+          if (hasAnyValue(next)) cached = next;
+          if (!cancelled) setParams(next);
+        })
+        .catch(() => {
+          // Leave every field null; callers render em dashes.
+        })
+        .finally(() => {
+          // Only release the shared slot if it still belongs to this
+          // generation, so a stale load's finally cannot wipe the request the
+          // new chain has already started.
+          if (gen === generation) {
+            inFlight = null;
+            if (!cancelled) setLoading(false);
+          }
+        });
+    };
+
+    run();
+    // Reload from the new chain on a switch. The module-level subscriber above
+    // is registered first, so by the time this runs it has already cleared the
+    // cache and bumped the generation — this starts a fresh load rather than
+    // reusing the previous chain's promise.
+    const unsubscribe = subscribeNetworkChange(() => {
+      if (cancelled) return;
+      setParams(EMPTY);
+      run();
+    });
+
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, []);
 

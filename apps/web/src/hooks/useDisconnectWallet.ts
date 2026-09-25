@@ -7,9 +7,11 @@ import { setAddress, setConnected, setWalletName } from '@/redux/wallet.slice';
 import { useEvmWallet } from '@/app/providers/evm-wallet-provider';
 import useWalletConnect from '@/hooks/useWalletConnect';
 import { clearTrackedConnects } from '@/utils/wallet-connect-marker';
-
-const KEPLR_WALLET_NAME = 'keplr-extension';
-const METAMASK_WALLET_NAME = 'metamask-extension';
+// The canonical wallet-name keys. Redefining them here had already drifted:
+// this file's METAMASK_WALLET_NAME was 'metamask-extension' while the value
+// actually stored is 'metamask', so the MetaMask disconnect branch never
+// matched and fell through to the Cosmos disconnect.
+import { KEPLR_WALLET_NAME, METAMASK_WALLET_NAME } from '@/utils/wallet-selection';
 
 /**
  * Tearing down a connection touches three places — the active wallet adapter,

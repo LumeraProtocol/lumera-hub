@@ -258,7 +258,10 @@ export default function Page() {
         onReview={({ to, amount, memo }) => {
           send.handleInputChange('recipient', to)
           send.handleInputChange('amount', amount)
-          if (memo) send.handleInputChange('memo', memo)
+          // Always set the memo, even to empty: useSend only clears it on a
+          // successful send, so a cancelled send that carried a memo would
+          // otherwise leak it into the next, memo-less send.
+          send.handleInputChange('memo', memo)
           hub.openDrawer({
             kind: 'tx',
             intent: {
@@ -277,6 +280,10 @@ export default function Page() {
         onBroadcast={send.handleSendClick}
         error={send.error}
         transactionHash={send.transactionHash}
+        memo={send.optionsAdvanced.memo}
+        onMemoChange={(v) => send.handleInputChange('memo', v)}
+        gasLimit={send.optionsAdvanced.gas}
+        onGasLimitChange={(v) => send.handleInputChange('gas', v)}
         onDone={() => void fetchData()}
       />
     </>

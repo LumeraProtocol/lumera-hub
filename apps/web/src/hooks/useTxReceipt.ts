@@ -63,7 +63,10 @@ const useTxReceipt = (hash?: string, attempts = 8, intervalMs = 1500) => {
     const read = async () => {
       tries += 1;
       try {
-        const { data } = await instance.get(`/cosmos/tx/v1beta1/txs/${hash}`);
+        // Quiet: the first reads after a broadcast normally 404 while the tx
+        // is still being indexed. That is expected here (we retry), so it must
+        // not raise the global error toast the way instance.get would.
+        const { data } = await instance.getQuiet(`/cosmos/tx/v1beta1/txs/${hash}`);
         if (cancelled) return;
         const response = data?.tx_response;
         if (response) {

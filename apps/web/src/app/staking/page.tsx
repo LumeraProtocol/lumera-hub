@@ -173,13 +173,25 @@ export default function Page() {
     totalBondedMicro,
   ])
 
-  const selected = validators.find((v) => v.key === selectedKey) || validators[0]
   const mine = validators.filter((v) => v.mine > 0)
+  // Undelegate acts on the selected validator, so it must default to one the
+  // wallet actually has stake on — not validators[0], the highest-power
+  // validator, which the user may not have delegated to at all.
+  const selected =
+    validators.find((v) => v.key === selectedKey) ||
+    (mode === 'undelegate' ? mine[0] : undefined) ||
+    validators[0]
   const source = mine.find((v) => v.key === sourceKey) || mine[0]
 
   // What the amount field is allowed to reach depends on which action it is.
+  // Undelegate can only release the stake on the SELECTED validator, not the
+  // wallet's total stake across all of them.
   const available =
-    mode === 'undelegate' ? stakedMicro : mode === 'redelegate' ? (source?.mine ?? 0) : availableMicro
+    mode === 'undelegate'
+      ? (selected?.mine ?? 0)
+      : mode === 'redelegate'
+        ? (source?.mine ?? 0)
+        : availableMicro
 
   const verb =
     mode === 'undelegate'
@@ -346,6 +358,18 @@ export default function Page() {
           ? unbond.handleSendClick
           : redelegate.handleSendClick
 
+  // The hook that owns the Advanced block's memo/gas for the current action, so
+  // an edit in the drawer reaches the broadcast. Claim withdraws from every
+  // delegation with no amount, memo or gas to tune, so it has none.
+  const advanced =
+    mode === 'delegate'
+      ? delegate
+      : mode === 'undelegate'
+        ? unbond
+        : mode === 'redelegate'
+          ? redelegate
+          : null
+
   const txError =
     mode === 'claim'
       ? errorClaim || undefined
@@ -416,6 +440,10 @@ export default function Page() {
         onBroadcast={broadcast}
         error={txError}
         transactionHash={txHash}
+        memo={advanced?.optionsAdvanced.memo}
+        onMemoChange={advanced ? (v) => advanced.handleInputChange('memo', v) : undefined}
+        gasLimit={advanced?.optionsAdvanced.gas}
+        onGasLimitChange={advanced ? (v) => advanced.handleInputChange('gas', v) : undefined}
         onDone={() => {
           setAmount('')
           fetchData()

@@ -20,27 +20,41 @@ import { setError } from '@/redux/error.slice';
  * 4xx is not a host problem, so it is returned as-is rather than retried
  * against every node in turn.
  */
-let activeHostIndex = 0;
-
-// A network switch replaces REST_ENDPOINTS with the other chain's hosts; the
-// pinned cursor points into the old array, so reset it to try the new primary
-// first.
-subscribeNetworkChange(() => {
-  activeHostIndex = 0;
-});
-
 /*
- * A host that has just failed is demoted immediately, before its concurrent
- * siblings finish. Screens fire ten or more reads at once, so pinning only on
- * success meant every one of them queued behind the same dead primary and paid
- * its full timeout — a ten-second blank page even though a healthy fallback
- * was one hop away.
+ * A host that fails is sidelined for a short cooldown rather than pinned away
+ * for the whole session. The old code demoted the failed host and pinned the
+ * fallback permanently, so a single slow query that tripped the 10s timeout
+ * (e.g. the account count in useNetworkStats) exiled an otherwise-healthy
+ * primary until the next reload. With a cooldown, requests prefer the first
+ * host not currently cooling down — the configured primary whenever it is
+ * healthy — and return to it automatically once the cooldown lapses.
+ *
+ * The failed host is sidelined immediately, before its concurrent siblings
+ * finish, so a burst of reads against a genuinely dead primary still fails over
+ * fast rather than each paying the full timeout.
  */
-const demote = (index: number) => {
-  if (index === activeHostIndex) {
-    activeHostIndex = (index + 1) % REST_ENDPOINTS.length;
-  }
+const HOST_COOLDOWN_MS = 30000;
+const cooldownUntil: number[] = [];
+
+const isCoolingDown = (index: number) => (cooldownUntil[index] ?? 0) > Date.now();
+const sideline = (index: number) => {
+  cooldownUntil[index] = Date.now() + HOST_COOLDOWN_MS;
 };
+
+// The most-preferred host not currently cooling down: the configured primary
+// (index 0) whenever it is healthy, else the first available fallback.
+const preferredHostIndex = () => {
+  for (let i = 0; i < REST_ENDPOINTS.length; i += 1) {
+    if (!isCoolingDown(i)) return i;
+  }
+  return 0; // every host is cooling down — try the primary again anyway
+};
+
+// A network switch replaces REST_ENDPOINTS with the other chain's hosts, so the
+// cooldowns recorded against the old array no longer apply.
+subscribeNetworkChange(() => {
+  cooldownUntil.length = 0;
+});
 
 /*
  * A dead host usually hangs rather than refusing, so without a ceiling the
@@ -50,7 +64,8 @@ const demote = (index: number) => {
 const REQUEST_TIMEOUT_MS = 10000;
 
 /** Which host the hub is currently reading from. Surfaced for diagnostics. */
-export const getActiveRestEndpoint = () => REST_ENDPOINTS[activeHostIndex] ?? REST_ENDPOINTS[0];
+export const getActiveRestEndpoint = () =>
+  REST_ENDPOINTS[preferredHostIndex()] ?? REST_ENDPOINTS[0];
 
 const isHostFailure = (error: unknown) => {
   if (axios.isCancel(error)) return false;
@@ -168,23 +183,28 @@ const customFetch = (
         url: `${host}${url}`,
         timeout: options.timeout ?? REQUEST_TIMEOUT_MS,
       });
-      // Pin whichever host answered so the rest of the session goes straight
-      // there.
-      activeHostIndex = hostIndex;
+      // It answered — clear any cooldown so it is preferred again.
+      cooldownUntil[hostIndex] = 0;
       return res;
     } catch (err) {
       if (!isHostFailure(err)) {
         return rejectWith(err);
       }
-      demote(hostIndex);
+      // Sideline this host briefly, then walk to the next one that is not itself
+      // cooling down.
+      sideline(hostIndex);
       if (tried + 1 >= REST_ENDPOINTS.length) {
         return rejectWith(err);
       }
-      return attempt((hostIndex + 1) % REST_ENDPOINTS.length, tried + 1);
+      let next = (hostIndex + 1) % REST_ENDPOINTS.length;
+      for (let hops = 0; hops < REST_ENDPOINTS.length && isCoolingDown(next); hops += 1) {
+        next = (next + 1) % REST_ENDPOINTS.length;
+      }
+      return attempt(next, tried + 1);
     }
   };
 
-  return attempt(activeHostIndex, 0);
+  return attempt(preferredHostIndex(), 0);
 };
 
 export const getExternal = (path: string) => customFetch(path, 'GET', {}, false, true);

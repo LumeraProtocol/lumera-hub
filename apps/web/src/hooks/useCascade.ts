@@ -28,7 +28,6 @@ import {
   SNAPI_URL,
   isSnapiReachable,
   DENOM,
-  REST_AI_URL,
   NETWORK_PROFILE,
   cascadeReadBase,
 } from '@/contants/network';
@@ -753,11 +752,12 @@ const useCascade = ({
       if (!filesAddress || !fileName) return null;
       try {
         const q = encodeURIComponent(`action_finalized.creator='${filesAddress}'`);
-        const res = await fetch(
-          `${REST_AI_URL}/cosmos/tx/v1beta1/txs?query=${q}&order_by=ORDER_BY_DESC&limit=10`,
+        // Through the failover REST client (quiet — the caller polls), so an
+        // unhealthy LCD host does not strand share-link resolution on a dead
+        // primary the way a direct fetch(REST_AI_URL, …) did.
+        const { data } = await instance.getQuiet(
+          `/cosmos/tx/v1beta1/txs?query=${q}&order_by=ORDER_BY_DESC&limit=10`,
         );
-        if (!res.ok) return null;
-        const data = await res.json();
         const ids: string[] = [];
         for (const tr of data?.tx_responses || []) {
           for (const ev of tr?.events || []) {
@@ -903,7 +903,11 @@ const useCascade = ({
       const currentFiles: TCascadeStogre[] = JSON.parse(currentUploadFiles);
       const filteredFiles = currentFiles.filter(item => {
         const currentDate = dayjs().subtract(1, 'day').valueOf();
-        const isExist = files.some(obj => obj.taskId === item.taskId && obj.name === item.fileName);
+        // Match the indexed file by its action_id, not its task_id: getFileInfo
+        // returns an empty task_id whenever SNAPI is unreachable (every deployed
+        // site), so a task_id compare never matched and this pending row lived on
+        // to duplicate the real indexed row. The action_id is stable and unique.
+        const isExist = !!item.actionId && files.some(obj => obj.actionID === item.actionId);
         return !isExist || Number(currentDate) > Number(item.time);
       });
       if (filteredFiles?.length) {

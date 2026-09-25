@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { RPC_ENDPOINTS } from '@/contants/network';
+import { RPC_ENDPOINTS, subscribeNetworkChange } from '@/contants/network';
 
 /*
  * Tendermint RPC failover.
@@ -16,6 +16,13 @@ import { RPC_ENDPOINTS } from '@/contants/network';
  */
 
 let activeIndex = 0;
+
+// A network switch swaps RPC_ENDPOINTS for the other chain's hosts; the pinned
+// cursor points into the old array, so reset it to try the new primary first —
+// the same reset api.ts already does for the REST client.
+subscribeNetworkChange(() => {
+  activeIndex = 0;
+});
 
 /*
  * Demote a failing host immediately so concurrent requests skip it rather than

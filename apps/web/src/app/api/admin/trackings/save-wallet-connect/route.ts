@@ -5,9 +5,11 @@ import dayjs from 'dayjs';
 
 import { getDataSource } from '@/lib/data-source';
 import { hubUserSchema } from '@/schemas/hubUserSchema';
-// SNAG is not wired up yet (next sprint). The referral-enrichment path below is
-// commented out until then; restore these imports with it.
-// import { SnagRefer } from '@/entities/SnagRefer';
+// SNAG's claim-awarding (its API client, SnagUser, SnagLoyalty) is not wired up
+// until next sprint and stays commented out. The referral MAPPING, however, is
+// recorded now: it is only available on an address's first connect, so dropping
+// it while SNAG is off would lose the credit for good — see below.
+import { SnagRefer } from '@/entities/SnagRefer';
 // import { SnagUser } from '@/entities/SnagUser';
 // import { SnagLoyalty } from '@/entities/SnagLoyalty';
 // import client from '@/lib/snag';
@@ -51,10 +53,7 @@ export async function POST(req: NextRequest) {
       secChUaPlatformVersion: req.headers.get('sec-ch-ua-platform-version'),
     });
 
-    // `isNewHub` was only read by the SNAG referral path below, which is
-    // disabled until SNAG lands next sprint. Drop the binding so it does not
-    // read as unused; restore it (`const { isNewHub } = ...`) with that path.
-    await persistWalletConnection(dataSource, {
+    const { isNewHub } = await persistWalletConnection(dataSource, {
       address: data.address,
       acquisitionSource,
       browser: ua?.browser?.name || null,
@@ -63,10 +62,34 @@ export async function POST(req: NextRequest) {
       timestamp: nowIso,
     });
 
-    // SNAG referral enrichment — disabled until SNAG is wired up (next sprint).
-    // The core wallet-connection record above is already committed; this block
-    // only awards referral credit through SNAG, so it is safe to leave off for
-    // now. Restore it (and the SNAG imports + `isNewHub` binding) with SNAG.
+    // Record the referral mapping on the address's FIRST connect, even though
+    // SNAG's claim-awarding is disabled. isNewHub is true only once per address,
+    // so this is the single chance to capture referralCode: without it, everyone
+    // who first connects while SNAG is off loses their referral credit for good.
+    // A SnagRefer row with no claim (claim defaults to 0) keeps the mapping until
+    // SNAG lands and can settle it. Best-effort — the wallet-connection record
+    // above is already committed and must not be turned into a retrying 500.
+    if (isNewHub && data.referralCode && data.referralCode !== data.address) {
+      try {
+        const snagReferRepo = dataSource.getRepository(SnagRefer);
+        const existing = await snagReferRepo.findOne({
+          where: { lumeraAddress: data.address },
+        });
+        if (!existing) {
+          await snagReferRepo.save({
+            lumeraAddress: data.address,
+            referAddress: data.referralCode,
+          });
+        }
+      } catch (error) {
+        console.error('Wallet referral mapping persist error:', error);
+      }
+    }
+
+    // SNAG referral claim-awarding — disabled until SNAG is wired up (next
+    // sprint). The mapping above is enough to settle these later; this block
+    // only awards the credit through the SNAG API. Restore it (and the SNAG
+    // imports) with SNAG.
     // if (isNewHub && data.referralCode) {
     //   // save SnagRefer
     //   try {

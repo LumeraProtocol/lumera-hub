@@ -29,33 +29,13 @@ export const consensusAddressFromPubkey = (
 };
 
 /**
- * The account address behind a validator's operator address.
+ * The account address behind a validator's operator (valoper) address.
  *
  * `lumeravaloper1…` and `lumera1…` wrap the same 20-byte payload under
- * different prefixes, so a validator's self-delegation can be looked up
- * without asking the chain for a second record.
- */
-export const accountAddressFromOperator = (
-  operatorAddress: string,
-  prefix = 'lumera',
-): string | null => {
-  if (!operatorAddress) return null;
-  try {
-    const { data } = fromBech32(operatorAddress);
-    return toBech32(prefix, data);
-  } catch {
-    return null;
-  }
-};
-
-/**
- * Derives a validator's own account address from its operator address.
- *
- * Governance records a vote against the account that cast it
- * (`lumera1…`), while the staking module lists validators by operator address
- * (`lumeravaloper1…`). The two are the same 20 bytes under different prefixes,
- * so re-encoding bridges them — which is what lets a vote be attributed to the
- * validator that cast it, and weighted by its stake.
+ * different prefixes, so re-encoding bridges them without asking the chain for a
+ * second record. This is what lets a validator's self-delegation be looked up,
+ * and a governance vote be attributed to the validator that cast it and
+ * weighted by its stake.
  */
 export const accountAddressFromValoper = (
   valoper: string,

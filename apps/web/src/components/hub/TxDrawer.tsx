@@ -42,6 +42,10 @@ export function TxDrawer({
   error,
   transactionHash,
   onDone,
+  memo: memoProp,
+  onMemoChange,
+  gasLimit: gasLimitProp,
+  onGasLimitChange,
 }: {
   /** Broadcasts the transaction. Should resolve once the wallet has answered. */
   onBroadcast: () => Promise<void> | void
@@ -50,15 +54,33 @@ export function TxDrawer({
   /** Hash from the owning hook, set once the transaction is broadcast. */
   transactionHash?: string
   onDone?: () => void
+  /**
+   * Advanced-block memo and gas, bound to the owning hook when provided, so an
+   * edit here actually reaches the broadcast (and a memo the hook already holds,
+   * e.g. "Stake for X", is shown). Unbound, the drawer keeps its own copy — the
+   * old behaviour, where the edits went nowhere.
+   */
+  memo?: string
+  onMemoChange?: (value: string) => void
+  gasLimit?: string
+  onGasLimitChange?: (value: string) => void
 }) {
   const hub = useHub()
   const [step, setStep] = useState<TxStep>('review')
   const [localOutcome, setLocalOutcome] = useState<TxOutcome | null>(null)
-  const [gasLimit, setGasLimit] = useState(GAS_LIMIT)
-  const [memo, setMemo] = useState('')
+  // Fallback state for the flows that do not bind the Advanced block to a hook.
+  const [localGasLimit, setLocalGasLimit] = useState(GAS_LIMIT)
+  const [localMemo, setLocalMemo] = useState('')
+  const gasLimit = gasLimitProp ?? localGasLimit
+  const memo = memoProp ?? localMemo
+  const setGasLimit = onGasLimitChange ?? setLocalGasLimit
+  const setMemo = onMemoChange ?? setLocalMemo
   const [hash, setHash] = useState<string | undefined>(undefined)
   const broadcasting = useRef(false)
   const settled = useRef(false)
+  // The hook's hash at the moment this broadcast started, so a hash left over
+  // from a previous send is not mistaken for this one's result.
+  const priorHash = useRef<string | undefined>(undefined)
 
   const drawer = hub.drawer
   const open = drawer?.kind === 'tx'
@@ -66,16 +88,19 @@ export function TxDrawer({
 
   const { receipt, isLoading: isReceiptLoading } = useTxReceipt(hash)
 
-  // Reset whenever the drawer opens for a new action.
+  // Reset whenever the drawer opens for a new action. Only the local fallback
+  // memo/gas are cleared — a bound hook owns its own copy (and may already hold
+  // a memo like "Stake for X"), so clearing that here would wipe it.
   useEffect(() => {
     if (open) {
       setStep('review')
       setLocalOutcome(null)
       setHash(undefined)
-      setGasLimit(GAS_LIMIT)
-      setMemo('')
+      setLocalGasLimit(GAS_LIMIT)
+      setLocalMemo('')
       broadcasting.current = false
       settled.current = false
+      priorHash.current = undefined
     }
   }, [open])
 
@@ -83,11 +108,17 @@ export function TxDrawer({
   // has been read back.
   useEffect(() => {
     if (!open || !broadcasting.current) return
-    if (transactionHash && transactionHash !== hash) {
+    // Adopt only a hash produced by THIS broadcast. The owning hook may still be
+    // holding the previous send's hash, and reading that tx back would report an
+    // earlier, unrelated success (or failure) as this attempt's outcome.
+    if (transactionHash && transactionHash !== priorHash.current && transactionHash !== hash) {
       setHash(transactionHash)
       return
     }
-    if (error && !transactionHash) {
+    // No new hash and the hook reported an error: the attempt never reached a
+    // block (a rejected signature, a failed simulate). The stale-hash guard
+    // means "no new hash" covers both an empty hash and the leftover one.
+    if (error && (!transactionHash || transactionHash === priorHash.current)) {
       broadcasting.current = false
       settled.current = true
       setLocalOutcome(REJECTION_PATTERNS.test(error) ? 'rejected' : 'failed')
@@ -130,6 +161,9 @@ export function TxDrawer({
       setStep('signing')
       broadcasting.current = true
       settled.current = false
+      // Snapshot the hook's current hash so the effect can distinguish a hash
+      // this broadcast produces from one it was already holding.
+      priorHash.current = transactionHash
       try {
         await onBroadcast()
       } catch (e) {

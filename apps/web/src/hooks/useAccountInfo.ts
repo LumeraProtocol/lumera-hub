@@ -331,6 +331,9 @@ const useAccountInfo = ({ address: addressOverride }: UseAccountInfoOptions = {}
 
   const handleClaimButtonClick = async () => {
     setErrorClaim(null);
+    // Clear the previous claim's hash so the tx drawer never reads an earlier
+    // claim back as this attempt's result.
+    setTransactionHash('');
     if (isEvm) {
       setErrorClaim('Staking rewards require a Keplr wallet connection.');
       return;

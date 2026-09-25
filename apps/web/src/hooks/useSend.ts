@@ -136,6 +136,9 @@ const useSend = (options: UseDepositOptions = {}) => {
 
     const handleSendClick = async () => {
       setError('');
+      // Clear the previous send's hash so the drawer never mistakes it for this
+      // attempt's result (the staking hooks already do this on start).
+      setTransactionHash('');
       if (!optionsAdvanced.amount) {
           setError('Please enter amount.');
           return
