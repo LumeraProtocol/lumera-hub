@@ -125,7 +125,7 @@ export function useWalletCascade() {
     [address, canUse, getModule],
   )
 
-  return { canUse, isConnected, walletMode, uploadBytes, downloadBytes, openConnectView }
+  return { canUse, isConnected, walletMode, address, uploadBytes, downloadBytes, openConnectView }
 }
 
 export default useWalletCascade

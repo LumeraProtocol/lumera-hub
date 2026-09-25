@@ -18,14 +18,61 @@ import React, { useEffect, useRef, useState } from 'react'
 import JSZip from 'jszip'
 
 import useWalletCascade, { type CascadePhase } from '@/hooks/useWalletCascade'
+import { NETWORK_PROFILE } from '@/contants/network'
 
 type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
 type SaveResult = { actionId: string } | { error: string } | null
+
+/** A chat archived to Cascade, remembered locally so it can be reopened by name. */
+type HistoryEntry = {
+  actionId: string
+  name: string
+  savedAt: string
+  messages: number
+  attachments: number
+}
 
 const KEY_STORE = 'lumera:openrouter-key'
 const CONVERSATION_ENTRY = 'conversation.json'
 const MAX_ATTACH_BYTES = 25 * 1024 * 1024
 const MAX_FILE_TEXT = 12000
+
+// Wallet-signed Cascade has no server index of a user's own objects (only the
+// owner wallet can list them, and the indexer lags), so we keep a lightweight
+// list of what this browser saved, scoped per wallet address AND network —
+// action_ids collide across chains, and one machine may hold several wallets.
+const HISTORY_PREFIX = 'lumera:chat-history'
+const historyKey = (address: string) => `${HISTORY_PREFIX}:${NETWORK_PROFILE}:${address.toLowerCase()}`
+
+const loadHistory = (address: string): HistoryEntry[] => {
+  if (!address) return []
+  try {
+    const raw = localStorage.getItem(historyKey(address))
+    const arr = raw ? JSON.parse(raw) : []
+    return Array.isArray(arr) ? arr.filter((e) => e && typeof e.actionId === 'string') : []
+  } catch {
+    return []
+  }
+}
+const persistHistory = (address: string, entries: HistoryEntry[]) => {
+  if (!address) return
+  try {
+    localStorage.setItem(historyKey(address), JSON.stringify(entries.slice(0, 50)))
+  } catch {
+    /* private mode / quota — history just won't persist */
+  }
+}
+
+const relTime = (iso: string): string => {
+  const ms = Date.now() - new Date(iso).getTime()
+  if (!Number.isFinite(ms) || ms < 0) return ''
+  const m = Math.floor(ms / 60000)
+  if (m < 1) return 'just now'
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
 
 /** The free models the design offers; the first is the reliable default. */
 const MODELS: { id: string; note: string }[] = [
@@ -70,7 +117,8 @@ export default function ChatPage() {
   const [attachments, setAttachments] = useState<File[]>([])
   const [model, setModel] = useState(MODELS[0].id)
 
-  const { canUse: walletReady, uploadBytes, downloadBytes, openConnectView } = useWalletCascade()
+  const { canUse: walletReady, address, uploadBytes, downloadBytes, openConnectView } =
+    useWalletCascade()
   const [savePhase, setSavePhase] = useState<CascadePhase | null>(null)
 
   const [importInput, setImportInput] = useState('')
@@ -78,6 +126,8 @@ export default function ChatPage() {
   const [importMsg, setImportMsg] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveResult, setSaveResult] = useState<SaveResult>(null)
+  const [saveName, setSaveName] = useState('')
+  const [history, setHistory] = useState<HistoryEntry[]>([])
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const hasKey = apiKey.trim().length > 0
@@ -96,6 +146,26 @@ export default function ChatPage() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, sending])
+
+  // Show the chats this browser saved under the connected wallet.
+  useEffect(() => {
+    setHistory(loadHistory(address))
+  }, [address])
+
+  const rememberEntry = (entry: HistoryEntry) => {
+    setHistory((prev) => {
+      const next = [entry, ...prev.filter((e) => e.actionId !== entry.actionId)]
+      persistHistory(address, next)
+      return next
+    })
+  }
+  const forgetEntry = (actionId: string) => {
+    setHistory((prev) => {
+      const next = prev.filter((e) => e.actionId !== actionId)
+      persistHistory(address, next)
+      return next
+    })
+  }
 
   const linkKey = () => {
     const k = keyInput.trim()
@@ -197,6 +267,7 @@ export default function ChatPage() {
     setMessages([])
     setAttachments([])
     setSaveResult(null)
+    setSaveName('')
     setError('')
   }
 
@@ -207,7 +278,7 @@ export default function ChatPage() {
     typeof (m as ChatMessage).content === 'string'
 
   const applyImportedData = (data: unknown, sourceLabel: string, files: File[] = []): boolean => {
-    const d = data as { messages?: unknown; model?: unknown } | null
+    const d = data as { messages?: unknown; model?: unknown; name?: unknown } | null
     const imported: ChatMessage[] = Array.isArray(d?.messages) ? d.messages.filter(isChatMessage) : []
     if (!imported.length && !files.length) {
       setImportMsg('That export has no conversation or files to import.')
@@ -216,6 +287,7 @@ export default function ChatPage() {
     setMessages(imported)
     setAttachments(files)
     setSaveResult(null)
+    if (typeof d?.name === 'string' && d.name.trim()) setSaveName(d.name.trim())
     if (typeof d?.model === 'string' && MODELS.some((m) => m.id === d.model)) setModel(d.model)
     const parts = [`${imported.length} message${imported.length === 1 ? '' : 's'}`]
     if (files.length) parts.push(`${files.length} file${files.length === 1 ? '' : 's'}`)
@@ -231,8 +303,18 @@ export default function ChatPage() {
     return s.replace(/[^A-Za-z0-9]/g, '')
   }
 
-  const importFromActionId = async () => {
-    const id = parseActionId(importInput)
+  // Record an opened/saved chat in the local history so it can be reopened by name.
+  const recordHistory = (id: string, conv: unknown, fileCount: number) => {
+    const c = conv as { name?: unknown; exportedAt?: unknown; messages?: unknown; attachments?: unknown }
+    const name = typeof c?.name === 'string' && c.name.trim() ? c.name.trim() : `Chat ${id}`
+    const savedAt = typeof c?.exportedAt === 'string' ? c.exportedAt : new Date().toISOString()
+    const messages = Array.isArray(c?.messages) ? c.messages.length : 0
+    const attachments = fileCount || (Array.isArray(c?.attachments) ? c.attachments.length : 0)
+    rememberEntry({ actionId: id, name, savedAt, messages, attachments })
+  }
+
+  const importFromActionId = async (raw?: string) => {
+    const id = parseActionId(raw ?? importInput)
     if (!id || importing) return
     if (!walletReady) {
       setImportMsg('Connect a Keplr wallet to open a chat you saved.')
@@ -262,10 +344,16 @@ export default function ChatPage() {
             files.push(new File([blob], entry.name, { type: blob.type || 'application/octet-stream' }))
           }),
         )
-        if (applyImportedData(conv, id, files)) setImportInput('')
+        if (applyImportedData(conv, id, files)) {
+          setImportInput('')
+          recordHistory(id, conv, files.length)
+        }
       } else {
         const conv = JSON.parse(new TextDecoder().decode(bytes))
-        if (applyImportedData(conv, id)) setImportInput('')
+        if (applyImportedData(conv, id)) {
+          setImportInput('')
+          recordHistory(id, conv, 0)
+        }
       }
     } catch (e) {
       setImportMsg(e instanceof Error ? e.message : 'Could not open that chat.')
@@ -290,6 +378,8 @@ export default function ChatPage() {
 
   const buildPayload = () => ({
     source: 'lumera-hub/chat',
+    name: saveName.trim(),
+    visibility: 'private',
     model,
     exportedAt: new Date().toISOString(),
     messages,
@@ -306,6 +396,10 @@ export default function ChatPage() {
       openConnectView()
       return
     }
+    if (!saveName.trim()) {
+      setSaveResult({ error: 'Give this chat a name before saving.' })
+      return
+    }
     setSaving(true)
     setSaveResult(null)
     setError('')
@@ -315,6 +409,15 @@ export default function ChatPage() {
       // a raw JSON when there are no files, a zip of conversation.json + files
       // when there are.
       const convJson = JSON.stringify(buildPayload(), null, 2)
+      // The name the user typed becomes the on-chain object name (sanitised to a
+      // safe filename); fall back to a timestamp if somehow empty.
+      const base =
+        saveName
+          .trim()
+          .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, 80) || `lumera-chat-${Date.now()}`
       let fileName: string
       let bytes: Uint8Array
       if (attachments.length) {
@@ -322,13 +425,24 @@ export default function ChatPage() {
         zip.file(CONVERSATION_ENTRY, convJson)
         for (const f of attachments) zip.file(f.name, f)
         bytes = await zip.generateAsync({ type: 'uint8array' })
-        fileName = `lumera-chat-${Date.now()}.zip`
+        fileName = `${base}.zip`
       } else {
         bytes = new TextEncoder().encode(convJson)
-        fileName = `lumera-chat-${Date.now()}.json`
+        fileName = `${base}.json`
       }
       const actionId = await uploadBytes(fileName, bytes, setSavePhase)
-      setSaveResult(actionId ? { actionId } : { error: 'Stored, but no action_id came back.' })
+      if (actionId) {
+        setSaveResult({ actionId })
+        rememberEntry({
+          actionId,
+          name: saveName.trim() || base,
+          savedAt: new Date().toISOString(),
+          messages: messages.length,
+          attachments: attachments.length,
+        })
+      } else {
+        setSaveResult({ error: 'Stored, but no action_id came back.' })
+      }
     } catch (e) {
       setSaveResult({ error: e instanceof Error ? e.message : 'Could not save to Cascade.' })
     } finally {
@@ -344,7 +458,8 @@ export default function ChatPage() {
     }
   }
 
-  const canSave = messages.length > 0 || attachments.length > 0
+  const hasContent = messages.length > 0 || attachments.length > 0
+  const canSave = hasContent && saveName.trim().length > 0
   const composerDisabled = !hasKey || sending
   const PHASE_LABEL: Record<CascadePhase, string> = {
     encoding: 'Encoding…',
@@ -633,6 +748,54 @@ export default function ChatPage() {
               </label>
             </div>
             {importMsg ? <span className="text-small text-text-muted text-pretty">{importMsg}</span> : null}
+            {history.length > 0 ? (
+              <div className="mt-1 flex flex-col gap-1.5">
+                <span className="text-small text-text-tertiary">Saved on this wallet</span>
+                <div className="flex flex-col overflow-hidden rounded-control border border-line-edge">
+                  {history.map((h) => (
+                    <div
+                      key={h.actionId}
+                      className="flex items-center gap-1 border-b border-line-hairline transition-colors last:border-b-0 hover:bg-ink-600"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => void importFromActionId(h.actionId)}
+                        disabled={importing}
+                        title={`Open ${h.name} (action_id ${h.actionId})`}
+                        className="flex min-w-0 flex-1 flex-col items-start gap-0.5 px-3 py-2 text-left disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <span className="w-full truncate text-small font-medium text-text-primary">
+                          {h.name}
+                        </span>
+                        <span className="w-full truncate font-mono text-[11px] text-text-tertiary">
+                          {[
+                            relTime(h.savedAt),
+                            `${h.messages} msg${h.messages === 1 ? '' : 's'}`,
+                            h.attachments ? `${h.attachments} file${h.attachments === 1 ? '' : 's'}` : null,
+                            h.actionId,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => forgetEntry(h.actionId)}
+                        aria-label={`Remove ${h.name} from this list`}
+                        title="Remove from this list"
+                        className="flex-none px-2.5 py-2 text-small text-text-tertiary transition-colors hover:text-danger"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <span className="text-[11px] text-text-tertiary">
+                  This list is kept in this browser only — it points at your on-chain saves, it does not
+                  store them.
+                </span>
+              </div>
+            ) : null}
           </div>
 
           {/* Archive to Cascade */}
@@ -642,11 +805,25 @@ export default function ChatPage() {
               Signed by your wallet and stored under your own Cascade account — only you can open it.
               Returns an on-chain action_id.
             </span>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-small text-text-tertiary">Name this chat</span>
+              <input
+                type="text"
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                placeholder="e.g. Cascade design notes"
+                maxLength={80}
+                spellCheck={false}
+                className="w-full rounded-control border border-line-edge bg-ink-900 px-3 py-2 text-small text-text-primary placeholder:text-text-tertiary focus:border-line-accent focus:outline-none"
+              />
+            </label>
             <div className="overflow-hidden rounded-control border border-line-edge">
               {[
+                { k: 'Name', v: saveName.trim() || '—' },
                 { k: 'Messages', v: `${messages.length} message${messages.length === 1 ? '' : 's'}` },
                 { k: 'Attachments', v: String(attachments.length) },
                 { k: 'Payload', v: messages.length || attachments.length ? sizeLabel(payloadBytes) : '—' },
+                { k: 'Visibility', v: 'Private' },
               ].map((r) => (
                 <div
                   key={r.k}
@@ -674,6 +851,10 @@ export default function ChatPage() {
             {!walletReady ? (
               <span className="text-small text-text-tertiary">
                 Cascade save is signed by a Keplr wallet and billed to you — connect one to save.
+              </span>
+            ) : hasContent && !saveName.trim() ? (
+              <span className="text-small text-text-tertiary">
+                Give this chat a name to save it. It is stored privately under your wallet.
               </span>
             ) : null}
             {saveResult && 'actionId' in saveResult ? (
