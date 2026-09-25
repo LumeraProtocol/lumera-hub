@@ -1,136 +1,190 @@
 // apps/web/src/app/governance/page.tsx
 'use client'
-import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Helmet } from 'react-helmet-async'
 
-import { GovernanceScreen } from '@lumera-hub/ui/src/screens/GovernanceScreen'
-import useGovernances from '@/hooks/useGovernances';
-import useProposals, { IProposal } from '@/hooks/useProposals';
-import useWalletConnect from '@/hooks/useWalletConnect';
-import useDeposit from '@/hooks/useDeposit';
-import { useDispatch } from '@/redux/hooks';
-import { setActiveView, setCurrentPath } from '@/redux/app.slice';
-import { NAV_ITEMS } from '@/components/layout/AppShell';
-import { GOVERNANCE_TRANSACTION_UNAVAILABLE_MESSAGE } from '@/utils/cosmos-transactions';
+import useGovernances from '@/hooks/useGovernances'
+import useStaking from '@/hooks/useStaking'
+import useAccountInfo from '@/hooks/useAccountInfo'
+import useNetworkStats from '@/hooks/useNetworkStats'
+import useChainParams from '@/hooks/useChainParams'
+import { RATE_VALUE } from '@/contants'
+import { formatNumber } from '@/utils/format'
+import { getDelegations } from '@/utils/portfolio'
+import { toSummary, turnoutPct, tallyShares } from '@/utils/governance-view'
+import { GovernanceListScreen } from '@lumera-hub/ui/src/screens/hub/GovernanceScreen'
+import { useHub } from '@lumera-hub/ui/src/hub/session'
+import { ProposeDrawer, proposalTypeLabel } from '@/components/hub/ProposeDrawer'
+import { TxDrawer } from '@/components/hub/TxDrawer'
+
+const compact = (micro: number) => {
+  const n = micro / RATE_VALUE
+  if (!Number.isFinite(n) || n === 0) return '—'
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B LUME`
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M LUME`
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K LUME`
+  return `${n.toFixed(0)} LUME`
+}
 
 export default function Page() {
-  const dispatch = useDispatch();
-  const [selectedItem, setSelectedItem] = useState<IProposal | null>(null);
-
-  useEffect(() => {
-    document.title = 'Governance - Lumera Hub';
-    dispatch(setCurrentPath({
-      currentPath: NAV_ITEMS[3].url,
-    }));
-    dispatch(setActiveView({
-      activeView: NAV_ITEMS[3].id,
-    }));
-  }, []);
+  const router = useRouter()
+  const hub = useHub()
+  const [filter, setFilter] = useState('all')
 
   const {
     isLoading,
     governances,
-    msg,
-    sumary,
-    currentTab,
-    isSumaryLoading,
-    totalVotes,
-    nextKey,
-    step,
-    selectedModal,
-    proposal,
-    isCreateProposalLoading,
-    transactionHash,
     requiredDeposit,
-    fetchData,
-    handleCreateProposalClick,
-    handleBackClick,
+    step,
+    proposal,
+    msg,
+    transactionHash,
+    fetchGovernances,
     handleInputChange,
-    handleOpenCreateProposalModal,
-    handleCloseCreateProposalModal,
     handleNextSteps,
-    handlePageClick,
-    handleTabChange,
-  } = useGovernances();
-  const proposals = useProposals({
-    customMemo: selectedItem ? `Vote for the ${selectedItem.title}` : '',
-    callback: fetchData,
-  });
-  const { address, canSignCosmosTransactions } = useWalletConnect();
-  const deposit = useDeposit({
-    callback: fetchData,
-    customMemo: selectedItem ? `Deposit for the ${selectedItem.title}` : '',
-  });
+    handleBackClick,
+    handleCreateProposalClick,
+  } = useGovernances()
+  const { bondedTokens } = useStaking()
+  const { accountInfo } = useAccountInfo(hub.isWatching ? { address: hub.address } : {})
+  const { stats: net } = useNetworkStats()
+
+  /*
+   * The community pool, in micro-denom.
+   *
+   * This used to read useStats, which returns the figure already formatted
+   * ("1.7M"). Number() on that is NaN, so the card fell back to zero and
+   * rendered an em dash while the chain was holding 1.7M LUME.
+   */
+  const treasury = compact(net.communityPoolMicro ?? 0)
+  const { params } = useChainParams()
+
+  useEffect(() => {
+    document.title = 'Governance - Lumera Hub'
+  }, [])
+
+  const bonded = Number(bondedTokens) || 0
+  // The chain's own minimum deposit, in micro-denom. useGovernances carries a
+  // literal fallback; the chain value wins when it loads.
+  const minDepositMicro = params.minDepositMicro
+  const requiredDepositLume = minDepositMicro != null
+    ? minDepositMicro / RATE_VALUE
+    : Number(requiredDeposit) || 0
+
+  const summaries = useMemo(
+    () =>
+      (governances || []).map((p) =>
+        toSummary(
+          p,
+          bonded,
+          requiredDepositLume ? requiredDepositLume * RATE_VALUE : null,
+          params.quorum,
+          () => router.push(`/governance/${p.id}`),
+        ),
+      ),
+    [bonded, governances, params.quorum, requiredDepositLume, router],
+  )
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = {
+      all: summaries.length,
+      voting: 0,
+      deposit: 0,
+      passed: 0,
+      rejected: 0,
+    }
+    summaries.forEach((s) => {
+      const key = s.status.toLowerCase()
+      if (key in c) c[key] += 1
+    })
+    return c
+  }, [summaries])
+
+  const shown = useMemo(
+    () => (filter === 'all' ? summaries : summaries.filter((s) => s.status.toLowerCase() === filter)),
+    [filter, summaries],
+  )
+
+  // Turnout on the most recently decided proposal is a more honest headline
+  // than an average across proposals with wildly different bonded totals.
+  const latestTurnout = useMemo(() => {
+    const decided = (governances || []).find((p) =>
+      ['PROPOSAL_STATUS_PASSED', 'PROPOSAL_STATUS_REJECTED'].includes(p.status),
+    )
+    if (!decided || !bonded) return '—'
+    return `${turnoutPct(tallyShares(decided).total, bonded).toFixed(1)}%`
+  }, [bonded, governances])
+
+  const myStake = getDelegations(accountInfo)
 
   return (
     <>
       <Helmet>
         <title>Governance - Lumera Hub</title>
       </Helmet>
-      <div className="governance-content">
-        <GovernanceScreen
-          selectedItem={selectedItem}
-          setSelectedItem={setSelectedItem}
-          address={address}
-          transactionUnavailableReason={
-            canSignCosmosTransactions ? '' : GOVERNANCE_TRANSACTION_UNAVAILABLE_MESSAGE
-          }
-          isLoading={isLoading}
-          governances={governances}
-          msg={msg}
-          sumary={sumary}
-          isSumaryLoading={isSumaryLoading}
-          totalVotes={totalVotes}
-          nextKey={nextKey}
-          handlePageClick={handlePageClick}
-          currentTab={currentTab}
-          onTabChange={handleTabChange}
-          onOptionChange={proposals.handleOptionChange}
-          onVoteClick={proposals.handleVote}
-          isVoteLoading={proposals.isVoteLoading}
-          error={proposals.errorVote}
-          voteAdvanced={proposals.voteAdvanced}
-          handleVoteAdvancedChange={proposals.handleVoteAdvancedChange}
-          handleResetError={proposals.handleResetError}
-          isVoteOpen={proposals.isVoteOpen}
-          setVoteOpen={proposals.setVoteOpen}
-          voteTransactionHash={proposals.transactionHash}
-          userVotes={proposals.userVotes}
-          onCloseVoteCongratulationsModal={proposals.handleCloseCongratulationsModal}
-          deposit={{
-            isOpen: deposit.isModalOpen,
-            sender: address,
-            isVoteLoading: deposit.isLoading,
-            error: deposit.error,
-            voteAdvanced: deposit.depositAdvanced,
-            showAdvanced: deposit.showAdvanced,
-            availableAmount: deposit.availableAmount,
-            transactionHash: deposit.transactionHash,
-            setProposalId: deposit.setProposalId,
-            setOpen: deposit.setModalOpen,
-            onVoteClick: deposit.handleSendClick,
-            setModalOpen: deposit.setModalOpen,
-            handleVoteAdvancedChange: deposit.handleDepositChange,
-            handleAdvancedCheckedChange: deposit.handleShowAdvancedChange,
-            handleCloseCongratulationsModal: deposit.handleCloseCongratulationsModal,
-          }}
-          createProposal={{
-            step,
-            selectedModal,
-            proposal,
-            isLoading: isCreateProposalLoading,
-            msg,
-            transactionHash,
-            requiredDeposit,
-            onOpenCreateProposalModalClick: handleOpenCreateProposalModal,
-            onCloseCreateProposalModalClick: handleCloseCreateProposalModal,
-            onNextStepsClick: handleNextSteps,
-            onInputChange: handleInputChange,
-            onBackClick: handleBackClick,
-            onCreateProposalClick: handleCreateProposalClick,
-          }}
-        />
-      </div>
+      <GovernanceListScreen
+        loading={isLoading}
+        proposals={shown}
+        filter={filter}
+        onFilterChange={setFilter}
+        counts={counts}
+        turnout={latestTurnout}
+        treasury={treasury}
+        votingWeight={
+          hub.hasPosition && myStake
+            ? `${formatNumber(myStake / RATE_VALUE, { decimalsLength: 0, currency: 'en-US' })} LUME`
+            : 'None yet'
+        }
+        onNewProposal={() =>
+          hub.gate(
+            {
+              title: 'Create a proposal',
+              line: requiredDepositLume
+                ? `Submitting requires a ${requiredDepositLume.toLocaleString('en-US')} LUME deposit`
+                : 'Submitting requires a deposit',
+            },
+            () => hub.openDrawer({ kind: 'propose' }),
+          )
+        }
+      />
+
+      <ProposeDrawer
+        step={step}
+        proposal={proposal}
+        // The chain's minimum once it loads; the hook's fallback until then.
+        requiredDeposit={String(requiredDepositLume || requiredDeposit)}
+        message={msg}
+        communityPool={treasury}
+        onInputChange={handleInputChange}
+        onNext={handleNextSteps}
+        onBack={handleBackClick}
+        onSubmit={() =>
+          hub.openDrawer({
+            kind: 'tx',
+            intent: {
+              title: `Submit ${proposalTypeLabel(proposal.type).toLowerCase()} proposal`,
+              lineLabel: 'Proposal',
+              line: proposal.title.trim() || 'Untitled proposal',
+              extra: {
+                k: 'Initial deposit',
+                v: `${formatNumber(Number(proposal.initialDeposit) || 0, { decimalsLength: 2, currency: 'en-US' })} LUME`,
+                tone:
+                  Number(proposal.initialDeposit) >= requiredDepositLume
+                    ? ('green' as const)
+                    : ('warn' as const),
+              },
+            },
+          })
+        }
+      />
+
+      <TxDrawer
+        onBroadcast={handleCreateProposalClick}
+        error={msg?.type === 'error' ? msg.message : undefined}
+        transactionHash={transactionHash}
+        onDone={() => fetchGovernances()}
+      />
     </>
   )
 }

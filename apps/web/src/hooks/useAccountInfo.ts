@@ -7,7 +7,7 @@ import useTrackingHubTransaction from '@/hooks/useTrackingHubTransaction';
 import { DENOM } from '@/contants/network';
 import { sumMicroLumeAmounts } from '@/utils/helpers';
 import { GAS_LIMIT, FEE_VALUE, GAS_RATIO, FEE_RATIO } from '@/contants';
-import { evmBalanceToMicroLume, getEvmBalance } from '@/utils/evm';
+import { evmAddressToCosmosAddress, evmBalanceToMicroLume, getEvmBalance, isEvmAddress } from '@/utils/evm';
 
 export interface Coin {
   denom: string;
@@ -226,9 +226,22 @@ export const getTotalRewards = (accountInfo: AccountInfoData | null) => {
   );
 }
 
-const useAccountInfo = () => {
+interface UseAccountInfoOptions {
+  /**
+   * Read a different account than the connected wallet. Watch mode uses this
+   * to show a read-only position; signing still uses the connected wallet, so
+   * claim and its friends are unaffected.
+   */
+  address?: string;
+}
+
+const useAccountInfo = ({ address: addressOverride }: UseAccountInfoOptions = {}) => {
   const { trackingHubTransaction } = useTrackingHubTransaction();
-  const { address, bech32Address, getClient, isEvm } = useWalletConnect();
+  const { address: connectedAddress, bech32Address, getClient, isEvm } = useWalletConnect();
+  const address = addressOverride || connectedAddress;
+  // A watched account is read through the Cosmos endpoints even on an EVM
+  // profile, because there is no connected EVM account to read from.
+  const isEvmRead = isEvm && !addressOverride;
 
   const [accountInfo, setAccountInfo] = useState<AccountInfoData | null>({
     balances: [],
@@ -259,7 +272,7 @@ const useAccountInfo = () => {
     setError(null);
 
     try {
-      if (isEvm) {
+      if (isEvmRead) {
         const _accountInfo = await fetchEvmAccountInfo({
           ethAddress: address,
           bech32Address,
@@ -273,7 +286,13 @@ const useAccountInfo = () => {
         return;
       }
 
-      const _accountInfo = await fetchAccountInfo(address);
+      // Cosmos REST is always keyed by Bech32. When this reads an override that
+      // is an EVM address — e.g. the connected MetaMask account handed to the
+      // notifications hook — convert it to its lumera1 form first, or every
+      // /cosmos/... query 500s with "decoding bech32 failed" and cascades
+      // through the whole fallback endpoint list.
+      const queryAddress = isEvmAddress(address) ? evmAddressToCosmosAddress(address) : address;
+      const _accountInfo = await fetchAccountInfo(queryAddress);
       if (!fetchRequest.isCurrent(requestId)) return;
       setAccountInfo(_accountInfo);
       setClaimInfo((current) => ({
@@ -291,7 +310,7 @@ const useAccountInfo = () => {
     } finally {
       if (fetchRequest.isCurrent(requestId)) setLoading(false);
     }
-  }, [address, bech32Address, fetchRequest, isEvm]);
+  }, [address, bech32Address, fetchRequest, isEvmRead]);
 
   useEffect(() => {
     if (!address) {
@@ -303,15 +322,18 @@ const useAccountInfo = () => {
     } else {
       setClaimInfo((current) => ({
         ...current,
-        senderAddress: address,
+        senderAddress: connectedAddress,
       }));
     }
     void fetchData();
     return () => fetchRequest.invalidate();
-  }, [address, fetchData, fetchRequest]);
+  }, [address, connectedAddress, fetchData, fetchRequest]);
 
   const handleClaimButtonClick = async () => {
     setErrorClaim(null);
+    // Clear the previous claim's hash so the tx drawer never reads an earlier
+    // claim back as this attempt's result.
+    setTransactionHash('');
     if (isEvm) {
       setErrorClaim('Staking rewards require a Keplr wallet connection.');
       return;

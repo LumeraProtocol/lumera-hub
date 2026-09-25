@@ -21,6 +21,7 @@ import {
 import type { Eip1193Provider } from '@/types/window';
 
 interface Eip6963ProviderDetail {
+  info?: { rdns?: string; name?: string };
   provider?: Eip1193Provider;
 }
 
@@ -57,10 +58,13 @@ export function EvmWalletProvider({ children }: { children: React.ReactNode }) {
       setProvider((currentProvider) => detectedProvider || currentProvider);
     };
     const handleProviderAnnouncement = (event: Event) => {
-      const announcedProvider = getMetaMaskProvider(
-        (event as CustomEvent<Eip6963ProviderDetail>).detail?.provider
-      );
-      if (announcedProvider) setProvider(announcedProvider);
+      const detail = (event as CustomEvent<Eip6963ProviderDetail>).detail;
+      // Bind on the EIP-6963 rdns, not the isMetaMask flag — Keplr's EVM
+      // provider spoofs that flag, which was making "connect MetaMask" open
+      // Keplr instead. Only the real MetaMask announces rdns "io.metamask".
+      if (detail?.info?.rdns === 'io.metamask' && detail.provider) {
+        setProvider(detail.provider);
+      }
     };
 
     detectProvider();

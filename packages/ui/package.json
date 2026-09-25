@@ -18,6 +18,7 @@
     "@tamagui/config": "^1.132.16",
     "@tamagui/core": "^1.132.16",
     "@tamagui/lucide-icons": "^1.132.20",
+    "d3-geo": "^3.1.1",
     "dayjs": "^1.11.18",
     "earth-map-3d-react": "^0.0.6",
     "echarts": "^6.1.0",
@@ -30,11 +31,16 @@
     "react-native": "0.79.5",
     "react-paginate": "^8.3.0",
     "react-toastify": "^11.0.5",
-    "tamagui": "^1.132.16"
+    "tamagui": "^1.132.16",
+    "topojson-client": "^3.1.0"
   },
   "devDependencies": {
+    "@types/d3-geo": "^3.1.1",
+    "@types/geojson": "^7946.0.16",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/react-paginate": "^7.1.4"
+    "@types/react-paginate": "^7.1.4",
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-specification": "^1.0.5"
   }
 }

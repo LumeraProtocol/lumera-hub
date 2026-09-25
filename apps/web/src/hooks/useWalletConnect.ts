@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from '@/redux/hooks';
 import { setModalOpen } from '@/redux/wallet.slice';
 import {
   RPC_ENDPOINT,
+  RPC_ENDPOINTS,
   CHAIN_NAME,
   COSMOS_EIP712_ENABLED,
   IS_EVM_NETWORK,
@@ -14,6 +15,8 @@ import { useEvmWallet } from '@/app/providers/evm-wallet-provider';
 import { canWalletSignCosmosTransactions } from '@/utils/cosmos-transactions';
 import { getActiveWalletAddress, getActiveWalletMode } from '@/utils/wallet-selection';
 import { getEvmAddressFormats } from '@/utils/evm';
+import { resolveOfflineSigner } from '@/utils/offline-signer';
+import { REQUEST_CONNECT_EVENT } from '@lumera-hub/ui/src/hub/session';
 
 const useWalletConnect = () => {
   const dispatch = useDispatch();
@@ -43,6 +46,18 @@ const useWalletConnect = () => {
   // is not mounted (WalletModalComponent renders WalletChoiceModal instead),
   // so interchain-kit's openView() would toggle a store nothing listens to.
   const openConnectView = useCallback((preferredWalletName?: string) => {
+    /*
+     * Ask the hub for its connect drawer rather than opening one of the old
+     * pickers. Every caller — the header, a gated action, an upload that
+     * needs a signature — now lands in the same single dialog, which connects
+     * the chosen wallet directly.
+     */
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent(REQUEST_CONNECT_EVENT, { detail: { preferredWalletName } }),
+      );
+      return;
+    }
     if (IS_EVM_NETWORK) {
       dispatch(setModalOpen({ status: true, preferredWalletName }));
       return;
@@ -60,19 +75,37 @@ const useWalletConnect = () => {
       }
       throw new Error('Cosmos signing is unavailable while using an EVM network profile.');
     }
-    if (!wallet || !chain) {
+    // A chain with no id cannot be signed for; the registry entry is broken.
+    if (!wallet || !chain?.chainId) {
       throw new Error('Please connect wallet before using');
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const offlineSigner: any = await wallet.getOfflineSigner(chain.chainId);
-    if (!offlineSigner) {
-      throw new Error('Please connect wallet before using');
+    const offlineSigner = await resolveOfflineSigner({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      wallet: wallet as any,
+      chainId: chain.chainId,
+      address,
+      walletName,
+    });
+    // Try the configured primary, then the community fallbacks, so a dead
+    // primary does not block every Cosmos transaction — the same failover the
+    // read client already uses. RPC_ENDPOINTS leads with RPC_ENDPOINT.
+    const hosts = RPC_ENDPOINTS?.length ? RPC_ENDPOINTS : [RPC_ENDPOINT];
+    let lastError: unknown;
+    for (const host of hosts) {
+      try {
+        return await SigningStargateClient.connectWithSigner(
+          host,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          offlineSigner as any,
+        );
+      } catch (error) {
+        lastError = error;
+      }
     }
-    return SigningStargateClient.connectWithSigner(
-      RPC_ENDPOINT,
-      offlineSigner
-    );
-  }, [canSignCosmosTransactions, chain, wallet, walletMode]);
+    throw lastError instanceof Error
+      ? lastError
+      : new Error('No RPC host answered for signing.');
+  }, [address, canSignCosmosTransactions, chain, wallet, walletMode, walletName]);
 
   const getOfflineSigner = useCallback(async () => {
     if (walletMode === 'none') {
@@ -81,17 +114,17 @@ const useWalletConnect = () => {
     if (walletMode === 'evm') {
       throw new Error('Cosmos signing is unavailable while using MetaMask.');
     }
-    if (!wallet || !chain) {
+    if (!wallet || !chain?.chainId) {
       throw new Error('Please connect wallet before using');
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const offlineSigner: any = await wallet?.getOfflineSigner(chain.chainId);
-    if (!offlineSigner) {
-      throw new Error('Please connect wallet before using');
-    }
-
-    return offlineSigner;
-  }, [chain, wallet, walletMode]);
+    return resolveOfflineSigner({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      wallet: wallet as any,
+      chainId: chain.chainId,
+      address,
+      walletName,
+    });
+  }, [address, chain, wallet, walletMode, walletName]);
 
   return {
     isModalOpen,

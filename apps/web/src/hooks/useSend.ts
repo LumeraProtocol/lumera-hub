@@ -121,11 +121,13 @@ const useSend = (options: UseDepositOptions = {}) => {
       });
     }
 
+    // Functional update so a caller can set recipient, amount and memo back to
+    // back without the later writes clobbering the earlier ones.
     const handleInputChange = (name: string, value: string) => {
-        setOptionsAdvanced({
-            ...optionsAdvanced,
+        setOptionsAdvanced((prev) => ({
+            ...prev,
             [name]: name === 'amount' ? extractValidNumber(value) : value,
-        });
+        }));
     }
 
     const handleShowAdvancedChange = (status: boolean) => {
@@ -134,6 +136,9 @@ const useSend = (options: UseDepositOptions = {}) => {
 
     const handleSendClick = async () => {
       setError('');
+      // Clear the previous send's hash so the drawer never mistakes it for this
+      // attempt's result (the staking hooks already do this on start).
+      setTransactionHash('');
       if (!optionsAdvanced.amount) {
           setError('Please enter amount.');
           return
