@@ -5,9 +5,10 @@
  *
  * The header's dropdown answers a query it can satisfy in a few rows. This is
  * where a broad query goes, and it searches real data rather than the shell's
- * short list of destinations: every active validator by name, every proposal by
- * title and summary, plus the things recognisable from their shape alone — a
- * transaction hash, an address, a block height.
+ * short list of destinations: every active validator by name, the most recent
+ * proposals by title and summary (the first page useGovernances loads — not the
+ * entire governance history), plus the things recognisable from their shape
+ * alone — a transaction hash, an address, a block height.
  *
  * The query lives in the URL so a result set can be linked to and reloaded.
  */

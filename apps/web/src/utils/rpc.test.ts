@@ -8,6 +8,9 @@ const ENDPOINTS = [
 
 vi.mock('@/contants/network', () => ({
   RPC_ENDPOINTS: ENDPOINTS,
+  // rpc.ts subscribes on import to reset its cursor on a network switch; the
+  // mock must supply it or importing the module throws before any assertion.
+  subscribeNetworkChange: () => () => {},
 }));
 
 const get = vi.fn();

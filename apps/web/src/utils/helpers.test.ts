@@ -26,10 +26,10 @@ describe('getChains', () => {
       chainName: 'lumera-testnet',
       chainId: 'lumera-testnet-2',
     });
-    // The configured host leads; community fallbacks follow it so a dead
-    // primary does not block signing.
-    expect(chains[0].apis?.rpc?.[0].address).toBe('https://lumera-testnet-rpc.polkachu.com');
-    expect(chains[0].apis?.rest?.[0].address).toBe('https://lumera-testnet-api.polkachu.com');
+    // The configured host leads; community fallbacks (polkachu et al.) follow it
+    // so a dead primary does not block signing.
+    expect(chains[0].apis?.rpc?.[0].address).toBe('https://rpc-testnet.lumeraprotocol.com');
+    expect(chains[0].apis?.rest?.[0].address).toBe('https://lcd-testnet.lumeraprotocol.com');
     expect(chains[0].apis?.rpc?.length).toBeGreaterThan(1);
     expect(chains[0].apis?.rest?.length).toBeGreaterThan(1);
     expect(assetLists[0].chainName).toBe('lumera-testnet');

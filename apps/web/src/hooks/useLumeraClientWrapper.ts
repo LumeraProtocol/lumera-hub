@@ -37,6 +37,9 @@ export function useLumeraClientWrapper(enabled = true) {
       inFlight ??= import('sdk-js-react');
       const imported = await inFlight;
       cachedModule = imported;
+      // Clear any error from a previous failed attempt, or a later success is
+      // reported with isLoaded:false and the Cascade UI stays gated on sdkError.
+      setError(null);
       setModule(imported);
       return imported;
     } catch (err) {

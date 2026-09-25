@@ -45,20 +45,27 @@ const EMPTY: TxReceipt = {
  */
 const useTxReceipt = (hash?: string, attempts = 8, intervalMs = 1500) => {
   const [receipt, setReceipt] = useState<TxReceipt>(EMPTY);
-  const [isLoading, setLoading] = useState(false);
+  // The hash a lookup cycle has finished for — either with a real receipt or by
+  // giving up. isLoading is DERIVED from it (below) rather than an effect-set
+  // flag, so it already reads true on the very first render a new hash appears,
+  // before this effect runs. A caller therefore cannot see isLoading:false with
+  // an empty receipt in that gap and wrongly conclude the tx is "sent" before
+  // the first request has even started.
+  const [settledHash, setSettledHash] = useState<string | undefined>(undefined);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
+    // A new hash starts from a clean slate: never leave the previous tx's
+    // receipt on screen while this one is still pending.
+    setReceipt(EMPTY);
     if (!hash) {
-      setReceipt(EMPTY);
-      setLoading(false);
+      setSettledHash(undefined);
       return;
     }
 
     let cancelled = false;
     let tries = 0;
-    setLoading(true);
 
     const read = async () => {
       tries += 1;
@@ -86,7 +93,7 @@ const useTxReceipt = (hash?: string, attempts = 8, intervalMs = 1500) => {
             messages: data?.tx?.body?.messages || [],
             memo: data?.tx?.body?.memo || null,
           });
-          setLoading(false);
+          setSettledHash(hash);
           return;
         }
       } catch {
@@ -95,7 +102,7 @@ const useTxReceipt = (hash?: string, attempts = 8, intervalMs = 1500) => {
       if (cancelled) return;
       if (tries >= attempts) {
         // Give up quietly: the drawer already knows the hash and can link out.
-        setLoading(false);
+        setSettledHash(hash);
         return;
       }
       timer.current = setTimeout(read, intervalMs);
@@ -109,6 +116,9 @@ const useTxReceipt = (hash?: string, attempts = 8, intervalMs = 1500) => {
     };
   }, [attempts, hash, intervalMs]);
 
+  // Loading until this exact hash's lookup has settled. Reads true immediately
+  // for a fresh hash, before the effect above has run.
+  const isLoading = !!hash && settledHash !== hash;
   return { receipt, isLoading };
 };
 

@@ -19,7 +19,9 @@ const useChainHead = (intervalMs = 6000) => {
 
     const read = async () => {
       try {
-        const { data } = await instance.get('/cosmos/base/tendermint/v1beta1/blocks/latest');
+        // Quiet: this is a 6s reachability poll, so a down host must only flip
+        // `reachable`, not spam the app-wide error toast on every tick.
+        const { data } = await instance.getQuiet('/cosmos/base/tendermint/v1beta1/blocks/latest');
         if (cancelled) return;
         const next = Number(data?.block?.header?.height) || 0;
         if (next) setHeight(next);

@@ -70,13 +70,15 @@ export default function Page() {
         state: 'Available' as const,
         progress: 0,
         of: 1,
-        onStart: hub.gated
-          ? () =>
-              hub.gate(
-                { title: r.name || 'Start quest', line: 'Quests are credited to your address' },
-                () => undefined,
-              )
-          : undefined,
+        // The same handler in both states, so connecting a wallet does not make
+        // an available quest less actionable. Disconnected, hub.gate prompts a
+        // connection first; connected, the start action is a placeholder until
+        // SNAG's quest flow lands next sprint.
+        onStart: () =>
+          hub.gate(
+            { title: r.name || 'Start quest', line: 'Quests are credited to your address' },
+            () => undefined,
+          ),
       })),
     [hub, rules],
   )

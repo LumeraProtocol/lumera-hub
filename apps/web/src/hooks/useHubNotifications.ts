@@ -57,12 +57,14 @@ const useHubNotifications = (address?: string) => {
       });
     }
 
-    // Only worth surfacing a vote to someone whose stake gives it weight.
+    // Only worth surfacing a vote to someone whose stake gives it weight, so an
+    // address with no bonded stake gets no governance badge at all.
     const staked = (accountInfo?.delegations || []).reduce(
       (sum, d) => sum + (Number(d.balance.amount) || 0),
       0,
     );
-    (governances || [])
+    const votableProposals = staked > 0 ? governances || [] : [];
+    votableProposals
       .filter((p) => p.status === 'PROPOSAL_STATUS_VOTING_PERIOD')
       .forEach((p) => {
         const closes = p.voting_end_time ? new Date(p.voting_end_time) : null;
@@ -74,9 +76,8 @@ const useHubNotifications = (address?: string) => {
           kind: 'Governance',
           tone: hoursLeft != null && hoursLeft < 48 ? 'warn' : 'muted',
           title: `#${p.id} ${hoursLeft != null ? `closes in ${hoursLeft < 48 ? `${hoursLeft}h` : `${Math.round(hoursLeft / 24)}d`}` : 'is open for voting'}`,
-          body: staked
-            ? `${p.title}. Your bonded stake carries weight on this vote.`
-            : `${p.title}. Voting weight comes from bonded stake.`,
+          // Only reached when staked > 0 (see votableProposals above).
+          body: `${p.title}. Your bonded stake carries weight on this vote.`,
           when: closes ? closes.toLocaleDateString() : '',
           cta: 'Read proposal',
           href: `/governance/${p.id}`,

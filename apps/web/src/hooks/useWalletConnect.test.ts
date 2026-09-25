@@ -51,6 +51,7 @@ vi.mock('@/contants/network', () => ({
   EVM_RPC_ENDPOINT: 'https://evm.example.test',
   IS_EVM_NETWORK: true,
   RPC_ENDPOINT: 'https://cosmos.example.test',
+  RPC_ENDPOINTS: ['https://cosmos.example.test'],
 }));
 
 const { KEPLR_WALLET_NAME, METAMASK_WALLET_NAME } = await import('@/utils/wallet-selection');

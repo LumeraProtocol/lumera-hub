@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from '@/redux/hooks';
 import { setModalOpen } from '@/redux/wallet.slice';
 import {
   RPC_ENDPOINT,
+  RPC_ENDPOINTS,
   CHAIN_NAME,
   COSMOS_EIP712_ENABLED,
   IS_EVM_NETWORK,
@@ -85,11 +86,25 @@ const useWalletConnect = () => {
       address,
       walletName,
     });
-    return SigningStargateClient.connectWithSigner(
-      RPC_ENDPOINT,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      offlineSigner as any,
-    );
+    // Try the configured primary, then the community fallbacks, so a dead
+    // primary does not block every Cosmos transaction — the same failover the
+    // read client already uses. RPC_ENDPOINTS leads with RPC_ENDPOINT.
+    const hosts = RPC_ENDPOINTS?.length ? RPC_ENDPOINTS : [RPC_ENDPOINT];
+    let lastError: unknown;
+    for (const host of hosts) {
+      try {
+        return await SigningStargateClient.connectWithSigner(
+          host,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          offlineSigner as any,
+        );
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError instanceof Error
+      ? lastError
+      : new Error('No RPC host answered for signing.');
   }, [address, canSignCosmosTransactions, chain, wallet, walletMode, walletName]);
 
   const getOfflineSigner = useCallback(async () => {

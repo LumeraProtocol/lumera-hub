@@ -129,15 +129,20 @@ export function TxDrawer({
   // Settle once the receipt resolves, or once the lookup gives up.
   useEffect(() => {
     if (!open || !hash || settled.current) return
+    // Wait for the receipt lookup to actually settle for this hash. isLoading is
+    // true even on the first render after the hash appears, so this guard stops
+    // the drawer concluding "sent" before the first request has run.
+    if (isReceiptLoading) return
     if (receipt.code != null) {
       broadcasting.current = false
       settled.current = true
       setLocalOutcome(receipt.code === 0 ? 'success' : 'failed')
       setStep('done')
       if (receipt.code === 0) onDone?.()
-    } else if (!isReceiptLoading) {
-      // Broadcast succeeded but the index never answered. Report it as sent
-      // rather than claiming a confirmation we did not see.
+    } else {
+      // The lookup gave up: the broadcast succeeded but the index never
+      // answered. Report it as sent rather than claiming a confirmation we did
+      // not see.
       broadcasting.current = false
       settled.current = true
       setLocalOutcome('success')

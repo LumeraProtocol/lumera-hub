@@ -17,7 +17,9 @@ const useLiveProposalCount = () => {
 
     const read = async () => {
       try {
-        const { data } = await instance.get(
+        // Quiet: a background badge poll whose failure is already handled below
+        // (the count stays as-is) must not raise the app-wide error toast.
+        const { data } = await instance.getQuiet(
           '/cosmos/gov/v1/proposals?proposal_status=PROPOSAL_STATUS_VOTING_PERIOD&pagination.count_total=true&pagination.limit=1',
         );
         if (cancelled) return;
