@@ -4,7 +4,7 @@ import axios from 'axios';
 
 import * as instance from '@/utils/api';
 import { IValidator } from '@/types/validator';
-import { RPC_ENDPOINT } from '@/contants/network';
+import { rpcGet } from '@/utils/rpc';
 
 export const LIMIT = 20;
 
@@ -32,7 +32,7 @@ const useValidator = () => {
   const fetchDelegators  = async (validator: string, page = 1) => {
     setFetchDelegatorsLoading(true);
     try {
-      const { data: { result } } = await axios.get(`${RPC_ENDPOINT}/tx_search?query="delegate.validator = %27${validator}%27"&page=${page}&per_page=${LIMIT}&order_by="desc"`);
+      const { result } = await rpcGet<{ result: { txs: never[]; total_count: string } }>(`/tx_search?query="delegate.validator = %27${validator}%27"&page=${page}&per_page=${LIMIT}&order_by="desc"`);
       setDelegators(result.txs);
       setTotalDelegators(Number(result.total_count));
     } catch (error) {

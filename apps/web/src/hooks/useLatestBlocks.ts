@@ -5,7 +5,7 @@ import axios from 'axios';
 import * as instance from '@/utils/api';
 import { IBlock } from '@/types';
 import { IValidator } from '@/types/validator';
-import { RPC_ENDPOINT } from '@/contants/network';
+import { rpcGet } from '@/utils/rpc';
 
 type TBlock = {
   block: IBlock
@@ -57,7 +57,7 @@ const useLatestBlocks = () => {
   const fetchBlocks = async () => {
     setFetchBlockLoading(true);
     try {
-      const { data: { result } } = await axios.get(`${RPC_ENDPOINT}/block_search?query="block.height > 0"&page=1&per_page=100&order_by="desc"`);
+      const { result } = await rpcGet<{ result: { blocks: TBlock[] } }>('/block_search?query="block.height > 0"&page=1&per_page=100&order_by="desc"');
       setBlocks(result.blocks.map((item: TBlock) => item.block))
     } catch (error) {
       setError((error as Error)?.message ||  'An unknown error occurred.');

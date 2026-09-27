@@ -42,6 +42,8 @@ import {
   NETWORK_PROFILE,
   REST_AI_URL,
   RPC_ENDPOINT,
+  RPC_ENDPOINTS,
+  REST_ENDPOINTS,
 } from '@/contants/network';
 
 export const getMessages = (msgs: { '@type'?: string; typeUrl?: string }[]) => {
@@ -152,12 +154,12 @@ export const getChains = () => {
         github: 'https://github.com/LumeraProtocol/',
       },
       apis: {
-        rpc: [
-          {
-            address: RPC_ENDPOINT,
-            provider: 'lumera',
-          },
-        ],
+        // Every healthy host, not just the configured one. interchain-kit
+        // walks this list, so a dead primary no longer blocks signing.
+        rpc: RPC_ENDPOINTS.map((address, i) => ({
+          address,
+          provider: i === 0 ? 'lumera' : 'community',
+        })),
         rest: [
           {
             address: REST_AI_URL,
@@ -223,8 +225,14 @@ export const getChains = () => {
         chainId: CHAIN_ID,
         apis: {
           ...chain.apis,
-          rpc: [{ address: RPC_ENDPOINT, provider: 'Lumera Hub profile' }],
-          rest: [{ address: REST_AI_URL, provider: 'Lumera Hub profile' }],
+          rpc: RPC_ENDPOINTS.map((address, i) => ({
+            address,
+            provider: i === 0 ? 'Lumera Hub profile' : 'community',
+          })),
+          rest: REST_ENDPOINTS.map((address, i) => ({
+            address,
+            provider: i === 0 ? 'Lumera Hub profile' : 'community',
+          })),
         },
       },
     ],

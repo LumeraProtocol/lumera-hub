@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  dominantVoteTone,
   formatGovernanceVote,
   getGovernanceVoteFormValue,
   getGovernanceVoteValue,
@@ -52,5 +53,42 @@ describe('formatGovernanceVote', () => {
     expect(getGovernanceVoteFormValue(vote([
       { option: 'VOTE_OPTION_NO', weight: '1.000000000000000000' },
     ]))).toBe('3');
+  });
+});
+
+describe('dominantVoteTone', () => {
+  it('reads a whole vote', () => {
+    expect(dominantVoteTone(vote([{ option: 'VOTE_OPTION_YES', weight: '1' }]))).toBe('yes');
+    expect(dominantVoteTone(vote([{ option: 'VOTE_OPTION_NO_WITH_VETO', weight: '1' }]))).toBe(
+      'veto',
+    );
+  });
+
+  it('takes the heaviest side of a split vote', () => {
+    expect(
+      dominantVoteTone(
+        vote([
+          { option: 'VOTE_OPTION_YES', weight: '0.25' },
+          { option: 'VOTE_OPTION_NO', weight: '0.75' },
+        ]),
+      ),
+    ).toBe('no');
+  });
+
+  it('ignores options carrying no weight', () => {
+    expect(
+      dominantVoteTone(
+        vote([
+          { option: 'VOTE_OPTION_NO', weight: '0' },
+          { option: 'VOTE_OPTION_ABSTAIN', weight: '1' },
+        ]),
+      ),
+    ).toBe('abstain');
+  });
+
+  it('has no answer for an empty or unknown vote', () => {
+    expect(dominantVoteTone(vote([]))).toBeNull();
+    expect(dominantVoteTone(null)).toBeNull();
+    expect(dominantVoteTone(vote([{ option: 'VOTE_OPTION_UNSPECIFIED', weight: '1' }]))).toBeNull();
   });
 });

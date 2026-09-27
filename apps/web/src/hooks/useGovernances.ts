@@ -67,7 +67,7 @@ export const GOVERNANCE_STATS = {
 
 const EXPEDITED_DEPOSIT_REQUIRED = GOVERNANCE_STATS.expeditedDepositRequired;
 
-const useGovernances = () => {
+const useGovernances = ({ enabled = true }: { enabled?: boolean } = {}) => {
   const { trackingHubTransaction } = useTrackingHubTransaction();
   const { address, canSignCosmosTransactions, getClient } = useWalletConnect();
   const [isLoading, setLoading] = useState(false);
@@ -183,16 +183,20 @@ const useGovernances = () => {
       for (const gov of data.proposals) {
         let item: IProposal = gov;
         if (gov.status === 'PROPOSAL_STATUS_VOTING_PERIOD') {
+          // The live running tally, which `final_tally_result` only carries
+          // once voting closes. Quiet: a host that will not serve /tally for
+          // one proposal must not raise a global error toast, and the proposal
+          // still renders from its own final_tally_result below.
           try {
-            const res = await instance.get(`/cosmos/gov/v1/proposals/${gov.id}/tally`);
+            const res = await instance.getQuiet(`/cosmos/gov/v1/proposals/${gov.id}/tally`);
             if (res?.data?.tally) {
               item = {
                 ...item,
                 final_tally_result: res.data.tally,
               };
             }
-          } catch (error) {
-            console.error(error);
+          } catch {
+            // Non-fatal — fall back to the tally already on the proposal.
           }
         }
         results.push(item);
@@ -215,9 +219,13 @@ const useGovernances = () => {
   }
 
   useEffect(() => {
+    // AppShell's notification badge mounts this on every route; skip the whole
+    // proposal + summary + per-proposal-tally fetch until it is actually needed
+    // (a connected viewer) rather than firing it on every visit.
+    if (!enabled) return;
     setGovernances([]);
     fetchData();
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
     setRequiredDeposit(proposal.isExpedited ? EXPEDITED_DEPOSIT_REQUIRED : GOVERNANCE_STATS.depositRequired);
@@ -302,7 +310,7 @@ const useGovernances = () => {
       if (!proposal.description) {
         setMsg({
           type: 'description',
-          message: 'Please enter title.',
+          message: 'Please enter a summary.',
         });
         return;
       }

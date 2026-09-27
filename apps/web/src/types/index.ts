@@ -288,6 +288,7 @@ export interface IRecentActivity {
 
 export type ViewId =
   | "dashboard"
+  | "faucet"
   | "staking"
   | "governance"
   | "cascade"
@@ -300,6 +301,8 @@ export type ViewId =
   | "tracking"
   | "blocks"
   | "portal"
+  | "foundry"
+  | "chat"
   | "injhub"
 
 export interface IFullBlock {
@@ -361,6 +364,9 @@ export interface IActionDetail {
 }
 
 export const VIEW_TITLES: Record<ViewId, string> = {
+  foundry: "Foundry",
+  chat: "Chat lab",
+  faucet: "Faucet",
   dashboard: "Dashboard",
   staking: "Staking",
   governance: "Governance",

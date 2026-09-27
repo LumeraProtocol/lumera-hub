@@ -56,11 +56,13 @@ const useUnbond = (options: UseDepositOptions = {}) => {
     });
   }
 
+  // Functional update so back-to-back field writes compose instead of the
+  // later one clobbering the earlier.
   const handleInputChange = (name: string, value: string) => {
-    setOptionsAdvanced({
-      ...optionsAdvanced,
+    setOptionsAdvanced((prev) => ({
+      ...prev,
       [name]: name === 'amount' ? extractValidNumber(value) : value,
-    });
+    }));
   }
 
   const handleShowAdvancedChange = (status: boolean) => {

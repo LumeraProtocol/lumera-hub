@@ -1,23 +1,28 @@
 // apps/web/src/app/nfts/page.tsx
 'use client'
-import { useEffect } from "react";
-import { Helmet } from "react-helmet-async";
+import { useEffect } from 'react'
+import { Helmet } from 'react-helmet-async'
 
-import { NFTsScreen } from '@lumera-hub/ui/src/screens/NFTsScreen';
+import { ComingSoonScreen, COMING_SOON } from '@lumera-hub/ui/src/screens/hub/ComingSoonScreen'
 
 export default function Page() {
   useEffect(() => {
-    document.title = 'NFTs - Lumera Hub';
-  }, []);
+    document.title = 'NFTs - Lumera Hub'
+  }, [])
 
   return (
     <>
       <Helmet>
         <title>NFTs - Lumera Hub</title>
       </Helmet>
-      <div className="nfts-content">
-        <NFTsScreen />
-      </div>
+      <ComingSoonScreen
+        {...COMING_SOON.nfts}
+        capabilities={[...COMING_SOON.nfts.capabilities]}
+        links={[
+          { label: 'Lumera documentation', href: 'https://docs.lumera.io/' },
+          { label: 'Protocol updates on X', href: 'https://x.com/lumera' },
+        ]}
+      />
     </>
   )
 }

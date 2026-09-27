@@ -50,3 +50,31 @@ export const formatGovernanceVote = (vote?: GovernanceVote | null) => {
     .map(({ option, weight }) => `${VOTE_OPTION_LABELS[option] || option} ${Number(weight) * 100}%`)
     .join(', ');
 };
+
+/** How a vote should be coloured. Mirrors the tally's own palette. */
+export type VoteTone = 'yes' | 'no' | 'abstain' | 'veto';
+
+const VOTE_OPTION_TONES: Record<string, VoteTone> = {
+  VOTE_OPTION_YES: 'yes',
+  VOTE_OPTION_ABSTAIN: 'abstain',
+  VOTE_OPTION_NO: 'no',
+  VOTE_OPTION_NO_WITH_VETO: 'veto',
+};
+
+/**
+ * The option carrying most of a vote's weight.
+ *
+ * A vote can be split across options, so there is not always one answer — but
+ * a row still has to be one colour. The heaviest option decides it, while the
+ * label from `formatGovernanceVote` keeps the split visible. Ties fall to
+ * whichever the chain listed first, which is stable for a given proposal.
+ */
+export const dominantVoteTone = (vote?: GovernanceVote | null): VoteTone | null => {
+  const options = vote?.options?.filter(({ weight }) => Number(weight) > 0) ?? [];
+  if (!options.length) return null;
+
+  const heaviest = options.reduce((best, o) =>
+    Number(o.weight) > Number(best.weight) ? o : best,
+  );
+  return VOTE_OPTION_TONES[heaviest.option] ?? null;
+};

@@ -26,7 +26,10 @@ import {
   SDK_PRESET,
   SNSCOPE_URL,
   SNAPI_URL,
+  isSnapiReachable,
   DENOM,
+  NETWORK_PROFILE,
+  cascadeReadBase,
 } from '@/contants/network';
 import {
   UPLOAD_MAX_FILES,
@@ -59,6 +62,10 @@ export interface IMyFile {
   fee: string;
   taskId: string;
   isPublic: boolean | null;
+  /** Accounts of the supernodes that finalised the action, from SNScope. */
+  superNodes?: string[];
+  /** What the upload cost, in micro-denom, so a drive can be totalled. */
+  priceMicro?: number;
 }
 
 export interface IMarker {
@@ -74,6 +81,8 @@ export interface IMarker {
   country_code: string;
   subdivision: string;
   city: string;
+  /** The chain's latest state for the node, e.g. SUPERNODE_STATE_ACTIVE. */
+  state?: string;
 }
 
 export type TFileTypeKey = 'all' | 'image' | 'program' | 'video' | 'archive' | 'document' | 'other';
@@ -88,6 +97,15 @@ interface FileToDownload {
   name: string;
   signatures: string;
 }
+
+/** The chain's supernode record, which is shaped nothing like the metrics one. */
+type ChainSupernode = {
+  validator_address?: string;
+  supernode_account?: string;
+  p2p_port?: string;
+  states?: Array<{ state?: string }>;
+  prev_ip_addresses?: Array<{ address?: string }>;
+};
 
 interface ISupernode {
   actual_version: string;
@@ -186,6 +204,9 @@ type TCascadeStogre = {
   taskId: string;
   isPublic?: boolean;
   time: number;
+  /** Real on-chain action id (from registerAction), so the local pending row
+   *  carries the correct id/link instead of a synthetic timestamp. */
+  actionId?: string;
 }
 
 export type TUploadCascadeInfo = {
@@ -196,6 +217,11 @@ export type TUploadCascadeInfo = {
   status?: string;
   message?: string;
   isPublic?: boolean;
+  /** The Cascade task id returned by a successful upload. */
+  taskId?: string;
+  /** The on-chain action id, known as soon as the action is registered — this
+   *  is what a share link/QR needs, available without waiting on the indexer. */
+  actionId?: string;
 }
 
 export const FILES_TYPE: FileTypeOption[] = [
@@ -245,7 +271,14 @@ export const getFileType = (filename: string) => {
 
 export const ITEM_PER_PAGE = 10;
 const GAS_PRICE = '0.025ulume';
-const storeName = 'lumera-cascade-files';
+/*
+ * The pending-upload cache is per network. An action_id is unique only within a
+ * chain — testnet 88109 and mainnet 88109 are unrelated files — so a single
+ * shared store leaked one network's just-uploaded rows onto the other's drive
+ * (and could surface the same id twice, which crashes the list on a dup key).
+ */
+const STORE_PREFIX = 'lumera-cascade-files';
+const cascadeStoreKey = () => `${STORE_PREFIX}:${NETWORK_PROFILE}`;
 
 let ipLocateClient: IPLocate | undefined;
 
@@ -273,14 +306,30 @@ export const getTxHash = (file: IMyFile, txs: IRecentActivity[]) => {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
+const useCascade = ({
+  sdkjsReact,
+  readAddress,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sdkjsReact: any;
+  /**
+   * The address whose drive is listed. Defaults to the signing wallet; the hub
+   * passes a watched address too, since a drive is public on chain and can be
+   * read without the keys that upload to it.
+   */
+  readAddress?: string;
+}) => {
   const { trackingCascadeDownload } = useTrackingCascadeDownload();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const summaryStartedRef = useRef(false);
   const getSummaryRef = useRef<() => Promise<void>>(() => Promise.resolve());
   const { address, isEvm, openConnectView } = useWalletConnect();
+  const filesAddress = readAddress || address;
   const [isUploading, setUploading] = useState(false);
+  /** 0 encoding, 1 signing, 2 registering, 3 storing — for the file in flight. */
+  const [uploadPhase, setUploadPhase] = useState(0);
+  /** Percent retrieved, keyed by action ID, while a download is running. */
+  const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
   const [error, setError] = useState('');
   const [isFetchSummaryLoading, setFetchSummaryLoading] = useState(false);
   const [networkStorage, setNetworkStorage] = useState({
@@ -288,6 +337,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     networkStorage: 'TBD',
     usedStorageBytes: 0,
     availableStorageBytes: 0,
+    usedPercent: 0,
+    availablePercent: 0,
+    totalBytes: 0,
   });
   const [myUsage, setMyUsage] = useState({
     size: '0 Bytes',
@@ -391,7 +443,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
 
   const fetchLocationFromIpWho = useCallback(async (host: string) => {
     try {
-      const { data } = await instance.getExternal(`https://ipwho.is/${encodeURIComponent(host)}`);
+      // Quiet: a supernode without a pin on the map is a smaller problem
+      // than a global error banner, and free geo APIs rate-limit routinely.
+      const { data } = await instance.getExternalQuiet(`https://ipwho.is/${encodeURIComponent(host)}`);
       if (data?.success === false) {
         return null;
       }
@@ -432,7 +486,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       if (!url) {
         return null;
       }
-      const { data } = await instance.getExternal(url);
+      const { data } = await instance.getExternalQuiet(url);
       return {
         latitude: data?.location?.latitude || null,
         longitude: data?.location?.longitude || null,
@@ -529,10 +583,13 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
               validatorMoniker: item.validator_moniker,
               address,
               p2pPort: item.p2p_port.toString(),
+              state: item.current_state,
             });
           }
         } else {
-          results.push(supernode);
+          // The seed knows where a node is, not what it is doing; the state
+          // comes from the list just read.
+          results.push({ ...supernode, state: item.current_state });
         }
       }
       setMarkers(results);
@@ -543,6 +600,57 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       });
     }
   }, [fetchLocationForIP, readSupernodeFile]);
+
+  /*
+   * Every supernode the chain knows about, for the map.
+   *
+   * The metrics feed below is filtered to nodes that are active AND currently
+   * answering probes, which on a testnet is a small fraction of the network —
+   * mapping only those, while the caption counts everything registered, made
+   * the map look far emptier than the network is. The chain's own list is the
+   * honest denominator, and it carries the address, the operator and the port,
+   * which is everything a pin needs.
+   */
+  const fetchRegisteredSupernodes = async (): Promise<ISupernode[]> => {
+    try {
+      const [listRes, valRes] = await Promise.all([
+        instance.get('/LumeraProtocol/lumera/supernode/v1/list_super_nodes?pagination.limit=1000'),
+        instance.get('/cosmos/staking/v1beta1/validators?pagination.limit=500'),
+      ]);
+
+      const monikers = new Map<string, string>();
+      for (const v of valRes?.data?.validators ?? []) {
+        if (v?.operator_address) {
+          monikers.set(v.operator_address, v?.description?.moniker || '');
+        }
+      }
+
+      return (listRes?.data?.supernodes ?? []).flatMap((sn: ChainSupernode) => {
+        // Addresses are a history; the last entry is where it lives now.
+        const address = sn.prev_ip_addresses?.at(-1)?.address?.trim();
+        const account = sn.supernode_account ?? '';
+        const validator = sn.validator_address ?? '';
+        const port = Number(sn.p2p_port) || 0;
+        // The lookup route validates what it is sent, so a record missing any
+        // of these is dropped here rather than failing the whole batch.
+        const moniker = monikers.get(validator) || validator.slice(0, 20);
+        if (!address || !account || !validator || !port || !moniker) return [];
+
+        return [
+          {
+            ip_address: address,
+            supernode_account: account,
+            validator_address: validator,
+            validator_moniker: moniker.slice(0, 50),
+            p2p_port: port,
+            current_state: sn.states?.at(-1)?.state ?? '',
+          } as unknown as ISupernode,
+        ];
+      });
+    } catch {
+      return [];
+    }
+  };
 
   const fetchSupernodes = async (cursor = '') => {
     try {
@@ -584,11 +692,21 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       setNetworkStorage({
         totalSupernode: snResults.length,
         networkStorage: data?.total_storage_bytes ? `${formatBytes(data.total_storage_bytes)}` : '',
+        // These two hold percentages, not bytes, despite the names — they feed
+        // a used/available pie. The *Percent fields below are the same values
+        // under honest names, plus the raw capacity so callers can show a real
+        // stored figure instead of formatting a percentage as bytes.
         usedStorageBytes: data?.storage_used_percent?.toFixed(2) || 0,
         availableStorageBytes: data?.storage_available_percent?.toFixed(2) || 0,
+        usedPercent: Number(data?.storage_used_percent) || 0,
+        availablePercent: Number(data?.storage_available_percent) || 0,
+        totalBytes: Number(data?.total_storage_bytes) || 0,
       });
       setFetchSummaryLoading(false);
-      await getChartMarker(snResults);
+      // Pins come from the chain's full list; snResults above stays the source
+      // for the storage figures, which are only meaningful for live nodes.
+      const registered = await fetchRegisteredSupernodes();
+      await getChartMarker(registered.length ? registered : snResults);
     } catch {
       setMarkerLoading(false);
     }
@@ -598,7 +716,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   getSummaryRef.current = getSummary;
 
   const fetchMyFiles = async (nextKey = '') => {
-    if (!address) {
+    if (!filesAddress) {
       return {
         actions: null,
         nextKey: null,
@@ -606,7 +724,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
     try {
       const nextKeyParam = nextKey ? `&cursor=${nextKey}` : '';
-      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=${ITEM_PER_PAGE}${nextKeyParam}&creator=${address}`);
+      const { data } = await instance.getExternal(`${SNSCOPE_URL}/v1/actions?type=ACTION_TYPE_CASCADE&limit=${ITEM_PER_PAGE}${nextKeyParam}&creator=${filesAddress}`);
       return {
         actions: data.items,
         nextKey: data.next_cursor,
@@ -618,6 +736,56 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       };
     }
   };
+
+  /*
+   * Resolve a just-uploaded object's on-chain action id.
+   *
+   * The indexer (snscope) lags the chain by minutes, so it is useless right
+   * after an upload. The chain itself is current: its tx search returns this
+   * creator's newest finalized Cascade actions, and the gateway (also current)
+   * gives each one's file name, so the freshly-stored file is matched by name.
+   * Only finalized actions surface here — which is exactly when a share link
+   * becomes retrievable.
+   */
+  const resolveActionId = useCallback(
+    async (fileName: string): Promise<{ actionID: string } | null> => {
+      if (!filesAddress || !fileName) return null;
+      try {
+        const q = encodeURIComponent(`action_finalized.creator='${filesAddress}'`);
+        // Through the failover REST client (quiet — the caller polls), so an
+        // unhealthy LCD host does not strand share-link resolution on a dead
+        // primary the way a direct fetch(REST_AI_URL, …) did.
+        const { data } = await instance.getQuiet(
+          `/cosmos/tx/v1beta1/txs?query=${q}&order_by=ORDER_BY_DESC&limit=10`,
+        );
+        const ids: string[] = [];
+        for (const tr of data?.tx_responses || []) {
+          for (const ev of tr?.events || []) {
+            if (ev?.type !== 'action_finalized') continue;
+            const idAttr = (ev.attributes || []).find(
+              (a: { key?: string }) => a?.key === 'action_id',
+            );
+            if (idAttr?.value) ids.push(String(idAttr.value));
+          }
+        }
+        // Newest first; match the file by the gateway receipt's artifact name.
+        for (const id of ids) {
+          try {
+            const rc = await fetch(`${cascadeReadBase()}/receipt/${id}`);
+            if (!rc.ok) continue;
+            const receipt = await rc.json();
+            if (receipt?.artifact?.name === fileName) return { actionID: id };
+          } catch {
+            /* try the next candidate */
+          }
+        }
+      } catch {
+        /* transient — the caller polls again */
+      }
+      return null;
+    },
+    [filesAddress],
+  );
 
   const fetchAction = async (actionId = ''): Promise<IActionDetail | null> => {
     if (!actionId) {
@@ -631,9 +799,23 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
   };
 
+  const EMPTY_FILE_INFO = {
+    file_size_kbs: 0,
+    created_at: '',
+    action_id: '',
+    task_id: '',
+  };
+
   const getFileInfo = async (action: IAction) => {
+    // Without a reachable supernode API there is nothing to ask, and asking
+    // anyway costs one refused connection per file on the page.
+    if (!isSnapiReachable()) {
+      return EMPTY_FILE_INFO;
+    }
     try {
-      const { data } = await instance.getExternal(`${SNAPI_URL}/api/v1/actions/cascade/${action.id}/tasks`);
+      // Quiet: the size is supplementary, so a failure returns zeros rather
+      // than raising a banner over a page whose other data is fine.
+      const { data } = await instance.getExternalQuiet(`${SNAPI_URL}/api/v1/actions/cascade/${action.id}/tasks`);
       const item = data.requests[0];
       if (item) {
         return {
@@ -643,19 +825,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
           task_id: item.task_id,
         };
       }
-      return {
-        file_size_kbs: 0,
-        created_at: '',
-        action_id: '',
-        task_id: '',
-      };
-    } catch (e) {
-      return {
-        file_size_kbs: 0,
-        created_at: '',
-        action_id: '',
-        task_id: '',
-      };
+      return EMPTY_FILE_INFO;
+    } catch {
+      return EMPTY_FILE_INFO;
     }
   }
 
@@ -665,13 +837,16 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         fee: '0 LUME',
         size: 0,
         register_tx_id: '',
+        super_nodes: [] as string[],
       };
     }
     const action = await fetchAction(actionId);
     let fee = '0 LUME';
     let register_tx_id = '';
     let size = 0;
+    let super_nodes: string[] = [];
     if (action) {
+      super_nodes = action.super_nodes ?? [];
       const transaction = action.transactions?.find((tx) => tx.tx_type === 'register');
       if (transaction) {
         fee = `${formatTokenDisplay({
@@ -686,6 +861,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       fee,
       size,
       register_tx_id,
+      super_nodes,
     };
   }
 
@@ -693,7 +869,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     const files: IMyFile[] = [];
     for (const item of items) {
       const fileInfo = await getFileInfo(item);
-      const { fee, size, register_tx_id } = await getAction(item.id);
+      const { fee, size, register_tx_id, super_nodes } = await getAction(item.id);
       files.push({
         name: item.decoded.file_name || '',
         size: item.size || size || fileInfo.file_size_kbs || 0,
@@ -712,19 +888,26 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         fee,
         isPublic: item.decoded.public,
         taskId: fileInfo.task_id,
+        superNodes: super_nodes,
+        priceMicro: Number(item.price?.amount) || 0,
       });
     }
     return [...new Map(files.map(item => [item.actionID, item])).values()];
   }
 
   const updateFilesStogre = (files: IMyFile[]) => {
+    const storeName = cascadeStoreKey();
     let results: TCascadeStogre[] = [];
     const currentUploadFiles = localStorage.getItem(storeName);
     if (currentUploadFiles) {
       const currentFiles: TCascadeStogre[] = JSON.parse(currentUploadFiles);
       const filteredFiles = currentFiles.filter(item => {
         const currentDate = dayjs().subtract(1, 'day').valueOf();
-        const isExist = files.some(obj => obj.taskId === item.taskId && obj.name === item.fileName);
+        // Match the indexed file by its action_id, not its task_id: getFileInfo
+        // returns an empty task_id whenever SNAPI is unreachable (every deployed
+        // site), so a task_id compare never matched and this pending row lived on
+        // to duplicate the real indexed row. The action_id is stable and unique.
+        const isExist = !!item.actionId && files.some(obj => obj.actionID === item.actionId);
         return !isExist || Number(currentDate) > Number(item.time);
       });
       if (filteredFiles?.length) {
@@ -740,10 +923,10 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         size: 0,
         txId: '',
         type: getFileType(r.fileName),
-        actionID: `${new Date().getTime()}`,
+        actionID: r.actionId || `${new Date().getTime()}`,
         signatures: '',
         lastModified: '',
-        state: 'In progress',
+        state: r.actionId ? 'DONE' : 'In progress',
         datahash: '',
         height: '',
         price: '0',
@@ -757,7 +940,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   }
 
   const getMyFiles = useCallback(async () => {
-    if (!address) {
+    if (!filesAddress) {
       return;
     }
     setMyFilesLoading(true);
@@ -816,7 +999,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     }
     setMyFilesLoading(false);
     setMyFilesLoadMore(false);
-  }, [address]);
+  }, [filesAddress]);
 
   const fetchRecentlyUploaded = async () => {
     try {
@@ -876,10 +1059,16 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   }, [address, getRecentlyUploaded]);
 
   useEffect(() => {
-    if (address) {
+    if (filesAddress) {
       getMyFiles();
+    } else {
+      // Nothing to list once the wallet or the watched address goes away, and
+      // the previous reader's files must not linger on screen.
+      setMyFilesOriginal([]);
+      setMyFiles([]);
+      setMyUsage({ size: '0 Bytes', uploaded: 0 });
     }
-  }, [address, getMyFiles]);
+  }, [filesAddress, getMyFiles]);
 
   useEffect(() => {
     if (!summaryStartedRef.current) {
@@ -906,16 +1095,23 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
 
   const trackingCascadeUpload = async (taskId: string) => {
     try {
-      await instance.postExternal(`/api/snag/tracking-cascade-upload`, {
+      // Quiet: telemetry for the quest service, which most deployments do not
+      // configure. The upload itself has already succeeded by this point, so a
+      // failure here must not put an error in front of someone whose file went
+      // up fine.
+      await instance.postExternalQuiet(`/api/snag/tracking-cascade-upload`, {
         taskId,
         lumeraAddress: address,
       });
     } catch (error) {
-      console.error(error);
+      // warn, not error: Next renders console.error as its error overlay, and
+      // the upload this reports on has already succeeded.
+      console.warn('Cascade upload tracking failed:', error);
     }
   }
 
-  const updateCascadeStogre = (taskId: string, fileName: string, isPublic: boolean) => {
+  const updateCascadeStogre = (taskId: string, fileName: string, isPublic: boolean, actionId?: string) => {
+    const storeName = cascadeStoreKey();
     try {
       trackingCascadeUpload(taskId);
       const currentUploadFiles = localStorage.getItem(storeName);
@@ -928,6 +1124,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         fileName,
         isPublic,
         time: dayjs().valueOf(),
+        actionId,
       });
       localStorage.setItem(storeName, JSON.stringify(files));
       const newFiles = myFilesOriginal;
@@ -936,10 +1133,13 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
         size: 0,
         txId: '',
         type: getFileType(fileName),
-        actionID: `${new Date().getTime()}`,
+        // The real action id is known from registration — use it (not a
+        // synthetic timestamp) so the row's share link points at the right
+        // object; a registered action is stored, so it is no longer "pending".
+        actionID: actionId || `${new Date().getTime()}`,
         signatures: '',
         lastModified: `${new Date()}`,
-        state: 'In progress',
+        state: actionId ? 'DONE' : 'In progress',
         datahash: '',
         height: '',
         price: '0',
@@ -963,8 +1163,31 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       try {
         if (sdkjsReact) {
           const signer = await sdkjsReact.getKeplrSigner(CHAIN_ID);
-          const signaturePrompter = await sdkjsReact.createBatchedSignaturePrompter();
-          const txPrompter = await sdkjsReact.createDefaultTxPrompter() || undefined;
+          const batchedPrompter = await sdkjsReact.createBatchedSignaturePrompter();
+          const defaultTxPrompter = await sdkjsReact.createDefaultTxPrompter() || undefined;
+          /*
+           * The SDK runs an upload as a single call, and its two prompters are
+           * the only points where it hands control back, so they double as the
+           * progress signal. Layout and index signatures mean the file has been
+           * encoded; the transaction prompt means it is being registered; the
+           * auth signature is the last step before the bytes go to supernodes.
+           */
+          const advance = (phase: number) => setUploadPhase((p) => Math.max(p, phase));
+          const signaturePrompter = Object.assign(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            async (context: any, sign: () => Promise<any>) => {
+              advance(context?.kind === 'auth' ? 2 : 1);
+              const signed = await batchedPrompter(context, sign);
+              if (context?.kind === 'auth') advance(3);
+              return signed;
+            },
+            { reset: () => batchedPrompter.reset?.() },
+          );
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const txPrompter = async (context: any, submit: () => Promise<any>) => {
+            advance(2);
+            return defaultTxPrompter ? defaultTxPrompter(context, submit) : submit();
+          };
           const client = await sdkjsReact.createLumeraClient({
             signer,
             address,
@@ -1001,6 +1224,7 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
                 await delay(1000);
               } else {
                 setSelectedModal('');
+                setUploadPhase(0);
                 const fileBuffer = await file.arrayBuffer();
                 const fileBytes = new Uint8Array(fileBuffer);
                 setUploadCascadeInfo(prev => prev.map((f) => {
@@ -1015,24 +1239,38 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
                 }));
                 const currentFile = uploadCascadeInfo?.find((f) => f.fileName === file.name);
                 const isPublic = currentFile?.isPublic || false;
-                const result = await client.Cascade.uploader.uploadFile(fileBytes, {
+                /*
+                 * Run the upload as its explicit steps rather than uploadFile()
+                 * so the on-chain action id is captured the moment the action is
+                 * registered. sendFileToSupernodes monitors the sn-api task until
+                 * it completes, so awaiting it is the "upload finished" signal —
+                 * no indexer polling needed to reveal the share result.
+                 */
+                const uploader = client.Cascade.uploader;
+                const prepared = await uploader.prepareFile(fileBytes);
+                const registered = await uploader.registerAction(prepared, {
                   fileName: file.name,
-                  expirationTime,
                   isPublic,
+                  expirationTime,
                   signaturePrompter,
                   txPrompter,
                 });
-                if (result?.task_id) {
-                  updateCascadeStogre(result.task_id, file.name, isPublic);
+                const task = await uploader.sendFileToSupernodes(
+                  registered.actionId,
+                  registered.authSignature,
+                  fileBytes,
+                );
+                const taskId =
+                  (task as { task_id?: string; taskId?: string })?.task_id ||
+                  (task as { task_id?: string; taskId?: string })?.taskId ||
+                  '';
+                if (registered?.actionId) {
+                  updateCascadeStogre(taskId, file.name, isPublic, registered.actionId);
                   setUploadCascadeInfo(prev => prev.map((f) => {
-                    let status = f.status;
                     if (f.fileName === file.name) {
-                      status = 'done'
+                      return { ...f, status: 'done', taskId, actionId: registered.actionId }
                     }
-                    return {
-                      ...f,
-                      status,
-                    }
+                    return f
                   }));
                 }
                 if (counter < selectedUploadCascadeFiles.length) {
@@ -1167,15 +1405,18 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getDownloadedBytes = async (stream: any) => {
+  const getDownloadedBytes = async (stream: any, onBytes?: (received: number) => void) => {
     // Read the stream
     const reader = stream.getReader();
     const chunks: Uint8Array[] = [];
+    let received = 0;
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       chunks.push(value);
+      received += value.length;
+      onBytes?.(received);
     }
 
     // Combine chunks
@@ -1222,7 +1463,16 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
           },
         });
         const stream = await client.Cascade.downloader.download(file.actionID);
-        const downloadedBytes = await getDownloadedBytes(stream);
+        // The stream carries no length, but the drive already knows the
+        // file's size, which is enough to say how far along it is.
+        let shown = -1;
+        const downloadedBytes = await getDownloadedBytes(stream, (received) => {
+          if (!file.size) return;
+          const pct = Math.min(99, Math.floor((received / file.size) * 100));
+          if (pct === shown) return;
+          shown = pct;
+          setDownloadProgress((prev) => ({ ...prev, [file.actionID]: pct }));
+        });
         const blob1 = new Blob([downloadedBytes]);
         downloadFile(blob1, file.name);
         const parseFile = file.name.split('.');
@@ -1239,6 +1489,11 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
       });
     }
     setSelectedFileDownload((prev) => prev.filter((val) => val !== file.actionID));
+    setDownloadProgress((prev) => {
+      const next = { ...prev };
+      delete next[file.actionID];
+      return next;
+    });
     setDownloading(false);
   }
 
@@ -1328,6 +1583,9 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
 
   return {
     isUploading,
+    uploadPhase,
+    downloadProgress,
+    totalBalance,
     error,
     isFetchSummaryLoading,
     address,
@@ -1368,6 +1626,8 @@ const useCascade = ({ sdkjsReact }: { sdkjsReact: any }) => {
     handleUploadCascade,
     handleRemoveUploadFile,
     handleDropRejected,
+    getMyFiles,
+    resolveActionId,
   }
 }
 

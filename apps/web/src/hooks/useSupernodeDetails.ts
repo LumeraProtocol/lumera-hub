@@ -245,7 +245,8 @@ const useSupernodeDetails = () => {
           return;
         }
       }
-      const { data } = await instance.getExternal(`https://keybase.io/_/api/1.0/user/lookup.json?key_suffix=${identity}&fields=pictures`);
+      // Quiet: this only fetches an avatar.
+      const { data } = await instance.getExternalQuiet(`https://keybase.io/_/api/1.0/user/lookup.json?key_suffix=${identity}&fields=pictures`);
       const url = data?.them?.[0]?.pictures?.primary?.url;
       if (url) {
         const parseUrl = url.split('/');

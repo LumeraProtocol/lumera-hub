@@ -23,6 +23,7 @@ import {
 import { useSelector } from '@/redux/hooks';
 import { RegistryProvider } from "./RegistryContext";
 import { EvmWalletProvider } from './evm-wallet-provider';
+import { useNetwork } from './network-provider';
 import store, { persistor } from '@/store';
 
 function InterchainWalletModeSynchronizer() {
@@ -154,10 +155,16 @@ export function WalletRuntimeProviders({ children }: { children: React.ReactNode
 }
 
 export function WebWalletProviders({ children }: { children: React.ReactNode }) {
+  // The chain, asset list and every network endpoint are resolved once when
+  // ChainProvider mounts (interchain-kit keeps its WalletManager in a ref and
+  // ignores later chain props). Keying the runtime subtree on the active
+  // network profile remounts it on a switch, so it rebuilds against the new
+  // chain — and everything below re-initializes with it — without a reload.
+  const { profile } = useNetwork();
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <WalletRuntimeProviders>{children}</WalletRuntimeProviders>
+        <WalletRuntimeProviders key={profile}>{children}</WalletRuntimeProviders>
       </PersistGate>
     </Provider>
   );

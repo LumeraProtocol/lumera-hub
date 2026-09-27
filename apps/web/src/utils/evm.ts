@@ -1,6 +1,8 @@
 import {
   EVM_NATIVE_DECIMALS,
   EVM_RPC_ENDPOINT,
+  EVM_CHAIN_ID,
+  EVM_PROFILE_NAME,
 } from '@/contants/network';
 import { fromBech32, fromHex, toBech32, toHex } from '@cosmjs/encoding';
 import type { Eip1193Provider } from '@/types/window';
@@ -62,11 +64,15 @@ export const getEvmConnectionErrorMessage = (
 
 export const getMetaMaskProvider = (provider?: Eip1193Provider | null) => {
   if (!provider) return null;
+  // Keplr's EVM provider also sets isMetaMask, so it must be excluded explicitly
+  // (it identifies itself with isKeplr) — otherwise it gets picked as MetaMask.
+  const isMetaMask = (candidate?: Eip1193Provider | null) =>
+    Boolean(candidate?.isMetaMask) && !(candidate as { isKeplr?: boolean } | null | undefined)?.isKeplr;
   if (provider.providers?.length) {
-    return provider.providers.find((candidate) => candidate.isMetaMask)
-      || (provider.isMetaMask ? provider : null);
+    return provider.providers.find((candidate) => isMetaMask(candidate))
+      || (isMetaMask(provider) ? provider : null);
   }
-  return provider.isMetaMask ? provider : null;
+  return isMetaMask(provider) ? provider : null;
 };
 
 export const isEvmAddress = (value: string) => /^0x[0-9a-fA-F]{40}$/.test(value);
@@ -132,6 +138,65 @@ export const getEvmAddressFormats = (address: string, isEvmNetwork: boolean) => 
 };
 
 export const toHexChainId = (chainId: number) => `0x${chainId.toString(16)}`;
+
+type Eip6963Detail = { info?: { rdns?: string }; provider?: Eip1193Provider };
+
+/**
+ * Find the real MetaMask provider via EIP-6963 discovery, keyed on MetaMask's
+ * rdns (`io.metamask`) — NOT the `isMetaMask` flag, which other wallets
+ * (notably Keplr's EVM provider) spoof, so relying on it hands the request to
+ * the wrong extension. Falls back to the legacy window.ethereum shape, still
+ * skipping a provider that also identifies as Keplr.
+ */
+export const resolveMetaMaskProvider = (): Promise<Eip1193Provider | null> => {
+  if (typeof window === 'undefined') return Promise.resolve(null);
+  return new Promise((resolve) => {
+    let found: Eip1193Provider | null = null;
+    const onAnnounce = (event: Event) => {
+      const detail = (event as CustomEvent<Eip6963Detail>).detail;
+      if (detail?.info?.rdns === 'io.metamask' && detail.provider) found = detail.provider;
+    };
+    window.addEventListener('eip6963:announceProvider', onAnnounce as EventListener);
+    window.dispatchEvent(new Event('eip6963:requestProvider'));
+    setTimeout(() => {
+      window.removeEventListener('eip6963:announceProvider', onAnnounce as EventListener);
+      if (!found) {
+        const eth = window.ethereum;
+        const notKeplr = (p?: Eip1193Provider | null) =>
+          Boolean(p?.isMetaMask) && !(p as { isKeplr?: boolean } | undefined)?.isKeplr;
+        found = eth?.providers?.find((p) => notKeplr(p)) || (notKeplr(eth) ? eth ?? null : null);
+      }
+      resolve(found);
+    }, 300);
+  });
+};
+
+/**
+ * Ask MetaMask to add the active network's Lumera EVM chain (wallet_addEthereumChain).
+ * A no-op-safe one-shot for a "Add Lumera to MetaMask" button — MetaMask itself
+ * shows the approval, and adding a chain that already exists just succeeds.
+ * Returns false (rather than throwing) when there is nothing to add.
+ */
+export const addLumeraToMetaMask = async (): Promise<boolean> => {
+  if (typeof window === 'undefined') return false;
+  if (!EVM_CHAIN_ID || !EVM_RPC_ENDPOINT || !EVM_PROFILE_NAME) return false;
+  const provider = await resolveMetaMaskProvider();
+  if (!provider) {
+    throw new Error('MetaMask was not detected. Install or enable the MetaMask extension.');
+  }
+  await provider.request({
+    method: 'wallet_addEthereumChain',
+    params: [
+      {
+        chainId: toHexChainId(EVM_CHAIN_ID),
+        chainName: EVM_PROFILE_NAME,
+        nativeCurrency: { name: 'LUME', symbol: 'LUME', decimals: EVM_NATIVE_DECIMALS },
+        rpcUrls: [EVM_RPC_ENDPOINT],
+      },
+    ],
+  });
+  return true;
+};
 
 export const getEvmAccountForChain = async (
   provider: Eip1193Provider,

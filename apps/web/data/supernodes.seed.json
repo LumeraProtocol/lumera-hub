@@ -1,206 +1,1413 @@
 [
-  {
-    "latLng": [
-      49.4254092,
-      11.0796553
-    ],
-    "name": "Nuremberg",
-    "continent": "Europe",
-    "country": "Germany",
-    "country_code": "DE",
-    "subdivision": "Berlin",
-    "city": "Nuremberg",
-    "supernodeAccount": "lumera1563uuzljqvpanh79w2tvymqsly73v9nwygda73",
-    "validatorAddress": "lumeravaloper1563uuzljqvpanh79w2tvymqsly73v9nwtj7pcj",
-    "validatorMoniker": "Yami",
-    "address": "152.53.138.108:4444 ",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      40.0992294,
-      -83.1140771
-    ],
-    "name": "Dublin",
-    "continent": "North America",
-    "country": "United States",
-    "country_code": "US",
-    "subdivision": "Washington D.C.",
-    "city": "Dublin",
-    "supernodeAccount": "lumera160ykrfmz8y99zvcf4750mhye69upa38rl4ykqz",
-    "validatorAddress": "lumeravaloper1glr5cyvmn7a8av5u5mxt4mvs8ahgappglkpmcu",
-    "validatorMoniker": "lumera-testnet-light-validator-4",
-    "address": "3.128.152.132:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      49.0068901,
-      8.4036527
-    ],
-    "name": "Karlsruhe",
-    "continent": "Europe",
-    "country": "Germany",
-    "country_code": "DE",
-    "subdivision": "Berlin",
-    "city": "Karlsruhe",
-    "supernodeAccount": "lumera18vw3u7778zvrxsa672q9xyqlwxm8d3hyllw9zl",
-    "validatorAddress": "lumeravaloper18vw3u7778zvrxsa672q9xyqlwxm8d3hys9aeyu",
-    "validatorMoniker": "Veriznode",
-    "address": "152.53.146.79:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      39.9611755,
-      -82.9987942
-    ],
-    "name": "Columbus",
-    "continent": "North America",
-    "country": "United States",
-    "country_code": "US",
-    "subdivision": "Washington D.C.",
-    "city": "Columbus",
-    "supernodeAccount": "lumera19ptfc8h6r57vtkxzldlx9rrjqfn59agemmeumg",
-    "validatorAddress": "lumeravaloper1vwhx8lwhw9jrumlejpcnsrh9y7hslxrsk226sg",
-    "validatorMoniker": "lumera-testnet-light-validator-5",
-    "address": "18.223.157.107:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      49.4254092,
-      11.0796553
-    ],
-    "name": "Nuremberg",
-    "continent": "Europe",
-    "country": "Germany",
-    "country_code": "DE",
-    "subdivision": "Berlin",
-    "city": "Nuremberg",
-    "supernodeAccount": "lumera1ek4vulycd3ag0lvaa4qsr8w44dcc8090z57chf",
-    "validatorAddress": "lumeravaloper1gapqwfgz45mw2lrvy5nwks9ndfkdzn6pg0u69s",
-    "validatorMoniker": "Winnode",
-    "address": "152.53.138.217:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      49.4254092,
-      11.0796553
-    ],
-    "name": "Nuremberg",
-    "continent": "Europe",
-    "country": "Germany",
-    "country_code": "DE",
-    "subdivision": "Berlin",
-    "city": "Nuremberg",
-    "supernodeAccount": "lumera1epyav8gvn9es0s3mfzj8pkle7hdjdhwald7rds",
-    "validatorAddress": "lumeravaloper15tltd8srxkxda6nyrg95tpc2dm4z328kg8e83w",
-    "validatorMoniker": "AstroStake",
-    "address": "152.53.138.4:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      52.2296756,
-      21.0122287
-    ],
-    "name": "Warsaw",
-    "continent": "Europe",
-    "country": "Poland",
-    "country_code": "PL",
-    "subdivision": "Warsaw",
-    "city": "Warsaw",
-    "supernodeAccount": "lumera1fkgj76q4w98hcseldveyrnlpklj0tp6khn7hag",
-    "validatorAddress": "lumeravaloper1jfl8rf4pmf9pwzfzckl6pv8jmz0fqp2t799nq0",
-    "validatorMoniker": "coinsspor",
-    "address": "149.50.116.116:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      39.9611755,
-      -82.9987942
-    ],
-    "name": "Columbus",
-    "continent": "North America",
-    "country": "United States",
-    "country_code": "US",
-    "subdivision": "Washington D.C.",
-    "city": "Columbus",
-    "supernodeAccount": "lumera1ntcrs6m7ccxnq7pk7nmydt8902w2972wxzsel8",
-    "validatorAddress": "lumeravaloper1hv63d80cssswfxnyqw67d0chhhuctaflca2vre",
-    "validatorMoniker": "lumera-testnet-light-validator-2",
-    "address": "3.147.255.62:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      50.4750046,
-      12.3649754
-    ],
-    "name": "Falkenstein",
-    "continent": "Europe",
-    "country": "Germany",
-    "country_code": "DE",
-    "subdivision": "Berlin",
-    "city": "Falkenstein",
-    "supernodeAccount": "lumera1q2vr2027lmczswdtpu6lfwk43g7qagxqunx7p2",
-    "validatorAddress": "lumeravaloper1q2vr2027lmczswdtpu6lfwk43g7qagxqnf4z8f",
-    "validatorMoniker": "killerwhales_user",
-    "address": "136.243.74.81:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      39.9611755,
-      -82.9987942
-    ],
-    "name": "Columbus",
-    "continent": "North America",
-    "country": "United States",
-    "country_code": "US",
-    "subdivision": "Washington D.C.",
-    "city": "Columbus",
-    "supernodeAccount": "lumera1ryrea8vdxqkh048965kyurexya784ptnesqpvz",
-    "validatorAddress": "lumeravaloper1p9zp9uuwywuh3r4gtt7tq7qskn2sql4cqrke96",
-    "validatorMoniker": "lumera-testnet-light-validator-3",
-    "address": "3.138.185.199:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      60.1698557,
-      24.938379
-    ],
-    "name": "Helsinki",
-    "continent": "Europe",
-    "country": "Finland",
-    "country_code": "FI",
-    "subdivision": "Helsinki",
-    "city": "Helsinki",
-    "supernodeAccount": "lumera1vm5lthf5tqege3erevlcuw3przyemrg3wdnrhz",
-    "validatorAddress": "lumeravaloper1vm5lthf5tqege3erevlcuw3przyemrg3phql3p",
-    "validatorMoniker": "MekongLabs",
-    "address": "135.181.139.249:4444",
-    "p2pPort": "4445"
-  },
-  {
-    "latLng": [
-      50.4750046,
-      12.3649754
-    ],
-    "name": "Falkenstein",
-    "continent": "Europe",
-    "country": "Germany",
-    "country_code": "DE",
-    "subdivision": "Berlin",
-    "city": "Falkenstein",
-    "supernodeAccount": "lumera1wmq0wu60a63cnx5fhln0m0zv6u5rq6dw0dhvhn",
-    "validatorAddress": "lumeravaloper1uj98474n68v52ycwu25chs6ldj77svrtqyddca",
-    "validatorMoniker": "Encapsulate",
-    "address": "176.9.8.81:4444",
-    "p2pPort": "4445"
-  }
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera1ls0l902nx7x32j75dh30ceqgvgw87f04gaqvum",
+  "validatorAddress": "lumeravaloper1q498cczezvamq6qu72zd3dt6ng6c4p9pqfsefj",
+  "validatorMoniker": "🏆OshVanK🏆",
+  "address": "sn-mainnet.oshvank.xyz:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1gp768n3ts8njuy2knmdjymfsw5cljr0yk566ty",
+  "validatorAddress": "lumeravaloper1pp2rxq67um69hmy9k0wqxlqxt03pfw42t54wqx",
+  "validatorMoniker": "Divinzzo",
+  "address": "152.53.145.35:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera12uruj3crh4prsmw7p0emuyja89rvf4qf8t0r0u",
+  "validatorAddress": "lumeravaloper1yt0whdf62s5fry5tpavzfazpm4x5fq0njun6zm",
+  "validatorMoniker": "NodeStake",
+  "address": "65.21.77.251:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.6924,
+   3.20113
+  ],
+  "name": "Roubaix",
+  "continent": "Europe",
+  "country": "France",
+  "country_code": "FR",
+  "subdivision": "Hauts-de-France",
+  "city": "Roubaix",
+  "supernodeAccount": "lumera1xjqf8cnz7nfu76x90e0m24vystle05rtrvkj2s",
+  "validatorAddress": "lumeravaloper1ymlgc5w9fcv7n76ey3f0fhpgd4l9pw0jae09ud",
+  "validatorMoniker": "StakerHouse",
+  "address": "lumera-sn.stakerhouse.com:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1j4nrux8g92lrh7vwqnrrdz9rte4xfjt70u0h4h",
+  "validatorAddress": "lumeravaloper19r3uelql4za2t2cf3fcqnkk3uf6wef7j37s3vy",
+  "validatorMoniker": "NodeGod20",
+  "address": "159.195.7.193:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1djmxrc6g8gcl5uj06suqu3gap7tmrzx025usd6",
+  "validatorAddress": "lumeravaloper193e470z9mw2y8k5p30u9sfkyf36vd0jr66042e",
+  "validatorMoniker": "Veriznode Labs",
+  "address": "152.53.179.211:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   39.96118,
+   -82.99879
+  ],
+  "name": "Columbus",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Ohio",
+  "city": "Columbus",
+  "supernodeAccount": "lumera1tpfluler2mwx9z95alp2hs77k7kjk65tctelmk",
+  "validatorAddress": "lumeravaloper195sxl5wjsmaqwf242ewfuhqfplpk528zenvuh5",
+  "validatorMoniker": "Lumera SN Validator 2",
+  "address": "18.220.88.251:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   39.96118,
+   -82.99879
+  ],
+  "name": "Columbus",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Ohio",
+  "city": "Columbus",
+  "supernodeAccount": "lumera16yfzj3vnctme73n32wc0d0zq7x09t7jjl33n8m",
+  "validatorAddress": "lumeravaloper1g55tgd7uxa7q44e2zuh6kg4pkx4kh8rw8pqf3z",
+  "validatorMoniker": "Lumera SN Validator 3",
+  "address": "3.151.52.219:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1w3m636nmxdyzj54ssgzqeughc5z7x5t20ldy4e",
+  "validatorAddress": "lumeravaloper1f88a86nkmcjk9ydx6vjj2txsehptmezs8j6wvg",
+  "validatorMoniker": "Winnode",
+  "address": "152.53.246.4:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   53.4809,
+   -2.2374
+  ],
+  "name": "Manchester",
+  "continent": "Europe",
+  "country": "United Kingdom",
+  "country_code": "GB",
+  "subdivision": "England",
+  "city": "Manchester",
+  "supernodeAccount": "lumera1uqyga045xd8tdg9nq503l9zjlr78c0gnxcwz3g",
+  "validatorAddress": "lumeravaloper1dyz5usmk7r7hua4nh8wz99j49v7y5j494m82e0",
+  "validatorMoniker": "LinkPool",
+  "address": "89.107.20.75:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   39.96118,
+   -82.99879
+  ],
+  "name": "Columbus",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Ohio",
+  "city": "Columbus",
+  "supernodeAccount": "lumera1m9u5ksahhth52n3gu4v544v83s9s2kyu7hsn04",
+  "validatorAddress": "lumeravaloper1dcgn470mxqddpk9ae5l7sctq9cqg99t2pg4cpz",
+  "validatorMoniker": "Lumera SN Validator 1",
+  "address": "3.18.55.43:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   39.96118,
+   -82.99879
+  ],
+  "name": "Columbus",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Ohio",
+  "city": "Columbus",
+  "supernodeAccount": "lumera18v6gsttpqpne5x42my38jkl00x5auuk8dchh4e",
+  "validatorAddress": "lumeravaloper1wpmzassenklwkz02mhsr94mumz3dacc23hl46m",
+  "validatorMoniker": "Lumera SN Validator 4",
+  "address": "3.138.81.67:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   45.5075,
+   -73.5887
+  ],
+  "name": "Montreal",
+  "continent": "North America",
+  "country": "Canada",
+  "country_code": "CA",
+  "subdivision": "Quebec",
+  "city": "Montreal",
+  "supernodeAccount": "lumera14uhkfj9p8mtt6km4ydj4xfmrfdkmdmmv30vpk8",
+  "validatorAddress": "lumeravaloper1w7pgnexrgcuf4t4llw4laem6za7g0n2pw7sh3r",
+  "validatorMoniker": "KaLaMuC",
+  "address": "38.49.212.137:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera12ves5t9tc76ade6wxjhgnehmc7t85ew4l32vv5",
+  "validatorAddress": "lumeravaloper10gc9x5tkcr8kr06kh48tfgr5pls4avg89gmlne",
+  "validatorMoniker": "NAGAGINI™",
+  "address": "152.53.85.145:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   39.96118,
+   -82.99879
+  ],
+  "name": "Columbus",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Ohio",
+  "city": "Columbus",
+  "supernodeAccount": "lumera1n2fvvl9dysadma5nlf0awm24qgs59qm5l9gxu4",
+  "validatorAddress": "lumeravaloper102v95umusguxux3m4pjcdl2al3q7ln0g6nwfwy",
+  "validatorMoniker": "Lumera SN Validator 8",
+  "address": "3.23.69.41:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera1vm5lthf5tqege3erevlcuw3przyemrg3wdnrhz",
+  "validatorAddress": "lumeravaloper1jzmqvv3s9whxv4vafnj8ry4mvxref0fflxry0y",
+  "validatorMoniker": "MekongLabs",
+  "address": "135.181.139.249:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera1jyhgnwq426am46w9t3ps0x4uadyemly7ka7zhs",
+  "validatorAddress": "lumeravaloper1jyhgnwq426am46w9t3ps0x4uadyemly7e8d73n",
+  "validatorMoniker": "CoreNode",
+  "address": "37.27.235.144:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.4777,
+   12.3649
+  ],
+  "name": "Falkenstein",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Saxony",
+  "city": "Falkenstein",
+  "supernodeAccount": "lumera1easq08fkq3lx9nvgz8htsjxj9ftx8j0wa6pxhd",
+  "validatorAddress": "lumeravaloper1npktg23dvr3ym4kcpcrpawdtz3yulrmxgq7ych",
+  "validatorMoniker": "Aurora Staking",
+  "address": "136.243.81.41:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   39.96118,
+   -82.99879
+  ],
+  "name": "Columbus",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Ohio",
+  "city": "Columbus",
+  "supernodeAccount": "lumera17r5aqnvpva53cwv8fn6f6h3ryqz49v5959fcvr",
+  "validatorAddress": "lumeravaloper1khu3s0gq32vz59f3gdxhdk5udel2ug3jfqypx8",
+  "validatorMoniker": "Lumera SN Validator 6",
+  "address": "3.147.131.79:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   39.96118,
+   -82.99879
+  ],
+  "name": "Columbus",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Ohio",
+  "city": "Columbus",
+  "supernodeAccount": "lumera1mfldjaqc7ec5rlh4k58yttv3cd978gzl070zk6",
+  "validatorAddress": "lumeravaloper1hz9ea8n7uvffmktysa0p9eyddeacx3gxvmk9qe",
+  "validatorMoniker": "Lumera SN Validator 5",
+  "address": "18.190.53.108:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera14x62xdj5ljfzmvl7tydr0hgu78k8m5gywn8h3g",
+  "validatorAddress": "lumeravaloper1h0ljtgz7khx02lrv37pgwry5zk54uc3zy7wy5r",
+  "validatorMoniker": "HusoNode",
+  "address": "mainnet-sn.husonode.xyz:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1q5g9wl5yclj53uh0qsdnm4zwf25e0mrydjj4d7",
+  "validatorAddress": "lumeravaloper1cy8uwcffldkr8667mrsezkd0yn4v909hu2fyt8",
+  "validatorMoniker": "nodeyus",
+  "address": "193.26.157.178:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   45.5406,
+   -73.6578
+  ],
+  "name": "Montreal",
+  "continent": "North America",
+  "country": "Canada",
+  "country_code": "CA",
+  "subdivision": "Quebec",
+  "city": "Montreal",
+  "supernodeAccount": "lumera155xzh450z7s5g7fl2xvnxvkgftdwdrgdjd80jd",
+  "validatorAddress": "lumeravaloper1cjdxm4urpdp42un8xjsdx6469h3nlx26ryareg",
+  "validatorMoniker": "OneNov",
+  "address": "104.152.210.127:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.4777,
+   12.3649
+  ],
+  "name": "Falkenstein",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Saxony",
+  "city": "Falkenstein",
+  "supernodeAccount": "lumera1k9ntrj2almgm6z2gsg86ydzj6h4cujv4pqupaq",
+  "validatorAddress": "lumeravaloper16p8pzyccmh5vdn0cw6jlmmvt2wxxvxvpnls6dg",
+  "validatorMoniker": "Innovating Capital",
+  "address": "144.76.6.180:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   39.96118,
+   -82.99879
+  ],
+  "name": "Columbus",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Ohio",
+  "city": "Columbus",
+  "supernodeAccount": "lumera10dxssufzcrjyf6u8aeukawnqwmxgevl3prctsl",
+  "validatorAddress": "lumeravaloper16km6dsme560ylv8kam8rfz09c267q8u6jcryhe",
+  "validatorMoniker": "Lumera SN Validator 7",
+  "address": "3.138.82.66:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   48.8558,
+   2.3494
+  ],
+  "name": "Paris",
+  "continent": "Europe",
+  "country": "France",
+  "country_code": "FR",
+  "subdivision": "Île-de-France",
+  "city": "Paris",
+  "supernodeAccount": "lumera17k80vwkkshpnmqp95erp6dsxae4c9eklt2rx7n",
+  "validatorAddress": "lumeravaloper1a7mak2dx8p2eglg50nx6gezcy2duvklrgzwjrv",
+  "validatorMoniker": "AstroStake",
+  "address": "62.210.212.142:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.4777,
+   12.3649
+  ],
+  "name": "Falkenstein",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Saxony",
+  "city": "Falkenstein",
+  "supernodeAccount": "lumera1urlcnt0d36jc83n8hlh5atgwtjtww7fwc6qluq",
+  "validatorAddress": "lumeravaloper1qqgqp30qzpulrujtkvllr92cjlx5zdfqdeeg2m",
+  "validatorMoniker": "lumera-testnet-light-validator-2",
+  "address": "159.69.68.253:4446",
+  "p2pPort": "4447"
+ },
+ {
+  "latLng": [
+   48.9742,
+   8.1851
+  ],
+  "name": "Lauterbourg",
+  "continent": "Europe",
+  "country": "France",
+  "country_code": "FR",
+  "subdivision": "Grand Est",
+  "city": "Lauterbourg",
+  "supernodeAccount": "lumera1wwtllhzj4lj5jwvx4jtfgl4wen4jhepz7sdqdl",
+  "validatorAddress": "lumeravaloper1qxt7awul3cyvgf2ku08k3n3nqn7lsqvs9zww9y",
+  "validatorMoniker": "OneNov",
+  "address": "supernode-lumera.onenov.xyz:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.4777,
+   12.3649
+  ],
+  "name": "Falkenstein",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Saxony",
+  "city": "Falkenstein",
+  "supernodeAccount": "lumera1q2vr2027lmczswdtpu6lfwk43g7qagxqunx7p2",
+  "validatorAddress": "lumeravaloper1q2vr2027lmczswdtpu6lfwk43g7qagxqnf4z8f",
+  "validatorMoniker": "killerwhales_user",
+  "address": "136.243.74.81:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.1169,
+   8.6837
+  ],
+  "name": "Frankfurt am Main",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Hesse",
+  "city": "Frankfurt am Main",
+  "supernodeAccount": "lumera1pe75rw2te8xfmssymxqzwh6pez0svczwxcxy9m",
+  "validatorAddress": "lumeravaloper1pe75rw2te8xfmssymxqzwh6pez0svczwfz4crc",
+  "validatorMoniker": "Lumera Midnight",
+  "address": "165.22.92.131:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.1169,
+   8.6837
+  ],
+  "name": "Frankfurt am Main",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Hesse",
+  "city": "Frankfurt am Main",
+  "supernodeAccount": "lumera1z9u85ca2ludfjcahvj6ydgxep3kyegs2qrx4ks",
+  "validatorAddress": "lumeravaloper1z9u85ca2ludfjcahvj6ydgxep3kyegs20e4fsn",
+  "validatorMoniker": "Veriznode",
+  "address": "62.171.154.33:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   43.653,
+   -79.383
+  ],
+  "name": "Toronto",
+  "continent": "North America",
+  "country": "Canada",
+  "country_code": "CA",
+  "subdivision": "Ontario",
+  "city": "Toronto",
+  "supernodeAccount": "lumera1myrd9l0yy0tcv9ay4723ypuc9wddnhxrgzyut7",
+  "validatorAddress": "lumeravaloper1z9letv4wmx773ltka8sm4g40leu4adgt8uj075",
+  "validatorMoniker": "LightNodes",
+  "address": "4.239.243.216:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1znpu9g8ma6k5dlfyqr6vq9vkq60va0f89d7yjv",
+  "validatorAddress": "lumeravaloper1znpu9g8ma6k5dlfyqr6vq9vkq60va0f82hdc50",
+  "validatorMoniker": "Nodeyus",
+  "address": "94.16.121.30:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.4777,
+   12.3649
+  ],
+  "name": "Falkenstein",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Saxony",
+  "city": "Falkenstein",
+  "supernodeAccount": "lumera1zlxdl376qfele4hgncdyd6y7a8du9wqqxdvuky",
+  "validatorAddress": "lumeravaloper1zlxdl376qfele4hgncdyd6y7a8du9wqqfhlqs8",
+  "validatorMoniker": "BonyNode💚",
+  "address": "88.198.46.55:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   38.6364,
+   -90.1985
+  ],
+  "name": "St Louis",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Missouri",
+  "city": "St Louis",
+  "supernodeAccount": "lumera1zlv49wfr9wnszaq8aygwp33u9eevvnyztgutx9",
+  "validatorAddress": "lumeravaloper1zlv49wfr9wnszaq8aygwp33u9eevvnyzyj0hqx",
+  "validatorMoniker": "Doable",
+  "address": "195.26.251.0:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.4777,
+   12.3649
+  ],
+  "name": "Falkenstein",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Saxony",
+  "city": "Falkenstein",
+  "supernodeAccount": "lumera1m5ktp0q9sgcpnx7pkm947a79jwme80h02ll565",
+  "validatorAddress": "lumeravaloper1yhdjvsmksz30nnnc9na49la9cet0evlsdz0psw",
+  "validatorMoniker": "lumera-testnet-light-validator-3",
+  "address": "159.69.68.253:4448",
+  "p2pPort": "4449"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1yuy3zyzzfhpjlzs890wy4js5kpnvs9kw5vl6l3",
+  "validatorAddress": "lumeravaloper1yuy3zyzzfhpjlzs890wy4js5kpnvs9kwmkvxej",
+  "validatorMoniker": "NodeRunnerIndo",
+  "address": "152.53.128.86:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.4777,
+   12.3649
+  ],
+  "name": "Falkenstein",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Saxony",
+  "city": "Falkenstein",
+  "supernodeAccount": "lumera1yl39t9djgh4gnjw77h9k354eus305n7pnyup7m",
+  "validatorAddress": "lumeravaloper1yl39t9djgh4gnjw77h9k354eus305n7pu70acc",
+  "validatorMoniker": "LINQNODE",
+  "address": "195.201.61.205:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera19xptrw59aetjgaglec39ryfdz5wmjg0fjxyq6k",
+  "validatorAddress": "lumeravaloper19xptrw59aetjgaglec39ryfdz5wmjg0fauhuu4",
+  "validatorMoniker": "nagagininode",
+  "address": "152.53.151.237:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   -6.99306,
+   110.421
+  ],
+  "name": "Semarang",
+  "continent": "Asia",
+  "country": "Indonesia",
+  "country_code": "ID",
+  "subdivision": "Central Java",
+  "city": "Semarang",
+  "supernodeAccount": "lumera19tl7p4qjlmn05e7hnxc699emujd2gn2hm3nuq5",
+  "validatorAddress": "lumeravaloper19tl7p4qjlmn05e7hnxc699emujd2gn2h5tqqxh",
+  "validatorMoniker": "dencuan",
+  "address": "182.253.38.115:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.4777,
+   12.3649
+  ],
+  "name": "Falkenstein",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Saxony",
+  "city": "Falkenstein",
+  "supernodeAccount": "lumera186822tfvchl7dyj52wmy4e8jrudcfk4ddv0w6n",
+  "validatorAddress": "lumeravaloper19vv3delzuk7vty3azwvmdpc8cm8sv3yu3w3k69",
+  "validatorMoniker": "Encapsulate",
+  "address": "176.9.8.81:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   52.2299,
+   21.0093
+  ],
+  "name": "Warsaw",
+  "continent": "Europe",
+  "country": "Poland",
+  "country_code": "PL",
+  "subdivision": "Mazovia",
+  "city": "Warsaw",
+  "supernodeAccount": "lumera1xyqzjwewwjvshvv2f5c4y2mgcaq4etm85chsdu",
+  "validatorAddress": "lumeravaloper1xyqzjwewwjvshvv2f5c4y2mgcaq4etm8mzyvtl",
+  "validatorMoniker": "HusoNode",
+  "address": "149.50.96.58:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   38.7493,
+   -77.4918
+  ],
+  "name": "Manassas",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Virginia",
+  "city": "Manassas",
+  "supernodeAccount": "lumera142cm0yqj59xq8peewzjlnmxyp7ercylsr8qusx",
+  "validatorAddress": "lumeravaloper1xn3pq8tk03t9cy3z6thfc2vdryq5p0ynqwvqac",
+  "validatorMoniker": "BadGateway",
+  "address": "152.53.90.39:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   41.4993,
+   -81.6944
+  ],
+  "name": "Cleveland",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Ohio",
+  "city": "Cleveland",
+  "supernodeAccount": "lumera1muyprn7gvl4ylyuf2h4t8qtrd78wzksmsmlhgs",
+  "validatorAddress": "lumeravaloper18mghfm88q4hgnchvrhw3h65wspnquepr0lzvjx",
+  "validatorMoniker": "RHINO 🦏",
+  "address": "74.80.149.122:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   52.2299,
+   21.0093
+  ],
+  "name": "Warsaw",
+  "continent": "Europe",
+  "country": "Poland",
+  "country_code": "PL",
+  "subdivision": "Mazovia",
+  "city": "Warsaw",
+  "supernodeAccount": "lumera1ywnr4pmestj7pkdavrlt9y66pknglaak6awnv4",
+  "validatorAddress": "lumeravaloper1gxauzl4ssrdtqznra9dcwn4cz9lq0qsqvhves7",
+  "validatorMoniker": "coinsspor",
+  "address": "149.50.116.116:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera1jnhlpm02v6d7893m9yyl8dyn336t4sppwlvypr",
+  "validatorAddress": "lumeravaloper1gk69m27spndzwkjqhtqx2fr6npvae6kcdmu6w0",
+  "validatorMoniker": "StoneGaze",
+  "address": "157.180.8.121:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1ek4vulycd3ag0lvaa4qsr8w44dcc8090z57chf",
+  "validatorAddress": "lumeravaloper1fcv0z9vt33wzdpj7awp669l0tyx04mzv4y6c33",
+  "validatorMoniker": "Winnode",
+  "address": "152.53.138.217:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   16.0685,
+   108.2215
+  ],
+  "name": "Da Nang",
+  "continent": "Asia",
+  "country": "Vietnam",
+  "country_code": "VN",
+  "subdivision": "Da Nang",
+  "city": "Da Nang",
+  "supernodeAccount": "lumera1nguz0ftsp6k9686pldmvunmjm584r7t2xlxzkv",
+  "validatorAddress": "lumeravaloper1fefmaqrd3f9vczv8q5hw8e6enqvmq4q4axcpqe",
+  "validatorMoniker": "BoyGau",
+  "address": "14.233.170.31:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   40.7862,
+   -74.0743
+  ],
+  "name": "Secaucus",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "New Jersey",
+  "city": "Secaucus",
+  "supernodeAccount": "lumera1q5gr6llat98fh44pdhxv6zdde97fj9werycryt",
+  "validatorAddress": "lumeravaloper1240333xn2u3a9gp779sfm8u83d3xtzu85xfujv",
+  "validatorMoniker": "Hightower",
+  "address": "sn.lumera.test.at.htw.tech:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   1.32123,
+   103.695
+  ],
+  "name": "Singapore",
+  "continent": "Asia",
+  "country": "Singapore",
+  "country_code": "SG",
+  "subdivision": "South West",
+  "city": "Singapore",
+  "supernodeAccount": "lumera1tzghn5e697kpu7lyq37qsvmjtecs8lapmnmm2z",
+  "validatorAddress": "lumeravaloper1tzghn5e697kpu7lyq37qsvmjtecs8lap5fg8vp",
+  "validatorMoniker": "cosmic-hodler",
+  "address": "159.223.86.20:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera1v7xlpgwuxkple4z3l0q32dpa0f6x7rsgj7umtv",
+  "validatorAddress": "lumeravaloper1v7xlpgwuxkple4z3l0q32dpa0f6x7rsgay08d0",
+  "validatorMoniker": "🏆OshVanK🏆",
+  "address": "sn-grpc.oshvank.xyz:443",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera1jfq05ev088sz7ngfpuaauk2znvnklv4k8xh0xu",
+  "validatorAddress": "lumeravaloper1dlu7aqxgmmepwuyey7q0f5c5fa7v88xge3casx",
+  "validatorMoniker": "MIPEnode",
+  "address": "157.180.52.245:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   43.653,
+   -79.383
+  ],
+  "name": "Toronto",
+  "continent": "North America",
+  "country": "Canada",
+  "country_code": "CA",
+  "subdivision": "Ontario",
+  "city": "Toronto",
+  "supernodeAccount": "lumera1dwlyuqxk6prf0x6dnn2wu7a5v4623as6hp34ra",
+  "validatorAddress": "lumeravaloper1w9lchjaw6v8x3ddh8l8y702w6u0j78vpcwvv9g",
+  "validatorMoniker": "Istanbul",
+  "address": "130.107.146.47:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.4777,
+   12.3649
+  ],
+  "name": "Falkenstein",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Saxony",
+  "city": "Falkenstein",
+  "supernodeAccount": "lumera1qpm3thuuxqaz24ut45mdcx4qp2s4pjfgnfesar",
+  "validatorAddress": "lumeravaloper1w6addkmaezrr0769rc2292ry8ufdxxfhty8e0c",
+  "validatorMoniker": "Innovating Capital",
+  "address": "159.69.68.253:4452",
+  "p2pPort": "4453"
+ },
+ {
+  "latLng": [
+   48.9742,
+   8.1851
+  ],
+  "name": "Lauterbourg",
+  "continent": "Europe",
+  "country": "France",
+  "country_code": "FR",
+  "subdivision": "Grand Est",
+  "city": "Lauterbourg",
+  "supernodeAccount": "lumera1s6nvkp5gre56h885qj36xhs77uhtfs7rwudu7c",
+  "validatorAddress": "lumeravaloper1s6nvkp5gre56h885qj36xhs77uhtfs7rpx7qcm",
+  "validatorMoniker": "WansNode",
+  "address": "213.136.83.231:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   48.9742,
+   8.1851
+  ],
+  "name": "Lauterbourg",
+  "continent": "Europe",
+  "country": "France",
+  "country_code": "FR",
+  "subdivision": "Grand Est",
+  "city": "Lauterbourg",
+  "supernodeAccount": "lumera13z4pkmgkr587sg6lkqnmqmqkkfpsau3rmjd5kx",
+  "validatorAddress": "lumeravaloper13z4pkmgkr587sg6lkqnmqmqkkfpsau3r5g7gs9",
+  "validatorMoniker": "Strivenode",
+  "address": "156.67.29.226:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   39.96118,
+   -82.99879
+  ],
+  "name": "Columbus",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Ohio",
+  "city": "Columbus",
+  "supernodeAccount": "lumera160ykrfmz8y99zvcf4750mhye69upa38rl4ykqz",
+  "validatorAddress": "lumeravaloper13ut8h0qskq0rcjwxwdn3d79p2fyy5syuaw02jg",
+  "validatorMoniker": "lumera-testnet-light-validator-4",
+  "address": "3.143.3.180:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1jf8n33jtz8lrnm4nqlgf33893apz966veh903y",
+  "validatorAddress": "lumeravaloper1jf8n33jtz8lrnm4nqlgf33893apz966vkdknh8",
+  "validatorMoniker": "Divinzzo",
+  "address": "152.53.136.97:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera1pskvxfytqe850mjh5jh7a9kwhf4tw6pv4aly6x",
+  "validatorAddress": "lumeravaloper1nx44yj7dazwl7wqanc67fy0emzsra0wrsv2cu7",
+  "validatorMoniker": "ESERCKR",
+  "address": "65.109.123.185:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1n3xgaycmjdjzdupuhuaxdhx8n80ew45kzsewsa",
+  "validatorAddress": "lumeravaloper1n3xgaycmjdjzdupuhuaxdhx8n80ew45kd22jk7",
+  "validatorMoniker": "catsmile",
+  "address": "159.195.87.236:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   39.96118,
+   -82.99879
+  ],
+  "name": "Columbus",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Ohio",
+  "city": "Columbus",
+  "supernodeAccount": "lumera19ptfc8h6r57vtkxzldlx9rrjqfn59agemmeumg",
+  "validatorAddress": "lumeravaloper1ncsdqq2pg96suq5cs9yf98656r9fdwltpy6puw",
+  "validatorMoniker": "lumera-testnet-light-validator-5",
+  "address": "18.219.144.87:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera1ftyw89tutvqnxyu6608qcyjmcu4varv7x243gl",
+  "validatorAddress": "lumeravaloper1nla7jryc9aq2jhsat7g9xlyttzf4dwzzqth9ju",
+  "validatorMoniker": "5Kage 🌀",
+  "address": "157.180.3.36:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1fvnaljmwxwudh92n6dt6ny49gk84v3mzhv4pzx",
+  "validatorAddress": "lumeravaloper15eet9999f6lrzmz0c225kxt03m70v88sfr9vej",
+  "validatorMoniker": "CoreNode",
+  "address": "213.109.163.99:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   40.8449,
+   14.2716
+  ],
+  "name": "Naples",
+  "continent": "Europe",
+  "country": "Italy",
+  "country_code": "IT",
+  "subdivision": "Campania",
+  "city": "Naples",
+  "supernodeAccount": "lumera1tr8q9v523437zst6qprehnx5u8mcs60dl593w9",
+  "validatorAddress": "lumeravaloper14yye6pnz2hl9h8j5jhy3emtd9zm9jt5qzzjh3f",
+  "validatorMoniker": "Kleomedes",
+  "address": "dns.kleomed.es:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera1mklprqwzek2swnxh3dhf25gr2gsy3knw0fcag5",
+  "validatorAddress": "lumeravaloper14y9h6hpf5rpvk2u2ges5v2y898p9nse7yj8vjn",
+  "validatorMoniker": "Fertal",
+  "address": "95.216.70.180:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   48.9742,
+   8.1851
+  ],
+  "name": "Lauterbourg",
+  "continent": "Europe",
+  "country": "France",
+  "country_code": "FR",
+  "subdivision": "Grand Est",
+  "city": "Lauterbourg",
+  "supernodeAccount": "lumera1uq7lylrf0mrvrfq5s5uzk5my2f4562w2qxxftw",
+  "validatorAddress": "lumeravaloper14hmngk20ukajmq3ew5y0mppez9hjlu6fur6k05",
+  "validatorMoniker": "MaouamNodelab",
+  "address": "185.197.195.18:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   -6.2114,
+   106.8446
+  ],
+  "name": "Jakarta",
+  "continent": "Asia",
+  "country": "Indonesia",
+  "country_code": "ID",
+  "subdivision": "Jakarta",
+  "city": "Jakarta",
+  "supernodeAccount": "lumera1kz366y86s32u8vkcmwy842c4xd8p7l3h29pamc",
+  "validatorAddress": "lumeravaloper1kz366y86s32u8vkcmwy842c4xd8p7l3h9ljpam",
+  "validatorMoniker": "QuiinBaby",
+  "address": "72.60.76.56:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1k2l9e99xh2xsnhrjx9unp4zxrah363k6dsqfxc",
+  "validatorAddress": "lumeravaloper1k2l9e99xh2xsnhrjx9unp4zxrah363k6z2n4qm",
+  "validatorMoniker": "NodeGod20",
+  "address": "152.53.150.4:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera1kdgfc4zfq8tu0m76duchqs7zt9k0xc6pefka2f",
+  "validatorAddress": "lumeravaloper1k3gfg72e6mn7m8unp76paafrxf78pwe70ssje6",
+  "validatorMoniker": "zeycanode",
+  "address": "65.109.24.39",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.4777,
+   12.3649
+  ],
+  "name": "Falkenstein",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Saxony",
+  "city": "Falkenstein",
+  "supernodeAccount": "lumera1ycfffwmfc6wmukj9jenqvw4x7us7p6jkjklpav",
+  "validatorAddress": "lumeravaloper1kef8felrzdrn2ywz8z2nzwfec4pgww4jz3zlhp",
+  "validatorMoniker": "FpXEL",
+  "address": "88.99.167.174:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   48.9742,
+   8.1851
+  ],
+  "name": "Lauterbourg",
+  "continent": "Europe",
+  "country": "France",
+  "country_code": "FR",
+  "subdivision": "Grand Est",
+  "city": "Lauterbourg",
+  "supernodeAccount": "lumera1hn4v845erhae96x572a9z4d66ah7qhhc6ffe7q",
+  "validatorAddress": "lumeravaloper1hn4v845erhae96x572a9z4d66ah7qhhc4n69cr",
+  "validatorMoniker": "Batana",
+  "address": "144.91.79.28:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   48.9742,
+   8.1851
+  ],
+  "name": "Lauterbourg",
+  "continent": "Europe",
+  "country": "France",
+  "country_code": "FR",
+  "subdivision": "Grand Est",
+  "city": "Lauterbourg",
+  "supernodeAccount": "lumera1hk2d36d9jec4zlspsyz23gw26hzctrv5dmqske",
+  "validatorAddress": "lumeravaloper1hk2d36d9jec4zlspsyz23gw26hzctrv5zpnvs6",
+  "validatorMoniker": "Chielnode",
+  "address": "62.84.181.238:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   52.2299,
+   21.0093
+  ],
+  "name": "Warsaw",
+  "continent": "Europe",
+  "country": "Poland",
+  "country_code": "PL",
+  "subdivision": "Mazovia",
+  "city": "Warsaw",
+  "supernodeAccount": "lumera1mtre5ghyenye8wlgckx5qz46zd9ruh75l35shz",
+  "validatorAddress": "lumeravaloper1hmkc6z238cpccrsachs8nedvz2cgq95mvg5kqm",
+  "validatorMoniker": "Shazoes",
+  "address": "supernode-testnet-grpc.shazoes.xyz:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   48.9999,
+   8.3732
+  ],
+  "name": "Karlsruhe",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Baden-Wurttemberg",
+  "city": "Karlsruhe",
+  "supernodeAccount": "lumera13fz0rrd4us0w4yf6w6ujyzla7p9vueancfp5wu",
+  "validatorAddress": "lumeravaloper1cz679v4xrp879serwqnm8w9gmy59wgpky2ce8l",
+  "validatorMoniker": "pilex3173",
+  "address": "89.147.102.206",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1cxu7hzvayudv5lkwmkagc60jqd6d96qvdmrjy0",
+  "validatorAddress": "lumeravaloper1cxu7hzvayudv5lkwmkagc60jqd6d96qvzpswzv",
+  "validatorMoniker": "Veriznode Labs",
+  "address": "152.53.146.79:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1es289vvdyylg40ers9f9pe5xre5x2yk8zt8crt",
+  "validatorAddress": "lumeravaloper1es289vvdyylg40ers9f9pe5xre5x2yk8d35y9g",
+  "validatorMoniker": "Yaminode",
+  "address": "152.53.138.108:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   54.6872,
+   25.2797
+  ],
+  "name": "Vilnius",
+  "continent": "Europe",
+  "country": "Lithuania",
+  "country_code": "LT",
+  "subdivision": "Vilnius",
+  "city": "Vilnius",
+  "supernodeAccount": "lumera1ha8y5j7ng9e8q3wuhte2pvygj8fltnv7h0xql4",
+  "validatorAddress": "lumeravaloper1eugasjyfpfjz7pgq0cad3374qwe7c5e95q2lg3",
+  "validatorMoniker": "komado",
+  "address": "supernode.komado.site:443",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.4777,
+   12.3649
+  ],
+  "name": "Falkenstein",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Saxony",
+  "city": "Falkenstein",
+  "supernodeAccount": "lumera1nkscejquueshdypc3m0m2x9lnm0rf6293shshd",
+  "validatorAddress": "lumeravaloper1ux9pyka7ztqlyy8s2t2pmnc2cnx24zc7aaak7e",
+  "validatorMoniker": "lumera-testnet-light-validator-1",
+  "address": "159.69.68.253:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera1cdd405legyskutquummxvmzwwcdvqjlgm8d70w",
+  "validatorAddress": "lumeravaloper1uxc2feaqyn2a2yn0sajx95aqyrav2m7dqwy6q2",
+  "validatorMoniker": "HazenNetworkSolutions",
+  "address": "65.108.237.96:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   49.4527,
+   11.0783
+  ],
+  "name": "Nuremberg",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Bavaria",
+  "city": "Nuremberg",
+  "supernodeAccount": "lumera1kq96nkztevqg82rv5kkughvt2s4c0rm7k23dfl",
+  "validatorAddress": "lumeravaloper1aju8lehmvkt48jflzd609hydza4s4zueq0c38g",
+  "validatorMoniker": "AstroStake",
+  "address": "152.53.138.4:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   60.1719,
+   24.9347
+  ],
+  "name": "Helsinki",
+  "continent": "Europe",
+  "country": "Finland",
+  "country_code": "FI",
+  "subdivision": "Uusimaa",
+  "city": "Helsinki",
+  "supernodeAccount": "lumera1n70hju0sew704tmzfxkhy64uer6prjsmp9j8fx",
+  "validatorAddress": "lumeravaloper1akpe9twlleurpfad6w9zmhxyf3mfnad2urqd6k",
+  "validatorMoniker": "kazzimkoc",
+  "address": "65.108.231.223:4444",
+  "p2pPort": "4445"
+ },
+ {
+  "latLng": [
+   50.4777,
+   12.3649
+  ],
+  "name": "Falkenstein",
+  "continent": "Europe",
+  "country": "Germany",
+  "country_code": "DE",
+  "subdivision": "Saxony",
+  "city": "Falkenstein",
+  "supernodeAccount": "lumera190wt6k6n4xvww034pttxqzjxnmeedfykn4ywuk",
+  "validatorAddress": "lumeravaloper17rxl2anj94mppyqunkch08p3h8a32zcj3mfdh9",
+  "validatorMoniker": "Aurora Staking",
+  "address": "159.69.68.253:4450",
+  "p2pPort": "4451"
+ },
+ {
+  "latLng": [
+   38.6364,
+   -90.1985
+  ],
+  "name": "St Louis",
+  "continent": "North America",
+  "country": "United States",
+  "country_code": "US",
+  "subdivision": "Missouri",
+  "city": "St Louis",
+  "supernodeAccount": "lumera17c4zrxmwswan97yrflepqfld47347nu9j4vyqu",
+  "validatorAddress": "lumeravaloper17c4zrxmwswan97yrflepqfld47347nu9a0lcxl",
+  "validatorMoniker": "Alpinode",
+  "address": "209.126.12.85:4444",
+  "p2pPort": "4445"
+ }
 ]
