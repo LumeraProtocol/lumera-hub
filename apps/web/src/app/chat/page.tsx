@@ -19,6 +19,7 @@ import JSZip from 'jszip'
 
 import useWalletCascade, { type CascadePhase } from '@/hooks/useWalletCascade'
 import { ChatMarkdown } from '@/components/hub/ChatMarkdown'
+import { TypingDots } from '@/components/hub/TypingDots'
 import { readChatStream } from '@/utils/openrouter-stream'
 import { NETWORK_PROFILE } from '@/contants/network'
 
@@ -240,8 +241,8 @@ export default function ChatPage() {
     stickRef.current = true
     const controller = new AbortController()
     abortRef.current = controller
-    // The assistant bubble is created by the first token, so "Thinking…" shows
-    // until the model actually starts answering.
+    // The assistant bubble is created by the first token, so the typing dots
+    // show until the model actually starts answering.
     let started = false
     try {
       // Straight to OpenRouter with the viewer's own key — nothing via Lumera.
@@ -599,8 +600,8 @@ export default function ChatPage() {
               )}
               {sending && messages[messages.length - 1]?.role !== 'assistant' ? (
                 <div className="flex justify-start">
-                  <div className="rounded-[10px] border border-line-edge bg-ink-600 px-3.5 py-2.5 text-base text-text-tertiary">
-                    Thinking…
+                  <div className="rounded-[10px] rounded-bl-[3px] border border-line-edge bg-ink-600 px-4 py-3">
+                    <TypingDots />
                   </div>
                 </div>
               ) : null}

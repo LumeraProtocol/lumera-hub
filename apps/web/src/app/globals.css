@@ -222,11 +222,30 @@ textarea:focus-visible,
   animation: lmBlink 2.4s infinite;
 }
 
+/* The chat's typing indicator: three dots rising in turn (staggered inline). */
+@keyframes lmTypingDot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.animate-typing-dot {
+  animation: lmTypingDot 1.2s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade,
   .animate-rise,
   .animate-drawer,
-  .animate-blink {
+  .animate-blink,
+  .animate-typing-dot {
     animation: none;
   }
 }
