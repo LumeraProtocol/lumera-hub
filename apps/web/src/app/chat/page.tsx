@@ -18,6 +18,9 @@ import React, { useEffect, useRef, useState } from 'react'
 import JSZip from 'jszip'
 
 import useWalletCascade, { type CascadePhase } from '@/hooks/useWalletCascade'
+import { ChatMarkdown } from '@/components/hub/ChatMarkdown'
+import { TypingDots } from '@/components/hub/TypingDots'
+import { readChatStream } from '@/utils/openrouter-stream'
 import { NETWORK_PROFILE } from '@/contants/network'
 
 type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
@@ -130,6 +133,10 @@ export default function ChatPage() {
   const [history, setHistory] = useState<HistoryEntry[]>([])
 
   const scrollRef = useRef<HTMLDivElement>(null)
+  // The in-flight reply, so Stop (or Clear) can cancel it mid-stream.
+  const abortRef = useRef<AbortController | null>(null)
+  // Whether the transcript is pinned to the bottom; scrolling up unpins it.
+  const stickRef = useRef(true)
   const hasKey = apiKey.trim().length > 0
 
   // Load the key from this tab's session on mount, and whether Cascade archive
@@ -143,8 +150,12 @@ export default function ChatPage() {
     }
   }, [])
 
+  // Follow a reply as it streams in, unless the reader has scrolled up to
+  // re-read something — then leave them where they are.
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+    const el = scrollRef.current
+    if (!el || !stickRef.current) return
+    el.scrollTo({ top: el.scrollHeight, behavior: sending ? 'auto' : 'smooth' })
   }, [messages, sending])
 
   // Show the chats this browser saved under the connected wallet.
@@ -227,6 +238,12 @@ export default function ChatPage() {
     setMessages(displayNext)
     setInput('')
     setSending(true)
+    stickRef.current = true
+    const controller = new AbortController()
+    abortRef.current = controller
+    // The assistant bubble is created by the first token, so the typing dots
+    // show until the model actually starts answering.
+    let started = false
     try {
       // Straight to OpenRouter with the viewer's own key — nothing via Lumera.
       // Send the picked model plus the others as fallback (free pool 429s a lot).
@@ -239,12 +256,15 @@ export default function ChatPage() {
           'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://hub.lumera.io',
           'X-Title': 'Lumera Hub Chat lab',
         },
-        // Generous cap: some free routes are reasoning models that spend tokens
-        // thinking, and a low cap returns an empty reply.
-        body: JSON.stringify({ models: candidates, messages: apiNext, max_tokens: 2048 }),
+        // Streamed, so the reply appears token by token. Generous cap: some free
+        // routes are reasoning models that spend tokens thinking, and a low cap
+        // returns an empty reply.
+        body: JSON.stringify({ models: candidates, messages: apiNext, max_tokens: 2048, stream: true }),
+        signal: controller.signal,
       })
-      const data = await res.json().catch(() => null)
-      if (!res.ok) {
+      if (!res.ok || !res.body) {
+        // Failures before the stream starts come back as ordinary JSON.
+        const data = await res.json().catch(() => null)
         const msg =
           res.status === 401
             ? 'OpenRouter rejected that key — check it and link it again.'
@@ -254,16 +274,41 @@ export default function ChatPage() {
         setError(msg)
         return
       }
-      const reply = data?.choices?.[0]?.message?.content || '(empty reply)'
-      setMessages([...displayNext, { role: 'assistant', content: reply }])
-    } catch {
-      setError('Could not reach OpenRouter from the browser.')
+      const full = await readChatStream(res.body, (delta) => {
+        if (!started) {
+          started = true
+          setMessages((prev) => [...prev, { role: 'assistant', content: delta }])
+          return
+        }
+        setMessages((prev) => {
+          const next = prev.slice()
+          const last = next[next.length - 1]
+          next[next.length - 1] = { ...last, content: last.content + delta }
+          return next
+        })
+      })
+      if (!started && !full) {
+        setMessages((prev) => [...prev, { role: 'assistant', content: '(empty reply)' }])
+      }
+    } catch (e) {
+      // Stopped by the reader: keep whatever had already arrived.
+      if (controller.signal.aborted) return
+      const reason = e instanceof Error ? e.message : ''
+      setError(
+        started
+          ? `The reply was cut off${reason ? `: ${reason}` : '.'}`
+          : e instanceof TypeError || !reason
+            ? 'Could not reach OpenRouter from the browser.'
+            : reason,
+      )
     } finally {
+      if (abortRef.current === controller) abortRef.current = null
       setSending(false)
     }
   }
 
   const clearConversation = () => {
+    abortRef.current?.abort()
     setMessages([])
     setAttachments([])
     setSaveResult(null)
@@ -510,6 +555,10 @@ export default function ChatPage() {
 
             <div
               ref={scrollRef}
+              onScroll={(e) => {
+                const el = e.currentTarget
+                stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80
+              }}
               className="flex min-h-[380px] flex-col gap-3 overflow-y-auto p-4"
               style={{ maxHeight: '54vh' }}
             >
@@ -535,18 +584,24 @@ export default function ChatPage() {
                       className={
                         m.role === 'user'
                           ? 'max-w-[80%] whitespace-pre-wrap rounded-[10px] rounded-br-[3px] bg-lumera-green/15 px-3.5 py-2.5 text-base leading-[1.55] text-text-primary'
-                          : 'max-w-[80%] whitespace-pre-wrap rounded-[10px] rounded-bl-[3px] border border-line-edge bg-ink-600 px-3.5 py-2.5 text-base leading-[1.55] text-text-secondary'
+                          : 'min-w-0 max-w-[85%] rounded-[10px] rounded-bl-[3px] border border-line-edge bg-ink-600 px-3.5 py-2.5 text-base leading-[1.55] text-text-secondary'
                       }
                     >
-                      {m.content}
+                      {/* Replies are Markdown (bold, lists, tables, code); the
+                          reader's own messages stay as typed. */}
+                      {m.role === 'assistant' ? (
+                        <ChatMarkdown streaming={sending && i === messages.length - 1}>{m.content}</ChatMarkdown>
+                      ) : (
+                        m.content
+                      )}
                     </div>
                   </div>
                 ))
               )}
-              {sending ? (
+              {sending && messages[messages.length - 1]?.role !== 'assistant' ? (
                 <div className="flex justify-start">
-                  <div className="rounded-[10px] border border-line-edge bg-ink-600 px-3.5 py-2.5 text-base text-text-tertiary">
-                    Thinking…
+                  <div className="rounded-[10px] rounded-bl-[3px] border border-line-edge bg-ink-600 px-4 py-3">
+                    <TypingDots />
                   </div>
                 </div>
               ) : null}
@@ -600,16 +655,16 @@ export default function ChatPage() {
               onKeyDown={onKeyDown}
               rows={2}
               placeholder={hasKey ? 'Message… (Enter to send, Shift+Enter for a new line)' : 'Link an OpenRouter key to start'}
-              disabled={composerDisabled}
+              disabled={!hasKey}
               className="flex-1 resize-none rounded-[10px] border border-line-edge bg-ink-800 px-3.5 py-2.5 text-base text-text-primary placeholder:text-text-tertiary focus:border-line-accent focus:outline-none disabled:opacity-60"
             />
             <button
               type="button"
-              onClick={() => void send()}
-              disabled={composerDisabled || (!input.trim() && attachments.length === 0)}
-              className="h-[46px] flex-none rounded-[10px] bg-lumera-green px-5 text-small font-semibold text-ink-900 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => (sending ? abortRef.current?.abort() : void send())}
+              disabled={!sending && (composerDisabled || (!input.trim() && attachments.length === 0))}
+              className={`h-[46px] flex-none rounded-[10px] px-5 text-small font-semibold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 ${sending ? 'border border-line-edge bg-ink-600 text-text-primary' : 'bg-lumera-green text-ink-900'}`}
             >
-              {sending ? 'Sending…' : 'Send'}
+              {sending ? 'Stop' : 'Send'}
             </button>
           </div>
           {!hasKey ? (
@@ -837,7 +892,7 @@ export default function ChatPage() {
             <button
               type="button"
               onClick={() => void saveToCascade()}
-              disabled={saving || !canSave}
+              disabled={saving || sending || !canSave}
               className="w-full rounded-[9px] border border-line-edge bg-ink-600 py-2 text-small font-medium text-text-primary transition-colors hover:border-line-accent hover:text-lumera-green disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving
