@@ -200,7 +200,9 @@ const RPC_FALLBACKS: Record<NetworkProfile, string[]> = {
     'https://lumera-rpc.publicnode.com',
     'https://lumera-rpc.stakerhouse.com',
     'https://lumera-mainnet-rpc.corenodehq.xyz',
-    'https://rpc.lumera.io',
+    // Not rpc.lumera.io: it sends no Access-Control-Allow-Origin header (on the
+    // preflight or a plain GET), so every browser request to it fails CORS.
+    // lcd.lumera.io does send one, which is why it stays in REST_FALLBACKS.
   ],
   testnet: [
     'https://lumera-testnet-rpc.polkachu.com',

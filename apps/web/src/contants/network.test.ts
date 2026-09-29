@@ -63,6 +63,13 @@ describe('network profile selection', () => {
     await expect(import('./network')).rejects.toThrow(/Unknown network profile/);
   });
 
+  it('never lists an RPC host that refuses cross-origin requests', async () => {
+    // rpc.lumera.io sends no Access-Control-Allow-Origin header, so the hub
+    // (which calls RPC straight from the browser) can never use it.
+    const net = await import('./network');
+    expect(net.rpcEndpointsFor('mainnet')).not.toContain('https://rpc.lumera.io');
+  });
+
   it('leads each profile endpoint list with its configured primary, fallbacks after', async () => {
     const net = await import('./network');
     const testnetRpc = net.rpcEndpointsFor('testnet');
