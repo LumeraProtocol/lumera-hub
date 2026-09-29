@@ -200,7 +200,9 @@ const RPC_FALLBACKS: Record<NetworkProfile, string[]> = {
     'https://lumera-rpc.publicnode.com',
     'https://lumera-rpc.stakerhouse.com',
     'https://lumera-mainnet-rpc.corenodehq.xyz',
-    'https://rpc.lumera.io',
+    // Not rpc.lumera.io: it sends no Access-Control-Allow-Origin header (on the
+    // preflight or a plain GET), so every browser request to it fails CORS.
+    // lcd.lumera.io does send one, which is why it stays in REST_FALLBACKS.
   ],
   testnet: [
     'https://lumera-testnet-rpc.polkachu.com',
@@ -366,6 +368,17 @@ export const setNetworkProfile = (profile: string): boolean => {
 export const CASCADE_API_URL = (
   process.env.NEXT_PUBLIC_CASCADE_API_URL || 'https://api.lumera.help'
 ).replace(/\/+$/, '');
+
+/*
+ * Endpoints for the Lumera SDK (createLumeraClient). Its built-in presets
+ * hardcode the official rpc.lumera.io / lcd.lumera.io, and rpc.lumera.io sends
+ * no Access-Control-Allow-Origin header, so every browser call the SDK makes
+ * through the mainnet preset fails CORS. Spread this next to `preset` so the
+ * SDK reads from the same CORS-verified primaries as the rest of the hub (the
+ * preset still supplies the chain id and SN-API). Read at call time, so it
+ * follows a network switch.
+ */
+export const sdkEndpoints = () => ({ rpcUrl: RPC_ENDPOINT, lcdUrl: REST_AI_URL });
 
 /*
  * Cascade objects are per-chain, and an action_id is unique only within a chain

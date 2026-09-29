@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { NextResponse } from 'next/server';
-import { fullSizeAvatar, parseSyndicatedTimeline, type XPost } from '@/utils/x-syndication';
+import { cleanPostText, fullSizeAvatar, parseSyndicatedTimeline, type XPost } from '@/utils/x-syndication';
 
 /**
  * Recent posts from the protocol's X account.
@@ -143,7 +143,7 @@ const fromApi = async (): Promise<XPost[] | null> => {
     .map((t: ApiTweet) => ({
       id: t.id,
       author,
-      text: (t.text ?? '').replace(/\s*https:\/\/t\.co\/\w+\s*$/, '').trim(),
+      text: cleanPostText((t.text ?? '').replace(/\s*https:\/\/t\.co\/\w+\s*$/, '')),
       createdAt: t.created_at ?? '',
       replies: t.public_metrics?.reply_count ?? 0,
       reposts: t.public_metrics?.retweet_count ?? 0,

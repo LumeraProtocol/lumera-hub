@@ -63,6 +63,27 @@ describe('network profile selection', () => {
     await expect(import('./network')).rejects.toThrow(/Unknown network profile/);
   });
 
+  it('points the Lumera SDK at the hub primaries, not its CORS-less preset URLs', async () => {
+    // The SDK's mainnet preset hardcodes rpc.lumera.io; sdkEndpoints overrides it.
+    const mainnet = await import('./network');
+    expect(mainnet.sdkEndpoints().rpcUrl).toBe('https://lumera-rpc.polkachu.com');
+
+    vi.resetModules();
+    process.env.NEXT_PUBLIC_NETWORK_PROFILE = 'testnet';
+    const testnet = await import('./network');
+    expect(testnet.sdkEndpoints()).toEqual({
+      rpcUrl: 'https://rpc-testnet.lumeraprotocol.com',
+      lcdUrl: 'https://lcd-testnet.lumeraprotocol.com',
+    });
+  });
+
+  it('never lists an RPC host that refuses cross-origin requests', async () => {
+    // rpc.lumera.io sends no Access-Control-Allow-Origin header, so the hub
+    // (which calls RPC straight from the browser) can never use it.
+    const net = await import('./network');
+    expect(net.rpcEndpointsFor('mainnet')).not.toContain('https://rpc.lumera.io');
+  });
+
   it('leads each profile endpoint list with its configured primary, fallbacks after', async () => {
     const net = await import('./network');
     const testnetRpc = net.rpcEndpointsFor('testnet');

@@ -24,6 +24,7 @@ import {
 import {
   CHAIN_ID,
   SDK_PRESET,
+  sdkEndpoints,
   SNSCOPE_URL,
   SNAPI_URL,
   isSnapiReachable,
@@ -1192,6 +1193,7 @@ const useCascade = ({
             signer,
             address,
             preset: SDK_PRESET,
+            ...sdkEndpoints(),
             gasPrice: GAS_PRICE,
           }, true);
           // Calculate expiration time (default to 24 hours from now)
@@ -1327,6 +1329,7 @@ const useCascade = ({
       try {
         const client = await sdkjsReact.createLumeraClient({
           preset: SDK_PRESET,
+          ...sdkEndpoints(),
         });
         const results = [];
         let errorMsg: string = '';
@@ -1454,6 +1457,7 @@ const useCascade = ({
         const signer = await sdkjsReact.getKeplrSigner(CHAIN_ID);
         const client = await sdkjsReact.createLumeraClient({
           preset: SDK_PRESET,
+          ...sdkEndpoints(),
           signer,
           address: address!,
           gasPrice: "0.025ulume",
@@ -1504,6 +1508,7 @@ const useCascade = ({
         const signer = await sdkjsReact.getKeplrSigner(CHAIN_ID);
         const client = await sdkjsReact.createLumeraClient({
           preset: SDK_PRESET,
+          ...sdkEndpoints(),
           signer,
           address: address!,
           gasPrice: "0.025ulume",
