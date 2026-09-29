@@ -6,12 +6,12 @@
  */
 export function TypingDots() {
   return (
-    <span role="status" aria-label="Assistant is typing" className="inline-flex items-center gap-[5px] py-[3px]">
+    <span role="status" aria-label="Assistant is typing" className="inline-flex items-center gap-1 py-[2px]">
       {[0, 1, 2].map((i) => (
         <span
           key={i}
           aria-hidden="true"
-          className="animate-typing-dot h-[7px] w-[7px] rounded-full bg-text-tertiary"
+          className="animate-typing-dot h-[5px] w-[5px] rounded-full bg-text-tertiary"
           style={{ animationDelay: `${i * 0.16}s` }}
         />
       ))}

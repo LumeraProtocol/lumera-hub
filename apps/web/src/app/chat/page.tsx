@@ -600,7 +600,7 @@ export default function ChatPage() {
               )}
               {sending && messages[messages.length - 1]?.role !== 'assistant' ? (
                 <div className="flex justify-start">
-                  <div className="rounded-[10px] rounded-bl-[3px] border border-line-edge bg-ink-600 px-4 py-3">
+                  <div className="flex items-center rounded-[10px] rounded-bl-[3px] border border-line-edge bg-ink-600 px-3 py-2">
                     <TypingDots />
                   </div>
                 </div>
