@@ -62,6 +62,18 @@ const decode = (s: string): string =>
     .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
     .replace(/&([a-z]+);/gi, (m, n) => ENTITIES[n.toLowerCase()] ?? m);
 
+/**
+ * Entity-decode and tidy a post's text for the card: both X sources return it
+ * HTML-escaped (`Q&amp;A`), and a run of blank lines collapses to one break so
+ * the card's line clamp is spent on words. Shared with the X API path in
+ * /api/x-feed, which otherwise showed the raw `&amp;`.
+ */
+export const cleanPostText = (text: string): string =>
+  decode(text)
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
+
 const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
 
 /**
@@ -85,10 +97,7 @@ const readable = (tweet: RawTweet): string => {
    * runs of newlines collapse to a single break — the structure survives, the
    * clamp is spent on words.
    */
-  return decode(text)
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{2,}/g, '\n')
-    .trim();
+  return cleanPostText(text);
 };
 
 /*

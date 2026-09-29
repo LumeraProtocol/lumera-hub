@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseSyndicatedTimeline } from './x-syndication';
+import { cleanPostText, parseSyndicatedTimeline } from './x-syndication';
 
 const page = (entries: unknown[]) =>
   `<html><script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
@@ -160,5 +160,17 @@ describe('parseSyndicatedTimeline', () => {
       'lumera',
     );
     expect(out).toEqual([]);
+  });
+});
+
+describe('cleanPostText', () => {
+  it('decodes the HTML entities X escapes post text with', () => {
+    expect(cleanPostText('fireside chat &amp; open Q&amp;A &lt;3 &quot;GM&quot; &#39;s&#x21;')).toBe(
+      'fireside chat & open Q&A <3 "GM" \'s!',
+    );
+  });
+
+  it('collapses runs of blank lines so the clamp is spent on words', () => {
+    expect(cleanPostText('Line one.  \n\n\nLine two.\n')).toBe('Line one.\nLine two.');
   });
 });
