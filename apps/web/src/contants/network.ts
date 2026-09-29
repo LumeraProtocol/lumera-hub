@@ -370,6 +370,17 @@ export const CASCADE_API_URL = (
 ).replace(/\/+$/, '');
 
 /*
+ * Endpoints for the Lumera SDK (createLumeraClient). Its built-in presets
+ * hardcode the official rpc.lumera.io / lcd.lumera.io, and rpc.lumera.io sends
+ * no Access-Control-Allow-Origin header, so every browser call the SDK makes
+ * through the mainnet preset fails CORS. Spread this next to `preset` so the
+ * SDK reads from the same CORS-verified primaries as the rest of the hub (the
+ * preset still supplies the chain id and SN-API). Read at call time, so it
+ * follows a network switch.
+ */
+export const sdkEndpoints = () => ({ rpcUrl: RPC_ENDPOINT, lcdUrl: REST_AI_URL });
+
+/*
  * Cascade objects are per-chain, and an action_id is unique only within a chain
  * (testnet 20000 and mainnet 20000 are unrelated files). The gateway serves
  * mainnet objects under /mainnet and testnet objects at the root, so a read must

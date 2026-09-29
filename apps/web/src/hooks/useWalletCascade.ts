@@ -17,7 +17,7 @@ import { useCallback } from 'react'
 
 import { useLumeraClientWrapper } from './useLumeraClientWrapper'
 import useWalletConnect from './useWalletConnect'
-import { CHAIN_ID, SDK_PRESET } from '@/contants/network'
+import { CHAIN_ID, SDK_PRESET, sdkEndpoints } from '@/contants/network'
 
 const GAS_PRICE = '0.025ulume'
 
@@ -86,7 +86,7 @@ export function useWalletCascade() {
       }
 
       const client = await sdk.createLumeraClient(
-        { signer, address, preset: SDK_PRESET, gasPrice: GAS_PRICE },
+        { signer, address, preset: SDK_PRESET, ...sdkEndpoints(), gasPrice: GAS_PRICE },
         true,
       )
       const uploader = client.Cascade.uploader
@@ -114,6 +114,7 @@ export function useWalletCascade() {
       const signer = await sdk.getKeplrSigner(CHAIN_ID)
       const client = await sdk.createLumeraClient({
         preset: SDK_PRESET,
+        ...sdkEndpoints(),
         signer,
         address,
         gasPrice: GAS_PRICE,
