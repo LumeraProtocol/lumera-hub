@@ -5,7 +5,11 @@ import { describe, expect, it } from 'vitest';
 import { ChatMarkdown } from './ChatMarkdown';
 
 const render = (md: string, streaming = false) =>
-  renderToStaticMarkup(createElement(ChatMarkdown, { streaming, children: md }));
+  // children goes as createElement's third argument (react/no-children-prop);
+  // the cast only satisfies the component's required-children prop type.
+  renderToStaticMarkup(
+    createElement(ChatMarkdown, { streaming } as { streaming: boolean; children: string }, md),
+  );
 
 describe('ChatMarkdown', () => {
   it('renders bold, lists and inline code instead of the raw markers', () => {
@@ -50,5 +54,17 @@ describe('ChatMarkdown', () => {
   it('marks the reply while it is still streaming', () => {
     expect(render('typing', true)).toContain('data-streaming="true"');
     expect(render('done')).not.toContain('data-streaming');
+  });
+
+  it('turns a raw <br> into a line break, e.g. inside a table cell', () => {
+    const html = render('| Place | Why |\n| - | - |\n| Seoul | palaces<br>• K-pop<br/>• food |');
+    expect(html).toMatch(/palaces<br\/?>\s*• K-pop<br\/?>\s*• food/);
+    expect(html).not.toContain('&lt;br');
+  });
+
+  it('still drops every other raw HTML tag', () => {
+    const html = render('keep <b>bold</b> text <script>x</script>');
+    expect(html).not.toContain('<b>');
+    expect(html).not.toContain('<script');
   });
 });

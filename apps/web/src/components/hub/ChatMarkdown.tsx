@@ -18,6 +18,26 @@ import React from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
+/*
+ * Models often break lines inside a table cell with a raw `<br>` — a real
+ * newline would end the row. Raw HTML is not rendered (so a reply cannot
+ * inject markup), which silently dropped those breaks and ran the cell's items
+ * together. This turns exactly `<br>` / `<br/>` into a Markdown hard break;
+ * every other HTML tag stays unrendered.
+ */
+type MdNode = { type: string; value?: string; children?: MdNode[] }
+const RAW_BR = /^<br\s*\/?>$/i
+function remarkHtmlBreaks() {
+  const walk = (node: MdNode) => {
+    if (!node.children) return
+    node.children = node.children.map((child) =>
+      child.type === 'html' && RAW_BR.test((child.value ?? '').trim()) ? { type: 'break' } : child,
+    )
+    node.children.forEach(walk)
+  }
+  return walk
+}
+
 type Intrinsic = keyof React.JSX.IntrinsicElements
 
 /**
@@ -95,7 +115,7 @@ export function ChatMarkdown({ children, streaming = false }: { children: string
       className={streaming ? `min-w-0 break-words ${STREAMING_CARET}` : 'min-w-0 break-words'}
       data-streaming={streaming ? 'true' : undefined}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+      <ReactMarkdown remarkPlugins={[remarkGfm, remarkHtmlBreaks]} components={components}>
         {children}
       </ReactMarkdown>
     </div>
