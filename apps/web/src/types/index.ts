@@ -301,7 +301,7 @@ export type ViewId =
   | "tracking"
   | "blocks"
   | "portal"
-  | "foundry"
+  | "snag"
   | "chat"
   | "injhub"
 
@@ -364,7 +364,7 @@ export interface IActionDetail {
 }
 
 export const VIEW_TITLES: Record<ViewId, string> = {
-  foundry: "Foundry",
+  snag: "Snag",
   chat: "Chat lab",
   faucet: "Faucet",
   dashboard: "Dashboard",

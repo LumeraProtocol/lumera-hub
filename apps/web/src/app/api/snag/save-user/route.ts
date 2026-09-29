@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       const loyaltyRule = await SnagLoyaltyRepo
         .createQueryBuilder()
         .select('id')
-        .where('metadata LIKE :metadata', { metadata: `%snag/wallet/connect%` })
+        .where('metadata LIKE :metadata', { metadata: `%/wallet/connect%` })
         .andWhere("type = 'external_rule'")
         .getRawOne();
       if (!loyaltyRule) {
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     const loyaltyRule = await SnagLoyaltyRepo
       .createQueryBuilder()
       .select('id')
-      .where('metadata LIKE :metadata', { metadata: `%snag/wallet/connect%` })
+      .where('metadata LIKE :metadata', { metadata: `%/wallet/connect%` })
       .andWhere("type = 'external_rule'")
       .getRawOne();
     if (!loyaltyRule) {

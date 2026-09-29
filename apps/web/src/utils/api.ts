@@ -95,7 +95,7 @@ const customFetch = (
   signal?: AbortSignal,
   /*
    * Skip the global error toast. A caller that renders its own explanation for
-   * a failure should not also raise a red banner over the whole app — Foundry
+   * a failure should not also raise a red banner over the whole app — Snag
    * saying "the quest service is not reachable" does not need to be
    * accompanied by "Internal server error".
    */
@@ -105,7 +105,7 @@ const customFetch = (
    * The quest service is off, so do not call it.
    *
    * These routes need SNAG credentials, and without them every one answers
-   * 500. They are invoked from ordinary flows rather than from Foundry alone,
+   * 500. They are invoked from ordinary flows rather than from Snag alone,
    * so leaving them to fail put "Internal server error" in front of people
    * whose wallet had just connected or whose upload had just completed.
    * Refusing here means no request, no 500 and no toast, and callers already

@@ -88,6 +88,7 @@ const PRIMARY_NAV: NavItem[] = [
   { id: "governance", label: "Governance", url: "/governance", icon: <GovernanceIcon /> },
   { id: "cascade", label: "Cascade", url: "/cascade", icon: <CascadeIcon /> },
   { id: "chat", label: "Chat lab", url: "/chat", icon: <ChatIcon /> },
+  { id: "snag", label: "Snag", url: "/snag", icon: <FoundryIcon /> },
 ]
 
 /*
@@ -97,9 +98,6 @@ const PRIMARY_NAV: NavItem[] = [
  */
 const PREVIEW_NAV: NavItem[] = [
   { id: "blocks", label: "Blocks", url: "/blocks", icon: <DashboardIcon /> },
-  // Foundry keeps its route (reachable by URL) but is not offered in the
-  // sidebar — its quests come from SNAG and are not ready to surface.
-  { id: "foundry", label: "Foundry", url: "/foundry", icon: <FoundryIcon />, hidden: true },
   { id: "sense", label: "Sense", url: "/sense", icon: <SearchIcon /> },
   { id: "inference", label: "Inference", url: "/inference", icon: <FoundryIcon /> },
   { id: "nfts", label: "NFTs", url: "/nfts", icon: <CascadeIcon /> },

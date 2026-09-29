@@ -425,7 +425,7 @@ export const COSMOS_EIP712_ENABLED = parseBooleanEnvironmentValue(
 /*
  * Whether the quest service is wired up on this deployment.
  *
- * Foundry and every quest verification run through SNAG, which needs server
+ * Snag and every quest verification run through SNAG, which needs server
  * credentials this repo does not carry. Off unless explicitly switched on, and
  * the API client refuses to call the quest routes while it is off.
  */
