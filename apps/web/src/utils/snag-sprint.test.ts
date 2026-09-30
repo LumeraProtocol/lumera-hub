@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSprint, firstQuests, isLive, questStyle, questTarget, type SnagRule, type SnagRuleGroup } from './snag-sprint';
+import { buildSprint, firstQuests, isLive, questFlow, questStyle, questTarget, type SnagRule, type SnagRuleGroup } from './snag-sprint';
 
 const NOW = Date.parse('2026-09-29T12:00:00Z');
 const rule = (id: string, extra: Partial<SnagRule> = {}): SnagRule => ({ id, name: `Rule ${id}`, type: 'quiz', amount: '10', ...extra });
@@ -110,5 +110,30 @@ describe('questTarget', () => {
 
   it('follows an external CTA as-is', () => {
     expect(questTarget({ cta: { href: 'https://medium.com/@lumera' } }, SITE)).toEqual({ kind: 'external', url: 'https://medium.com/@lumera' });
+  });
+});
+
+describe('questFlow', () => {
+  const SITE = 'https://snag.example';
+
+  it('does the wallet link, X/Discord connects and follows natively', () => {
+    expect(questFlow({ type: 'external_rule', cta: { href: 'https://hub.lumera.io/loyalty/wallet/connect' } }, SITE)).toEqual({ kind: 'wallet-link' });
+    expect(questFlow({ type: 'connected_twitter' }, SITE)).toEqual({ kind: 'connect', provider: 'twitter' });
+    expect(questFlow({ type: 'connected_discord' }, SITE)).toEqual({ kind: 'connect', provider: 'discord' });
+    expect(questFlow({ type: 'drip_x_follow', followUrl: 'https://x.com/lumera' }, SITE)).toEqual({
+      kind: 'follow',
+      handle: 'lumera',
+      url: 'https://x.com/intent/follow?screen_name=lumera',
+    });
+  });
+
+  it('sends a follow with no usable account, and anything else, to SNAG', () => {
+    expect(questFlow({ type: 'drip_x_follow', followUrl: 'https://example.com/x' }, SITE)).toEqual({ kind: 'snag', url: SITE });
+    expect(questFlow({ type: 'quiz' }, SITE)).toEqual({ kind: 'snag', url: SITE });
+  });
+
+  it('keeps hub verification pages in the hub', () => {
+    const id = '362997f0-a566-43ff-b69a-c3dbf84ea4ce';
+    expect(questFlow({ type: 'external_rule', cta: { href: `https://hub.lumera.io/loyalty/${id}/stake` } }, SITE)).toEqual({ kind: 'hub', path: `/loyalty/${id}/stake` });
   });
 });

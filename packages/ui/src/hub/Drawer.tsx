@@ -34,17 +34,11 @@ export function Drawer({
   children,
   footer,
   onClose,
-  wide = false,
-  flush = false,
 }: {
   title: React.ReactNode
   children: React.ReactNode
   footer?: React.ReactNode
   onClose: () => void
-  /** A wider panel, for embedded pages rather than forms. */
-  wide?: boolean
-  /** The body runs edge to edge with no padding or scrolling of its own (e.g. an iframe). */
-  flush?: boolean
 }) {
   const panel = useRef<HTMLDivElement>(null)
 
@@ -81,10 +75,7 @@ export function Drawer({
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : 'Drawer'}
         tabIndex={-1}
-        className={cx(
-          'animate-drawer fixed top-0 right-0 bottom-0 z-41 flex w-full flex-col border-l border-line-edge bg-ink-700 shadow-[-24px_0_60px_rgba(0,6,16,.55)] outline-none',
-          wide ? 'max-w-[540px]' : 'max-w-[428px]',
-        )}
+        className="animate-drawer fixed top-0 right-0 bottom-0 z-41 flex w-full max-w-[428px] flex-col border-l border-line-edge bg-ink-700 shadow-[-24px_0_60px_rgba(0,6,16,.55)] outline-none"
         style={{ zIndex: 41 }}
       >
         <div className="flex flex-none items-center justify-between gap-3.5 border-b border-line-hairline px-5 py-[18px]">
@@ -99,14 +90,7 @@ export function Drawer({
           </button>
         </div>
 
-        <div
-          className={cx(
-            'flex flex-1 flex-col',
-            flush ? 'min-h-0 overflow-hidden' : 'gap-4 overflow-y-auto px-5 py-[18px]',
-          )}
-        >
-          {children}
-        </div>
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-[18px]">{children}</div>
 
         {footer ? (
           <div className="flex flex-none gap-[9px] border-t border-line-hairline px-5 py-4">

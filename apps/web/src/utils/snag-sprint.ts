@@ -19,7 +19,11 @@ export type SnagRule = {
   showBeforeStart?: boolean | null
   hideInUi?: boolean | null
   deletedAt?: string | null
-  metadata?: { cta?: { label?: string | null; href?: string | null } | null } | null
+  metadata?: {
+    cta?: { label?: string | null; href?: string | null } | null
+    /** The account a drip_x_follow quest asks the reader to follow. */
+    twitterAccountUrl?: string | null
+  } | null
 }
 
 export type SnagRuleGroup = {
@@ -39,6 +43,8 @@ export type SprintQuest = {
   frequency?: string
   endsAt?: string
   cta?: { label?: string; href: string }
+  /** For a follow quest: the X profile to follow. */
+  followUrl?: string
 }
 
 export type SprintGroup = { id: string; name: string; subtitle?: string; quests: SprintQuest[] }
@@ -62,6 +68,7 @@ const toQuest = (rule: SnagRule): SprintQuest => {
     frequency: rule.frequency || undefined,
     endsAt: rule.endTime || undefined,
     cta: href ? { label: rule.metadata?.cta?.label?.trim() || undefined, href } : undefined,
+    followUrl: rule.metadata?.twitterAccountUrl?.trim() || undefined,
   }
 }
 
@@ -165,4 +172,41 @@ export const questTarget = (quest: Pick<SprintQuest, 'cta'>, snagSiteUrl: string
     }
   }
   return { kind: 'external', url: snagSiteUrl }
+}
+
+/* -------------------------------------------------------------- native flows */
+
+/**
+ * How a quest is done inside the hub, step by step, without the SNAG site:
+ *
+ *   wallet-link  sign a message with the hub wallet; the server checks it and
+ *                completes the quest on SNAG.
+ *   connect      sign in with X / Discord through SNAG (in a popup: neither
+ *                allows being framed), then SNAG confirms the connection.
+ *   follow       follow the account on X, then SNAG checks the follow.
+ *   hub          a hub verification page (/loyalty/<rule>/<kind>).
+ *   snag         anything else: done on the SNAG site.
+ */
+export type QuestFlow =
+  | { kind: 'wallet-link' }
+  | { kind: 'connect'; provider: 'twitter' | 'discord' }
+  | { kind: 'follow'; url: string; handle: string }
+  | { kind: 'hub'; path: string }
+  | { kind: 'snag'; url: string }
+
+/** Quest types SNAG verifies itself when asked, so the hub may request it. */
+export const SNAG_VERIFIED_TYPES = new Set(['connected_twitter', 'connected_discord', 'drip_x_follow'])
+
+const X_HANDLE = /^https?:\/\/(?:www\.)?(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})\/?$/i
+
+export const questFlow = (quest: Pick<SprintQuest, 'type' | 'cta' | 'followUrl'>, snagSiteUrl: string): QuestFlow => {
+  if (quest.cta?.href && /\/wallet\/connect\b/.test(quest.cta.href)) return { kind: 'wallet-link' }
+  if (quest.type === 'connected_twitter') return { kind: 'connect', provider: 'twitter' }
+  if (quest.type === 'connected_discord') return { kind: 'connect', provider: 'discord' }
+  if (quest.type === 'drip_x_follow') {
+    const handle = quest.followUrl ? X_HANDLE.exec(quest.followUrl)?.[1] : undefined
+    if (handle) return { kind: 'follow', url: `https://x.com/intent/follow?screen_name=${handle}`, handle }
+  }
+  const target = questTarget(quest, snagSiteUrl)
+  return target.kind === 'hub' ? target : { kind: 'snag', url: target.url }
 }

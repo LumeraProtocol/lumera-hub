@@ -8,6 +8,10 @@
  * SNAG's own sections. The page reads it live from SNAG through this app's
  * server; where that is unavailable the screen says so rather than inventing
  * quests someone would then try to complete.
+ *
+ * Quests the hub can run itself open in place: the row expands to show the
+ * quest's steps, each with its own action, and the reader never leaves the page
+ * except for the sign-in windows X and Discord insist on.
  */
 
 import React from 'react'
@@ -19,11 +23,29 @@ import {
   Notice,
   PageTitle,
   Skeleton,
+  cx,
 } from '../../design/primitives'
 import { CheckIcon, DiscordIcon, ExternalIcon, StarIcon, XIcon } from '../../design/icons'
-import { Drawer, drawerButton } from '../../hub/Drawer'
 
 export type SnagPlatform = 'wallet' | 'x' | 'discord' | 'other'
+
+/** One step of a quest done in place. */
+export type SnagStep = {
+  title: string
+  hint?: React.ReactNode
+  done?: boolean
+  action?: {
+    label: string
+    onClick: () => void
+    /** Working on it: the button shows as busy. */
+    busy?: boolean
+    disabled?: boolean
+    /** Opens another site (in a small window). */
+    external?: boolean
+    /** A secondary action, drawn outlined. */
+    secondary?: boolean
+  }
+}
 
 export type SnagQuest = {
   id: string
@@ -41,14 +63,15 @@ export type SnagQuest = {
   completed?: boolean
   /** SNAG is still verifying a submission. */
   pending?: boolean
+  /** Starts a quest that has no steps here (a hub page, the SNAG site). */
   onStart?: () => void
-}
-
-/** The SNAG site, open in the embedded panel. */
-export type SnagEmbed = {
-  url: string
-  /** The quest the reader opened it for, if any. */
-  quest?: string
+  /** The quest's steps, when it is done in place. */
+  steps?: SnagStep[]
+  /** Its steps are showing. */
+  open?: boolean
+  onToggle?: () => void
+  /** Under the steps: what is happening now, or what went wrong. */
+  status?: { tone: 'info' | 'danger'; text: string } | null
 }
 
 export type SnagGroup = {
@@ -80,59 +103,52 @@ function PlatformMark({ platform }: { platform: SnagPlatform }) {
   return null
 }
 
-/*
- * SNAG in a panel over the page. Its sign-in and quests run inside the frame;
- * "Open in new window" is the way out where they cannot, e.g. a browser that
- * keeps a signed-in session out of embedded sites.
- */
-function EmbedPanel({
-  embed,
-  onClose,
-  onPopOut,
-}: {
-  embed: SnagEmbed
-  onClose: () => void
-  onPopOut: () => void
-}) {
+function StepRow({ step, index }: { step: SnagStep; index: number }) {
+  const a = step.action
   return (
-    <Drawer
-      title="Snag"
-      wide
-      flush
-      onClose={onClose}
-      footer={
-        <>
-          <button type="button" onClick={onPopOut} className={drawerButton.secondary}>
-            <span className="inline-flex items-center gap-[7px]">
-              Open in new window
-              <ExternalIcon size={12} />
-            </span>
-          </button>
-          <button type="button" onClick={onClose} className={drawerButton.primary}>
-            Done
-          </button>
-        </>
-      }
-    >
-      {embed.quest ? (
-        <div className="flex-none border-b border-line-hairline px-5 py-3 text-small leading-[1.5] text-text-muted text-pretty">
-          Complete <span className="font-medium text-text-primary">{embed.quest}</span> below, then press Done.
+    <li className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:gap-4">
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <span
+          className={cx(
+            'mt-px flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full font-mono text-small font-semibold',
+            step.done ? 'bg-lumera-green text-ink-800' : 'border border-line-edge text-text-secondary',
+          )}
+          aria-hidden="true"
+        >
+          {step.done ? <CheckIcon size={12} /> : index + 1}
+        </span>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className={cx('text-base leading-[1.35] font-medium', step.done ? 'text-text-muted' : 'text-text-primary')}>
+            {step.title}
+          </span>
+          {step.hint ? <span className="text-small leading-[1.5] text-text-muted text-pretty">{step.hint}</span> : null}
+        </div>
+      </div>
+      {a && !step.done ? (
+        <div className="flex flex-none pl-[34px] sm:pl-0">
+          <Button
+            variant={a.secondary ? 'outline' : 'solid'}
+            size="sm"
+            onClick={a.onClick}
+            disabled={a.disabled || a.busy}
+            className="min-w-[96px]"
+          >
+            {a.busy ? 'Working…' : a.label}
+            {a.external && !a.busy ? <ExternalIcon size={11} /> : null}
+          </Button>
         </div>
       ) : null}
-      <iframe
-        src={embed.url}
-        title="Snag quests"
-        allow="clipboard-write; web-share"
-        className="min-h-0 w-full flex-1 border-0 bg-white"
-      />
-    </Drawer>
+    </li>
   )
 }
 
 function QuestRow({ quest }: { quest: SnagQuest }) {
   const kicker = quest.kicker ?? PLATFORM_LABEL[quest.platform]
+  const inPlace = Boolean(quest.steps?.length && quest.onToggle)
+  const open = inPlace && quest.open && !quest.completed
+
   return (
-    <Card className={quest.completed ? 'bg-ink-800 opacity-75' : 'bg-ink-800'}>
+    <Card className={cx('bg-ink-800', quest.completed && 'opacity-75', open && 'border-line-accent')}>
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5">
         {/* Reward pill */}
         <div className="flex h-[52px] w-[88px] flex-none items-center justify-center gap-1.5 rounded-control bg-ink-600 font-mono text-lg font-semibold tnum text-text-primary">
@@ -148,9 +164,7 @@ function QuestRow({ quest }: { quest: SnagQuest }) {
               {kicker}
             </span>
           ) : null}
-          <span className="text-base leading-[1.35] font-medium text-text-primary text-pretty">
-            {quest.title}
-          </span>
+          <span className="text-base leading-[1.35] font-medium text-text-primary text-pretty">{quest.title}</span>
           {quest.note ? (
             <span className="line-clamp-2 text-small leading-[1.5] text-text-muted text-pretty">{quest.note}</span>
           ) : null}
@@ -163,8 +177,17 @@ function QuestRow({ quest }: { quest: SnagQuest }) {
               <CheckIcon size={13} />
               Completed
             </span>
-          ) : quest.pending ? (
+          ) : quest.pending && !open ? (
             <span className="text-small text-text-tertiary">Verifying…</span>
+          ) : inPlace ? (
+            <Button
+              variant={open ? 'outline' : 'solid'}
+              onClick={quest.onToggle}
+              aria-expanded={open}
+              aria-controls={`quest-${quest.id}`}
+            >
+              {open ? 'Close' : (quest.ctaLabel ?? CONNECT_LABEL[quest.platform])}
+            </Button>
           ) : (
             <Button variant="solid" onClick={quest.onStart} disabled={!quest.onStart}>
               {quest.ctaLabel ?? CONNECT_LABEL[quest.platform]}
@@ -173,6 +196,21 @@ function QuestRow({ quest }: { quest: SnagQuest }) {
           )}
         </div>
       </div>
+
+      {open ? (
+        <div id={`quest-${quest.id}`} className="animate-fade border-t border-line-hairline px-4 pb-4">
+          <ol className="m-0 flex list-none flex-col divide-y divide-line-hairline p-0">
+            {quest.steps!.map((step, i) => (
+              <StepRow key={i} step={step} index={i} />
+            ))}
+          </ol>
+          {quest.status ? (
+            <div className="pt-1">
+              <Notice tone={quest.status.tone === 'danger' ? 'danger' : 'info'}>{quest.status.text}</Notice>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </Card>
   )
 }
@@ -187,9 +225,6 @@ export function SnagScreen({
   groups,
   siteUrl,
   onOpenSite,
-  embed,
-  onCloseEmbed,
-  onPopOutEmbed,
 }: {
   loading?: boolean
   /** False when the loyalty backend is not reachable from this deployment. */
@@ -199,18 +234,13 @@ export function SnagScreen({
   sprintLabel: string | null
   /** A line under the title, e.g. the reader's progress. */
   summary?: string | null
-  /** A note above the quests, e.g. how to link a Snag profile. */
+  /** A note above the quests. */
   notice?: React.ReactNode
   groups: SnagGroup[]
   /** The SNAG quest site, linked from the header. */
   siteUrl?: string
-  /** Opens the SNAG site (e.g. in the panel); defaults to a new tab. */
+  /** Opens the SNAG site (e.g. in a popup); defaults to a new tab. */
   onOpenSite?: () => void
-  /** SNAG open in the panel over the page, if it is. */
-  embed?: SnagEmbed | null
-  onCloseEmbed?: () => void
-  /** Moves the panel's page to a window of its own. */
-  onPopOutEmbed?: () => void
 }) {
   const hasQuests = groups.some((g) => g.quests.length > 0)
 
@@ -231,7 +261,7 @@ export function SnagScreen({
               onClick={() => (onOpenSite ? onOpenSite() : window.open(siteUrl, '_blank', 'noopener,noreferrer'))}
             >
               Open Snag
-              {onOpenSite ? null : <ExternalIcon size={13} />}
+              <ExternalIcon size={13} />
             </Button>
           ) : undefined
         }
@@ -267,9 +297,7 @@ export function SnagScreen({
           .map((group) => (
             <section key={group.id} className="flex flex-col gap-3.5">
               <div className="flex flex-col gap-1">
-                <h2 className="m-0 font-mono text-[19px] leading-none font-normal text-text-tertiary">
-                  {group.label}
-                </h2>
+                <h2 className="m-0 font-mono text-[19px] leading-none font-normal text-text-tertiary">{group.label}</h2>
                 {group.subtitle ? (
                   <span className="text-small text-text-muted text-pretty">{group.subtitle}</span>
                 ) : null}
@@ -291,14 +319,6 @@ export function SnagScreen({
           }
         />
       )}
-
-      {embed && onCloseEmbed ? (
-        <EmbedPanel
-          embed={embed}
-          onClose={onCloseEmbed}
-          onPopOut={onPopOutEmbed ?? (() => window.open(embed.url, '_blank', 'noopener,noreferrer'))}
-        />
-      ) : null}
     </div>
   )
 }
