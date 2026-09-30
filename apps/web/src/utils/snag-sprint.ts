@@ -19,6 +19,8 @@ export type SnagRule = {
   showBeforeStart?: boolean | null
   hideInUi?: boolean | null
   deletedAt?: string | null
+  /** The currency the rule pays out in. */
+  loyaltyCurrencyId?: string | null
   metadata?: {
     cta?: { label?: string | null; href?: string | null } | null
     /** The account a drip_x_follow quest asks the reader to follow. */

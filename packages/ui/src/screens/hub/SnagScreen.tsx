@@ -19,10 +19,12 @@ import {
   Badge,
   Button,
   Card,
+  CardHeader,
   EmptyState,
   Notice,
   PageTitle,
   Skeleton,
+  StatStrip,
   cx,
 } from '../../design/primitives'
 import { CheckIcon, DiscordIcon, ExternalIcon, StarIcon, XIcon } from '../../design/icons'
@@ -72,6 +74,31 @@ export type SnagQuest = {
   onToggle?: () => void
   /** Under the steps: what is happening now, or what went wrong. */
   status?: { tone: 'info' | 'danger'; text: string } | null
+}
+
+/** The reader's own standing, shown under the title. */
+export type SnagScore =
+  | { state: 'disconnected'; onConnect: () => void }
+  | {
+      state: 'loading' | 'ready'
+      /** e.g. "EXP". */
+      currency: string
+      points?: number
+      /** Their place, e.g. "3" or "5000+"; none until they have points. */
+      rankText?: string | null
+      completed?: number
+      total?: number
+      wallet?: string
+    }
+
+export type SnagLeader = { rank: number; name: string; points: number; you?: boolean }
+
+export type SnagLeaderboard = {
+  loading?: boolean
+  currency: string
+  rows: SnagLeader[]
+  /** The reader, when they are not in `rows`. */
+  you?: { rankText: string | null; name: string; points: number } | null
 }
 
 export type SnagGroup = {
@@ -215,6 +242,101 @@ function QuestRow({ quest }: { quest: SnagQuest }) {
   )
 }
 
+function ScoreStrip({ score }: { score: SnagScore }) {
+  if (score.state === 'disconnected') {
+    return (
+      <Card className="flex flex-col gap-3 px-[18px] py-4 sm:flex-row sm:items-center sm:justify-between">
+        <span className="text-base text-text-muted text-pretty">
+          Connect a wallet to see your points and your place on the leaderboard.
+        </span>
+        <Button variant="solid" onClick={score.onConnect} className="self-start sm:self-auto">
+          Connect wallet
+        </Button>
+      </Card>
+    )
+  }
+  return (
+    <StatStrip
+      loading={score.state === 'loading'}
+      items={[
+        { label: 'Your points', value: `${(score.points ?? 0).toLocaleString('en-US')} ${score.currency}`, tone: 'green' },
+        { label: 'Rank', value: score.rankText ? `#${score.rankText}` : '—', tone: score.rankText ? 'primary' : 'muted' },
+        { label: 'Quests done', value: score.total ? `${score.completed ?? 0} / ${score.total}` : '—' },
+        { label: 'Wallet', value: score.wallet || '—', tone: 'muted' },
+      ]}
+    />
+  )
+}
+
+function LeaderRow({ row, rankText }: { row: SnagLeader; rankText?: string }) {
+  return (
+    <li
+      className={cx(
+        'flex items-center gap-3 border-b border-line-hairline px-[18px] py-2.5 last:border-b-0',
+        row.you && 'bg-lumera-teal/10',
+      )}
+    >
+      <span
+        className={cx(
+          'w-8 flex-none font-mono text-small font-semibold tnum',
+          row.rank <= 3 ? 'text-lumera-green' : 'text-text-tertiary',
+        )}
+      >
+        #{rankText ?? row.rank}
+      </span>
+      <span className="flex min-w-0 flex-1 items-center gap-2">
+        <span className="truncate text-base text-text-primary">{row.name}</span>
+        {row.you ? <Badge tone="green">YOU</Badge> : null}
+      </span>
+      <span className="flex-none font-mono text-small font-medium tnum text-text-secondary">
+        {row.points.toLocaleString('en-US')}
+      </span>
+    </li>
+  )
+}
+
+function Leaderboard({ board }: { board: SnagLeaderboard }) {
+  return (
+    <Card className="lg:sticky lg:top-4">
+      <CardHeader
+        title="Leaderboard"
+        action={<span className="font-mono text-small text-text-tertiary">{board.currency}</span>}
+      />
+      {board.loading ? (
+        <div className="flex flex-col gap-3 px-[18px] py-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-4 w-full" />
+          ))}
+        </div>
+      ) : board.rows.length ? (
+        <ol className="m-0 list-none p-0">
+          {board.rows.map((row, i) => (
+            <LeaderRow key={i} row={row} />
+          ))}
+          {board.you ? (
+            <>
+              <li
+                className="border-b border-line-hairline px-[18px] py-1 text-center text-small text-text-disabled"
+                aria-hidden="true"
+              >
+                ⋯
+              </li>
+              <LeaderRow
+                row={{ rank: Number.MAX_SAFE_INTEGER, name: board.you.name || 'You', points: board.you.points, you: true }}
+                rankText={board.you.rankText ?? '—'}
+              />
+            </>
+          ) : null}
+        </ol>
+      ) : (
+        <p className="m-0 px-[18px] py-4 text-small text-text-muted">
+          No points yet this Sprint — complete a quest to lead the board.
+        </p>
+      )}
+    </Card>
+  )
+}
+
 export function SnagScreen({
   loading,
   available,
@@ -225,6 +347,8 @@ export function SnagScreen({
   groups,
   siteUrl,
   onOpenSite,
+  score,
+  leaderboard,
 }: {
   loading?: boolean
   /** False when the loyalty backend is not reachable from this deployment. */
@@ -241,6 +365,10 @@ export function SnagScreen({
   siteUrl?: string
   /** Opens the SNAG site (e.g. in a popup); defaults to a new tab. */
   onOpenSite?: () => void
+  /** The reader's own points and place. */
+  score?: SnagScore
+  /** The Sprint's top players, beside the quests. */
+  leaderboard?: SnagLeaderboard
 }) {
   const hasQuests = groups.some((g) => g.quests.length > 0)
 
@@ -276,49 +404,61 @@ export function SnagScreen({
         <Notice tone="info">{notice}</Notice>
       ) : null}
 
-      {loading ? (
-        <div className="flex flex-col gap-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} className="bg-ink-800">
-              <div className="flex items-center gap-5 p-4">
-                <Skeleton className="h-[52px] w-[88px] flex-none" />
-                <div className="flex flex-1 flex-col gap-2">
-                  <Skeleton className="h-4 w-1/2" />
-                  <Skeleton className="h-3 w-1/3" />
-                </div>
-                <Skeleton className="h-9 w-28 flex-none" />
-              </div>
-            </Card>
-          ))}
+      {available && score ? <ScoreStrip score={score} /> : null}
+
+      <div
+        className={cx(
+          'grid grid-cols-1 items-start gap-[22px]',
+          available && leaderboard && 'lg:grid-cols-[minmax(0,1fr)_320px]',
+        )}
+      >
+        <div className="flex min-w-0 flex-col gap-[22px]">
+          {loading ? (
+            <div className="flex flex-col gap-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i} className="bg-ink-800">
+                  <div className="flex items-center gap-5 p-4">
+                    <Skeleton className="h-[52px] w-[88px] flex-none" />
+                    <div className="flex flex-1 flex-col gap-2">
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-3 w-1/3" />
+                    </div>
+                    <Skeleton className="h-9 w-28 flex-none" />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : hasQuests ? (
+            groups
+              .filter((g) => g.quests.length > 0)
+              .map((group) => (
+                <section key={group.id} className="flex flex-col gap-3.5">
+                  <div className="flex flex-col gap-1">
+                    <h2 className="m-0 font-mono text-[19px] leading-none font-normal text-text-tertiary">{group.label}</h2>
+                    {group.subtitle ? (
+                      <span className="text-small text-text-muted text-pretty">{group.subtitle}</span>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {group.quests.map((quest) => (
+                      <QuestRow key={quest.id} quest={quest} />
+                    ))}
+                  </div>
+                </section>
+              ))
+          ) : (
+            <EmptyState
+              title={available ? 'No quests in this Sprint yet' : 'Sprint unavailable here'}
+              body={
+                available
+                  ? 'When a Sprint opens, its quests appear here with what each one is worth.'
+                  : 'This deployment has no connection to the quest service, so there is nothing to list. The rest of the hub is unaffected.'
+              }
+            />
+          )}
         </div>
-      ) : hasQuests ? (
-        groups
-          .filter((g) => g.quests.length > 0)
-          .map((group) => (
-            <section key={group.id} className="flex flex-col gap-3.5">
-              <div className="flex flex-col gap-1">
-                <h2 className="m-0 font-mono text-[19px] leading-none font-normal text-text-tertiary">{group.label}</h2>
-                {group.subtitle ? (
-                  <span className="text-small text-text-muted text-pretty">{group.subtitle}</span>
-                ) : null}
-              </div>
-              <div className="flex flex-col gap-3">
-                {group.quests.map((quest) => (
-                  <QuestRow key={quest.id} quest={quest} />
-                ))}
-              </div>
-            </section>
-          ))
-      ) : (
-        <EmptyState
-          title={available ? 'No quests in this Sprint yet' : 'Sprint unavailable here'}
-          body={
-            available
-              ? 'When a Sprint opens, its quests appear here with what each one is worth.'
-              : 'This deployment has no connection to the quest service, so there is nothing to list. The rest of the hub is unaffected.'
-          }
-        />
-      )}
+        {available && leaderboard ? <Leaderboard board={leaderboard} /> : null}
+      </div>
     </div>
   )
 }

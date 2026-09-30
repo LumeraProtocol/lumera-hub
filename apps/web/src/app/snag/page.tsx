@@ -8,7 +8,14 @@ import * as instance from '@/utils/api'
 import useWalletProof from '@/hooks/useWalletProof'
 import { questFlow, questStyle, type SprintGroup, type SprintQuest } from '@/utils/snag-sprint'
 import { proofMessage } from '@/utils/wallet-proof-message'
-import { SnagScreen, type SnagGroup, type SnagStep } from '@lumera-hub/ui/src/screens/hub/SnagScreen'
+import {
+  SnagScreen,
+  type SnagGroup,
+  type SnagLeader,
+  type SnagLeaderboard,
+  type SnagScore,
+  type SnagStep,
+} from '@lumera-hub/ui/src/screens/hub/SnagScreen'
 import { short, useHub } from '@lumera-hub/ui/src/hub/session'
 
 const POPUP_NAME = 'lumera-snag'
@@ -51,6 +58,14 @@ type SprintResponse = {
   progress?: { linked: boolean; completed: string[]; pending: string[]; failed?: Record<string, string> }
 }
 
+type BoardResponse = {
+  configured?: boolean
+  error?: string
+  currency?: string
+  top?: SnagLeader[]
+  you?: { name: string; points: number; rank: number | null; rankText: string | null } | null
+}
+
 type Work = { phase: 'busy' | 'checking' | 'idle'; since?: number; status?: { tone: 'info' | 'danger'; text: string } }
 
 const errorText = (err: unknown, fallback: string) => {
@@ -77,6 +92,8 @@ export default function Page() {
   const [work, setWork] = useState<Record<string, Work>>({})
   const [followed, setFollowed] = useState<Record<string, boolean>>({})
   const [returned, setReturned] = useState<Record<string, boolean>>({})
+  const [board, setBoard] = useState<BoardResponse | null>(null)
+  const [boardLoading, setBoardLoading] = useState(true)
 
   useEffect(() => {
     document.title = 'Snag - Lumera Hub'
@@ -112,6 +129,25 @@ export default function Page() {
   useEffect(() => {
     load()
   }, [load])
+
+  // The leaderboard, with the connected wallet's own points and place.
+  const boardId = useRef(0)
+  const loadBoard = useCallback(() => {
+    const id = ++boardId.current
+    setBoardLoading(true)
+    const query = snagWallet ? `?wallet=${encodeURIComponent(snagWallet)}` : ''
+    instance
+      .getExternalQuiet(`/api/snag/leaderboard${query}`)
+      .then(({ data: body }: { data: BoardResponse }) => {
+        if (id === boardId.current) setBoard(body)
+      })
+      .catch(() => {
+        if (id === boardId.current) setBoard(null)
+      })
+      .finally(() => {
+        if (id === boardId.current) setBoardLoading(false)
+      })
+  }, [snagWallet])
 
   const setQuestWork = (id: string, next: Work | null) =>
     setWork((all) => {
@@ -242,6 +278,12 @@ export default function Page() {
   const progress = data?.progress
   const completed = useMemo(() => new Set(progress?.completed ?? []), [progress])
   const pending = useMemo(() => new Set(progress?.pending ?? []), [progress])
+
+  // Read on arrival, and again whenever a quest completes (the points moved).
+  const completedCount = progress?.completed?.length ?? 0
+  useEffect(() => {
+    loadBoard()
+  }, [loadBoard, completedCount])
 
   // While SNAG is checking a quest, re-read progress until it settles.
   const checkingIds = Object.keys(work).filter((id) => work[id].phase === 'checking')
@@ -406,6 +448,32 @@ export default function Page() {
   const done = groups.reduce((n, g) => n + g.quests.filter((q) => q.completed).length, 0)
   const summary = progress?.linked && total ? `${done} of ${total} quests completed this Sprint.` : null
 
+  const currency = board?.currency || 'points'
+  const score: SnagScore = !snagWallet
+    ? { state: 'disconnected', onConnect: hub.connect }
+    : {
+        state: boardLoading && !board ? 'loading' : 'ready',
+        currency,
+        points: board?.you?.points ?? 0,
+        rankText: board?.you?.rankText ?? null,
+        completed: done,
+        total,
+        wallet: short(snagWallet, 8, 4),
+      }
+  const onBoard = board?.top?.some((row) => row.you)
+  const leaderboard: SnagLeaderboard | undefined =
+    board?.error || board?.configured === false
+      ? undefined
+      : {
+          loading: boardLoading && !board,
+          currency,
+          rows: board?.top ?? [],
+          you:
+            board?.you && !onBoard && board.you.points > 0
+              ? { rankText: board.you.rankText, name: board.you.name, points: board.you.points }
+              : null,
+        }
+
   return (
     <>
       <Helmet>
@@ -424,6 +492,8 @@ export default function Page() {
         groups={groups}
         siteUrl={siteUrl || undefined}
         onOpenSite={siteUrl ? () => openSnag(siteUrl) : undefined}
+        score={score}
+        leaderboard={leaderboard}
       />
     </>
   )
