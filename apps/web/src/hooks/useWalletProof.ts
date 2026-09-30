@@ -11,12 +11,16 @@ type Proof = { signature: string; pubkey?: string }
 
 /** Keplr/Leap-style extensions expose signArbitrary directly too. */
 type ArbitrarySigner = {
+  getAccount?: (chainId: string) => Promise<{ address?: string }>
+  getKey?: (chainId: string) => Promise<{ bech32Address?: string }>
   signArbitrary?: (
     chainId: string,
     signer: string,
     data: string,
   ) => Promise<{ signature: string; pub_key: { value: string } }>
 }
+
+const shortAddress = (a: string) => (a.length > 18 ? `${a.slice(0, 10)}…${a.slice(-6)}` : a)
 
 const utf8Hex = (text: string) =>
   `0x${Array.from(new TextEncoder().encode(text), (b) => b.toString(16).padStart(2, '0')).join('')}`
@@ -49,6 +53,17 @@ const useWalletProof = () => {
         const cosmos = (wallet?.getWalletOfType?.(CosmosWallet) as ArbitrarySigner | undefined) ??
           ((window as unknown as { keplr?: ArbitrarySigner }).keplr)
         if (!cosmos?.signArbitrary) throw new Error('This wallet cannot sign messages.')
+        // The extension signs only with its active account. If the reader switched
+        // accounts since connecting, say so rather than surface "Signer mismatched".
+        const active =
+          (await cosmos.getAccount?.(chainId).catch(() => undefined))?.address ||
+          (await cosmos.getKey?.(chainId).catch(() => undefined))?.bech32Address
+        if (active && active !== bech32Address) {
+          throw new Error(
+            `Your wallet's active account is ${shortAddress(active)}, but the hub is connected as ${shortAddress(bech32Address)}. ` +
+              'Switch back to that account in your wallet, or disconnect and reconnect to use the new one.',
+          )
+        }
         const res = await cosmos.signArbitrary(chainId, bech32Address, message)
         return { signature: res.signature, pubkey: res.pub_key.value }
       }

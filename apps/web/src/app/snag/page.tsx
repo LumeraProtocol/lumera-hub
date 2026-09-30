@@ -71,6 +71,8 @@ type Work = { phase: 'busy' | 'checking' | 'idle'; since?: number; status?: { to
 const errorText = (err: unknown, fallback: string) => {
   const e = err as { message?: string; code?: number }
   if (e?.code === 4001 || /reject|denied|cancel/i.test(e?.message ?? '')) return 'You declined the signature. Nothing was sent.'
+  if (/signer mismatch/i.test(e?.message ?? ''))
+    return 'Your wallet signed with a different account than the hub is connected as. Disconnect and reconnect, then try again.'
   return e?.message || fallback
 }
 
