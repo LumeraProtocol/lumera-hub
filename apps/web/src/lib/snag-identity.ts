@@ -15,8 +15,11 @@ import { LUMERA_ADDRESS, SNAG_ADDRESS } from '@/schemas/snagUserSchema';
 
 export type SnagWho = { walletAddress: string } | { userId: string };
 
+/** SNAG keeps EVM addresses in lowercase and rejects other spellings of them. */
+export const snagWalletAddress = (wallet: string) => (SNAG_ADDRESS.test(wallet) ? wallet.toLowerCase() : wallet);
+
 export async function snagIdentity(wallet: string): Promise<SnagWho | null> {
-  if (SNAG_ADDRESS.test(wallet)) return { walletAddress: wallet };
+  if (SNAG_ADDRESS.test(wallet)) return { walletAddress: snagWalletAddress(wallet) };
   if (!LUMERA_ADDRESS.test(wallet)) return null;
 
   try {

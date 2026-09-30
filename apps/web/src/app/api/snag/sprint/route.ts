@@ -25,6 +25,8 @@ import { firstQuests, type SprintGroup } from '@/utils/snag-sprint';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const MAX_STATUS_PAGES = 10;
+
 type Progress = {
   linked: boolean;
   completed: string[];
@@ -37,17 +39,27 @@ async function progressFor(wallet: string): Promise<Progress> {
   const who = await snagIdentity(wallet);
   if (!who) return { linked: false, completed: [], pending: [], failed: {} };
 
-  const res: any = await client.loyalty.rules.getStatus({
-    ...who,
-    organizationId: snagOrgId(),
-    websiteId: snagWebsiteId(),
-    limit: 1000,
-  });
+  // SNAG returns at most 100 statuses a call; page through the rest.
+  const rows: any[] = [];
+  let startingAfter: string | undefined;
+  for (let page = 0; page < MAX_STATUS_PAGES; page += 1) {
+    const res: any = await client.loyalty.rules.getStatus({
+      ...who,
+      organizationId: snagOrgId(),
+      websiteId: snagWebsiteId(),
+      limit: 100,
+      ...(startingAfter ? { startingAfter } : {}),
+    });
+    const data: any[] = res?.data ?? [];
+    rows.push(...data);
+    if (data.length < 100 || !data[data.length - 1]?.id) break;
+    startingAfter = data[data.length - 1].id;
+  }
   const completed = new Set<string>();
   const pending = new Set<string>();
   const failed: Record<string, string> = {};
   // Newest first, so a quest's latest attempt decides its state.
-  const rows = [...(res?.data ?? [])].sort((a: any, b: any) => Date.parse(b?.updatedAt ?? 0) - Date.parse(a?.updatedAt ?? 0));
+  rows.sort((a: any, b: any) => Date.parse(b?.updatedAt ?? 0) - Date.parse(a?.updatedAt ?? 0));
   const seen = new Set<string>();
   for (const s of rows) {
     const id = s?.loyaltyRuleId;

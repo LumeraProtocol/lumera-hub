@@ -7,7 +7,7 @@ import client from '@/lib/snag';
 import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
 import { findQuest, snagOrgId, snagSiteUrl, snagWebsiteId } from '@/lib/snag-season';
-import { snagIdentity } from '@/lib/snag-identity';
+import { snagIdentity, snagWalletAddress } from '@/lib/snag-identity';
 import { freshProofMessage, verifyCosmosSignature, verifyEvmSignature } from '@/lib/wallet-proof';
 import { LUMERA_ADDRESS, SNAG_ADDRESS } from '@/schemas/snagUserSchema';
 import { SNAG_VERIFIED_TYPES, questFlow } from '@/utils/snag-sprint';
@@ -52,29 +52,49 @@ function publicOrigin(req: NextRequest): string {
   return host ? `${proto}://${host}` : req.nextUrl.origin;
 }
 
+/** SNAG's own explanation of a failed call, when it gave one. */
+const snagReason = (error: any): string => String(error?.error?.message || error?.message || '').replace(/^\d{3}\s+/, '');
+
+/** SNAG refused a completion because the reader already has it: that is success. */
+const alreadyDone = (error: any) => /already (been )?(rewarded|completed)|already claimed/i.test(snagReason(error));
+
 /** The SNAG user id for a verified wallet, connecting the wallet to SNAG if it is new there. */
 async function connectWallet(wallet: string): Promise<string> {
   const who = await snagIdentity(wallet);
   if (who && 'userId' in who) return who.userId;
 
+  const address = snagWalletAddress(wallet);
+  let refusal = '';
   try {
     const user: any = await client.users.connect({
       organizationId: snagOrgId() ?? '',
       websiteId: snagWebsiteId() ?? '',
-      walletAddress: wallet,
+      walletAddress: address,
       walletType: SNAG_ADDRESS.test(wallet) ? 'evm' : 'cosmos',
       // The signature was checked above, before this is called.
       verificationData: { verifiedLocally: true },
     });
     if (user?.id) return user.id;
   } catch (error) {
-    // Already connected: fall through to looking the account up.
+    // Possibly already connected: fall through to looking the account up.
+    refusal = snagReason(error);
     console.error('Snag wallet connect failed:', error);
   }
-  const found: any = await client.get(`api/users?address=${encodeURIComponent(wallet)}`);
+  const found: any = await client.get(`api/users?address=${encodeURIComponent(address)}`);
   const id = found?.data?.[0]?.id;
-  if (!id) throw new Error('Snag did not accept this wallet.');
+  if (!id) throw new Error(refusal ? `Snag did not accept this wallet: ${refusal}` : 'Snag did not accept this wallet.');
   return id;
+}
+
+/** Ask SNAG to complete a quest; one the reader already has counts as done. */
+async function complete(questId: string, who: object): Promise<{ queued: true; alreadyDone?: true }> {
+  try {
+    await client.loyalty.rules.complete(questId, who);
+    return { queued: true };
+  } catch (error) {
+    if (alreadyDone(error)) return { queued: true, alreadyDone: true };
+    throw error;
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -112,8 +132,7 @@ export async function POST(req: NextRequest) {
     if (body.action === 'verify') {
       if (!SNAG_VERIFIED_TYPES.has(quest.type)) return fail(400, 'This quest is not verified by Snag.');
       const who = await snagIdentity(wallet);
-      const res: any = await client.loyalty.rules.complete(questId, { ...(who ?? {}) });
-      return NextResponse.json({ queued: true, message: res?.message });
+      return NextResponse.json(await complete(questId, { ...(who ?? {}) }));
     }
 
     if (body.action === 'link') {
@@ -140,14 +159,13 @@ export async function POST(req: NextRequest) {
           console.error('Snag link record failed:', error);
         }
       }
-      await client.loyalty.rules.complete(questId, { userId });
-      return NextResponse.json({ linked: true, queued: true });
+      return NextResponse.json({ linked: true, ...(await complete(questId, { userId })) });
     }
 
     return fail(400, 'Unknown action.');
   } catch (error: any) {
     console.error('Snag quest action failed:', error);
-    const detail = error?.error?.message || error?.message;
-    return fail(502, detail ? `Snag: ${String(detail).slice(0, 200)}` : 'Snag could not be reached just now.');
+    const detail = snagReason(error);
+    return fail(502, detail ? `Snag: ${detail.slice(0, 200)}` : 'Snag could not be reached just now.');
   }
 }
