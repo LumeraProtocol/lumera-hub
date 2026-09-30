@@ -94,6 +94,23 @@ export function buildSprint(rules: SnagRule[], groups: SnagRuleGroup[], now = Da
   return out
 }
 
+/**
+ * The first `limit` quests in SNAG's order, keeping their sections. A limit
+ * that is not a positive number leaves the season whole.
+ */
+export function firstQuests(groups: SprintGroup[], limit: number): SprintGroup[] {
+  if (!(limit > 0)) return groups
+  const out: SprintGroup[] = []
+  let left = Math.floor(limit)
+  for (const group of groups) {
+    if (left <= 0) break
+    const quests = group.quests.slice(0, left)
+    left -= quests.length
+    if (quests.length) out.push({ ...group, quests })
+  }
+  return out
+}
+
 /* ------------------------------------------------------------- presentation */
 
 export type QuestPlatform = 'wallet' | 'x' | 'discord' | 'other'

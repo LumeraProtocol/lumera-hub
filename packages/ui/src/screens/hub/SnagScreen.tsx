@@ -21,6 +21,7 @@ import {
   Skeleton,
 } from '../../design/primitives'
 import { CheckIcon, DiscordIcon, ExternalIcon, StarIcon, XIcon } from '../../design/icons'
+import { Drawer, drawerButton } from '../../hub/Drawer'
 
 export type SnagPlatform = 'wallet' | 'x' | 'discord' | 'other'
 
@@ -35,12 +36,19 @@ export type SnagQuest = {
   kicker?: string
   /** Button text; defaults by platform. */
   ctaLabel?: string
-  /** The button opens SNAG (or another site) in a new tab. */
+  /** The button leaves the hub (another site, or SNAG in a window of its own). */
   external?: boolean
   completed?: boolean
   /** SNAG is still verifying a submission. */
   pending?: boolean
   onStart?: () => void
+}
+
+/** The SNAG site, open in the embedded panel. */
+export type SnagEmbed = {
+  url: string
+  /** The quest the reader opened it for, if any. */
+  quest?: string
 }
 
 export type SnagGroup = {
@@ -70,6 +78,55 @@ function PlatformMark({ platform }: { platform: SnagPlatform }) {
   if (platform === 'x') return <XIcon size={13} />
   if (platform === 'discord') return <DiscordIcon size={15} />
   return null
+}
+
+/*
+ * SNAG in a panel over the page. Its sign-in and quests run inside the frame;
+ * "Open in new window" is the way out where they cannot, e.g. a browser that
+ * keeps a signed-in session out of embedded sites.
+ */
+function EmbedPanel({
+  embed,
+  onClose,
+  onPopOut,
+}: {
+  embed: SnagEmbed
+  onClose: () => void
+  onPopOut: () => void
+}) {
+  return (
+    <Drawer
+      title="Snag"
+      wide
+      flush
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" onClick={onPopOut} className={drawerButton.secondary}>
+            <span className="inline-flex items-center gap-[7px]">
+              Open in new window
+              <ExternalIcon size={12} />
+            </span>
+          </button>
+          <button type="button" onClick={onClose} className={drawerButton.primary}>
+            Done
+          </button>
+        </>
+      }
+    >
+      {embed.quest ? (
+        <div className="flex-none border-b border-line-hairline px-5 py-3 text-small leading-[1.5] text-text-muted text-pretty">
+          Complete <span className="font-medium text-text-primary">{embed.quest}</span> below, then press Done.
+        </div>
+      ) : null}
+      <iframe
+        src={embed.url}
+        title="Snag quests"
+        allow="clipboard-write; web-share"
+        className="min-h-0 w-full flex-1 border-0 bg-white"
+      />
+    </Drawer>
+  )
 }
 
 function QuestRow({ quest }: { quest: SnagQuest }) {
@@ -130,6 +187,9 @@ export function SnagScreen({
   groups,
   siteUrl,
   onOpenSite,
+  embed,
+  onCloseEmbed,
+  onPopOutEmbed,
 }: {
   loading?: boolean
   /** False when the loyalty backend is not reachable from this deployment. */
@@ -144,8 +204,13 @@ export function SnagScreen({
   groups: SnagGroup[]
   /** The SNAG quest site, linked from the header. */
   siteUrl?: string
-  /** Opens the SNAG site (e.g. in a popup); defaults to a new tab. */
+  /** Opens the SNAG site (e.g. in the panel); defaults to a new tab. */
   onOpenSite?: () => void
+  /** SNAG open in the panel over the page, if it is. */
+  embed?: SnagEmbed | null
+  onCloseEmbed?: () => void
+  /** Moves the panel's page to a window of its own. */
+  onPopOutEmbed?: () => void
 }) {
   const hasQuests = groups.some((g) => g.quests.length > 0)
 
@@ -166,7 +231,7 @@ export function SnagScreen({
               onClick={() => (onOpenSite ? onOpenSite() : window.open(siteUrl, '_blank', 'noopener,noreferrer'))}
             >
               Open Snag
-              <ExternalIcon size={13} />
+              {onOpenSite ? null : <ExternalIcon size={13} />}
             </Button>
           ) : undefined
         }
@@ -226,6 +291,14 @@ export function SnagScreen({
           }
         />
       )}
+
+      {embed && onCloseEmbed ? (
+        <EmbedPanel
+          embed={embed}
+          onClose={onCloseEmbed}
+          onPopOut={onPopOutEmbed ?? (() => window.open(embed.url, '_blank', 'noopener,noreferrer'))}
+        />
+      ) : null}
     </div>
   )
 }

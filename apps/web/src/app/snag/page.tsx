@@ -6,16 +6,16 @@ import { Helmet } from 'react-helmet-async'
 
 import * as instance from '@/utils/api'
 import { questStyle, questTarget, type SprintGroup } from '@/utils/snag-sprint'
-import { SnagScreen, type SnagGroup } from '@lumera-hub/ui/src/screens/hub/SnagScreen'
+import { SnagScreen, type SnagEmbed, type SnagGroup } from '@lumera-hub/ui/src/screens/hub/SnagScreen'
 import { useHub } from '@lumera-hub/ui/src/hub/session'
 
 /*
- * SNAG-native quests are completed on the SNAG site, which cannot be embedded
- * here: its frame-ancestors allow-list does not include this hub, and X's
- * sign-in refuses to be framed anywhere. So instead of sending the reader off
- * in a new tab, the quest opens in a small popup window over the hub, and the
- * reader's progress is re-read the moment it closes. A blocked popup falls back
- * to a tab.
+ * SNAG-native quests are completed on the SNAG site, which opens embedded in a
+ * panel over this page (SNAG allows hub.lumera.io, hub.testnet.lumera.io and
+ * lumera.network to frame it). The panel can move it to a small popup window
+ * instead, for what cannot run in a frame; the reader's progress is re-read
+ * when either closes. Other sites a quest links to open in the popup too, and a
+ * blocked popup falls back to a tab.
  */
 const openInPopup = (url: string, onClose: () => void) => {
   const w = 480
@@ -51,8 +51,8 @@ type SprintResponse = {
 /**
  * Snag: the live SNAG season, read through this app's /api/snag/sprint (which
  * holds the API key). Quests the hub verifies open its /loyalty pages; the rest
- * are completed on the SNAG quest site, in a new tab, with the reader's SNAG
- * account. The reader's progress shows once their wallet is linked to that
+ * are completed on the SNAG quest site, embedded over this page, with the
+ * reader's SNAG account. The reader's progress shows once their wallet is linked to that
  * account — MetaMask wallets are the account itself; Keplr wallets link through
  * the "Connect wallet to Lumera Hub" quest.
  */
@@ -62,6 +62,7 @@ export default function Page() {
   const [data, setData] = useState<SprintResponse | null>(null)
   const [available, setAvailable] = useState(true)
   const [loading, setLoading] = useState(true)
+  const [embed, setEmbed] = useState<SnagEmbed | null>(null)
 
   useEffect(() => {
     document.title = 'Snag - Lumera Hub'
@@ -119,6 +120,7 @@ export default function Page() {
       quests: group.quests.map((quest) => {
         const style = questStyle(quest)
         const target = questTarget(quest, siteUrl)
+        const onSnag = target.kind === 'external' && Boolean(siteUrl) && target.url.startsWith(siteUrl)
         return {
           id: quest.id,
           platform: style.platform,
@@ -127,7 +129,7 @@ export default function Page() {
           title: quest.name,
           note: quest.description,
           points: quest.points,
-          external: target.kind === 'external',
+          external: target.kind === 'external' && !onSnag,
           completed: completed.has(quest.id),
           pending: pending.has(quest.id),
           onStart:
@@ -136,9 +138,11 @@ export default function Page() {
                   hub.gate({ title: quest.name, line: 'Quests are credited to your address' }, () =>
                     router.push(target.path),
                   )
-              : target.url
-                ? () => openInPopup(target.url, () => load(true))
-                : undefined,
+              : onSnag
+                ? () => setEmbed({ url: target.url, quest: quest.name })
+                : target.url
+                  ? () => openInPopup(target.url, () => load(true))
+                  : undefined,
         }
       }),
     }))
@@ -177,7 +181,18 @@ export default function Page() {
         notice={notice}
         groups={groups}
         siteUrl={siteUrl || undefined}
-        onOpenSite={siteUrl ? () => openInPopup(siteUrl, () => load(true)) : undefined}
+        onOpenSite={siteUrl ? () => setEmbed({ url: siteUrl }) : undefined}
+        embed={embed}
+        onCloseEmbed={() => {
+          setEmbed(null)
+          load(true)
+        }}
+        onPopOutEmbed={() => {
+          if (!embed) return
+          const url = embed.url
+          setEmbed(null)
+          openInPopup(url, () => load(true))
+        }}
       />
     </>
   )

@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import client from '@/lib/snag';
 import { getDataSource } from '@/lib/data-source';
 import { SnagUser } from '@/entities/SnagUser';
-import { buildSprint, type SnagRule, type SnagRuleGroup, type SprintGroup } from '@/utils/snag-sprint';
+import { buildSprint, firstQuests, type SnagRule, type SnagRuleGroup, type SprintGroup } from '@/utils/snag-sprint';
 
 /*
  * The live SNAG season for /snag, read straight from SNAG rather than from the
@@ -18,6 +18,9 @@ import { buildSprint, type SnagRule, type SnagRuleGroup, type SprintGroup } from
  * request: a MetaMask (0x) wallet is a SNAG account directly, while a Keplr
  * (lumera1) wallet is found through the link /api/snag/save-user recorded when
  * the reader connected it from their SNAG profile.
+ *
+ * SNAG_QUEST_LIMIT, when set, shows only the first N quests in SNAG's order
+ * (e.g. to trial the board on a test deployment).
  *
  * The API key never leaves the server.
  */
@@ -104,7 +107,7 @@ export async function GET(req: NextRequest) {
 
   let groups: SprintGroup[];
   try {
-    groups = await season();
+    groups = firstQuests(await season(), Number(process.env.SNAG_QUEST_LIMIT));
   } catch (error) {
     console.error('Snag season read failed:', error);
     return NextResponse.json({ configured: true, error: 'Snag could not be reached.' }, { status: 502 });

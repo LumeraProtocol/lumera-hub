@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSprint, isLive, questStyle, questTarget, type SnagRule, type SnagRuleGroup } from './snag-sprint';
+import { buildSprint, firstQuests, isLive, questStyle, questTarget, type SnagRule, type SnagRuleGroup } from './snag-sprint';
 
 const NOW = Date.parse('2026-09-29T12:00:00Z');
 const rule = (id: string, extra: Partial<SnagRule> = {}): SnagRule => ({ id, name: `Rule ${id}`, type: 'quiz', amount: '10', ...extra });
@@ -55,6 +55,29 @@ describe('buildSprint', () => {
       NOW,
     );
     expect(g.quests[0]).toMatchObject({ name: 'Connect Twitter/X to Snag profile', points: 15, cta: { label: 'Claim', href: 'https://x.test/a' } });
+  });
+});
+
+describe('firstQuests', () => {
+  const season = buildSprint(
+    [rule('a'), rule('b'), rule('c'), rule('d')],
+    [group('g1', 1, [['a', 1], ['b', 2]]), group('g2', 2, [['c', 1], ['d', 2]])],
+    NOW,
+  );
+
+  it('keeps the first N quests in order, across sections', () => {
+    const cut = firstQuests(season, 3);
+    expect(cut.map((g) => g.id)).toEqual(['g1', 'g2']);
+    expect(cut.flatMap((g) => g.quests.map((q) => q.id))).toEqual(['a', 'b', 'c']);
+  });
+
+  it('drops sections left empty by the cut', () => {
+    expect(firstQuests(season, 2).map((g) => g.id)).toEqual(['g1']);
+  });
+
+  it('leaves the season whole without a positive limit', () => {
+    expect(firstQuests(season, 0)).toBe(season);
+    expect(firstQuests(season, Number.NaN)).toBe(season);
   });
 });
 
