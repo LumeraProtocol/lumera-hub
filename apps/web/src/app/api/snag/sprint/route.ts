@@ -25,7 +25,7 @@ import { firstQuests, type SprintGroup } from '@/utils/snag-sprint';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const MAX_STATUS_PAGES = 10;
+const MAX_PAGES = 10;
 
 type Progress = {
   linked: boolean;
@@ -35,33 +35,56 @@ type Progress = {
   failed: Record<string, string>;
 };
 
+/** Every page of a SNAG list that returns at most 100 rows a call. */
+async function allPages(fetchPage: (startingAfter?: string) => Promise<any>): Promise<any[]> {
+  const rows: any[] = [];
+  let startingAfter: string | undefined;
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const res: any = await fetchPage(startingAfter);
+    const data: any[] = res?.data ?? [];
+    rows.push(...data);
+    const last = data[data.length - 1]?.id;
+    if (!last || (res?.hasNextPage === false) || data.length < 100) break;
+    startingAfter = last;
+  }
+  return rows;
+}
+
+/*
+ * Done: quests SNAG has credited, from the reader's points history (the lasting
+ * record). In progress or turned down: SNAG's recent rule statuses, which only
+ * cover checks still being worked on or just finished.
+ */
 async function progressFor(wallet: string): Promise<Progress> {
   const who = await snagIdentity(wallet);
   if (!who) return { linked: false, completed: [], pending: [], failed: {} };
+  const scope = { ...who, organizationId: snagOrgId(), websiteId: snagWebsiteId(), limit: 100 };
 
-  // SNAG returns at most 100 statuses a call; page through the rest.
-  const rows: any[] = [];
-  let startingAfter: string | undefined;
-  for (let page = 0; page < MAX_STATUS_PAGES; page += 1) {
-    const res: any = await client.loyalty.rules.getStatus({
-      ...who,
-      organizationId: snagOrgId(),
-      websiteId: snagWebsiteId(),
-      limit: 100,
-      ...(startingAfter ? { startingAfter } : {}),
-    });
-    const data: any[] = res?.data ?? [];
-    rows.push(...data);
-    if (data.length < 100 || !data[data.length - 1]?.id) break;
-    startingAfter = data[data.length - 1].id;
-  }
+  const [entries, statuses] = await Promise.all([
+    allPages((startingAfter) =>
+      client.loyalty.transactions.getTransactionEntries({
+        ...scope,
+        type: 'loyalty_rule',
+        ...(startingAfter ? { startingAfter } : {}),
+      } as any),
+    ),
+    allPages((startingAfter) =>
+      client.loyalty.rules.getStatus({ ...scope, ...(startingAfter ? { startingAfter } : {}) }),
+    ),
+  ]);
+
   const completed = new Set<string>();
+  for (const e of entries) {
+    const id = e?.loyaltyTransaction?.loyaltyRuleId;
+    if (id && e?.direction !== 'debit') completed.add(id);
+  }
+
   const pending = new Set<string>();
   const failed: Record<string, string> = {};
   // Newest first, so a quest's latest attempt decides its state.
-  rows.sort((a: any, b: any) => Date.parse(b?.updatedAt ?? 0) - Date.parse(a?.updatedAt ?? 0));
+  statuses.sort((a: any, b: any) => Date.parse(b?.updatedAt ?? 0) - Date.parse(a?.updatedAt ?? 0));
   const seen = new Set<string>();
-  for (const s of rows) {
+  for (const s of statuses) {
     const id = s?.loyaltyRuleId;
     if (!id) continue;
     if (s.status === 'completed' || s.fulfilledAt) completed.add(id);
