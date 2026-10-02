@@ -17,13 +17,14 @@ import Image from 'next/image'
 
 import useConnectWallet from '@/hooks/useConnectWallet'
 import { addLumeraToMetaMask, resolveMetaMaskProvider } from '@/utils/evm'
+import { addLumeraEvmToKeplr, canAddLumeraEvmToKeplr } from '@/utils/keplr-evm'
 import { EVM_CHAIN_ID, IS_EVM_NETWORK, NETWORK_LABEL } from '@/contants/network'
 // Canonical wallet keys — the drawer must pass the same values useConnectWallet
 // branches on, or "MetaMask" falls through to the Keplr path.
 import { KEPLR_WALLET_NAME, METAMASK_WALLET_NAME } from '@/utils/wallet-selection'
 import { useHub, LUMERA_ADDRESS } from '@lumera-hub/ui/src/hub/session'
 import { Drawer, IntentBanner } from '@lumera-hub/ui/src/hub/Drawer'
-import { Button, Field, Input, cx } from '@lumera-hub/ui/src/design/primitives'
+import { Button, Field, Input, Notice, cx } from '@lumera-hub/ui/src/design/primitives'
 import { EyeIcon } from '@lumera-hub/ui/src/design/icons'
 
 export function ConnectDrawer() {
@@ -34,6 +35,9 @@ export function ConnectDrawer() {
   // Detect the real MetaMask (EIP-6963), not any wallet claiming isMetaMask, so
   // the add-chain button shows only when there is genuinely a MetaMask to add to.
   const [hasMetaMask, setHasMetaMask] = useState(false)
+  const [addingKeplrEvm, setAddingKeplrEvm] = useState(false)
+  // Shown when Keplr kept its existing (pre-migration) settings for the chain.
+  const [keplrEvmKept, setKeplrEvmKept] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -60,6 +64,30 @@ export function ConnectDrawer() {
       hub.flash(e instanceof Error ? e.message : 'Could not add the chain to MetaMask', 'error')
     } finally {
       setAddingChain(false)
+    }
+  }
+
+  // Migrated (EVM-key) accounts only appear in Keplr once it has the chain with
+  // EVM settings; offer that wherever the network has an EVM chain.
+  const canAddKeplrEvm = typeof window !== 'undefined' && canAddLumeraEvmToKeplr(window as { keplr?: unknown })
+
+  const handleAddKeplrEvm = async () => {
+    setAddingKeplrEvm(true)
+    setKeplrEvmKept(false)
+    try {
+      const result = await addLumeraEvmToKeplr(window.keplr as Parameters<typeof addLumeraEvmToKeplr>[0])
+      if (result.status === 'kept-existing') {
+        setKeplrEvmKept(true)
+        return
+      }
+      hub.flash(`Keplr now uses your EVM address ${result.address.slice(0, 10)}…${result.address.slice(-4)}`, 'ok')
+      // Reconnect so the hub picks up the address Keplr now reports.
+      const ok = await connectWallet(KEPLR_WALLET_NAME)
+      if (ok) hub.closeDrawer()
+    } catch (e) {
+      hub.flash(e instanceof Error ? e.message : 'Could not set up Keplr', 'error')
+    } finally {
+      setAddingKeplrEvm(false)
     }
   }
 
@@ -156,6 +184,25 @@ export function ConnectDrawer() {
         >
           {addingChain ? 'Opening MetaMask…' : `Add Lumera ${NETWORK_LABEL} to MetaMask`}
         </button>
+      ) : null}
+
+      {canAddKeplrEvm ? (
+        <button
+          type="button"
+          onClick={handleAddKeplrEvm}
+          disabled={addingKeplrEvm}
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[9px] border border-line-edge bg-transparent px-3.5 py-[11px] text-small leading-none font-medium text-text-secondary transition-colors hover:border-line-accent hover:text-lumera-green disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {addingKeplrEvm ? 'Opening Keplr…' : `Add Lumera ${NETWORK_LABEL} (EVM) to Keplr`}
+        </button>
+      ) : null}
+
+      {keplrEvmKept ? (
+        <Notice tone="warn">
+          Keplr already has Lumera {NETWORK_LABEL} with its older settings and kept them, so it still shows your
+          pre-migration address. In Keplr, open Settings → General → Manage Non-Native Chains, remove Lumera{' '}
+          {NETWORK_LABEL}, then press the button again. Your funds and recovery phrase are not affected.
+        </Notice>
       ) : null}
 
       {connectError ? (
