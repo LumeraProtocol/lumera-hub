@@ -126,12 +126,71 @@ export function IntentBanner({ intent }: { intent: Intent }) {
 export type TxStep = 'review' | 'signing' | 'done'
 export type TxOutcome = 'success' | 'rejected' | 'failed'
 
+/** Failures that happen before anything is broadcast: the wallet, the RPC connection, the gas estimate. */
+const BEFORE_BROADCAST =
+  /No RPC host answered for signing|Failed to retrieve account from signer|cannot sign for|Please connect wallet|signing is unavailable|transactions are temporarily unavailable|Query failed with|does not exist on chain/i
+
+/**
+ * What a failed transaction cost, judged from how far it got. Each case speaks
+ * only for this transaction (a two-step flow's earlier step is its own).
+ *
+ * - it has a hash or a block: it was included and failed there — fee charged;
+ * - the network answered the broadcast with an error code: refused before any
+ *   block — no fee;
+ * - it was sent but never seen on chain: it may still land;
+ * - it failed before broadcast (wallet, RPC, gas estimate): not sent — no fee;
+ * - anything else may have happened after the broadcast (e.g. the connection
+ *   dropped while waiting for the block), so make no promise either way.
+ */
+export function describeFailure({
+  blockHeight,
+  txHash,
+  errorDetail,
+}: {
+  blockHeight?: string
+  txHash?: string
+  errorDetail?: string
+}): { title: string; body: string } {
+  if (blockHeight || txHash) {
+    return {
+      title: 'Rejected by the chain',
+      body: blockHeight
+        ? `The transaction reached block ${blockHeight} but did not complete. The fee was still charged.`
+        : 'The transaction was included in a block but did not complete. The fee was still charged.',
+    }
+  }
+  const detail = errorDetail ?? ''
+  if (/was submitted but was not yet found on the chain/i.test(detail)) {
+    return {
+      title: 'Not confirmed yet',
+      body: 'The transaction was sent but has not shown up on the chain yet. It may still go through — check your activity before trying again.',
+    }
+  }
+  if (/Broadcasting transaction failed with code/i.test(detail)) {
+    return {
+      title: 'Rejected by the network',
+      body: 'The network refused this transaction before it entered a block, so it was not charged a fee.',
+    }
+  }
+  if (BEFORE_BROADCAST.test(detail)) {
+    return {
+      title: 'Not sent',
+      body: 'This transaction was never sent, so it was not charged a fee.',
+    }
+  }
+  return {
+    title: 'Status unknown',
+    body: 'We could not confirm whether this transaction was sent. Check your activity before trying again.',
+  }
+}
+
 /**
  * Review → Sign → Receipt. Written once, used by every signing action.
  *
- * The three outcomes are distinct on purpose: declining a signature costs
- * nothing, while a chain rejection has already charged the fee, and the reader
- * needs to know which happened.
+ * The outcomes are distinct on purpose: declining a signature costs nothing;
+ * a transaction that reached a block and failed there was charged its fee; one
+ * the network refused before any block (or that never left the wallet) was not.
+ * The reader needs to know which happened.
  */
 export function TxFlow({
   intent,
@@ -186,6 +245,8 @@ export function TxFlow({
           : outcome === 'failed'
             ? 'Step 3 of 3 · Failed'
             : 'Step 3 of 3 · Confirmed'
+
+  const failure = describeFailure({ blockHeight, txHash, errorDetail })
 
   const summary: Array<{ k: string; v: string; tone: string }> = [
     { k: 'Action', v: intent.title, tone: 'text-text-primary' },
@@ -393,13 +454,9 @@ export function TxFlow({
               <path d="m15 9-6 6" />
               <path d="m9 9 6 6" />
             </svg>
-            <span className="text-base leading-none font-semibold text-danger">Rejected by the chain</span>
+            <span className="text-base leading-none font-semibold text-danger">{failure.title}</span>
           </div>
-          <p className="m-0 text-base leading-[1.6] text-text-secondary text-pretty">
-            {blockHeight
-              ? `The transaction reached block ${blockHeight} but did not complete. The fee was still charged.`
-              : 'The transaction was broadcast but did not complete. The fee was still charged.'}
-          </p>
+          <p className="m-0 text-base leading-[1.6] text-text-secondary text-pretty">{failure.body}</p>
           {gasUsed ? (
             <div className="flex items-baseline justify-between gap-3">
               <span className="text-small text-text-muted">Gas used</span>

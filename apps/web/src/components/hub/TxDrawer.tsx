@@ -28,6 +28,14 @@ const TOKEN = DENOM.replace(/^u/, '').toUpperCase()
 const REJECTION_PATTERNS = /request rejected|user rejected|rejected by user|declined|denied|user denied/i
 
 /**
+ * The id of a transaction CosmJS broadcast but stopped waiting for (its
+ * TimeoutError). It may still land, so it is tracked like any other hash
+ * rather than reported as a failure with a "Try again" that could send twice.
+ */
+export const timedOutTxId = (error: string): string | undefined =>
+  /Transaction with ID ([0-9A-F]{64}) was submitted but was not yet found on the chain/i.exec(error)?.[1]
+
+/**
  * What the fee will be at the app's default gas limit and gas price. The real
  * figure is only known once the wallet has simulated the message, so this is
  * shown as an estimate and replaced by the charged amount on the receipt.
@@ -119,6 +127,12 @@ export function TxDrawer({
     // block (a rejected signature, a failed simulate). The stale-hash guard
     // means "no new hash" covers both an empty hash and the leftover one.
     if (error && (!transactionHash || transactionHash === priorHash.current)) {
+      const sentId = timedOutTxId(error)
+      if (sentId && sentId !== hash) {
+        setHash(sentId)
+        return
+      }
+      if (sentId) return
       broadcasting.current = false
       settled.current = true
       setLocalOutcome(REJECTION_PATTERNS.test(error) ? 'rejected' : 'failed')
@@ -172,6 +186,11 @@ export function TxDrawer({
       try {
         await onBroadcast()
       } catch (e) {
+        const sentId = timedOutTxId(String(e))
+        if (sentId) {
+          setHash(sentId)
+          return
+        }
         broadcasting.current = false
         settled.current = true
         setLocalOutcome(REJECTION_PATTERNS.test(String(e)) ? 'rejected' : 'failed')

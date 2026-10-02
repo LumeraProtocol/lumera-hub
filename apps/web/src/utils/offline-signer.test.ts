@@ -1,10 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
+import { fromBase64, toBase64 } from '@cosmjs/encoding';
+import { isOfflineDirectSigner, type OfflineDirectSigner } from '@cosmjs/proto-signing';
+import { SigningStargateClient } from '@cosmjs/stargate';
+import { AuthInfo, type SignDoc } from 'cosmjs-types/cosmos/tx/v1beta1/tx';
 import {
+  mislabelledEthKey,
   nativeProviderFor,
   resolveOfflineSigner,
   signerHasAddress,
+  signsWithEthKey,
   type MinimalSigner,
 } from './offline-signer';
+
+/** Amino JSON for a compressed secp256k1 key, as a wallet returns it with a signature. */
+const encodeSecp256k1Pubkey = (pubkey: Uint8Array) => ({
+  type: 'tendermint/PubKeySecp256k1',
+  value: toBase64(pubkey),
+});
 
 const signerFor = (...addresses: string[]) => ({
   getAccounts: vi.fn(async () => addresses.map((address) => ({ address }))),
@@ -132,5 +144,87 @@ describe('a signer that cannot be checked', () => {
         win: {},
       }),
     ).toBe(opaque);
+  });
+});
+
+/*
+ * The testnet EVM migration: an account whose address is the Ethereum-style
+ * (keccak) address of its key. Keplr's CosmJS signer lists it as plain
+ * "secp256k1", and signing it as such put /cosmos.crypto.secp256k1.PubKey in the
+ * transaction — which the chain rejects with "pubKey does not match signer
+ * address … invalid pubkey". Vectors: a real lumera-testnet-2 account.
+ */
+describe('Ethereum-style keys a signer mislabels', () => {
+  const PUBKEY = fromBase64('A5K0iClRfHPHY1TJwmkj6UGs1U7hwjvOKj7UXGdeGYqZ');
+  const ETH_ADDRESS = 'lumera18ulqt4jzn5ch3h4yt8xn9rd9wuufvftxu237hj'; // keccak(pubkey)
+  const COSMOS_ADDRESS = 'lumera1rqx08dfy2fh09lgp6pp6687peyly6gtykqk27a'; // ripemd160(sha256(pubkey))
+  const chainId = 'lumera-testnet-2';
+
+  // Shaped like Keplr's CosmJSOfflineSigner: a class, methods on the prototype,
+  // every key reported as "secp256k1".
+  class KeplrLikeSigner {
+    constructor(readonly address: string) {}
+    async getAccounts() {
+      return [{ address: this.address, algo: 'secp256k1' as const, pubkey: PUBKEY }];
+    }
+    async signDirect(_signer: string, signDoc: SignDoc) {
+      return {
+        signed: signDoc,
+        signature: { pub_key: encodeSecp256k1Pubkey(PUBKEY), signature: toBase64(new Uint8Array(64)) },
+      };
+    }
+  }
+
+  const signedPubkeyType = async (signer: unknown, address: string) => {
+    const client = await SigningStargateClient.offline(signer as OfflineDirectSigner);
+    const tx = await client.sign(
+      address,
+      [{ typeUrl: '/cosmos.bank.v1beta1.MsgSend', value: { fromAddress: address, toAddress: address, amount: [] } }],
+      { amount: [], gas: '200000' },
+      '',
+      { accountNumber: BigInt(9189), sequence: 5, chainId },
+    );
+    return AuthInfo.decode(tx.authInfoBytes).signerInfos[0].publicKey?.typeUrl;
+  };
+
+  const resolve = (signer: MinimalSigner, address: string) =>
+    resolveOfflineSigner({
+      wallet: { getOfflineSigner: vi.fn() },
+      chainId,
+      address,
+      walletName: 'Keplr',
+      win: { keplr: { getOfflineSignerAuto: async () => signer } },
+    });
+
+  it('spots the mislabel by the address, and only then', () => {
+    expect(mislabelledEthKey({ address: ETH_ADDRESS, algo: 'secp256k1', pubkey: PUBKEY })).toBe(true);
+    expect(mislabelledEthKey({ address: COSMOS_ADDRESS, algo: 'secp256k1', pubkey: PUBKEY })).toBe(false);
+    expect(mislabelledEthKey({ address: ETH_ADDRESS, algo: 'eth_secp256k1', pubkey: PUBKEY })).toBe(false);
+    // Missing, uncompressed or malformed data is never a reason to relabel.
+    expect(mislabelledEthKey({ address: ETH_ADDRESS })).toBe(false);
+    expect(mislabelledEthKey({ address: ETH_ADDRESS, pubkey: new Uint8Array(65) })).toBe(false);
+    expect(mislabelledEthKey({ address: ME, pubkey: PUBKEY })).toBe(false);
+  });
+
+  it('signs an Ethereum-style key with the EVM public-key type', async () => {
+    const raw = new KeplrLikeSigner(ETH_ADDRESS);
+    // Unfixed, this is the transaction the chain rejected.
+    expect(await signedPubkeyType(raw, ETH_ADDRESS)).toBe('/cosmos.crypto.secp256k1.PubKey');
+
+    const signer = await resolve(raw, ETH_ADDRESS);
+    expect(signer).not.toBe(raw);
+    expect((await signer.getAccounts!())[0].algo).toBe('eth_secp256k1');
+    expect(await signsWithEthKey(signer, ETH_ADDRESS)).toBe(true);
+    // Still a direct signer: methods were bound, not lost to a spread.
+    expect(isOfflineDirectSigner(signer as OfflineDirectSigner)).toBe(true);
+    expect(await signedPubkeyType(signer, ETH_ADDRESS)).toBe('/cosmos.evm.crypto.v1.ethsecp256k1.PubKey');
+  });
+
+  it('leaves a plain Cosmos key, and its signer, exactly as they were', async () => {
+    const raw = new KeplrLikeSigner(COSMOS_ADDRESS);
+    const signer = await resolve(raw, COSMOS_ADDRESS);
+    expect(signer).toBe(raw);
+    expect(await signsWithEthKey(signer, COSMOS_ADDRESS)).toBe(false);
+    expect(await signedPubkeyType(signer, COSMOS_ADDRESS)).toBe('/cosmos.crypto.secp256k1.PubKey');
   });
 });

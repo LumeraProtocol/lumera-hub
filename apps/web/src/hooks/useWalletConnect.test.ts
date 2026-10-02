@@ -55,7 +55,7 @@ vi.mock('@/contants/network', () => ({
 }));
 
 const { KEPLR_WALLET_NAME, METAMASK_WALLET_NAME } = await import('@/utils/wallet-selection');
-const { default: useWalletConnect } = await import('./useWalletConnect');
+const { default: useWalletConnect, ETH_KEY_GAS_PAD } = await import('./useWalletConnect');
 
 describe('useWalletConnect EVM profile selection', () => {
   beforeEach(() => {
@@ -122,6 +122,33 @@ describe('useWalletConnect EVM profile selection', () => {
       'https://cosmos.example.test',
       signer,
     );
+  });
+
+  it('pads the gas estimate for an Ethereum-style key the chain has not seen yet', async () => {
+    // CosmJS simulates with a plain secp256k1 key (1,000 gas to verify) while an
+    // EVM key costs 21,000. Once the key is on chain the simulation charges the
+    // 21,000 itself; before then the estimate needs the difference added.
+    const signer = {
+      getAccounts: async () => [{ address: BECH32_ADDRESS, algo: 'eth_secp256k1' }],
+    };
+    const simulate = vi.fn(async () => 70_000);
+    const getAccount = vi.fn(async () => ({ pubkey: null }));
+    mocks.reduxWallet.walletName = KEPLR_WALLET_NAME;
+    mocks.chainState.address = BECH32_ADDRESS;
+    mocks.getOfflineSigner.mockResolvedValue(signer);
+    mocks.connectWithSigner.mockResolvedValue({ simulate, getAccount });
+    const { result } = renderHook(() => useWalletConnect());
+    const client = await result.current.getClient();
+
+    // No key on chain yet: padded.
+    await expect(client.simulate(BECH32_ADDRESS, [], '')).resolves.toBe(70_000 + ETH_KEY_GAS_PAD);
+    expect(simulate).toHaveBeenCalledWith(BECH32_ADDRESS, [], '');
+    // The key is on chain: the estimate already includes it.
+    getAccount.mockResolvedValueOnce({ pubkey: { type: 'os/PubKeyEthSecp256k1', value: 'A5K0' } } as never);
+    await expect(client.simulate(BECH32_ADDRESS, [], '')).resolves.toBe(70_000);
+    // The lookup failed: pad rather than risk running out of gas.
+    getAccount.mockRejectedValueOnce(new Error('rpc down'));
+    await expect(client.simulate(BECH32_ADDRESS, [], '')).resolves.toBe(70_000 + ETH_KEY_GAS_PAD);
   });
 
   it('asks the hub for its connect drawer rather than opening a picker', () => {
