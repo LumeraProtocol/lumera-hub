@@ -17,12 +17,21 @@ import Image from 'next/image'
 
 import useConnectWallet from '@/hooks/useConnectWallet'
 import { addLumeraToMetaMask, resolveMetaMaskProvider } from '@/utils/evm'
-import { addLumeraEvmToKeplr, canAddLumeraEvmToKeplr, keplrChainState } from '@/utils/keplr-evm'
+import * as instance from '@/utils/api'
+import {
+  KEPLR_REMOVE_CHAIN_PATH,
+  addLumeraEvmToKeplr,
+  canAddLumeraEvmToKeplr,
+  evmAddressOf,
+  keplrChainState,
+  type FetchJson,
+  type KeplrEvmResult,
+} from '@/utils/keplr-evm'
 import { EVM_CHAIN_ID, IS_EVM_NETWORK, NETWORK_LABEL } from '@/contants/network'
 // Canonical wallet keys — the drawer must pass the same values useConnectWallet
 // branches on, or "MetaMask" falls through to the Keplr path.
 import { KEPLR_WALLET_NAME, METAMASK_WALLET_NAME } from '@/utils/wallet-selection'
-import { useHub, LUMERA_ADDRESS } from '@lumera-hub/ui/src/hub/session'
+import { useHub, LUMERA_ADDRESS, short } from '@lumera-hub/ui/src/hub/session'
 import { Drawer, IntentBanner } from '@lumera-hub/ui/src/hub/Drawer'
 import { Button, Field, Input, Notice, cx } from '@lumera-hub/ui/src/design/primitives'
 import { EyeIcon } from '@lumera-hub/ui/src/design/icons'
@@ -36,6 +45,8 @@ export function ConnectDrawer() {
   // the add-chain button shows only when there is genuinely a MetaMask to add to.
   const [hasMetaMask, setHasMetaMask] = useState(false)
   const [addingKeplrEvm, setAddingKeplrEvm] = useState(false)
+  // What the last Keplr EVM setup found, shown under the button.
+  const [keplrEvm, setKeplrEvm] = useState<KeplrEvmResult | null>(null)
   // Keplr kept its existing (pre-migration) settings: wait for the reader to
   // remove the chain there, then add it back with the EVM settings.
   const [waitingForRemoval, setWaitingForRemoval] = useState(false)
@@ -55,26 +66,28 @@ export function ConnectDrawer() {
   const canAddKeplrEvm = typeof window !== 'undefined' && canAddLumeraEvmToKeplr(window as { keplr?: unknown })
 
   const keplr = () => (typeof window !== 'undefined' ? window.keplr : undefined) as Parameters<typeof addLumeraEvmToKeplr>[0]
+  const fetchJson: FetchJson = (path) => instance.getQuiet(path).then((res: { data: unknown }) => res.data)
 
   const addKeplrEvm = useCallback(async () => {
     setAddingKeplrEvm(true)
     try {
-      const result = await addLumeraEvmToKeplr(keplr())
-      if (result.status === 'kept-existing') {
-        setWaitingForRemoval(true)
-        return
+      const result = await addLumeraEvmToKeplr(keplr(), fetchJson)
+      setKeplrEvm(result)
+      setWaitingForRemoval(result.kind === 'kept-existing' || result.kind === 'needs-evm-settings')
+      if (result.kind === 'ready') {
+        hub.flash(`Keplr shows your migrated address ${short(result.keplrAddress)}`, 'ok')
+        // Reconnect so the hub picks up the address Keplr now reports.
+        const ok = await connectWallet(KEPLR_WALLET_NAME)
+        if (ok) hub.closeDrawer()
       }
-      setWaitingForRemoval(false)
-      hub.flash(`Keplr now uses your EVM address ${result.address.slice(0, 10)}…${result.address.slice(-4)}`, 'ok')
-      // Reconnect so the hub picks up the address Keplr now reports.
-      const ok = await connectWallet(KEPLR_WALLET_NAME)
-      if (ok) hub.closeDrawer()
     } catch (e) {
       setWaitingForRemoval(false)
       hub.flash(e instanceof Error ? e.message : 'Could not set up Keplr', 'error')
     } finally {
       setAddingKeplrEvm(false)
     }
+    // fetchJson and keplr read fixed module state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectWallet, hub])
 
   // While waiting, check Keplr every few seconds and whenever the reader comes
@@ -238,10 +251,9 @@ export function ConnectDrawer() {
 
       {waitingForRemoval ? (
         <Notice tone="warn">
-          Keplr still has Lumera {NETWORK_LABEL} with its older settings, so it shows your pre-migration address, and
-          it does not let sites change that. In Keplr, open Settings → General → Manage Non-Native Chains and remove
-          Lumera {NETWORK_LABEL} — the hub notices and adds it back with EVM settings straight away; just approve
-          Keplr&apos;s prompt. Your funds and recovery phrase are not affected.{' '}
+          Keplr still has Lumera {NETWORK_LABEL} with its older settings and does not let sites change them. In Keplr,
+          open {KEPLR_REMOVE_CHAIN_PATH} and delete Lumera {NETWORK_LABEL} — the hub notices and adds it back with EVM
+          settings straight away; approve Keplr&apos;s prompt. Your funds and recovery phrase are not affected.{' '}
           <button
             type="button"
             onClick={() => setWaitingForRemoval(false)}
@@ -249,6 +261,46 @@ export function ConnectDrawer() {
           >
             Stop waiting
           </button>
+        </Notice>
+      ) : null}
+
+      {keplrEvm?.kind === 'reimport' ? (
+        <Notice tone="warn">
+          <span className="flex flex-col gap-2">
+            <span>
+              Keplr has the EVM settings, but this Keplr profile still holds your pre-migration key, so it shows{' '}
+              <span className="font-mono">{short(keplrEvm.keplrAddress)}</span> — an address nothing was moved to.
+              Your account was migrated to <span className="font-mono">{short(keplrEvm.migration.newAddress)}</span>{' '}
+              (<span className="font-mono">{short(evmAddressOf(keplrEvm.migration.newAddress), 6, 4)}</span> in an EVM
+              wallet).
+            </span>
+            <span>
+              To use it, in Keplr click your wallet name → + → Import existing wallet, enter the same recovery phrase
+              and switch to the new profile. Or connect the EVM wallet you migrated with (e.g. MetaMask).
+            </span>
+            <button
+              type="button"
+              onClick={() => hub.watch(keplrEvm.migration.newAddress)}
+              className="cursor-pointer self-start border-none bg-transparent p-0 text-small font-medium text-lumera-green hover:text-lumera-green-bright"
+            >
+              View the migrated account →
+            </button>
+          </span>
+        </Notice>
+      ) : null}
+
+      {keplrEvm?.kind === 'not-migrated' ? (
+        <Notice tone="info">
+          This Keplr account (<span className="font-mono">{short(keplrEvm.legacyAddress)}</span>) was not migrated to
+          an EVM key, so there is nothing to switch and Keplr was left as it is.
+          {keplrEvm.keplrAddress !== keplrEvm.legacyAddress ? (
+            <>
+              {' '}
+              Keplr is showing it as <span className="font-mono">{short(keplrEvm.keplrAddress)}</span>; to see{' '}
+              <span className="font-mono">{short(keplrEvm.legacyAddress)}</span> again, delete Lumera {NETWORK_LABEL}{' '}
+              in Keplr ({KEPLR_REMOVE_CHAIN_PATH}) and connect again.
+            </>
+          ) : null}
         </Notice>
       ) : null}
 
