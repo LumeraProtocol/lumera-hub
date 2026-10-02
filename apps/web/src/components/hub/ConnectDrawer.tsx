@@ -12,12 +12,12 @@
  * chain explorer want to look at an address, not sign with one.
  */
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 
 import useConnectWallet from '@/hooks/useConnectWallet'
 import { addLumeraToMetaMask, resolveMetaMaskProvider } from '@/utils/evm'
-import { addLumeraEvmToKeplr, canAddLumeraEvmToKeplr } from '@/utils/keplr-evm'
+import { addLumeraEvmToKeplr, canAddLumeraEvmToKeplr, keplrChainState } from '@/utils/keplr-evm'
 import { EVM_CHAIN_ID, IS_EVM_NETWORK, NETWORK_LABEL } from '@/contants/network'
 // Canonical wallet keys — the drawer must pass the same values useConnectWallet
 // branches on, or "MetaMask" falls through to the Keplr path.
@@ -36,8 +36,9 @@ export function ConnectDrawer() {
   // the add-chain button shows only when there is genuinely a MetaMask to add to.
   const [hasMetaMask, setHasMetaMask] = useState(false)
   const [addingKeplrEvm, setAddingKeplrEvm] = useState(false)
-  // Shown when Keplr kept its existing (pre-migration) settings for the chain.
-  const [keplrEvmKept, setKeplrEvmKept] = useState(false)
+  // Keplr kept its existing (pre-migration) settings: wait for the reader to
+  // remove the chain there, then add it back with the EVM settings.
+  const [waitingForRemoval, setWaitingForRemoval] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -49,6 +50,64 @@ export function ConnectDrawer() {
     }
   }, [])
 
+  // Migrated (EVM-key) accounts only appear in Keplr once it has the chain with
+  // EVM settings; offer that wherever the network has an EVM chain.
+  const canAddKeplrEvm = typeof window !== 'undefined' && canAddLumeraEvmToKeplr(window as { keplr?: unknown })
+
+  const keplr = () => (typeof window !== 'undefined' ? window.keplr : undefined) as Parameters<typeof addLumeraEvmToKeplr>[0]
+
+  const addKeplrEvm = useCallback(async () => {
+    setAddingKeplrEvm(true)
+    try {
+      const result = await addLumeraEvmToKeplr(keplr())
+      if (result.status === 'kept-existing') {
+        setWaitingForRemoval(true)
+        return
+      }
+      setWaitingForRemoval(false)
+      hub.flash(`Keplr now uses your EVM address ${result.address.slice(0, 10)}…${result.address.slice(-4)}`, 'ok')
+      // Reconnect so the hub picks up the address Keplr now reports.
+      const ok = await connectWallet(KEPLR_WALLET_NAME)
+      if (ok) hub.closeDrawer()
+    } catch (e) {
+      setWaitingForRemoval(false)
+      hub.flash(e instanceof Error ? e.message : 'Could not set up Keplr', 'error')
+    } finally {
+      setAddingKeplrEvm(false)
+    }
+  }, [connectWallet, hub])
+
+  // While waiting, check Keplr every few seconds and whenever the reader comes
+  // back to the page; once the chain is gone, add it back straight away (Keplr
+  // shows its own approval). Gives up after ten minutes.
+  const addRef = useRef(addKeplrEvm)
+  addRef.current = addKeplrEvm
+  useEffect(() => {
+    if (!waitingForRemoval) return
+    let busy = false
+    const check = async () => {
+      if (busy) return
+      busy = true
+      const state = await keplrChainState(keplr())
+      busy = false
+      if (state === 'removed' || state === 'evm') {
+        stop()
+        void addRef.current()
+      }
+    }
+    const timer = window.setInterval(check, 2500)
+    const giveUp = window.setTimeout(() => setWaitingForRemoval(false), 10 * 60 * 1000)
+    window.addEventListener('focus', check)
+    function stop() {
+      window.clearInterval(timer)
+      window.clearTimeout(giveUp)
+      window.removeEventListener('focus', check)
+    }
+    return stop
+  }, [waitingForRemoval])
+
+  // Hooks above run while the drawer is closed too, so a wait in progress
+  // survives the reader closing it to go to Keplr.
   if (hub.drawer?.kind !== 'connect') return null
 
   // Offer the one-click chain add only where there is an EVM chain to add (the
@@ -64,30 +123,6 @@ export function ConnectDrawer() {
       hub.flash(e instanceof Error ? e.message : 'Could not add the chain to MetaMask', 'error')
     } finally {
       setAddingChain(false)
-    }
-  }
-
-  // Migrated (EVM-key) accounts only appear in Keplr once it has the chain with
-  // EVM settings; offer that wherever the network has an EVM chain.
-  const canAddKeplrEvm = typeof window !== 'undefined' && canAddLumeraEvmToKeplr(window as { keplr?: unknown })
-
-  const handleAddKeplrEvm = async () => {
-    setAddingKeplrEvm(true)
-    setKeplrEvmKept(false)
-    try {
-      const result = await addLumeraEvmToKeplr(window.keplr as Parameters<typeof addLumeraEvmToKeplr>[0])
-      if (result.status === 'kept-existing') {
-        setKeplrEvmKept(true)
-        return
-      }
-      hub.flash(`Keplr now uses your EVM address ${result.address.slice(0, 10)}…${result.address.slice(-4)}`, 'ok')
-      // Reconnect so the hub picks up the address Keplr now reports.
-      const ok = await connectWallet(KEPLR_WALLET_NAME)
-      if (ok) hub.closeDrawer()
-    } catch (e) {
-      hub.flash(e instanceof Error ? e.message : 'Could not set up Keplr', 'error')
-    } finally {
-      setAddingKeplrEvm(false)
     }
   }
 
@@ -189,19 +224,31 @@ export function ConnectDrawer() {
       {canAddKeplrEvm ? (
         <button
           type="button"
-          onClick={handleAddKeplrEvm}
-          disabled={addingKeplrEvm}
+          onClick={() => void addKeplrEvm()}
+          disabled={addingKeplrEvm || waitingForRemoval}
           className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[9px] border border-line-edge bg-transparent px-3.5 py-[11px] text-small leading-none font-medium text-text-secondary transition-colors hover:border-line-accent hover:text-lumera-green disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {addingKeplrEvm ? 'Opening Keplr…' : `Add Lumera ${NETWORK_LABEL} (EVM) to Keplr`}
+          {addingKeplrEvm
+            ? 'Opening Keplr…'
+            : waitingForRemoval
+              ? 'Waiting for Keplr…'
+              : `Add Lumera ${NETWORK_LABEL} (EVM) to Keplr`}
         </button>
       ) : null}
 
-      {keplrEvmKept ? (
+      {waitingForRemoval ? (
         <Notice tone="warn">
-          Keplr already has Lumera {NETWORK_LABEL} with its older settings and kept them, so it still shows your
-          pre-migration address. In Keplr, open Settings → General → Manage Non-Native Chains, remove Lumera{' '}
-          {NETWORK_LABEL}, then press the button again. Your funds and recovery phrase are not affected.
+          Keplr still has Lumera {NETWORK_LABEL} with its older settings, so it shows your pre-migration address, and
+          it does not let sites change that. In Keplr, open Settings → General → Manage Non-Native Chains and remove
+          Lumera {NETWORK_LABEL} — the hub notices and adds it back with EVM settings straight away; just approve
+          Keplr&apos;s prompt. Your funds and recovery phrase are not affected.{' '}
+          <button
+            type="button"
+            onClick={() => setWaitingForRemoval(false)}
+            className="cursor-pointer border-none bg-transparent p-0 text-small font-medium text-text-secondary underline hover:text-text-primary"
+          >
+            Stop waiting
+          </button>
         </Notice>
       ) : null}
 

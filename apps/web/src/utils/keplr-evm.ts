@@ -9,7 +9,11 @@
  * derive and sign with the migrated key.
  *
  * Keplr ignores a suggestion for a chain it already has, so whether it took is
- * read back from the key Keplr then reports, not assumed.
+ * read back from the key Keplr then reports, not assumed. Keplr also gives
+ * sites no way to remove or change a chain (or any site could re-point a
+ * wallet's addresses), so when the old settings stay, the reader removes the
+ * chain in Keplr and the hub notices it is gone (keplrChainState) and adds it
+ * back with these settings.
  */
 
 import {
@@ -85,4 +89,22 @@ export async function addLumeraEvmToKeplr(keplr: KeplrLike | undefined): Promise
   const key = await keplr.getKey?.(CHAIN_ID)
   const address = key?.bech32Address ?? ''
   return keplrUsesEvmKey(key) ? { status: 'applied', address } : { status: 'kept-existing', address }
+}
+
+/** Keplr's error for a chain it does not have, e.g. "There is no modular chain info for …". */
+export const isMissingChainError = (error: unknown): boolean =>
+  /no (modular )?chain info|chain info .*not found|unknown chain/i.test(
+    String((error as { message?: unknown } | null)?.message ?? error),
+  )
+
+/** What Keplr has for the chain now: EVM settings, Cosmos settings, nothing, or unknown (locked, refused). */
+export async function keplrChainState(
+  keplr: KeplrLike | undefined,
+): Promise<'evm' | 'cosmos' | 'removed' | 'unknown'> {
+  if (!keplr?.getKey) return 'unknown'
+  try {
+    return keplrUsesEvmKey(await keplr.getKey(CHAIN_ID)) ? 'evm' : 'cosmos'
+  } catch (error) {
+    return isMissingChainError(error) ? 'removed' : 'unknown'
+  }
 }
