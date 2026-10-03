@@ -233,3 +233,24 @@ export async function keplrChainState(
     return isMissingChainError(error) ? 'removed' : 'unknown'
   }
 }
+
+/* --------------------------------------------------------- profile switch */
+
+/** Keplr's window event for a profile (or account) switch. */
+export const KEPLR_KEYSTORE_CHANGE = 'keplr_keystorechange'
+
+/**
+ * After the reader re-imports their recovery phrase, which profile Keplr is on:
+ * - `done`: it shows the migrated address;
+ * - `old-profile`: still the pre-migration profile (nothing switched yet);
+ * - `other-profile`: some other profile — not the one that holds the migration.
+ */
+export function judgeProfileSwitch(
+  target: Migration,
+  status: KeplrMigrationStatus | null,
+): 'done' | 'old-profile' | 'other-profile' {
+  if (!status) return 'old-profile'
+  if (status.keplrAddress === target.newAddress) return 'done'
+  if (status.kind === 'reimport' && status.migration.newAddress === target.newAddress) return 'old-profile'
+  return 'other-profile'
+}

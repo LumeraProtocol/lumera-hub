@@ -16,7 +16,9 @@ const {
   canAddLumeraEvmToKeplr,
   evmAddressOf,
   isMissingChainError,
+  judgeProfileSwitch,
   keplrChainState,
+  keplrMigrationStatus,
   keplrUsesEvmKey,
   legacyAddressOf,
   lumeraEvmChainInfo,
@@ -146,5 +148,25 @@ describe('keplrChainState', () => {
     await expect(keplrChainState(locked)).resolves.toBe('unknown');
     expect(isMissingChainError(new Error('There is no chain info for x'))).toBe(true);
     expect(keplrUsesEvmKey({ algo: 'eth_secp256k1' })).toBe(true);
+  });
+});
+
+describe('judgeProfileSwitch', () => {
+  const target = { legacyAddress: LEGACY, newAddress: MIGRATED };
+  const status = (profileKey: Uint8Array, records?: Record<string, string>) =>
+    keplrMigrationStatus(fakeKeplr(profileKey, 'evm'), chain(records));
+
+  it('is done once Keplr is on the profile re-imported from the recovery phrase', async () => {
+    expect(judgeProfileSwitch(target, await status(NEW_KEY))).toBe('done');
+  });
+
+  it('keeps waiting while Keplr is still on the pre-migration profile', async () => {
+    expect(judgeProfileSwitch(target, await status(OLD_KEY))).toBe('old-profile');
+    expect(judgeProfileSwitch(target, null)).toBe('old-profile');
+  });
+
+  it('says so when the reader switched to an unrelated profile', async () => {
+    const unrelated = Secp256k1.makeKeypair(new Uint8Array(32).fill(3)).pubkey;
+    expect(judgeProfileSwitch(target, await status(Secp256k1.compressPubkey(unrelated), {}))).toBe('other-profile');
   });
 });
