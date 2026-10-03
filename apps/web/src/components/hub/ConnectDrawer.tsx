@@ -137,9 +137,15 @@ export function ConnectDrawer() {
   useEffect(() => {
     if (!reimportTarget) return
     let busy = false
+    // A switch that lands while a check is running gets a check of its own.
+    let again = false
     let stopped = false
     const check = async () => {
-      if (busy || stopped) return
+      if (stopped) return
+      if (busy) {
+        again = true
+        return
+      }
       busy = true
       const status = await keplrMigrationStatus(keplr(), fetchJson).catch(() => null)
       busy = false
@@ -151,8 +157,12 @@ export function ConnectDrawer() {
         setOtherProfile(null)
         hubRef.current.flash(`Keplr is on your migrated account ${short(reimportTarget.newAddress)}`, 'ok')
         if (await connectRef.current(KEPLR_WALLET_NAME)) hubRef.current.closeDrawer()
-      } else {
-        setOtherProfile(verdict === 'other-profile' && status ? status.keplrAddress : null)
+        return
+      }
+      setOtherProfile(verdict === 'other-profile' && status ? status.keplrAddress : null)
+      if (again) {
+        again = false
+        void check()
       }
     }
     const onSwitch = () => void check()

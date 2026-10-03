@@ -79,9 +79,18 @@ vi.mock('@lumera-hub/ui/src/hub/session', async (importOriginal) => {
 
 const { ConnectDrawer } = await import('./ConnectDrawer');
 
+// Long enough for a loaded machine, shorter than the drawer's 4s fallback timer —
+// so a pass proves the keplr_keystorechange listener, not the timer, did it.
+const WAIT = { timeout: 3000 };
+
 /** Keplr with the chain on the EVM settings; `active` is the profile's key. */
 const installKeplr = () => {
-  const keplr = {
+  const keplr: {
+    active: Uint8Array;
+    experimentalSuggestChain: ReturnType<typeof vi.fn>;
+    enable: ReturnType<typeof vi.fn>;
+    getKey: ReturnType<typeof vi.fn>;
+  } = {
     active: OLD_KEY,
     experimentalSuggestChain: vi.fn(async () => undefined),
     enable: vi.fn(async () => undefined),
@@ -116,7 +125,7 @@ describe('ConnectDrawer — Keplr EVM setup for a migrated account', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add Lumera Testnet (EVM) to Keplr' }));
 
     // The old profile only shows its key's EVM-style address, which is empty.
-    expect(await screen.findByText(/an address nothing was moved to/)).toBeTruthy();
+    expect(await screen.findByText(/an address nothing was moved to/, {}, WAIT)).toBeTruthy();
     expect(screen.getByText(/Waiting for you to switch Keplr profiles/)).toBeTruthy();
     expect(screen.getByText(/in an EVM/).textContent).toContain('0x9694');
     // Already on the EVM settings: nothing to suggest again.
@@ -124,12 +133,12 @@ describe('ConnectDrawer — Keplr EVM setup for a migrated account', () => {
 
     // An unrelated profile is named as such, and nothing connects.
     await switchProfile(keplr, OTHER_KEY);
-    expect(await screen.findByText(/which is not\s+your migrated account/)).toBeTruthy();
+    expect(await screen.findByText(/which is not\s+your migrated account/, {}, WAIT)).toBeTruthy();
     expect(mocks.connectWallet).not.toHaveBeenCalled();
 
     // The profile re-imported from the recovery phrase holds the new key.
     await switchProfile(keplr, NEW_KEY);
-    await waitFor(() => expect(mocks.connectWallet).toHaveBeenCalledWith('keplr-extension'));
+    await waitFor(() => expect(mocks.connectWallet).toHaveBeenCalledWith('keplr-extension'), WAIT);
     expect(mocks.flash).toHaveBeenCalledWith(expect.stringMatching(/migrated account lumera1j6/), 'ok');
     expect(mocks.closeDrawer).toHaveBeenCalled();
     expect(screen.queryByText(/an address nothing was moved to/)).toBeNull();
@@ -147,7 +156,7 @@ describe('ConnectDrawer — Keplr EVM setup for a migrated account', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add Lumera Testnet (EVM) to Keplr' }));
 
-    expect(await screen.findByText(/was not migrated to/)).toBeTruthy();
+    expect(await screen.findByText(/was not migrated to/, {}, WAIT)).toBeTruthy();
     expect(keplr.experimentalSuggestChain).not.toHaveBeenCalled();
     expect(mocks.connectWallet).not.toHaveBeenCalled();
   });
